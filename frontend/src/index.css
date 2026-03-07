@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+@theme {
+  --color-linear-bg: #09090b;
+  --color-linear-card: #18181b;
+  --color-linear-border: #27272a;
+  --color-linear-text-muted: #a1a1aa;
+  --color-linear-accent: #3f3f46;
+  --color-linear-glow: rgba(59, 130, 246, 0.1);
+  --color-retro-amber: #ffb000;
+  --color-retro-green: #33ff33;
+}
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #09090b;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-content: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #09090b;
+}
+
+#root {
+  width: 100%;
+}
+
+/* Retro Map Styling */
+.retro-map .leaflet-container {
+  background: #09090b !important;
+  filter: grayscale(1) invert(1) contrast(1.2) brightness(0.8) sepia(0.5) hue-rotate(10deg);
+}
+
+.retro-map .leaflet-tile-pane {
+  opacity: 0.6;
+}
+
+.property-popup .leaflet-popup-content-wrapper {
+  background: #18181b;
+  color: #fff;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+.property-popup .leaflet-popup-tip {
+  background: #18181b;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+.glass-panel {
+  background: rgba(24, 24, 27, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(39, 39, 42, 0.5);
+}
+
+.glow-border {
+  position: relative;
+}
+
+.glow-border::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  border-radius: inherit;
+  z-index: -1;
+  pointer-events: none;
+}

@@ -1,0 +1,37 @@
+{
+  "name": "Gemini CLI Environment",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    }
+  },
+
+  // Tells Docker to load your local .env file into the container
+  "runArgs": [
+    "--env-file",
+    ".env"
+  ],
+
+  "postCreateCommand": "pip install google-generativeai && npm install -g @google/gemini-cli",
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  },
+
+  "forwardPorts": [3000, 8080, 5173],
+  "remoteUser": "vscode"
+}

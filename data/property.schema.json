@@ -1,0 +1,122 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Prime London Property",
+  "type": "object",
+  "required": [
+    "id",
+    "metadata",
+    "address",
+    "area",
+    "list_price",
+    "realistic_price",
+    "sqft",
+    "price_per_sqm",
+    "is_value_buy",
+    "epc",
+    "tenure",
+    "dom",
+    "neg_strategy",
+    "alpha_score",
+    "link"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the property."
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["first_seen", "last_seen", "discovery_count", "is_new"],
+      "properties": {
+        "first_seen": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO date string when the property was first discovered."
+        },
+        "last_seen": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO date string when the property was last seen in a scrape."
+        },
+        "discovery_count": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total number of times this property has been discovered across multiple days."
+        },
+        "is_new": {
+          "type": "boolean",
+          "description": "True if the property was discovered for the first time in the current scrape session."
+        }
+      }
+    },
+    "address": {
+      "type": "string",
+      "description": "Full street address of the property."
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "Islington (N1)",
+        "Islington (N7)",
+        "Bayswater (W2)",
+        "Belsize Park (NW3)",
+        "West Hampstead (NW6)"
+      ],
+      "description": "Target acquisition area and postcode."
+    },
+    "list_price": {
+      "type": "number",
+      "minimum": 0,
+      "description": "The current asking price in GBP."
+    },
+    "realistic_price": {
+      "type": "number",
+      "minimum": 0,
+      "description": "The calculated target bid price based on market conditions and DoM."
+    },
+    "sqft": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Internal floor area in square feet."
+    },
+    "price_per_sqm": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Calculated price per square meter."
+    },
+    "is_value_buy": {
+      "type": "boolean",
+      "description": "True if list_price / sqm < £9,500."
+    },
+    "epc": {
+      "type": "string",
+      "pattern": "^[A-G]$+",
+      "description": "EPC energy efficiency rating."
+    },
+    "tenure": {
+      "type": "string",
+      "description": "Property tenure status (e.g., 'Share of Freehold', 'Leasehold (999 yrs)')."
+    },
+    "dom": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Days on market."
+    },
+    "neg_strategy": {
+      "type": "string",
+      "description": "Recommended negotiation strategy (e.g., 'Aggressive: -12% bid')."
+    },
+    "alpha_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Calculated investment grade score (0-10)."
+    },
+    "link": {
+      "type": "string",
+      "format": "uri",
+      "description": "Direct link to the property listing."
+    }
+  }
+}

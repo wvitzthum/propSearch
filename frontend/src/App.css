@@ -1,0 +1,18 @@
+/* Custom styles for Leaflet popups to match the theme */
+.property-popup .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+.property-popup .leaflet-popup-content {
+  margin: 12px;
+  line-height: 1.5;
+}
+
+.property-popup .leaflet-popup-tip {
+  background: white;
+  border: 1px solid #e2e8f0;
+}
