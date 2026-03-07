@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -11,9 +11,25 @@ import {
   Zap,
   ChevronDown
 } from 'lucide-react';
+import { useProperties } from '../hooks/useProperties';
+import SearchModal from './SearchModal';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
+  const { properties } = useProperties();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const navItems = [
     { icon: <Compass size={16} />, label: 'Discover', path: '/' },
@@ -21,28 +37,65 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { icon: <Zap size={16} />, label: 'Strategy', path: '/strategy' },
   ];
 
+  const dynamicAreas = useMemo(() => {
+    const uniqueAreas = new Set(properties.map(p => p.area.split(' (')[0]));
+    return Array.from(uniqueAreas).sort();
+  }, [properties]);
+
+  const breadcrumbs = useMemo(() => {
+    const paths = location.pathname.split('/').filter(Boolean);
+    if (paths.length === 0) return [{ label: 'Discover', path: '/', active: true }];
+
+    return paths.map((path, index) => {
+      const isLast = index === paths.length - 1;
+      const currentPath = '/' + paths.slice(0, index + 1).join('/');
+      let label = path.charAt(0).toUpperCase() + path.slice(1);
+      
+      // Special cases
+      if (path === 'dashboard') label = 'Terminal';
+      if (path === 'strategy') label = 'Acquisition Strategy';
+      if (path === 'property' && paths[index + 1]) {
+        return { label: 'Asset Scan', path: '/dashboard', active: false };
+      }
+      if (index > 0 && paths[index - 1] === 'property') {
+        label = `ID:${path.slice(0, 8)}`;
+      }
+
+      return {
+        label,
+        path: currentPath,
+        active: isLast
+      };
+    });
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen bg-linear-bg text-white font-sans antialiased flex selection:bg-blue-500/30">
+      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+
       {/* Sidebar */}
       <aside className="w-64 border-r border-linear-border flex flex-col fixed inset-y-0 left-0 z-50 bg-linear-bg/80 backdrop-blur-xl">
         <div className="p-4 flex items-center justify-between group">
-          <div className="flex items-center gap-2 cursor-pointer p-1 rounded-lg hover:bg-linear-card transition-colors">
+          <Link to="/" className="flex items-center gap-2 cursor-pointer p-1 rounded-lg hover:bg-linear-card transition-colors">
             <div className="h-6 w-6 rounded bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-black italic shadow-lg shadow-blue-500/20">
               IS
             </div>
             <span className="text-sm font-semibold tracking-tight">immoSearch</span>
             <ChevronDown size={14} className="text-linear-text-muted" />
-          </div>
+          </Link>
           <button className="h-6 w-6 rounded border border-linear-border flex items-center justify-center text-linear-text-muted hover:text-white hover:bg-linear-card transition-all">
             <Plus size={14} />
           </button>
         </div>
 
         <div className="px-3 py-2">
-          <button className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-linear-card border border-linear-border text-linear-text-muted hover:text-white transition-all shadow-sm group">
+          <button 
+            onClick={() => setIsSearchOpen(true)}
+            className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-linear-card border border-linear-border text-linear-text-muted hover:text-white transition-all shadow-sm group"
+          >
             <div className="flex items-center gap-2">
               <Search size={14} />
-              <span className="text-xs">Search properties</span>
+              <span className="text-xs">Search terminal</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="text-[10px] bg-linear-bg px-1 rounded border border-linear-border group-hover:border-linear-accent transition-colors">⌘</span>
@@ -51,68 +104,123 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </button>
         </div>
 
-        <nav className="flex-grow px-2 py-4 space-y-0.5">
+        <nav className="flex-grow px-2 py-4 space-y-0.5 overflow-y-auto custom-scrollbar">
           {navItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
               className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all group ${
-                location.pathname === item.path 
+                location.pathname === item.path || (item.path === '/dashboard' && location.pathname.startsWith('/property'))
                   ? 'bg-linear-card text-white shadow-sm ring-1 ring-linear-border' 
                   : 'text-linear-text-muted hover:text-white hover:bg-linear-card/50'
               }`}
             >
-              <span className={`${location.pathname === item.path ? 'text-blue-400' : 'text-linear-text-muted group-hover:text-blue-400'} transition-colors`}>
+              <span className={`${(location.pathname === item.path || (item.path === '/dashboard' && location.pathname.startsWith('/property'))) ? 'text-blue-400' : 'text-linear-text-muted group-hover:text-blue-400'} transition-colors`}>
                 {item.icon}
               </span>
               {item.label}
             </Link>
           ))}
 
-          <div className="pt-8 pb-2 px-3 text-[10px] font-bold text-linear-text-muted uppercase tracking-wider">
+          <div className="pt-8 pb-2 px-3 text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">
             Target Areas
           </div>
           <div className="space-y-0.5">
-            {['Islington', 'Bayswater', 'West Hampstead'].map(area => (
-              <button key={area} className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium text-linear-text-muted hover:text-white hover:bg-linear-card/50 transition-all text-left group">
-                <div className="h-2 w-2 rounded-full border border-linear-border group-hover:border-blue-500 transition-colors"></div>
+            {dynamicAreas.length > 0 ? dynamicAreas.map(area => (
+              <Link 
+                key={area} 
+                to={`/dashboard?area=${encodeURIComponent(area)}`}
+                className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-left group ${
+                  location.search.includes(encodeURIComponent(area)) 
+                    ? 'text-white bg-linear-card/40' 
+                    : 'text-linear-text-muted hover:text-white hover:bg-linear-card/50'
+                }`}
+              >
+                <div className={`h-1.5 w-1.5 rounded-full border transition-colors ${
+                  location.search.includes(encodeURIComponent(area)) 
+                    ? 'border-blue-500 bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' 
+                    : 'border-linear-border group-hover:border-blue-500'
+                }`}></div>
                 {area}
-              </button>
-            ))}
+              </Link>
+            )) : (
+              <div className="px-3 py-2 text-[10px] text-linear-accent italic uppercase">Loading nodes...</div>
+            )}
           </div>
         </nav>
 
-        <div className="p-4 border-t border-linear-border flex items-center justify-between">
-          <div className="flex items-center gap-2 group cursor-pointer">
-            <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-[10px] font-bold border border-white/10 shadow-lg ring-1 ring-white/5">
-              AM
+        <div className="p-4 border-t border-linear-border relative bg-linear-bg">
+          <div className="flex items-center justify-between">
+            <div 
+              className="flex items-center gap-2 group cursor-pointer"
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+            >
+              <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-[10px] font-bold border border-white/10 shadow-lg ring-1 ring-white/5">
+                AM
+              </div>
+              <span className="text-xs font-medium text-linear-text-muted group-hover:text-white transition-colors">alex.m</span>
+              <ChevronDown size={12} className={`text-linear-accent transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
             </div>
-            <span className="text-xs font-medium text-linear-text-muted group-hover:text-white transition-colors">alex.m</span>
+            <div className="flex items-center gap-1">
+              <button className="p-1.5 text-linear-text-muted hover:text-white hover:bg-linear-card rounded-md transition-all relative">
+                <Bell size={16} />
+                <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-blue-500 rounded-full border border-linear-bg"></div>
+              </button>
+              <button className="p-1.5 text-linear-text-muted hover:text-white hover:bg-linear-card rounded-md transition-all">
+                <Settings size={16} />
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <button className="p-1.5 text-linear-text-muted hover:text-white hover:bg-linear-card rounded-md transition-all relative">
-              <Bell size={16} />
-              <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-blue-500 rounded-full border border-linear-bg"></div>
-            </button>
-            <button className="p-1.5 text-linear-text-muted hover:text-white hover:bg-linear-card rounded-md transition-all">
-              <Settings size={16} />
-            </button>
-          </div>
+
+          {/* Profile Dropdown */}
+          {isProfileOpen && (
+            <div className="absolute bottom-full left-4 right-4 mb-2 bg-linear-card border border-linear-border rounded-xl shadow-2xl p-2 animate-in slide-in-from-bottom-2 duration-200 z-[60]">
+               <div className="px-3 py-2 border-b border-linear-border mb-1">
+                  <p className="text-xs font-bold text-white">Alex Morgan</p>
+                  <p className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest mt-0.5">Institutional Access</p>
+               </div>
+               <button className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium text-linear-text-muted hover:text-white hover:bg-linear-bg/50 transition-all text-left">
+                  <Compass size={14} className="text-blue-500" />
+                  View Profile
+               </button>
+               <button className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium text-linear-text-muted hover:text-white hover:bg-linear-bg/50 transition-all text-left">
+                  <Zap size={14} className="text-linear-accent" />
+                  Subscription Plan
+               </button>
+               <div className="h-px bg-linear-border my-1"></div>
+               <button className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/5 transition-all text-left">
+                  <div className="h-1.5 w-1.5 rounded-full bg-rose-500"></div>
+                  Disconnect Terminal
+               </button>
+            </div>
+          )}
         </div>
       </aside>
 
       {/* Main Content */}
       <main className="flex-grow pl-64 min-h-screen">
         <header className="h-12 border-b border-linear-border bg-linear-bg/50 backdrop-blur-md sticky top-0 z-40 px-6 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-medium text-linear-text-muted">
-            <span className="hover:text-white cursor-pointer">Acquisition</span>
-            <span className="text-linear-border">/</span>
-            <span className="text-white capitalize">{location.pathname.replace('/', '') || 'Discover'}</span>
+          <div className="flex items-center gap-2 text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">
+            {breadcrumbs.map((crumb, i) => (
+              <React.Fragment key={i}>
+                {i > 0 && <span className="text-linear-accent mx-1">/</span>}
+                {crumb.active ? (
+                  <span className="text-white">{crumb.label}</span>
+                ) : (
+                  <Link to={crumb.path || '#'} className="hover:text-white transition-colors">
+                    {crumb.label}
+                  </Link>
+                )}
+              </React.Fragment>
+            ))}
           </div>
           <div className="flex items-center gap-3">
-             <div className="flex items-center gap-1 bg-linear-card px-2 py-1 rounded border border-linear-border text-[10px] font-mono text-linear-text-muted select-none">
-                <Command size={10} />
-                <span>K</span>
+             <div 
+               onClick={() => setIsSearchOpen(true)}
+               className="flex items-center gap-1 bg-linear-card px-2 py-1 rounded border border-linear-border text-[10px] font-mono text-linear-text-muted select-none group hover:border-linear-accent transition-colors cursor-pointer"
+             >
+                <Command size={10} className="group-hover:text-white transition-colors" />
+                <span className="group-hover:text-white transition-colors">K</span>
              </div>
           </div>
         </header>

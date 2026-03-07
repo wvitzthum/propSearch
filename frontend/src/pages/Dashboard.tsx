@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { 
   Filter, 
@@ -9,96 +9,207 @@ import {
   ExternalLink,
   Map as MapIcon,
   LayoutGrid,
-  Gem,
   Search,
   ShieldAlert,
-  Clock,
   Table as TableIcon,
   ChevronRight,
-  Activity
+  ChevronDown,
+  Zap,
+  Maximize2,
+  Gem
 } from 'lucide-react';
 import { useProperties } from '../hooks/useProperties';
 import type { PropertyWithCoords } from '../hooks/useProperties';
+import { usePipeline } from '../hooks/usePipeline';
+import type { PropertyStatus } from '../hooks/usePipeline';
 import PropertyTable from '../components/PropertyTable';
+import AlphaBadge from '../components/AlphaBadge';
+import KPICard from '../components/KPICard';
+import LoadingNode from '../components/LoadingNode';
+import PreviewDrawer from '../components/PreviewDrawer';
+import MarketPulse from '../components/MarketPulse';
+import { Bookmark, Archive, RotateCcw } from 'lucide-react';
 
-// Fix Leaflet marker icons with a custom "Retro" style
-const createRetroIcon = (color: string) => {
+// Fix Leaflet marker icons with a custom "Linear" style
+const createPropertyIcon = (score: number) => {
+  const color = score >= 8 ? '#10b981' : score >= 5 ? '#f59e0b' : '#ef4444';
   return L.divIcon({
-    className: 'retro-marker',
-    html: `<div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 10px ${color};"></div>`,
-    iconSize: [12, 12],
-    iconAnchor: [6, 6]
+    className: 'property-marker',
+    html: `<div class="group relative flex items-center justify-center">
+             <div class="absolute inset-0 rounded-full blur-[6px] opacity-40 group-hover:opacity-80 transition-opacity" style="background-color: ${color}"></div>
+             <div class="relative w-3.5 h-3.5 rounded-full border-[1.5px] border-white shadow-xl flex items-center justify-center transition-transform group-hover:scale-125" style="background-color: ${color}">
+               <div class="w-1 h-1 bg-white/40 rounded-full"></div>
+             </div>
+           </div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7]
   });
 };
 
-const AlphaBadge: React.FC<{ score: number }> = ({ score }) => {
-  let colorClass = "text-rose-400 border-rose-400/20 bg-rose-400/10";
-  if (score >= 8) colorClass = "text-emerald-400 border-emerald-400/20 bg-emerald-400/10";
-  else if (score >= 5) colorClass = "text-amber-400 border-amber-400/20 bg-amber-400/10";
-
-  return (
-    <div className={`px-1.5 py-0.5 rounded-md text-[10px] font-black border uppercase tracking-wider ${colorClass}`}>
-      {score.toFixed(1)}
-    </div>
-  );
+const createNodeIcon = (type: 'hub' | 'park' | 'station', label: string) => {
+  const iconColor = type === 'hub' ? '#60a5fa' : type === 'park' ? '#34d399' : '#94a3b8';
+  return L.divIcon({
+    className: 'node-marker',
+    html: `<div class="flex items-center gap-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-md border border-white/10 shadow-2xl">
+             <div class="w-2 h-2 rounded-full" style="background-color: ${iconColor}; box-shadow: 0 0 8px ${iconColor}"></div>
+             <span class="text-[9px] font-black text-white uppercase tracking-widest whitespace-nowrap">${label}</span>
+           </div>`,
+    iconSize: [100, 24],
+    iconAnchor: [12, 12]
+  });
 };
 
-const PropertyCard: React.FC<{ property: PropertyWithCoords }> = ({ property }) => {
+const INSTITUTIONAL_NODES = [
+  { name: 'Paternoster Sq', coords: [51.5147, -0.0988], type: 'hub' },
+  { name: 'Canada Square', coords: [51.5050, -0.0195], type: 'hub' }
+] as const;
+
+const SPATIAL_CONTEXT = [
+  { name: 'Hyde Park', coords: [51.5073, -0.1657], type: 'park' },
+  { name: 'Regent\'s Park', coords: [51.5313, -0.1569], type: 'park' },
+  { name: 'King\'s Cross', coords: [51.5309, -0.1233], type: 'station' },
+  { name: 'Waterloo', coords: [51.5033, -0.1123], type: 'station' },
+  { name: 'Green Park', coords: [51.5040, -0.1418], type: 'park' },
+  { name: 'Victoria', coords: [51.4952, -0.1441], type: 'station' }
+] as const;
+
+const AutoFitBounds: React.FC<{ properties: PropertyWithCoords[] }> = ({ properties }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (properties.length === 0) return;
+    
+    const bounds = L.latLngBounds(properties.map(p => [p.lat, p.lng]));
+    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15, animate: true, duration: 1 });
+  }, [properties, map]);
+  
+  return null;
+};
+
+const PropertyCard: React.FC<{ 
+  property: PropertyWithCoords; 
+  status: PropertyStatus;
+  onStatusChange: (id: string, status: PropertyStatus) => void;
+  onPreview: (property: PropertyWithCoords) => void;
+}> = ({ property, status, onStatusChange, onPreview }) => {
   return (
-    <div className="bg-linear-card border border-linear-border rounded-xl overflow-hidden hover:border-linear-accent transition-all group flex flex-col h-full relative glow-border">
-      <Link to={`/property/${property.id}`} className="p-5 flex-grow cursor-pointer">
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-               <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">{property.area.split(' (')[0]}</span>
-               {property.metadata.is_new && <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse"></span>}
+    <div className={`bg-linear-card border rounded-xl overflow-hidden hover:border-linear-accent transition-all group flex flex-col h-full relative glow-border ${
+      status === 'shortlisted' ? 'border-blue-500/40 shadow-[0_0_15px_rgba(59,130,246,0.1)]' : 'border-linear-border'
+    }`}>
+      {/* Thumbnail */}
+      <div 
+        onClick={() => onPreview(property)}
+        className="relative h-40 w-full overflow-hidden bg-linear-bg flex items-center justify-center group-hover:opacity-90 transition-opacity cursor-pointer"
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
+        <img 
+          src={`https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80&sig=${property.id.slice(0, 4)}`}
+          alt={property.address}
+          className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+        
+        {/* Badges on Image */}
+        <div className="absolute top-3 left-3 z-20 flex flex-col gap-2">
+          {property.is_value_buy && (
+            <div className="px-2 py-0.5 bg-emerald-500 text-black text-[9px] font-black uppercase rounded shadow-lg flex items-center gap-1 border border-emerald-400">
+              <Gem size={10} />
+              Value Buy
             </div>
-            <h3 className="font-semibold text-white leading-tight group-hover:text-blue-400 transition-colors text-sm">{property.address}</h3>
-          </div>
+          )}
+          {property.metadata.is_new && (
+            <div className="px-2 py-0.5 bg-blue-500 text-white text-[9px] font-black uppercase rounded shadow-lg border border-blue-400">
+              Fresh
+            </div>
+          )}
+        </div>
+
+        <div className="absolute bottom-3 left-3 z-20">
           <AlphaBadge score={property.alpha_score} />
         </div>
+      </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="space-y-1">
-            <span className="text-[9px] text-linear-text-muted block uppercase tracking-tighter">Realistic Target</span>
-            <div className="flex items-baseline gap-2">
-              <span className="text-base font-bold text-white tracking-tight">£{property.realistic_price.toLocaleString()}</span>
-            </div>
-          </div>
-          <div className="text-right space-y-1">
-            <span className="text-[9px] text-linear-text-muted block uppercase tracking-tighter">Efficiency</span>
-            <span className={`text-xs font-bold ${property.is_value_buy ? 'text-emerald-400' : 'text-white'}`}>£{property.price_per_sqm.toLocaleString()}/m²</span>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-1.5 mb-6">
-          {['tenure', 'epc', 'sqft'].map((key) => (
-            <span key={key} className="px-2 py-0.5 bg-linear-bg text-linear-text-muted rounded text-[10px] font-medium border border-linear-border capitalize">
-               {property[key as keyof PropertyWithCoords] as string} {key === 'sqft' ? 'SQFT' : ''}
+      <div className="p-4 flex-grow flex flex-col">
+        <div className="flex justify-between items-start mb-3 cursor-pointer" onClick={() => onPreview(property)}>
+          <div className="flex flex-col">
+            <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest mb-0.5">
+              {property.area.split(' (')[0]}
+              {property.metadata.discovery_count > 1 && (
+                <span className="ml-2 text-linear-accent">×{property.metadata.discovery_count}</span>
+              )}
             </span>
-          ))}
+            <h3 className="font-bold text-white leading-tight group-hover:text-blue-400 transition-colors text-sm tracking-tight truncate w-[180px]">{property.address}</h3>
+          </div>
         </div>
 
-        <div className="px-3 py-2 bg-blue-500/5 border border-blue-500/10 rounded-lg flex items-center justify-between">
-          <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest">Neg Strategy</span>
-          <span className="text-[10px] font-bold text-blue-100">{property.neg_strategy}</span>
+        <div className="grid grid-cols-2 gap-3 mb-4 flex-grow">
+          <div className="space-y-0.5">
+            <span className="text-[8px] text-linear-text-muted block uppercase tracking-tighter font-bold opacity-60">Acquisition</span>
+            <div className="text-sm font-bold text-white tracking-tight">£{property.realistic_price.toLocaleString()}</div>
+          </div>
+          <div className="text-right space-y-0.5">
+            <span className="text-[8px] text-linear-text-muted block uppercase tracking-tighter font-bold opacity-60">Price/SQM</span>
+            <span className={`text-xs font-bold ${property.is_value_buy ? 'text-retro-green' : 'text-zinc-400'}`}>£{property.price_per_sqm.toLocaleString()}</span>
+          </div>
         </div>
-      </Link>
+
+        <div className="flex items-center gap-3 py-2 border-y border-linear-border/50 mb-4">
+          <div className="flex items-center gap-1.5">
+            <Maximize2 size={10} className="text-linear-accent" />
+            <span className="text-[10px] font-bold text-white tracking-tighter">{property.sqft}</span>
+          </div>
+          <div className="h-2 w-px bg-linear-border" />
+          <div className="flex items-center gap-1.5">
+            <Zap size={10} className="text-linear-accent" />
+            <span className="text-[10px] font-bold text-white tracking-tighter">{property.epc}</span>
+          </div>
+          <div className="h-2 w-px bg-linear-border" />
+          <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-tighter truncate">{property.tenure.split(' ')[0]}</span>
+        </div>
+
+        <div className="px-2.5 py-1.5 bg-blue-500/5 border border-blue-500/10 rounded flex items-center justify-between group-hover:bg-blue-500/10 transition-colors">
+          <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Protocol</span>
+          <span className="text-[10px] font-bold text-blue-100">{property.neg_strategy.split(':')[0]}</span>
+        </div>
+      </div>
       
-      <div className="px-5 py-3 bg-linear-bg/50 border-t border-linear-border flex justify-between items-center mt-auto">
-        <div className="flex items-center gap-2 text-[10px] text-linear-text-muted font-medium">
-          <Activity size={12} className="text-emerald-500" />
-          {property.dom}d on market
+      <div className="px-4 py-2.5 bg-linear-bg/50 border-t border-linear-border flex justify-between items-center mt-auto">
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => onStatusChange(property.id, status === 'shortlisted' ? 'discovered' : 'shortlisted')}
+            className={`p-1 rounded transition-all hover:scale-110 ${
+              status === 'shortlisted' ? 'text-blue-400' : 'text-linear-accent hover:text-white'
+            }`}
+            title="Shortlist"
+          >
+            <Bookmark size={14} fill={status === 'shortlisted' ? 'currentColor' : 'none'} />
+          </button>
+          <button 
+            onClick={() => onStatusChange(property.id, status === 'archived' ? 'discovered' : 'archived')}
+            className={`p-1 rounded transition-all hover:scale-110 ${
+              status === 'archived' ? 'text-rose-400' : 'text-linear-accent hover:text-rose-400'
+            }`}
+            title="Archive"
+          >
+            {status === 'archived' ? <RotateCcw size={14} /> : <Archive size={14} />}
+          </button>
         </div>
-        <a 
-          href={property.link} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-[10px] font-bold text-white hover:text-blue-400 flex items-center gap-1 transition-colors uppercase tracking-widest"
-        >
-          Source
-          <ExternalLink size={10} />
-        </a>
+        <div className="flex items-center gap-3">
+          <Link 
+            to={`/property/${property.id}`}
+            className="text-[9px] font-black text-linear-accent hover:text-white transition-colors uppercase tracking-[0.1em]"
+          >
+            Details
+          </Link>
+          <a 
+            href={property.link} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-[9px] font-black text-white hover:text-blue-400 flex items-center gap-1 transition-colors uppercase tracking-[0.1em]"
+          >
+            Link
+            <ExternalLink size={10} />
+          </a>
+        </div>
       </div>
     </div>
   );
@@ -106,48 +217,86 @@ const PropertyCard: React.FC<{ property: PropertyWithCoords }> = ({ property }) 
 
 const Dashboard: React.FC = () => {
   const { properties, loading, error } = useProperties();
+  const { pipeline, setStatus, getStatus } = usePipeline();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
   const [filterValueBuys, setFilterValueBuys] = useState(false);
   const [filterNewOnly, setFilterNewOnly] = useState(false);
+  const [filterShortlisted, setFilterShortlisted] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [areaFilter, setAreaFilter] = useState('All Areas');
-  const [sortBy, setSortBy] = useState<'alpha' | 'price' | 'sqm'>('alpha');
+  const [sortBy, setSortBy] = useState<'alpha_score' | 'realistic_price' | 'price_per_sqm'>('alpha_score');
   const [viewMode, setViewMode] = useState<'grid' | 'table' | 'map'>('grid');
+  
+  const [selectedProperty, setSelectedProperty] = useState<PropertyWithCoords | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  // Precision Filters
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  const [maxPrice, setMaxPrice] = useState<number>(1000000);
+  const [minSqft, setMinSqft] = useState<number>(0);
+
+  const handlePreview = (property: PropertyWithCoords) => {
+    setSelectedProperty(property);
+    setIsPreviewOpen(true);
+  };
+
+  // Handle URL area parameter
+  useEffect(() => {
+    const area = searchParams.get('area');
+    if (area) {
+      setAreaFilter(area);
+    } else {
+      setAreaFilter('All Areas');
+    }
+  }, [searchParams]);
 
   const filteredProperties = useMemo(() => {
     let result = [...properties];
+    
+    // Status Filter (Archived logic)
+    if (showArchived) {
+      result = result.filter(p => getStatus(p.id) === 'archived');
+    } else {
+      result = result.filter(p => getStatus(p.id) !== 'archived');
+    }
+
+    if (filterShortlisted) result = result.filter(p => getStatus(p.id) === 'shortlisted');
     if (filterValueBuys) result = result.filter(p => p.is_value_buy);
     if (filterNewOnly) result = result.filter(p => p.metadata.is_new);
     if (areaFilter !== 'All Areas') result = result.filter(p => p.area.includes(areaFilter));
 
+    // Precision Filters
+    result = result.filter(p => p.realistic_price <= maxPrice);
+    result = result.filter(p => p.sqft >= minSqft);
+
     result.sort((a, b) => {
-      if (sortBy === 'alpha') return b.alpha_score - a.alpha_score;
-      if (sortBy === 'price') return a.realistic_price - b.realistic_price;
-      if (sortBy === 'sqm') return a.price_per_sqm - b.price_per_sqm;
+      if (sortBy === 'alpha_score') return b.alpha_score - a.alpha_score;
+      if (sortBy === 'realistic_price') return a.realistic_price - b.realistic_price;
+      if (sortBy === 'price_per_sqm') return a.price_per_sqm - b.price_per_sqm;
       return 0;
     });
 
     return result;
-  }, [properties, filterValueBuys, filterNewOnly, areaFilter, sortBy]);
+  }, [properties, filterValueBuys, filterNewOnly, areaFilter, sortBy, filterShortlisted, showArchived, getStatus, maxPrice, minSqft]);
 
   const stats = useMemo(() => {
-    if (properties.length === 0) return { total: 0, avgAlpha: 0, valueBuys: 0 };
+    if (properties.length === 0) return { total: 0, avgAlpha: 0, shortlisted: 0 };
     return {
       total: properties.length,
       avgAlpha: (properties.reduce((acc, p) => acc + p.alpha_score, 0) / properties.length).toFixed(1),
-      valueBuys: properties.filter(p => p.is_value_buy).length
+      shortlisted: Object.values(pipeline).filter(s => s === 'shortlisted').length
     };
-  }, [properties]);
+  }, [properties, pipeline]);
 
   const areas = useMemo(() => {
     const uniqueAreas = new Set(properties.map(p => p.area.split(' (')[0]));
-    return ['All Areas', ...Array.from(uniqueAreas)];
+    return ['All Areas', ...Array.from(uniqueAreas).sort()];
   }, [properties]);
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="flex flex-col items-center gap-6">
-        <div className="h-10 w-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-linear-text-muted text-xs font-bold uppercase tracking-widest">Syncing Prime Assets...</p>
-      </div>
+      <LoadingNode />
     </div>
   );
 
@@ -171,160 +320,274 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-10 pb-20">
+      <PreviewDrawer 
+        property={selectedProperty} 
+        isOpen={isPreviewOpen} 
+        onClose={() => setIsPreviewOpen(false)}
+        status={selectedProperty ? getStatus(selectedProperty.id) : 'discovered'}
+        onStatusChange={setStatus}
+      />
+
       {/* KPI Header */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-linear-card p-6 rounded-xl border border-linear-border flex flex-col justify-between h-32 relative overflow-hidden group">
-          <div className="flex items-center gap-2 text-linear-text-muted z-10">
-            <LayoutGrid size={14} />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Inventory</span>
-          </div>
-          <div className="text-3xl font-bold text-white tracking-tighter z-10">{stats.total}</div>
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <LayoutGrid size={80} strokeWidth={1} />
-          </div>
-        </div>
-        <div className="bg-linear-card p-6 rounded-xl border border-linear-border flex flex-col justify-between h-32 relative overflow-hidden group">
-          <div className="flex items-center gap-2 text-linear-text-muted z-10">
-            <TrendingUp size={14} />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Alpha Avg</span>
-          </div>
-          <div className="text-3xl font-bold text-blue-400 tracking-tighter z-10">{stats.avgAlpha}</div>
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <TrendingUp size={80} strokeWidth={1} />
-          </div>
-        </div>
-        <div className="bg-linear-card p-6 rounded-xl border border-linear-border flex flex-col justify-between h-32 relative overflow-hidden group">
-          <div className="flex items-center gap-2 text-linear-text-muted z-10">
-            <Gem size={14} />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Value Buys</span>
-          </div>
-          <div className="text-3xl font-bold text-emerald-400 tracking-tighter z-10">{stats.valueBuys}</div>
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <Gem size={80} strokeWidth={1} />
-          </div>
-        </div>
+        <KPICard 
+          label="Institutional Inventory" 
+          value={stats.total} 
+          icon={LayoutGrid} 
+        />
+        <KPICard 
+          label="Alpha Performance" 
+          value={stats.avgAlpha} 
+          icon={TrendingUp} 
+          className="text-blue-400"
+        />
+        <KPICard 
+          label="Shortlisted Assets" 
+          value={stats.shortlisted} 
+          icon={Bookmark} 
+          className="text-retro-green"
+        />
       </div>
 
+      {/* Market Pulse Widget */}
+      <MarketPulse />
+
       {/* Control Panel */}
-      <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
+      <div className="flex flex-col lg:flex-row gap-6 items-center justify-between bg-linear-card/50 p-4 rounded-2xl border border-linear-border">
         <div className="flex flex-wrap gap-4 items-center w-full lg:w-auto">
-          <div className="flex bg-linear-card p-1 rounded-lg border border-linear-border shadow-sm">
+          <div className="flex bg-linear-bg p-1 rounded-lg border border-linear-border shadow-inner">
             <button 
-              onClick={() => setViewMode('grid')}
-              className={`px-3 py-1 rounded-md text-[11px] font-bold flex items-center gap-2 transition-all ${viewMode === 'grid' ? 'bg-linear-accent text-white shadow-inner' : 'text-linear-text-muted hover:text-white'}`}
+              onClick={() => { setViewMode('grid'); setShowArchived(false); }}
+              className={`px-3 py-1.5 rounded-md text-[10px] font-bold flex items-center gap-2 transition-all uppercase tracking-wider ${viewMode === 'grid' && !showArchived ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
             >
               <LayoutGrid size={12} />
-              Grid
+              GRID
             </button>
             <button 
-              onClick={() => setViewMode('table')}
-              className={`px-3 py-1 rounded-md text-[11px] font-bold flex items-center gap-2 transition-all ${viewMode === 'table' ? 'bg-linear-accent text-white shadow-inner' : 'text-linear-text-muted hover:text-white'}`}
+              onClick={() => { setViewMode('table'); setShowArchived(false); }}
+              className={`px-3 py-1.5 rounded-md text-[10px] font-bold flex items-center gap-2 transition-all uppercase tracking-wider ${viewMode === 'table' && !showArchived ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
             >
               <TableIcon size={12} />
-              Table
+              TABLE
             </button>
             <button 
-              onClick={() => setViewMode('map')}
-              className={`px-3 py-1 rounded-md text-[11px] font-bold flex items-center gap-2 transition-all ${viewMode === 'map' ? 'bg-linear-accent text-white shadow-inner' : 'text-linear-text-muted hover:text-white'}`}
+              onClick={() => { setViewMode('map'); setShowArchived(false); }}
+              className={`px-3 py-1.5 rounded-md text-[10px] font-bold flex items-center gap-2 transition-all uppercase tracking-wider ${viewMode === 'map' && !showArchived ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
             >
               <MapIcon size={12} />
-              Map
+              MAP
+            </button>
+            <div className="w-px h-4 bg-linear-border mx-1 self-center"></div>
+            <button 
+              onClick={() => setShowArchived(true)}
+              className={`px-3 py-1.5 rounded-md text-[10px] font-bold flex items-center gap-2 transition-all uppercase tracking-wider ${showArchived ? 'bg-rose-500/20 text-rose-400 shadow-lg border border-rose-500/30' : 'text-linear-text-muted hover:text-rose-400'}`}
+            >
+              <Archive size={12} />
+              ARCHIVED
             </button>
           </div>
           
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 cursor-pointer group">
+          <div className="flex items-center gap-6 ml-2">
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <input 
+                type="checkbox" 
+                checked={filterShortlisted} 
+                onChange={(e) => setFilterShortlisted(e.target.checked)}
+                className="hidden"
+              />
+              <div className={`w-8 h-4 rounded-full relative transition-colors ${filterShortlisted ? 'bg-blue-500' : 'bg-linear-accent'}`}>
+                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all shadow-sm ${filterShortlisted ? 'left-4.5' : 'left-0.5'}`}></div>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-linear-text-muted group-hover:text-white transition-colors">Shortlist</span>
+            </label>
+
+            <label className="flex items-center gap-3 cursor-pointer group">
               <input 
                 type="checkbox" 
                 checked={filterValueBuys} 
                 onChange={(e) => setFilterValueBuys(e.target.checked)}
                 className="hidden"
               />
-              <div className={`w-8 h-4 rounded-full relative transition-colors ${filterValueBuys ? 'bg-emerald-500' : 'bg-linear-accent'}`}>
-                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${filterValueBuys ? 'left-4.5' : 'left-0.5'}`}></div>
+              <div className={`w-8 h-4 rounded-full relative transition-colors ${filterValueBuys ? 'bg-retro-green' : 'bg-linear-accent'}`}>
+                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all shadow-sm ${filterValueBuys ? 'left-4.5' : 'left-0.5'}`}></div>
               </div>
-              <span className="text-[11px] font-semibold text-linear-text-muted group-hover:text-white">Value Only</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-linear-text-muted group-hover:text-white transition-colors">Value Only</span>
             </label>
 
-            <label className="flex items-center gap-2 cursor-pointer group">
+            <label className="flex items-center gap-3 cursor-pointer group">
               <input 
                 type="checkbox" 
                 checked={filterNewOnly} 
                 onChange={(e) => setFilterNewOnly(e.target.checked)}
                 className="hidden"
               />
-              <div className={`w-8 h-4 rounded-full relative transition-colors ${filterNewOnly ? 'bg-blue-500' : 'bg-linear-accent'}`}>
-                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${filterNewOnly ? 'left-4.5' : 'left-0.5'}`}></div>
+              <div className={`w-8 h-4 rounded-full relative transition-colors ${filterNewOnly ? 'bg-indigo-500' : 'bg-linear-accent'}`}>
+                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all shadow-sm ${filterNewOnly ? 'left-4.5' : 'left-0.5'}`}></div>
               </div>
-              <span className="text-[11px] font-semibold text-linear-text-muted group-hover:text-white">Fresh</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-linear-text-muted group-hover:text-white transition-colors">Fresh</span>
             </label>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-3 items-center w-full lg:w-auto justify-end">
+          <button 
+            onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
+            className={`p-2 rounded-lg border transition-all ${isFilterPanelOpen ? 'bg-blue-500 border-blue-400 text-white shadow-lg shadow-blue-500/20' : 'bg-linear-bg border-linear-border text-linear-text-muted hover:border-linear-accent hover:text-white'}`}
+          >
+            <Filter size={16} />
+          </button>
+
           <div className="relative group">
-            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-linear-text-muted">
-              <Filter size={12} />
-            </div>
             <select 
               value={areaFilter} 
-              onChange={(e) => setAreaFilter(e.target.value)}
-              className="bg-linear-card border border-linear-border rounded-lg pl-8 pr-3 py-1.5 text-[11px] font-bold text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 appearance-none hover:border-linear-accent transition-colors"
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === 'All Areas') {
+                  searchParams.delete('area');
+                } else {
+                  searchParams.set('area', val);
+                }
+                setSearchParams(searchParams);
+              }}
+              className="bg-linear-bg border border-linear-border rounded-lg pl-8 pr-8 py-1.5 text-[10px] font-bold text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 appearance-none hover:border-linear-accent transition-all cursor-pointer uppercase tracking-widest"
             >
               {areas.map(area => <option key={area} value={area}>{area}</option>)}
             </select>
+            <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-linear-accent pointer-events-none" />
           </div>
 
           <div className="relative group">
-            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-linear-text-muted">
+            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-linear-accent group-hover:text-blue-400 transition-colors">
               <ArrowUpDown size={12} />
             </div>
             <select 
               value={sortBy} 
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-linear-card border border-linear-border rounded-lg pl-8 pr-3 py-1.5 text-[11px] font-bold text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 appearance-none hover:border-linear-accent transition-colors"
+              className="bg-linear-bg border border-linear-border rounded-lg pl-8 pr-8 py-1.5 text-[10px] font-bold text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 appearance-none hover:border-linear-accent transition-all cursor-pointer uppercase tracking-widest"
             >
-              <option value="alpha">Alpha Score</option>
-              <option value="price">Price (L-H)</option>
-              <option value="sqm">Price/m² (L-H)</option>
+              <option value="alpha_score">Alpha Score (H-L)</option>
+              <option value="realistic_price">Target Price (L-H)</option>
+              <option value="price_per_sqm">Efficiency (L-H)</option>
             </select>
+            <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-linear-accent pointer-events-none" />
           </div>
         </div>
       </div>
+
+      {/* Precision Filter Panel */}
+      {isFilterPanelOpen && (
+        <div className="bg-linear-card border border-linear-border rounded-2xl p-6 grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-top-4 duration-300">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">Max Target Price</span>
+              <span className="text-sm font-bold text-white tracking-tight">£{maxPrice.toLocaleString()}</span>
+            </div>
+            <input 
+              type="range" 
+              min="400000" 
+              max="1500000" 
+              step="50000" 
+              value={maxPrice} 
+              onChange={(e) => setMaxPrice(parseInt(e.target.value))}
+              className="w-full h-1.5 bg-linear-bg rounded-lg appearance-none cursor-pointer accent-blue-500"
+            />
+            <div className="flex justify-between text-[9px] font-bold text-linear-accent uppercase">
+              <span>£400k</span>
+              <span>£1.5M</span>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">Min Interior Space</span>
+              <span className="text-sm font-bold text-white tracking-tight">{minSqft} SQFT</span>
+            </div>
+            <input 
+              type="range" 
+              min="0" 
+              max="1500" 
+              step="50" 
+              value={minSqft} 
+              onChange={(e) => setMinSqft(parseInt(e.target.value))}
+              className="w-full h-1.5 bg-linear-bg rounded-lg appearance-none cursor-pointer accent-blue-500"
+            />
+            <div className="flex justify-between text-[9px] font-bold text-linear-accent uppercase">
+              <span>0 SQFT</span>
+              <span>1500 SQFT</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main View */}
       <div className="mt-6">
         {viewMode === 'grid' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {filteredProperties.map(property => (
-              <PropertyCard key={property.id} property={property} />
+              <PropertyCard 
+                key={property.id} 
+                property={property} 
+                status={getStatus(property.id)}
+                onStatusChange={setStatus}
+                onPreview={handlePreview}
+              />
             ))}
             {filteredProperties.length === 0 && (
-              <div className="col-span-full py-32 text-center bg-linear-card/30 rounded-2xl border border-dashed border-linear-border">
-                <div className="inline-flex items-center justify-center h-12 w-12 bg-linear-card rounded-xl text-linear-text-muted mb-4 border border-linear-border">
+              <div className="col-span-full py-32 text-center bg-linear-card/20 rounded-2xl border border-dashed border-linear-border">
+                <div className="inline-flex items-center justify-center h-12 w-12 bg-linear-card rounded-xl text-linear-accent mb-4 border border-linear-border">
                   <Search size={20} />
                 </div>
                 <h3 className="text-sm font-bold text-white tracking-tight">No matching assets found</h3>
-                <p className="text-xs text-linear-text-muted mt-1">Try adjusting the filters or expanding your area search.</p>
+                <p className="text-[10px] text-linear-text-muted mt-1 uppercase tracking-widest font-bold">Try expanding your search parameters</p>
               </div>
             )}
           </div>
         ) : viewMode === 'table' ? (
           <div className="animate-in fade-in duration-500">
-            <PropertyTable properties={filteredProperties} />
+            <PropertyTable 
+              properties={filteredProperties} 
+              onSortChange={(key) => setSortBy(key as any)} 
+              currentSort={sortBy}
+              onPreview={handlePreview}
+              onStatusChange={setStatus}
+              getStatus={getStatus}
+            />
           </div>
         ) : (
           <div className="h-[70vh] rounded-2xl overflow-hidden border border-linear-border relative z-0 retro-map animate-in fade-in zoom-in-95 duration-700 shadow-2xl shadow-black/50">
-            <MapContainer center={[51.54, -0.15]} zoom={12} style={{ height: '100%', width: '100%' }}>
+            <MapContainer center={[51.52, -0.12]} zoom={12} style={{ height: '100%', width: '100%' }}>
+              <AutoFitBounds properties={filteredProperties} />
               <TileLayer
                 attribution='&copy; CARTO'
                 url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
               />
+              
+              {/* Institutional Hubs */}
+              {INSTITUTIONAL_NODES.map(node => (
+                <Marker 
+                  key={node.name} 
+                  position={node.coords as [number, number]} 
+                  icon={createNodeIcon('hub', node.name)}
+                />
+              ))}
+
+              {/* Spatial Context (Parks/Stations) */}
+              {SPATIAL_CONTEXT.map(node => (
+                <Marker 
+                  key={node.name} 
+                  position={node.coords as [number, number]} 
+                  icon={createNodeIcon(node.type as any, node.name)}
+                />
+              ))}
+
               {filteredProperties.map(property => (
                 <Marker 
                   key={property.id} 
                   position={[property.lat, property.lng]}
-                  icon={createRetroIcon(property.alpha_score >= 8 ? '#10b981' : property.alpha_score >= 5 ? '#f59e0b' : '#3b82f6')}
+                  icon={createPropertyIcon(property.alpha_score)}
+                  eventHandlers={{
+                    click: () => handlePreview(property)
+                  }}
                 >
                   <Popup className="property-popup">
                     <div className="w-64">
@@ -332,18 +595,30 @@ const Dashboard: React.FC = () => {
                         <h4 className="font-bold text-white text-xs m-0 tracking-tight">{property.address}</h4>
                         <AlphaBadge score={property.alpha_score} />
                       </div>
-                      <div className="text-[10px] text-linear-text-muted mb-3 uppercase tracking-widest">{property.area}</div>
-                      <div className="flex justify-between items-end border-t border-linear-border pt-2 mt-2">
+                      <div className="text-[10px] text-linear-text-muted mb-3 uppercase tracking-widest font-bold">{property.area}</div>
+                      
+                      <div className="flex gap-4 py-2 border-y border-linear-border/30 mb-2">
+                         <div className="flex flex-col">
+                            <span className="text-[8px] text-linear-text-muted uppercase font-bold">St Pauls</span>
+                            <span className="text-[10px] font-black text-blue-400">{property.commute_paternoster} min</span>
+                         </div>
+                         <div className="flex flex-col border-l border-linear-border/30 pl-3">
+                            <span className="text-[8px] text-linear-text-muted uppercase font-bold">Canary Wharf</span>
+                            <span className="text-[10px] font-black text-emerald-400">{property.commute_canada_square} min</span>
+                         </div>
+                      </div>
+
+                      <div className="flex justify-between items-end">
                         <div className="flex flex-col">
-                           <span className="text-[9px] text-linear-text-muted uppercase">Target Price</span>
+                           <span className="text-[9px] text-linear-text-muted uppercase font-bold">Target Price</span>
                            <span className="text-sm font-bold text-white leading-none">£{property.realistic_price.toLocaleString()}</span>
                         </div>
-                        <Link 
-                          to={`/property/${property.id}`}
-                          className="text-[10px] font-bold text-blue-400 flex items-center gap-1 hover:text-blue-300 transition-colors uppercase"
+                        <button 
+                          onClick={() => handlePreview(property)}
+                          className="text-[10px] font-bold text-blue-400 flex items-center gap-1 hover:text-blue-300 transition-colors uppercase tracking-widest"
                         >
                           Deep Scan <ChevronRight size={12} />
-                        </Link>
+                        </button>
                       </div>
                     </div>
                   </Popup>

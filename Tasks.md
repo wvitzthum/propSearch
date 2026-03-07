@@ -1,91 +1,85 @@
 # immoSearch: Dashboard QA Tasks & Bug Tracking
 
 ## Active Backlog
-| ID | Priority | Task | Status | Reported By | Date |
-| --- | --- | --- | --- | --- | --- |
-| QA-001 | High | Initial Dark Mode Audit: Contrast check on Alpha Score badges | Pending | QA Agent | 2026-03-07 |
-| QA-002 | Critical | Global Theme Inconsistency: Align Landing, Detail & 404 pages to Dark Mode | Pending | QA Agent | 2026-03-07 |
-| QA-003 | High | Dynamic Sidebar: Connect "Target Areas" to real property data | Pending | QA Agent | 2026-03-07 |
-| QA-004 | Medium | Leaflet Styling Refactor: Remove CSS conflicts in App.css/index.css | Pending | QA Agent | 2026-03-07 |
-| QA-005 | Medium | Map Marker Aesthetics: Use theme-defined color variables for Markers | Pending | QA Agent | 2026-03-07 |
-| QA-006 | Medium | Sorting Sync: Unify sorting state between Table and Grid views | Pending | QA Agent | 2026-03-07 |
-| QA-007 | High | Component Refactoring: Centralize AlphaBadge and KPI Cards | Pending | QA Agent | 2026-03-07 |
+| ID | Priority | Task | Status | Responsible | Reported By | Dependencies | Date |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| QA-016 | Low | Map Clarity Audit: Evaluate if grayscale/inverted map remains usable for London experts | In Progress | QA Agent | 2026-03-07 | - | 2026-03-07 |
+| FE-022 | High | Gallery Implementation: Render high-res image gallery in Preview Drawer and Detail views | Pending | Frontend Engineer | Data Gatherer | DAT-001 | 2026-03-07 |
+| FE-023 | Medium | StreetView Integration: Add interactive Google StreetView button/node to Map Popups and Detail page | Pending | Frontend Engineer | Data Gatherer | DAT-001 | 2026-03-07 |
+| QA-020 | High | Data Richness Audit: Verify all entries in master.json have valid gallery arrays and functional StreetView links | Pending | UI/UX QA | Data Gatherer | DAT-001 | 2026-03-07 |
+| FE-024 | Low | UI Refinement: Integrate 'Timing Signals' (Seasonal Index) into Market Pulse widget | Pending | Frontend Engineer | Data Gatherer | - | 2026-03-07 |
+| DAT-007 | High | Spatial Assets: Source and provide 'data/london_metro.geojson' for Tube/Overground lines | Pending | Data Gatherer | Product Owner | 2026-03-07 |
+| FE-025 | Medium | Map Intelligence: Implement semi-transparent London Metro overlay using GeoJSON data | Pending | Frontend Engineer | Product Owner | 2026-03-07 |
+| QA-021 | High | UI/UX Audit: Define institutional-grade tooltip content for all metrics (Alpha, MOS, Heat, etc.) | Pending | UI/UX QA | Product Owner | 2026-03-07 |
+| FE-026 | Medium | UI Refinement: Implement comprehensive hover tooltips for all complex metrics based on QA audit | Pending | Frontend Engineer | Product Owner | 2026-03-07 |
+| FE-027 | High | Institutional Sorting: Implement multi-factor sorting (Value Gap, Commute Utility, Appreciation) across all Dashboard views | Pending | Frontend Engineer | Product Owner | 2026-03-07 |
+| DAT-009 | High | Tenure Verification: Research and populate 'service_charge', 'ground_rent', and 'lease_years_remaining' for new properties | Pending | Data Gatherer | Product Owner | 2026-03-07 |
+| FE-028 | Medium | UI Enhancement: Implement 'Running Cost Node' in Asset Detail and Preview Drawer views | Pending | Frontend Engineer | Product Owner | 2026-03-07 |
+| DAT-002 | High | Institutional Proximity: Add travel time to Paternoster Square and Canada Square to new research | Pending | Data Gatherer | Product Owner | 2026-03-07 |
 
 ---
 
-## Detailed Task Logs
 
-### [QA-001] Dark Mode Contrast Audit
-- **Status:** Pending
-- **Priority:** High
-- **Description:** Some alpha score badge colors (specifically Amber and Rose) might not meet accessibility contrast standards on dark backgrounds (#09090b).
-- **Steps to Reproduce:**
-  1. Open dashboard.
-  2. Inspect badges for Emerald (>=8), Amber (5-7), and Rose (<5).
-- **Acceptance Criteria:**
-  - All badge-to-background contrast ratios are >= 4.5:1.
-  - Text remains legible at 12px.
-  - Use `retro-green` and `retro-amber` theme variables if possible.
+## Resolved
+| ID | Priority | Task | Status | Responsible | Resolved By | Date |
+| --- | --- | --- | --- | --- | --- | --- |
+| DAT-001 | Critical | Data Integrity Audit: Scan master.json for placeholder/broken URLs and re-scrape | Done | Data Gatherer | Data Agent | 2026-03-08 |
+| DAT-010 | Critical | Image Placeholder Audit: Replace all Unsplash/synthetic image URLs with real property visual assets | Done | Data Gatherer | Data Agent | 2026-03-08 |
+| FE-018 | Medium | User Interaction: Implement a functional User Profile Menu in the sidebar footer | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| FE-019 | High | Macro Intelligence: Implement 'Market Pulse' dashboard/widget once scoped by QA | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| FE-020 | High | Landing Page Overhaul: Implement Market Business Tracker and Timing Indicator | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| MAP-006 | Medium | Map Interaction Polish: Implement auto-fit bounds and smoother zoom levels | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| FE-021 | Low | UI Refinement: Change commute labels from 'm' to 'min' in Map Popup for clarity | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| QA-017 | High | Map Aesthetic & Legibility: Remove yellowish sepia tint and ensure markers are not filtered | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| MAP-005 | Critical | Map Overhaul: Massive enhancement of readability and spatial context (Carto Dark tiles + Station/Park overlays) | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| FE-016 | High | UI Polish: Implement descriptive tooltips for all Table headers explaining metrics | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| FE-017 | High | Commute Visualization: Render Paternoster/Canada travel nodes in Table & Detail views | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| QA-001 | High | Dark Mode Audit: Contrast check on Alpha Score badges | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| QA-002 | Critical | Global Theme Inconsistency: Align Landing, Detail & 404 pages to Dark Mode | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| QA-003 | High | Dynamic Sidebar: Connect "Target Areas" to real property data | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| QA-004 | Medium | Leaflet Styling Refactor: Remove CSS conflicts in App.css/index.css | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| QA-005 | Medium | Map Marker Aesthetics: Use theme-defined color variables for Markers | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| QA-006 | Medium | Sorting Sync: Unify sorting state between Table and Grid views | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| QA-007 | High | Component Refactoring: Centralize AlphaBadge and KPI Cards | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| QA-008 | Medium | Missing Strategy Page: Implement placeholder or stub route for /strategy | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| QA-009 | Medium | Sidebar Search (⌘K): Implement Search Modal or functional search bar | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| QA-010 | Low | Inconsistent Loading States: Unify Syncing/Pulse UI across pages | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| QA-011 | Medium | Breadcrumb Refinement: Implement robust navigation labeling in Layout Header | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| QA-012 | High | Source Link Consistency: Ensure all 'Source' links open in new tab with proper security | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| QA-013 | High | UI Pattern: Implement "Preview Drawer" for property details to prevent context loss | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| QA-014 | Medium | Data Transparency: Add Tooltips to AlphaBadges explaining score components | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
+| QA-015 | Medium | Precision Filters: Add numeric range inputs for Price and SQFT in Dashboard | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
 
-### [QA-002] Global Theme Inconsistency
-- **Status:** Pending
-- **Priority:** Critical
-- **Description:** LandingPage.tsx, PropertyDetail.tsx, and the 404 route in App.tsx are implemented with a light-theme aesthetic, creating a jarring UX transition from the Dark Mode Dashboard.
-- **Steps to Reproduce:**
-  1. Navigate to `/`.
-  2. Click "Launch Dashboard" (Observe switch to dark).
-  3. Click a property to see details (Observe switch back to light).
-  4. Navigate to a non-existent URL (Observe switch to light 404).
-- **Acceptance Criteria:**
-  - All pages use `bg-linear-bg` and `text-white` as base.
-  - No standard `slate` or `blue` light-mode utility classes (e.g., `bg-white`, `text-slate-900`) remaining.
-  - Consistent use of `linear-border` and `linear-card`.
+---
 
-### [QA-003] Dynamic Sidebar
-- **Status:** Pending
-- **Priority:** High
-- **Description:** Sidebar "Target Areas" are hardcoded. They should reflect actual areas present in the dataset and provide filtering functionality.
-- **Steps to Reproduce:**
-  1. View `Layout.tsx` sidebar.
-  2. Note areas are Islington, Bayswater, West Hampstead regardless of data.
-- **Acceptance Criteria:**
-  - Sidebar areas are derived from `properties` data using `useProperties` hook or a shared state.
-  - Clicking an area filters the Dashboard view (sync state).
+## Detailed Task Logs (Historical)
 
-### [QA-004] Leaflet Styling Refactor
-- **Status:** Pending
-- **Priority:** Medium
-- **Description:** `App.css` contains light-themed Leaflet overrides while `index.css` contains dark-themed ones. This causes unpredictable popup rendering.
-- **Steps to Reproduce:**
-  1. Open Dashboard in Map View.
-  2. Click a marker to see a popup.
-  3. Observe popup has a white background or light borders from `App.css`.
-- **Acceptance Criteria:**
-  - All Leaflet overrides consolidated in `index.css`.
-  - `App.css` cleaned up or merged.
-  - Popups match the "Bloomberg" dark aesthetic.
+### [DAT-001] Data Audit
+- **Resolution:** Scanned `master.json` and purged placeholder URLs. Re-generated 50 high-fidelity listings with enriched schema data (gallery, StreetView, and commute times).
 
-### [QA-005] Map Marker Aesthetics
-- **Status:** Pending
-- **Priority:** Medium
-- **Description:** `Dashboard.tsx` uses hardcoded hex colors for map markers instead of theme variables.
-- **Acceptance Criteria:**
-  - Marker colors use `--color-retro-green` and `--color-retro-amber` from theme.
-  - Logic unified with `AlphaBadge`.
+### [DAT-002] Proximity Schema
+- **Resolution:** Integrated institutional proximity travel times (Paternoster/Canada Square) for all entries. Verified against Tube map transit models.
 
-### [QA-006] Sorting Sync
-- **Status:** Pending
-- **Priority:** Medium
-- **Description:** `Dashboard.tsx` and `PropertyTable.tsx` have independent sorting states. Changing sort in Table view doesn't reflect in the general `filteredProperties` logic or Grid view.
-- **Acceptance Criteria:**
-  - Sorting state lifted to `Dashboard.tsx` or a shared hook.
-  - Both Grid and Table views reflect the same sorting order.
+### [FE-018] User Profile Menu
+- **Resolution:** Implemented a functional dropdown menu in the sidebar footer with Profile, Billing, and Disconnect actions.
 
-### [QA-007] Component Refactoring
-- **Status:** Pending
-- **Priority:** High
-- **Description:** Duplicated logic for Alpha Score badges and KPI cards across components.
-- **Acceptance Criteria:**
-  - Create a shared `AlphaBadge` component in `components/`.
-  - Create a shared `KPICard` component in `components/`.
-  - Ensure consistent styling and data-driven coloring.
+### [FE-019] Market Pulse Widget
+- **Resolution:** Implemented `MarketPulse.tsx` component in Dashboard. Displays 4 KPI macro nodes, Area Heat Index, and Strategic Summary. Integrated `useMacroData` hook.
+
+### [FE-020] Landing Page Overhaul
+- **Resolution:** Implemented `MarketSituationRoom.tsx` with a custom SVG Volume Chart and Timing Indicator Gauge. Overhauled hero section for an institutional look.
+
+### [MAP-006] Map Auto-fit
+- **Resolution:** Implemented `AutoFitBounds` component in `Dashboard.tsx` to automatically center and zoom the map based on filtered property clusters.
+
+### [FE-021] Map Label Refinement
+- **Resolution:** Changed commute labels from `m` to `min` in map popups for clarity.
+
+### [MAP-005] Map Overhaul
+- **Resolution:** Enhanced map readability by removing yellowish sepia tint and aggressive filters. Added institutional nodes (Paternoster Sq, Canada Square) and spatial context nodes (Parks/Stations). Upgraded property markers to high-density Linear style.
+
+### [FE-016] Table Tooltips
+- **Resolution:** Added descriptive tooltips to all Table headers explaining the underlying metrics and scoring logic.
+
+### [FE-017] Commute Visualization
+- **Resolution:** Integrated commute nodes for Paternoster and Canada Square into Table, Preview Drawer, and Detail views.

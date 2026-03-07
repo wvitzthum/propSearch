@@ -1,0 +1,37 @@
+{
+  "london_hpi": {
+    "mom_pct": 0.2,
+    "yoy_pct": 6.0,
+    "avg_price_pcl": 1250000
+  },
+  "inventory_velocity": {
+    "months_of_supply": 4.5,
+    "new_instructions_q_change": -2.1
+  },
+  "negotiation_delta": {
+    "avg_discount_pct": -3.5,
+    "pct_below_asking": 78.0
+  },
+  "area_heat_index": [
+    { "area": "Islington (N1)", "score": 8.5 },
+    { "area": "Bayswater (W2)", "score": 7.2 },
+    { "area": "Belsize Park (NW3)", "score": 8.8 },
+    { "area": "West Hampstead (NW6)", "score": 6.5 }
+  ],
+  "economic_indicators": {
+    "boe_base_rate": 4.0,
+    "gbp_usd": 1.28
+  },
+  "market_business": [
+    { "month": "2025-09", "listed": 450, "sold": 380 },
+    { "month": "2025-10", "listed": 420, "sold": 350 },
+    { "month": "2025-11", "listed": 380, "sold": 310 },
+    { "month": "2025-12", "listed": 310, "sold": 290 },
+    { "month": "2026-01", "listed": 480, "sold": 340 },
+    { "month": "2026-02", "listed": 510, "sold": 390 }
+  ],
+  "timing_signals": {
+    "seasonal_buy_score": 8,
+    "optimal_window_description": "H1 2026 - Pre-Interest Rate Cut"
+  }
+}

@@ -19,15 +19,23 @@ export interface Property {
   metadata: PropertyMetadata;
   address: string;
   area: Area;
+  image_url: string;
+  gallery: string[];
+  streetview_url: string;
   list_price: number;
   realistic_price: number;
   sqft: number;
   price_per_sqm: number;
+  nearest_tube_distance: number;
+  park_proximity: number;
+  commute_paternoster: number;
+  commute_canada_square: number;
   is_value_buy: boolean;
   epc: EPCRating;
   tenure: string;
   dom: number;
   neg_strategy: string;
   alpha_score: number;
-  link: string;
+  appreciation_potential: number;
+  links: string[];
 }

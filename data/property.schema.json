@@ -7,17 +7,25 @@
     "metadata",
     "address",
     "area",
+    "image_url",
+    "gallery",
+    "streetview_url",
     "list_price",
     "realistic_price",
     "sqft",
     "price_per_sqm",
+    "nearest_tube_distance",
+    "park_proximity",
+    "commute_paternoster",
+    "commute_canada_square",
     "is_value_buy",
     "epc",
     "tenure",
     "dom",
     "neg_strategy",
     "alpha_score",
-    "link"
+    "appreciation_potential",
+    "links"
   ],
   "properties": {
     "id": {
@@ -65,6 +73,26 @@
       ],
       "description": "Target acquisition area and postcode."
     },
+    "image_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Direct URL to the primary high-res hero image (1024px+)."
+    },
+    "gallery": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      },
+      "minItems": 5,
+      "maxItems": 5,
+      "description": "An array of URLs for the top 5 most descriptive interior/exterior images."
+    },
+    "streetview_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "A direct link to a Google StreetView or similar based on lat/lng."
+    },
     "list_price": {
       "type": "number",
       "minimum": 0,
@@ -84,6 +112,26 @@
       "type": "number",
       "minimum": 0,
       "description": "Calculated price per square meter."
+    },
+    "nearest_tube_distance": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Estimated walking distance (in meters) to the closest Tube or Overground station."
+    },
+    "park_proximity": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Distance (in meters) to the nearest major green space."
+    },
+    "commute_paternoster": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Travel time (in minutes) to Paternoster Square (St Paul's) via public transport."
+    },
+    "commute_canada_square": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Travel time (in minutes) to Canada Square (Canary Wharf) via public transport."
     },
     "is_value_buy": {
       "type": "boolean",
@@ -113,10 +161,20 @@
       "maximum": 10,
       "description": "Calculated investment grade score (0-10)."
     },
-    "link": {
-      "type": "string",
-      "format": "uri",
-      "description": "Direct link to the property listing."
+    "appreciation_potential": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "Calculated likelihood of capital growth over a 5-year horizon (0-10)."
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      },
+      "minItems": 1,
+      "description": "A list of direct links to the property listing."
     }
   }
 }

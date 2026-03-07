@@ -5,11 +5,20 @@ immoSearch is a specialized research platform built to identify and acquire a sp
 
 **Note:** This project is for internal research and personal use only. It is not intended for commercial distribution or external revenue generation.
 
----
 ## The Agent Ecosystem
-We utilize a multi-agent workflow to separate concerns and ensure a "Bloomberg Terminal meets Linear" high-fidelity experience:
+We utilize a multi-agent workflow to separate concerns and ensure a "Bloomberg Terminal meets Linear" high-fidelity experience.
 
-1.  **[Product Owner](./agents/product_owner/README.md):**
+### Starting Agents in Separate Terminals
+You can easily spawn dedicated terminal windows for each agent role in VS Code:
+1.  Press `Cmd+Shift+P` (macOS) or `Ctrl+Shift+P` (Windows/Linux).
+2.  Search for **Tasks: Run Task**.
+3.  Select the desired agent (e.g., **Agent: Product Owner**, **Agent: Data Gatherer**, etc.).
+This will open a new terminal window and pre-load the Gemini CLI with that agent's specific role and instructions.
+
+---
+## Agent Roles
+...
+
     - Maintains the [REQUIREMENTS.md](./REQUIREMENTS.md) strategic roadmap.
     - Defines new features and strategic priorities in [Tasks.md](./Tasks.md).
 2.  **[Data Gatherer](./agents/data_gatherer/README.md):** 

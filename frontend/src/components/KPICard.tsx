@@ -1,0 +1,51 @@
+import React from 'react';
+import type { LucideIcon } from 'lucide-react';
+
+interface KPICardProps {
+  label: string;
+  value: string | number;
+  icon?: LucideIcon;
+  trend?: {
+    value: string;
+    isPositive?: boolean;
+  };
+  className?: string;
+  loading?: boolean;
+}
+
+const KPICard: React.FC<KPICardProps> = ({ 
+  label, 
+  value, 
+  icon: Icon, 
+  trend, 
+  className = '', 
+  loading = false 
+}) => {
+  if (loading) {
+    return (
+      <div className={`p-4 bg-linear-card border border-linear-border rounded-xl animate-pulse ${className}`}>
+        <div className="h-3 w-20 bg-linear-bg rounded mb-3"></div>
+        <div className="h-6 w-24 bg-linear-bg rounded"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`p-4 bg-linear-card border border-linear-border rounded-xl shadow-sm hover:border-linear-accent transition-all ${className}`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-wider">{label}</span>
+        {Icon && <Icon size={14} className="text-linear-accent" />}
+      </div>
+      <div className="flex items-end justify-between">
+        <div className="text-2xl font-bold text-white tracking-tight">{value}</div>
+        {trend && (
+          <div className={`text-[10px] font-bold ${trend.isPositive ? 'text-retro-green' : 'text-rose-400'}`}>
+            {trend.value}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default KPICard;

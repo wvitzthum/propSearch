@@ -13,20 +13,34 @@ A multi-agent system that automates the discovery, normalization, and visualizat
   - **Linear:** Precision typography, subtle border/surface shadows, high-quality focus states, and a clean, minimalist layout (see: `linear.app`).
 
 ### Agents
+
 1. **Product Owner & Strategic Lead (`agents/product_owner/`):**
-   - Owns the roadmap and strategic vision in `REQUIREMENTS.md`.
-   - Populates `Tasks.md` with features and strategic refinements.
+   - **Primary Goal:** Long-term vision and strategic roadmap.
+   - **Responsibilities:** Maintains `REQUIREMENTS.md`, prioritizes the backlog in `Tasks.md`, and suggests high-level feature enhancements.
+   - **Write Access:** `REQUIREMENTS.md`, `Tasks.md`, `agents/product_owner/`.
+
 2. **Senior Real Estate Data Engineer (`agents/data_gatherer/`):** 
-   - Generates and normalizes institutional-grade property datasets.
-   - Implements Alpha Score logic and pricing negotiation algorithms.
+   - **Primary Goal:** High-fidelity property dataset generation and normalization.
+   - **Responsibilities:** Scrapes listings, calculates Alpha/Appreciation scores, and maintains `data/master.json`.
+   - **Write Access:** `data/`, `agents/data_gatherer/`.
+
 3. **Lead Frontend Engineer & UX Architect (`agents/frontend_engineer/`):** 
-   - Builds the decision-support dashboard using React and Tailwind CSS.
-   - Focuses on data density and visual hierarchy for rapid analysis.
+   - **Primary Goal:** Responsive, "Bloomberg meets Linear" research dashboard.
+   - **Responsibilities:** Implements data-dense UI, sorting/filtering, and ensures no-auth architecture.
+   - **Write Access:** `frontend/`, `agents/frontend_engineer/`.
+
 4. **UI/UX Quality Assurance Engineer (`agents/ui_ux_qa/`):**
-   - Conducts functional, accessibility, and dark mode audits.
-   - Generates bug reports and UX task lists in `Tasks.md`.
+   - **Primary Goal:** Rigorous functional and aesthetic audit.
+   - **Responsibilities:** Validates against `REQUIREMENTS.md`, conducts dark mode audits, and logs bugs in `Tasks.md`.
+   - **Write Access:** `Tasks.md`, `agents/ui_ux_qa/`.
+
+---
+
+### Cross-Agent Task Creation
+**Mandate:** Any agent is authorized to create new tasks in `Tasks.md` for other agents if a completed task requires a follow-up (e.g., Data Engineer adds a new field and creates a task for the Frontend Engineer to display it). This ensures the "Research -> Strategy -> Execution" cycle remains continuous across domains.
 
 ### Coordination Rules
+- **Data Authenticity:** Agents are FORBIDDEN from creating synthetic or "hallucinated" property/trend data. All property datasets must be fetched from external sources (internet, APIs, or existing local files). Any generation of non-empirical data (e.g., test mocks or manual trend estimation) requires explicit user approval via `ask_user`.
 - **Schema Integrity:** All data must strictly follow the JSON schema defined in the agent READMEs.
 - **Aesthetic Direction:** "Bloomberg Terminal meets Linear (via linear.app patterns)."
 - **Agent Boundaries:** Agents must strictly adhere to their specialized domains. If an agent's task evolves into the domain of another (e.g., Data Engineer starts writing React components), they MUST stop and defer to the appropriate agent. Cross-contamination of responsibilities is a hard failure.
