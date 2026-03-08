@@ -163,12 +163,12 @@ const PropertyCard: React.FC<{
             <span className="text-[10px] font-bold text-white tracking-tighter">{property.epc}</span>
           </div>
           <div className="h-2 w-px bg-linear-border" />
-          <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-tighter truncate">{property.tenure.split(' ')[0]}</span>
+          <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-tighter truncate">{(property.tenure || 'N/A').split(' ')[0]}</span>
         </div>
 
         <div className="px-2.5 py-1.5 bg-blue-500/5 border border-blue-500/10 rounded flex items-center justify-between group-hover:bg-blue-500/10 transition-colors">
           <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Protocol</span>
-          <span className="text-[10px] font-bold text-blue-100">{property.neg_strategy.split(':')[0]}</span>
+          <span className="text-[10px] font-bold text-blue-100">{(property.neg_strategy || 'Default: 0% bid').split(':')[0]}</span>
         </div>
       </div>
       
