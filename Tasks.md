@@ -28,6 +28,8 @@
 | QA-027 | High | Low | UX Audit: Verify and document sidebar menu "flicker/disappear" bug and Property Detail page scroll lock | Pending | UI/UX QA | Product Owner | - | 2026-03-08 |
 | FE-042 | High | Medium | UI Fix: Resolve sidebar popup timing issues and restore scrolling functionality on Property Detail page | Pending | Frontend Engineer | Product Owner | QA-027 | 2026-03-08 |
 | FE-043 | Medium | Medium | UI Enhancement: Implement a minimalist "Location Node" mini-map on the Property Detail page | Pending | Frontend Engineer | Product Owner | - | 2026-03-08 |
+| QA-028 | High | Low | Map Aesthetic Audit: Review Metro line thickness, background contrast (streetnames), and environmental shading (rivers/parks) | Pending | UI/UX QA | Product Owner | - | 2026-03-08 |
+| FE-044 | High | Medium | Map Refinement: Increase Metro line thickness (3-4px), enhance background tile contrast, and implement river/park shading | Pending | Frontend Engineer | Product Owner | QA-028 | 2026-03-08 |
 
 ---
 

@@ -63,8 +63,15 @@ To build a private, high-precision research tool that enables a single buyer to 
 - **Instruction to Data Agent:** Source and provide a `data/london_metro.geojson` file containing the geometry for all Tube and Overground lines.
 - **Instruction to Frontend Agent:** 
   - **Aesthetic:** "Bloomberg Terminal" style. Use a high-contrast dark tile set (e.g., Carto Dark Matter).
-  - **Metro Layer:** Render the GeoJSON lines with low opacity (e.g., 20-30%) and color-coding based on official line colors (e.g., Central = Red, Victoria = Light Blue).
-  - **Visual Layers:** Implement visual overlays for Tube stations (Circular nodes) and Green spaces.
+- **Metro Layer:** Render the GeoJSON lines with high legibility. 
+  - **Thickness:** Lines must be bold enough to be clearly visible (e.g., 3-4px) without obscuring property markers.
+  - **Color:** Use official line colors with refined opacity (e.g., 40-50%).
+- **Base Map Legibility:** 
+  - **Contrast:** Ensure the background tile set provides enough contrast for street names and labels to be legible for a London expert.
+  - **Environmental Shading:** Enhance spatial context with distinct shading/textures for **Water (Rivers/Canals)** and **Green Spaces (Parks/Commons)**.
+- **Instruction to Frontend Agent:** 
+  - Adjust Metro line weights and base map opacity/contrast.
+  - Implement custom CSS filters or tile providers to enhance river and park visibility.
 
 ### 6. Commute & Connectivity (Institutional Proximity)
 - **Requirement:** Track travel proximity to key commercial hubs: **Paternoster Square (City)** and **Canada Square (Canary Wharf)**.
