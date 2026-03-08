@@ -25,6 +25,9 @@
 | DAT-019 | High | Low | Manual Ingestion: Update workflow to prioritize and process `data/manual_queue.json` in every cycle | Pending | Data Gatherer | Product Owner | - | 2026-03-08 |
 | FE-040 | Medium | Medium | Quick Add UI: Implement 'Direct URL Injection' input in Dashboard to write to `manual_queue.json` via local API | Pending | Frontend Engineer | Product Owner | DAT-015 | 2026-03-08 |
 | FE-041 | Medium | Low | Visual Resilience: Implement a 'PropertyImage' component with an `onError` handler and stylized institutional placeholder | Pending | Frontend Engineer | Product Owner | - | 2026-03-08 |
+| QA-027 | High | Low | UX Audit: Verify and document sidebar menu "flicker/disappear" bug and Property Detail page scroll lock | Pending | UI/UX QA | Product Owner | - | 2026-03-08 |
+| FE-042 | High | Medium | UI Fix: Resolve sidebar popup timing issues and restore scrolling functionality on Property Detail page | Pending | Frontend Engineer | Product Owner | QA-027 | 2026-03-08 |
+| FE-043 | Medium | Medium | UI Enhancement: Implement a minimalist "Location Node" mini-map on the Property Detail page | Pending | Frontend Engineer | Product Owner | - | 2026-03-08 |
 
 ---
 
