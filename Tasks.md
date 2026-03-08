@@ -10,10 +10,9 @@
 ## Active Backlog
 | ID | Priority | Effort | Task | Status | Responsible | Reported By | Dependencies | Date |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DAT-019 | High | Low | Manual Ingestion: Update workflow to prioritize and process `data/manual_queue.json` in every cycle | Pending | Data Gatherer | Product Owner | - | 2026-03-08 |
-| DAT-020 | High | Medium | External Data Ingestion: Implement logic to ingest and normalize raw JSON leads from `data/import/` | Pending | Data Gatherer | Product Owner | - | 2026-03-08 |
-| DAT-021 | High | Medium | Submission Lifecycle: Implement status tracking (processing, completed, failed) in `data/manual_queue.json` | Pending | Data Gatherer | Product Owner | DAT-019 | 2026-03-08 |
-| FE-045 | Medium | High | Submission History Tracker: Implement a UI component to track lead research status and notify user on completion | Pending | Frontend Engineer | Product Owner | DAT-021 | 2026-03-08 |
+| DAT-022 | High | Low | Research Expansion: Update `agents/data_gatherer/README.md`, `property.schema.json`, and `types/property.ts` to include 'Chelsea (SW3/SW10)' | Pending | Data Gatherer | Product Owner | - | 2026-03-08 |
+| DAT-023 | High | High | Data Gathering: Fetch/Scrape initial 10-15 high-fidelity Chelsea listings to populate the expanded target area | Pending | Data Gatherer | Product Owner | DAT-022 | 2026-03-08 |
+| FE-046 | High | Low | UI Expansion: Update `AREA_COORDS` and Sidebar/Search filters to support 'Chelsea (SW3/SW10)' | Pending | Frontend Engineer | Product Owner | DAT-022 | 2026-03-08 |
 | QA-028 | High | Low | Map Aesthetic Audit: Review Metro line thickness, background contrast (streetnames), and environmental shading (rivers/parks) | Pending | UI/UX QA | Product Owner | - | 2026-03-08 |
 | QA-025 | High | Medium | Active Capture Audit: Validate the end-to-end workflow from raw scrape -> Inbox -> Master DB promotion | Pending | UI/UX QA | Product Owner | FE-036 | 2026-03-08 |
 | QA-026 | High | Medium | Financial Audit: Verify ownership cost calculation accuracy and mortgage rate visualization fidelity | Pending | UI/UX QA | Product Owner | FE-038 | 2026-03-08 |
@@ -24,6 +23,10 @@
 ## Resolved
 | ID | Priority | Effort | Task | Status | Responsible | Resolved By | Date |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| FE-045 | Medium | High | Submission History Tracker: Implement a UI component to track lead research status and notify user on completion | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| DAT-021 | High | Medium | Submission Lifecycle: Status tracking in `manual_queue.json` | Done | Data Gatherer | Data Agent | 2026-03-08 |
+| DAT-019 | High | Low | Manual Ingestion: Automated workflow via `scripts/sync_data.js` | Done | Data Gatherer | Data Agent | 2026-03-08 |
+| DAT-020 | High | Medium | External Data Ingestion: Automated ingestion via `scripts/sync_data.js` and `data/import/` | Done | Data Gatherer | Data Agent | 2026-03-08 |
 | FE-040 | Medium | Medium | Quick Add UI: Implement 'Direct URL Injection' input in Dashboard/SearchModal to write to `manual_queue.json` | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
 | FE-035 | High | High | Inbox UI: Implement a 'Rapid Review' dashboard for raw listings with keyboard shortcuts | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
 | FE-036 | Medium | Medium | API Integration: Connect Dashboard to the new Local API Server for 'Inbox' management | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |

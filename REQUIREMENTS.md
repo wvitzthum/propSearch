@@ -182,6 +182,17 @@ To build a private, high-precision research tool that enables a single buyer to 
 - **Instruction to Frontend Agent:** 
   - Ensure the "Source Hub" correctly attributes these external leads if a `source_name` field is provided.
 
+### 15. Research Expansion: Chelsea (SW3/SW10)
+- **Requirement:** Expand the primary research scope to include the **Chelsea (SW3/SW10)** area.
+- **Goal:** Capture high-stakes luxury assets in prime South West London.
+- **Instruction to Data Agent:** 
+  - Update `data/property.schema.json` to include `Chelsea (SW3/SW10)` in the `area` enum.
+  - Synchronize `frontend/src/types/property.ts` to include the new area in the `Area` type.
+  - Update `data/macro_trend.json` to include a "Heat Index" and trend data for Chelsea.
+- **Instruction to Frontend Agent:** 
+  - Update `AREA_COORDS` in `useProperties.ts` and `PropertyContext.tsx` to include coordinates for Chelsea (e.g., `[51.4875, -0.1687]`).
+  - Ensure the Sidebar and Search filters correctly reflect the new area.
+
 ---
 
 ## Technical Constraints
@@ -194,7 +205,7 @@ To build a private, high-precision research tool that enables a single buyer to 
 ---
 
 ## Success Criteria
-- [ ] A dashboard that displays 50 properties with Alpha Scores correctly calculated.
+- [ ] A dashboard that displays a number of properties with Alpha Scores correctly calculated.
 - [ ] A functional sorting/filtering system for "Value Buys" and "Shortlisted Assets".
 - [ ] Persistence of user "Shortlist/Archive" decisions and "Analyst Notes".
 - [ ] High-density visual thumbnails and side-by-side comparison engine.

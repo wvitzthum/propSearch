@@ -4,16 +4,17 @@
 This document provides instructions for external agents (e.g., GPT, Claude, or third-party scrapers) to format property leads for ingestion into the **immoSearch** ecosystem.
 
 ## How to Prompt an External Agent
-"I am looking for prime London properties in Islington (N1/N7), Bayswater (W2), Belsize Park (NW3), and West Hampstead (NW6) between £600k and £775k. Please find listings and provide them as a JSON array following this exact schema:
+"I am looking for prime London properties in Islington (N1/N7), Bayswater (W2), Belsize Park (NW3), West Hampstead (NW6), and Chelsea (SW3/SW10) between £600k and £775k. Please find listings and provide them as a JSON array following this exact schema:
 
 ```json
 [
   {
     "address": "Full property address",
-    "area": "Islington (N1) | Islington (N7) | Bayswater (W2) | Belsize Park (NW3) | West Hampstead (NW6)",
+    "area": "Islington (N1) | Islington (N7) | Bayswater (W2) | Belsize Park (NW3) | West Hampstead (NW6) | Chelsea (SW3/SW10)",
     "list_price": 685000,
     "sqft": 750,
-    "epc": "B",
+```
+
     "tenure": "Leasehold (105 yrs)",
     "service_charge": 2200,
     "ground_rent": 150,
