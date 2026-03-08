@@ -39,6 +39,13 @@ To build a private, high-precision research tool that enables a single buyer to 
   - **Hero Thumbnail:** The Data Agent must extract a high-quality primary image (`image_url`) from the portal (e.g., Rightmove/Zoopla).
   - **Gallery Support:** The schema must support a `gallery` array (strings) for the top 5 high-res property images.
   - **Exterior Fidelity (StreetView):** If possible, provide a `streetview_url` based on coordinates to provide immediate street-level context.
+- **Visual Resilience (Image Fallbacks):** 
+  - **Requirement:** The UI must never show a "broken image" icon or an empty container if a property image fails to load or is missing from the dataset.
+  - **Goal:** Maintain the "Bloomberg Terminal" professional aesthetic at all times.
+  - **Fallback Strategy:** Implement a high-contrast, stylized SVG placeholder that reflects the property type or area (e.g., a minimalist architectural wireframe or a "Data Loading" node).
+- **Instruction to Frontend Agent:** 
+  - Create a reusable `PropertyImage` component with an `onError` handler to swap broken URLs for the institutional placeholder.
+  - Ensure the placeholder matches the dark-mode, high-density theme.
 - **Instruction to Data Agent:** Implement robust "Hidden Web Data" extraction from portal JSON blobs (e.g., `PAGE_MODEL` or `__NEXT_DATA__`) to ensure link longevity and high resolution (1024px+).
 - **Instruction to Frontend Agent:** 
   - **Dashboard:** Render high-density thumbnails in `PropertyCard`.
