@@ -10,15 +10,7 @@
 ## Active Backlog
 | ID | Priority | Effort | Task | Status | Responsible | Reported By | Dependencies | Date |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DAT-016 | High | Medium | Financial Data Sourcing: Capture Council Tax bands/costs for all target areas (Islington, Bayswater, etc.) | Pending | Data Gatherer | Product Owner | - | 2026-03-08 |
-| DAT-017 | High | Medium | Mortgage Data Pipeline: Source current 90% LTV mortgage rates for 25 and 30-year terms | Pending | Data Gatherer | Product Owner | - | 2026-03-08 |
-| DAT-018 | High | Low | Macro Trend Update: Include historical and current mortgage rates in `macro_trend.json` | Pending | Data Gatherer | Product Owner | DAT-017 | 2026-03-08 |
-| FE-037 | High | High | Ownership Cost Calculator: Implement logic to calculate total monthly/annual cost (Mortgage + Service + Ground + Council Tax) | Pending | Frontend Engineer | Product Owner | DAT-016, DAT-017 | 2026-03-08 |
-| FE-038 | High | High | Mortgage Tracker Page: Create a new high-density page visualizing BoE Base Rate vs. 25/30-year Mortgage Rates | Pending | Frontend Engineer | Product Owner | DAT-018 | 2026-03-08 |
-| FE-039 | Medium | Low | KPI Enhancement: Add "Total Monthly Cost" node to Property Detail and Preview Drawer | Pending | Frontend Engineer | Product Owner | FE-037 | 2026-03-08 |
 | DAT-011 | Medium | Low | Schema Cleanup: Deprecate single 'link' field in master.json once the frontend is updated to use 'links' array | Pending | Data Gatherer | Product Owner | FE-029 | 2026-03-07 |
-| FE-026 | Medium | Medium | UI Refinement: Implement comprehensive hover tooltips based on `agents/ui_ux_qa/METRIC_DEFINITIONS.md` | Pending | Frontend Engineer | UI/UX QA | QA-021 | 2026-03-08 |
-| FE-030 | High | Medium | Analyst Annotations: Implement local-persistence 'Analyst Notes' field in Property Detail and Preview Drawer | Pending | Frontend Engineer | Product Owner | - | 2026-03-08 |
 | FE-031 | Medium | Medium | Comparative Intelligence: Implement side-by-side property comparison matrix (max 3 properties) | Pending | Frontend Engineer | Product Owner | - | 2026-03-08 |
 | DAT-012 | High | High | High-Fidelity Dataset Expansion: Populate 'master.json' until it reaches 50 high-fidelity listings with full schema support (gallery, links, running costs) | Pending | Data Gatherer | Product Owner | - | 2026-03-08 |
 | QA-024 | High | Medium | Data Audit: Verify the final dataset of 50 properties for schema completeness, image fidelity, and geographical distribution | Pending | UI/UX QA | Product Owner | DAT-012 | 2026-03-08 |
@@ -30,6 +22,8 @@
 | FE-036 | Medium | Medium | API Integration: Connect Dashboard to the new Local API Server for 'Inbox' management | Pending | Frontend Engineer | Product Owner | FE-035 | 2026-03-08 |
 | QA-025 | High | Medium | Active Capture Audit: Validate the end-to-end workflow from raw scrape -> Inbox -> Master DB promotion | Pending | UI/UX QA | Product Owner | FE-036 | 2026-03-08 |
 | QA-026 | High | Medium | Financial Audit: Verify ownership cost calculation accuracy and mortgage rate visualization fidelity | Pending | UI/UX QA | Product Owner | FE-038 | 2026-03-08 |
+| DAT-019 | High | Low | Manual Ingestion: Update workflow to prioritize and process `data/manual_queue.json` in every cycle | Pending | Data Gatherer | Product Owner | - | 2026-03-08 |
+| FE-040 | Medium | Medium | Quick Add UI: Implement 'Direct URL Injection' input in Dashboard to write to `manual_queue.json` via local API | Pending | Frontend Engineer | Product Owner | DAT-015 | 2026-03-08 |
 
 ---
 
@@ -37,6 +31,8 @@
 ## Resolved
 | ID | Priority | Effort | Task | Status | Responsible | Resolved By | Date |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| FE-030 | High | Medium | Analyst Annotations: Implement local-persistence 'Analyst Notes' field in Property Detail and Preview Drawer | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| FE-026 | Medium | Medium | UI Refinement: Implement comprehensive hover tooltips based on `agents/ui_ux_qa/METRIC_DEFINITIONS.md` | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
 | FE-034 | Medium | Low | Type Safety: Remove '(property as any)' type casts in 'PreviewDrawer.tsx' and 'PropertyDetail.tsx' once 'Property' interface is updated | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
 | FE-022 | High | High | Gallery Implementation: Render high-res image gallery in Preview Drawer and Detail views | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
 | FE-025 | High | Medium | Map Intelligence: Implement semi-transparent London Metro overlay using GeoJSON data | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |

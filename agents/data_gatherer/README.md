@@ -126,13 +126,15 @@ You are authorized to write ONLY to:
 5.  **Completion:** Once a task is complete (e.g., data refresh, schema change, URL audit), mark its status as `Done` in `Tasks.md` and move it to the **Resolved** table.
 
 ## Generation Workflow:
-1. **Scrape:** Generate today's property snapshot.
-2. **Snapshot:** Save to `data/DD_MM_YYYY.json`.
-3. **Registry Sync:** Update `data/master.json` by merging today's snapshot:
-   - Identify existing properties via `address` + `area`.
-   - Update `metadata.last_seen` and increment `metadata.discovery_count`.
-   - If new, set `metadata.is_new: true` and `metadata.first_seen`.
-   - Update `data/manifest.json`.
+1.  **Manual Queue Audit:** Check `data/manual_queue.json` for `pending` URLs.
+2.  **Deep Scrape:** Perform a high-fidelity scrape for all manual URLs before general scraping.
+3.  **Registry Sync:** Update `data/master.json` by merging manual and general snapshots:
+    - Identify existing properties via `address` + `area`.
+    - Update `metadata.last_seen` and increment `metadata.discovery_count`.
+    - If new, set `metadata.is_new: true` and `metadata.first_seen`.
+    - Update `data/manifest.json`.
+4.  **Mark Processed:** Update statuses in `data/manual_queue.json`.
+5.  **Snapshot:** Save to `data/DD_MM_YYYY.json`.
 
 ### Schema Summary:
 #### 1. Property Asset (`data/master.json`)

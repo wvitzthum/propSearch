@@ -136,6 +136,21 @@ To build a private, high-precision research tool that enables a single buyer to 
   - Implement the "Total Monthly Outlay" calculator in the Property Detail and Preview Drawer.
   - Add a "Financial DNA" widget to the Landing Page/Situation Room.
 
+### 13. Manual Lead Ingestion (User-Driven Discovery)
+- **Requirement:** Provide a "Direct Injection" path for the user to suggest specific property URLs for the system to analyze.
+- **Goal:** Allow the user to bypass the automated scraper when they find a high-interest lead manually on a portal.
+- **The Manual Queue:** A dedicated file (`data/manual_queue.json`) where the user can paste raw URLs.
+- **Processing Logic:** 
+  - The Data Agent must monitor this file during every scrape cycle.
+  - For every URL in the queue, the agent must perform a "Deep Scrape", calculate all metrics (Alpha Score, Commute, etc.), and promote it to `master.json`.
+  - Once processed, the entry should be moved to a `processed` state or removed from the queue.
+- **Instruction to Data Agent:** 
+  - Implement a `process_manual_queue` function that prioritizes these URLs over general scraping.
+  - Ensure the same data integrity and validation rules apply to manual leads.
+- **Instruction to Frontend Agent:** 
+  - Implement a "Quick Add" input in the Dashboard (Sidebar or Command Menu).
+  - Use the Local API Server to append new URLs to the `manual_queue.json`.
+
 ---
 
 ## Technical Constraints
