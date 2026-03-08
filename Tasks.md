@@ -2,22 +2,23 @@
 
 ## Task Template (Copy/Paste)
 <!--
-| ID | Priority | Effort | Task | Status | Responsible | Reported By | Dependencies | Date |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | [ID] | [Low/Med/High/Critical] | [Low/Med/High] | [Summary] | [Pending/In Progress/Done] | [Agent Name] | [Agent Name] | [Task ID or -] | [YYYY-MM-DD] |
 -->
 
 ## Active Backlog
 | ID | Priority | Effort | Task | Status | Responsible | Reported By | Dependencies | Date |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DAT-023 | High | High | Data Gathering: Fetch/Scrape initial 10-15 high-fidelity Chelsea listings to populate the expanded target area | In Progress | Data Gatherer | Product Owner | DAT-022 | 2026-03-08 |
-| FE-047 | Critical | Medium | Map Institutional Clarity Fix: Implement specific `MAP_USABILITY_GUIDE.md` specs (Remove filters, increase background luminosity to #0c0c0e, and boost Metro weight to 4.5/0.75) | Pending | Frontend Engineer | UI/UX QA | - | 2026-03-08 |
-| FE-046 | High | Low | UI Expansion: Update `AREA_COORDS` and Sidebar/Search filters to support 'Chelsea (SW3/SW10)' | Pending | Frontend Engineer | Product Owner | DAT-022 | 2026-03-08 |
-| DAT-024 | Critical | Medium | Visual Extraction Research: Investigate anti-detection methods (stealth browsers, direct APIs) to overcome portal-side image blocking | Pending | Data Gatherer | Product Owner | - | 2026-03-08 |
-| DAT-025 | High | Medium | Visual Extraction Protocol: Document and implement a multi-stage fallback (Portal JSON -> Agent Site -> Search) for robust image recovery | Pending | Data Gatherer | Product Owner | DAT-024 | 2026-03-08 |
-| QA-028 | High | Low | Map Aesthetic Audit: Review Metro line thickness, background contrast (streetnames), and environmental shading (rivers/parks) | Pending | UI/UX QA | Product Owner | - | 2026-03-08 |
-| QA-025 | High | Medium | Active Capture Audit: Validate the end-to-end workflow from raw scrape -> Inbox -> Master DB promotion | Pending | UI/UX QA | Product Owner | FE-036 | 2026-03-08 |
-| QA-026 | High | Medium | Financial Audit: Verify ownership cost calculation accuracy and mortgage rate visualization fidelity | Pending | UI/UX QA | Product Owner | FE-038 | 2026-03-08 |
+| DAT-039 | EMERGENCY | Low | Data Restoration: REVERT `master.json` to `master_backup_07_03_2026.json` to purge 20 hallucinated listings (IDs a1b2c3d4-...). (See REPORT_2026_03_08_CORRUPTION) | Pending | Data Gatherer | UI/UX QA | - | 2026-03-08 |
+| DAT-040 | EMERGENCY | Low | Data Hygiene: DELETE all shallow leads in `data/triaged/` or enrich them with full schema before syncing. Current files lack `list_price` and `sqft`. | Pending | Data Gatherer | UI/UX QA | - | 2026-03-08 |
+| DAT-041 | High | Medium | Data Workflow Fix: Update `sync_data.js` to strictly validate items. Reject items with `list_price: 0` or missing `sqft`. | Pending | Data Gatherer | UI/UX QA | - | 2026-03-08 |
+| FE-058 | High | Medium | UI Implementation: 'Vetted' Pipeline Status - Add Gem/Shield action to Table/Drawer, add Dashboard filter, and update KPI logic. (See REPORT_2026_03_08_VETTED_GAP) | Pending | Frontend Engineer | UI/UX QA | QA-029 | 2026-03-08 |
+| DAT-037 | Critical | Low | Data Deletion: DELETE `data/import/immoSearch_listings_20.json` immediately. | Pending | Data Gatherer | UI/UX QA | - | 2026-03-08 |
+| DAT-031 | Critical | High | Data Workflow: Implement Inbox Triage Promotion logic (Move approved leads to Master DB) | Pending | Data Gatherer | UI/UX QA | QA-025 | 2026-03-08 |
+| FE-050 | Medium | Medium | UX Enhancement: Implement "Vetted" status UI transitions and pipeline visualization | Pending | Frontend Engineer | UI/UX QA | QA-029 | 2026-03-08 |
+| QA-030 | High | Low | UX Audit: Evaluate 'Comparative Intelligence' selection workflow and propose improvements for a 'Global Comparison Basket' | Pending | UI/UX QA | Product Owner | - | 2026-03-08 |
+| DAT-035 | High | Medium | Data Gathering: Fetch final 8-10 high-fidelity listings to reach the 50-property milestone | In Progress | Data Gatherer | Data Agent | - | 2026-03-08 |
+| FE-060 | High | Low | Feasibility Audit: Investigate `iframe` embedding or "Portal Proxy" for direct portal review within Inbox 2.0 | Pending | Frontend Engineer | Product Owner | - | 2026-03-08 |
+| INF-001 | Medium | Low | Token Optimization Strategy: Standardize the use of `rtk` (Rust Token Killer) across all high-volume shell commands to reduce agent context noise | Pending | Generalist | Product Owner | - | 2026-03-08 |
 
 ---
 
@@ -25,7 +26,32 @@
 ## Resolved
 | ID | Priority | Effort | Task | Status | Responsible | Resolved By | Date |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| FE-045 | Medium | High | Submission History Tracker: Implement a UI component to track lead research status and notify user on completion | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| QA-029 | Medium | Low | UX Audit: 'Vetted' pipeline status implementation review | Done | UI/UX QA | UI/UX QA | 2026-03-08 |
+| FE-046 | High | Low | UI Expansion: Update `AREA_COORDS` and Sidebar/Search filters to support 'Chelsea' and 'Primrose Hill' | Done | Frontend Engineer | UI/UX QA | 2026-03-08 |
+| QA-031 | High | Medium | UI Fix: Tooltip clipping in overflow containers resolved via React Portals and dynamic positioning | Done | UI/UX QA | UI/UX QA | 2026-03-08 |
+| QA-025 | High | Medium | Active Capture Audit: Resolve "Black Hole" by implementing triage move logic in `server/index.js` and `sync_data.js` | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| QA-026 | High | Medium | Financial Audit: Verify ownership cost calculation accuracy and mortgage rate visualization fidelity | Done | UI/UX QA | UI/UX QA | 2026-03-08 |
+| FE-047 | Critical | Medium | Map Institutional Clarity Fix: Implement specific `MAP_USABILITY_GUIDE.md` specs | Done | Frontend Engineer | UI/UX QA | 2026-03-08 |
+| FE-048 | Medium | Low | UI Enhancement: Display `floor_level` in Property Detail, Table, and Preview Drawer | Done | Frontend Engineer | UI/UX QA | 2026-03-08 |
+| FE-051 | High | Medium | UI Expansion (Mortgage 2.0): Implement Charts, PPI, and LTV Arbitrage widgets in `MortgageTracker.tsx` | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| FE-052 | High | High | UI Overhaul (Compare 2.0): Implement Global Comparison Basket, fixed Comparison Bar, and high-density Analytics Matrix | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| FE-055 | Critical | Low | UI Priority: Set `viewMode` default to 'table' in `Dashboard.tsx` | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| FE-056 | High | Medium | Table Optimization: Audit `PropertyTable` columns, increase page width usage, and ensure all high-signal metrics are visible without scrolling | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| FE-057 | High | Medium | Map Refinement: Reduce Metro line weight to 2.5 and implement a distinct visual state (color/glow) for 'Shortlisted' property markers | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| FE-049 | High | Medium | Institutional Tooltip Expansion: Update all KPICards and Table Headers to include 'Methodology' section as per REQUIREMENTS.md | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| DAT-029 | High | Medium | Data Architecture: Convert `master.json` to JSONL (JSON Lines) | Done | Data Gatherer | Data Agent | 2026-03-08 |
+| DAT-032 | High | Low | Data Enrichment: Add RBKC council tax bands to `financial_context.json` | Done | Data Gatherer | Data Agent | 2026-03-08 |
+| DAT-033 | High | Medium | Data Sourcing (Mortgage 2.0): Add 12-month historical time-series | Done | Data Gatherer | Data Agent | 2026-03-08 |
+| DAT-034 | Medium | Low | Data Enrichment (Mortgage 2.0): Add `mpc_next_meeting` and `market_consensus` | Done | Data Gatherer | Data Agent | 2026-03-08 |
+| DAT-030 | High | Low | Token Optimization: Implement `data/manifest.json` (ID, Area, Price only) | Done | Data Gatherer | Data Agent | 2026-03-08 |
+| DAT-026 | High | Low | Data Expansion: Update `data/macro_trend.json` to include 'Primrose Hill (NW1)' metrics | Done | Data Gatherer | Data Agent | 2026-03-08 |
+| DAT-027 | Medium | Low | Data Normalization: Standardize 'Chelsea' area names to 'Chelsea (SW3/SW10)' in `master.json` | Done | Data Gatherer | Data Agent | 2026-03-08 |
+| DAT-028 | High | Medium | Data Enrichment: Update `data/property.schema.json` and extract `floor_level` for all listings in `master.json` | Done | Data Gatherer | Data Agent | 2026-03-08 |
+| QA-028 | High | Low | Map Aesthetic Audit: Review Metro line thickness, background contrast (streetnames), and environmental shading (rivers/parks) | Done | UI/UX QA | UI/UX QA | 2026-03-08 |
+| DAT-023 | High | High | Data Gathering: Fetch/Scrape initial 10-15 high-fidelity Chelsea listings | Done | Data Gatherer | Data Agent | 2026-03-08 |
+| DAT-024 | Critical | Medium | Visual Extraction Research: Investigate anti-detection methods | Done | Data Gatherer | Data Agent | 2026-03-08 |
+| DAT-025 | High | Medium | Visual Extraction Protocol: Document and implement a multi-stage fallback | Done | Data Gatherer | Data Agent | 2026-03-08 |
+| FE-045 | Medium | High | Submission History Tracker: Implement a UI component | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
 | DAT-022 | High | Low | Research Expansion: Chelsea support | Done | Data Gatherer | Product Owner | 2026-03-08 |
 | DAT-021 | High | Medium | Submission Lifecycle: Status tracking in `manual_queue.json` | Done | Data Gatherer | Data Agent | 2026-03-08 |
 | DAT-019 | High | Low | Manual Ingestion: Automated workflow via `scripts/sync_data.js` | Done | Data Gatherer | Data Agent | 2026-03-08 |

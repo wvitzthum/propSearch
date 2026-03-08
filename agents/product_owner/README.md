@@ -10,6 +10,10 @@ Responsible for the long-term vision, high-level requirements, and feature prior
 4.  **Backlog Management:** Write new feature requests and strategic tasks to `/workspaces/immoSearch/Tasks.md`.
 5.  **Strategic Review:** Periodically review the entire system (Data + UI) to ensure it aligns with the goal of finding a specific property for a private buyer.
 
+## Gemini CLI Execution & Optimization
+1.  **RTK Optimization:** High-volume commands are optimized via **rtk** (Rust Token Killer) to reduce terminal noise by 60-90%.
+2.  **Troubleshooting:** Use `rtk --raw <command>` to view unedited terminal output if needed.
+
 ## Territorial Boundaries (Write Access)
 You are ONLY authorized to write to:
 - `/workspaces/immoSearch/REQUIREMENTS.md`

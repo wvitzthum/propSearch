@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -8,24 +8,57 @@ import {
   ShieldAlert, 
   Calendar, 
   Maximize2, 
+  LayoutGrid,
   Home,
   Zap,
   Gem,
   TrendingDown,
   Clock,
-  Scale
+  Scale,
+  FileText,
+  Save,
+  ArrowRight,
+  TrendingUp,
+  BarChart3
 } from 'lucide-react';
-import { useProperties } from '../hooks/useProperties';
+import { usePropertyContext } from '../hooks/PropertyContext';
+import { useFinancialData } from '../hooks/useFinancialData';
 import AlphaBadge from '../components/AlphaBadge';
 import LoadingNode from '../components/LoadingNode';
+import PropertyImage from '../components/PropertyImage';
+import LocationNodeMap from '../components/LocationNodeMap';
+import PipelineTracker from '../components/PipelineTracker';
+import type { PropertyWithCoords } from '../types/property';
+import { usePipeline } from '../hooks/usePipeline';
 
 const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { properties, loading } = useProperties();
+  const { properties, loading } = usePropertyContext();
+  const { calculateMonthlyOutlay } = useFinancialData();
+  const { getStatus, setStatus } = usePipeline();
+  const [notes, setLocalNotes] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const property = useMemo(() => {
-    return properties.find(p => p.id === id);
+    return properties.find(p => p.id === id) as PropertyWithCoords | undefined;
   }, [properties, id]);
+
+  const outlay = property ? calculateMonthlyOutlay(property) : null;
+  const status = property ? getStatus(property.id) : 'discovered';
+
+  useEffect(() => {
+    if (id) {
+      const savedNotes = localStorage.getItem(`notes_${id}`) || '';
+      setLocalNotes(savedNotes);
+    }
+  }, [id]);
+
+  const handleSaveNotes = () => {
+    if (!id) return;
+    setIsSaving(true);
+    localStorage.setItem(`notes_${id}`, notes);
+    setTimeout(() => setIsSaving(false), 600);
+  };
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -76,7 +109,51 @@ const PropertyDetail: React.FC = () => {
               {property.address}
             </h1>
 
-            <div className="grid grid-cols-3 gap-4 mb-12 py-8 border-y border-linear-border">
+            {/* Asset Pipeline */}
+            <div className="mb-12 p-8 bg-linear-card border border-linear-border rounded-3xl shadow-xl">
+              <PipelineTracker 
+                status={status} 
+                onStatusChange={(newStatus) => setStatus(property.id, newStatus)} 
+              />
+            </div>
+
+            {/* Gallery Implementation */}
+            <div className="mb-12 space-y-4">
+              <div className="relative aspect-[16/9] w-full bg-linear-card rounded-2xl overflow-hidden group border border-linear-border/50">
+                <PropertyImage 
+                  src={property.image_url || property.gallery[0]}
+                  alt={property.address}
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-linear-bg/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute bottom-6 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all">
+                  <span className="px-3 py-1.5 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold rounded-lg border border-white/10 uppercase tracking-widest">
+                    Primary View
+                  </span>
+                </div>
+              </div>
+              
+              {property.gallery && property.gallery.length > 0 && (
+                <div className="grid grid-cols-4 gap-4">
+                  {property.gallery.slice(0, 4).map((url, i) => (
+                    <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden border border-linear-border group cursor-pointer relative">
+                      <PropertyImage 
+                        src={url} 
+                        className="h-full w-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500" 
+                        alt={`Gallery ${i}`} 
+                      />
+                      {i === 3 && property.gallery.length > 4 && (
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center text-white font-bold group-hover:bg-black/40 transition-colors">
+                          +{property.gallery.length - 4} More
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-4 gap-4 mb-12 py-8 border-y border-linear-border">
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
                   <Maximize2 size={12} className="text-linear-accent" /> Space
@@ -85,9 +162,15 @@ const PropertyDetail: React.FC = () => {
               </div>
               <div className="flex flex-col gap-1 border-x border-linear-border px-4">
                 <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
+                  <LayoutGrid size={12} className="text-linear-accent" /> Floor
+                </span>
+                <span className="text-lg font-bold text-white tracking-tight uppercase">{property.floor_level || '—'}</span>
+              </div>
+              <div className="flex flex-col gap-1 border-r border-linear-border px-4">
+                <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
                   <Home size={12} className="text-linear-accent" /> Tenure
                 </span>
-                <span className="text-lg font-bold text-white tracking-tight">{property.tenure}</span>
+                <span className="text-lg font-bold text-white tracking-tight leading-tight">{property.tenure}</span>
               </div>
               <div className="flex flex-col gap-1 pl-4">
                 <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
@@ -96,6 +179,83 @@ const PropertyDetail: React.FC = () => {
                 <span className="text-lg font-bold text-white tracking-tight">{property.epc} Rating</span>
               </div>
             </div>
+
+            {/* Asset Overhead */}
+            <div className="mb-12">
+              <h2 className="text-xs font-bold text-linear-text-muted uppercase tracking-widest mb-6 flex items-center gap-2">
+                <TrendingDown size={14} className="text-retro-green" />
+                Asset Overhead & Costs
+              </h2>
+              <div className="p-8 bg-linear-card border border-linear-border rounded-3xl grid sm:grid-cols-2 gap-12 group hover:border-linear-accent/20 transition-colors">
+                <div className="flex flex-col gap-3">
+                  <span className="text-[10px] text-linear-text-muted uppercase font-black tracking-widest">Est. Service Charge</span>
+                  <div className="text-4xl font-bold text-white tracking-tighter">
+                    £{property.service_charge.toLocaleString()}
+                    <span className="text-sm text-linear-text-muted ml-1 uppercase font-black">/ Per Year</span>
+                  </div>
+                  <div className="h-1 w-full bg-linear-bg rounded-full overflow-hidden mt-2">
+                    <div className="h-full bg-linear-accent/30 w-[45%]" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3 sm:border-l sm:border-linear-border sm:pl-12">
+                  <span className="text-[10px] text-linear-text-muted uppercase font-black tracking-widest">Ground Rent</span>
+                  <div className="text-4xl font-bold text-white tracking-tighter">
+                    £{property.ground_rent.toLocaleString()}
+                    <span className="text-sm text-linear-text-muted ml-1 uppercase font-black">/ Per Year</span>
+                  </div>
+                  <div className="h-1 w-full bg-linear-bg rounded-full overflow-hidden mt-2">
+                    <div className="h-full bg-linear-accent/10 w-[15%]" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Total Monthly Outlay */}
+            {outlay && (
+              <div className="mb-12">
+                <h2 className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                  <TrendingUp size={14} />
+                  Institutional Ownership Model
+                </h2>
+                <div className="p-8 bg-blue-500/5 border border-blue-500/20 rounded-3xl relative overflow-hidden group hover:border-blue-500/40 transition-all">
+                  <div className="absolute -right-8 -top-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity">
+                    <BarChart3 size={300} />
+                  </div>
+                  
+                  <div className="relative z-10 grid sm:grid-cols-2 gap-12">
+                    <div>
+                      <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-2">Total Monthly Outlay</span>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-5xl font-bold text-white tracking-tighter">£{outlay.total.toLocaleString()}</span>
+                        <span className="text-sm text-linear-text-muted font-black uppercase">/ Month</span>
+                      </div>
+                      <p className="mt-4 text-xs text-linear-text-muted leading-relaxed max-w-xs">
+                        Aggregate carry cost including mortgage servicing (90% LTV), council tax, and institutional overheads.
+                      </p>
+                    </div>
+                    
+                    <div className="flex flex-col justify-center space-y-4 sm:border-l sm:border-blue-500/10 sm:pl-12">
+                      <div className="flex justify-between items-center group/item">
+                        <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-wider group-hover/item:text-white transition-colors">Mortgage (Principal & Interest)</span>
+                        <span className="text-sm font-bold text-white tracking-tight">£{outlay.mortgage.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center group/item">
+                        <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-wider group-hover/item:text-white transition-colors">Estimated Council Tax</span>
+                        <span className="text-sm font-bold text-white tracking-tight">£{outlay.councilTax.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center group/item">
+                        <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-wider group-hover/item:text-white transition-colors">Service Charge & Ground Rent</span>
+                        <span className="text-sm font-bold text-white tracking-tight">£{(outlay.serviceCharge + outlay.groundRent).toLocaleString()}</span>
+                      </div>
+                      <div className="pt-4 mt-2 border-t border-blue-500/10 flex items-center justify-between">
+                        <span className="text-[9px] font-black text-blue-400/60 uppercase tracking-[0.2em]">Financing: 90% LTV @ {outlay.rate}% Fixed</span>
+                        <span className="text-[9px] font-mono text-linear-text-muted">ID: FIN-OUT-{property.id.slice(0, 4)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-12">
               <div>
@@ -124,10 +284,10 @@ const PropertyDetail: React.FC = () => {
                   <div className="relative z-10">
                     <div className="flex items-center gap-3 text-white font-bold mb-3">
                       <Scale size={20} className="text-blue-400" />
-                      {property.neg_strategy}
+                      {property.neg_strategy || 'Default Protocol'}
                     </div>
                     <p className="text-linear-text-muted text-sm leading-relaxed max-w-lg">
-                      Based on a market duration of {property.dom} days, we recommend an {property.neg_strategy.toLowerCase().includes('aggressive') ? 'aggressive bidding posture' : 'entry at market value'}. 
+                      Based on a market duration of {property.dom} days, we recommend an {(property.neg_strategy || '').toLowerCase().includes('aggressive') ? 'aggressive bidding posture' : 'entry at market value'}. 
                       The Realistic Price of £{property.realistic_price.toLocaleString()} represents a target entry point for immediate equity capture.
                     </p>
                   </div>
@@ -191,6 +351,14 @@ const PropertyDetail: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Location Node Mini-Map */}
+              {property && (
+                <div>
+                  <h2 className="text-xs font-bold text-linear-text-muted uppercase tracking-widest mb-4">Location Node Context</h2>
+                  <LocationNodeMap lat={property.lat} lng={property.lng} address={property.address} />
+                </div>
+              )}
             </div>
           </div>
 
@@ -230,18 +398,71 @@ const PropertyDetail: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                <a 
-                  href={property.link} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="w-full py-3.5 bg-white text-black rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all active:scale-95 shadow-lg shadow-white/5"
-                >
-                  Go to Source
-                  <ExternalLink size={16} />
-                </a>
-                <button className="w-full py-3.5 bg-linear-card text-white border border-linear-border rounded-xl font-bold hover:bg-linear-accent transition-all active:scale-95 flex items-center justify-center gap-2">
-                  Generate PDF
+                <div className="relative group/hub">
+                  <button 
+                    className="w-full py-4 bg-white text-black rounded-xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all active:scale-95 shadow-2xl shadow-white/5"
+                  >
+                    Asset Source Hub
+                    <ExternalLink size={14} />
+                  </button>
+                  <div className="absolute bottom-full left-0 right-0 pb-2 mb-0 opacity-0 translate-y-4 pointer-events-none group-hover/hub:opacity-100 group-hover/hub:translate-y-0 group-hover/hub:pointer-events-auto transition-all z-50">
+                    <div className="bg-linear-card border border-linear-border rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl p-3">
+                      <div className="flex flex-col gap-2">
+                        <div className="px-3 py-2 text-[9px] font-black text-linear-text-muted uppercase tracking-[0.2em] border-b border-linear-border mb-1">
+                          Select Verification Portal
+                        </div>
+                        {(property.links || [property.link]).map((url, i) => (
+                          <a 
+                            key={i}
+                            href={url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="p-4 text-[10px] font-bold text-linear-text-muted hover:text-white hover:bg-linear-bg rounded-xl transition-all flex items-center justify-between group/link uppercase tracking-wider border border-transparent hover:border-linear-border"
+                          >
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-white">{url.includes('rightmove') ? 'Rightmove Institutional' : url.includes('zoopla') ? 'Zoopla Analytics' : 'Direct Agent Portal'}</span>
+                              <span className="text-[8px] opacity-50 lowercase truncate max-w-[180px]">{url}</span>
+                            </div>
+                            <ArrowRight size={14} className="opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-linear-accent" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button className="w-full py-3.5 bg-linear-card text-white border border-linear-border rounded-xl font-bold hover:bg-linear-accent transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest">
+                  Generate PDF Report
                 </button>
+              </div>
+
+              {/* Analyst Annotations */}
+              <div className="mt-8 pt-8 border-t border-linear-border space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
+                    <FileText size={12} className="text-linear-accent" /> Analyst Notes
+                  </h3>
+                  <button 
+                    onClick={handleSaveNotes}
+                    disabled={isSaving}
+                    className={`flex items-center gap-1.5 px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest transition-all ${
+                      isSaving ? 'bg-retro-green/20 text-retro-green' : 'bg-linear-card text-linear-text-muted hover:text-white'
+                    }`}
+                  >
+                    <Save size={10} />
+                    {isSaving ? 'Secured' : 'Sync'}
+                  </button>
+                </div>
+                <div className="relative group">
+                  <textarea 
+                    value={notes}
+                    onChange={(e) => setLocalNotes(e.target.value)}
+                    placeholder="Strategic observations..."
+                    className="w-full h-40 bg-linear-bg border border-linear-border rounded-xl p-4 text-xs text-white placeholder:text-linear-text-muted/40 focus:outline-none focus:border-linear-accent/50 focus:ring-1 focus:ring-linear-accent/10 transition-all resize-none custom-scrollbar"
+                  />
+                  <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[8px] font-mono text-linear-text-muted uppercase">
+                    Local Persistence
+                  </div>
+                </div>
               </div>
 
               <div className="mt-8 pt-8 border-t border-linear-border">
@@ -250,7 +471,7 @@ const PropertyDetail: React.FC = () => {
                     <MapPin size={16} />
                   </div>
                   <div className="text-[10px] leading-relaxed text-linear-text-muted">
-                    Positioned in <span className="text-white font-bold">Prime {property.area.split(' (')[0]}</span>. High rental demand zone with strong historical capital appreciation.
+                    Positioned in <span className="text-white font-bold">Prime {(property.area || 'Unknown').split(' (')[0]}</span>. High rental demand zone with strong historical capital appreciation.
                   </div>
                 </div>
               </div>

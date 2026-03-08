@@ -9,16 +9,22 @@ import {
   Plus,
   Compass,
   Zap,
-  ChevronDown
+  ChevronDown,
+  Percent,
+  Inbox,
+  History
 } from 'lucide-react';
-import { useProperties } from '../hooks/useProperties';
+import { usePropertyContext } from '../hooks/PropertyContext';
 import SearchModal from './SearchModal';
+import SubmissionHistory from './SubmissionHistory';
+import ComparisonBar from './ComparisonBar';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const { properties } = useProperties();
+  const { properties } = usePropertyContext();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -34,7 +40,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navItems = [
     { icon: <Compass size={16} />, label: 'Discover', path: '/' },
     { icon: <LayoutDashboard size={16} />, label: 'Dashboard', path: '/dashboard' },
-    { icon: <Zap size={16} />, label: 'Strategy', path: '/strategy' },
+    { icon: <Inbox size={16} />, label: 'Lead Inbox', path: '/inbox' },
+    { icon: <Zap size={16} />, label: 'Comparative Intel', path: '/compare' },
+    { icon: <Percent size={16} />, label: 'Mortgage Tracker', path: '/mortgage' },
   ];
 
   const dynamicAreas = useMemo(() => {
@@ -53,7 +61,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       
       // Special cases
       if (path === 'dashboard') label = 'Terminal';
-      if (path === 'strategy') label = 'Acquisition Strategy';
+      if (path === 'inbox') label = 'Lead Inbox';
+      if (path === 'compare') label = 'Comparative Intel';
+      if (path === 'mortgage') label = 'Mortgage Intelligence';
       if (path === 'property' && paths[index + 1]) {
         return { label: 'Asset Scan', path: '/dashboard', active: false };
       }
@@ -72,6 +82,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="min-h-screen bg-linear-bg text-white font-sans antialiased flex selection:bg-blue-500/30">
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      <SubmissionHistory isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} />
 
       {/* Sidebar */}
       <aside className="w-64 border-r border-linear-border flex flex-col fixed inset-y-0 left-0 z-50 bg-linear-bg/80 backdrop-blur-xl">
@@ -215,6 +226,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             ))}
           </div>
           <div className="flex items-center gap-3">
+             <button 
+               onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+               className={`flex items-center gap-2 px-2.5 py-1 rounded border transition-all ${isHistoryOpen ? 'bg-linear-accent text-white border-white/20 shadow-lg' : 'bg-linear-card border-linear-border text-linear-text-muted hover:text-white hover:border-linear-accent'}`}
+             >
+                <History size={12} className={isHistoryOpen ? 'animate-pulse' : ''} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Trace</span>
+             </button>
              <div 
                onClick={() => setIsSearchOpen(true)}
                className="flex items-center gap-1 bg-linear-card px-2 py-1 rounded border border-linear-border text-[10px] font-mono text-linear-text-muted select-none group hover:border-linear-accent transition-colors cursor-pointer"
@@ -224,9 +242,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
              </div>
           </div>
         </header>
-        <div className="p-8 max-w-7xl mx-auto">
+        <div className={`p-8 mx-auto ${location.pathname === '/dashboard' ? 'max-w-[1600px]' : 'max-w-7xl'}`}>
           {children}
         </div>
+        <ComparisonBar />
       </main>
     </div>
   );

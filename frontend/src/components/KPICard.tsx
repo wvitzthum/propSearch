@@ -1,5 +1,6 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
+import Tooltip from './Tooltip';
 
 interface KPICardProps {
   label: string;
@@ -11,6 +12,8 @@ interface KPICardProps {
   };
   className?: string;
   loading?: boolean;
+  tooltip?: string;
+  methodology?: string;
 }
 
 const KPICard: React.FC<KPICardProps> = ({ 
@@ -19,7 +22,9 @@ const KPICard: React.FC<KPICardProps> = ({
   icon: Icon, 
   trend, 
   className = '', 
-  loading = false 
+  loading = false,
+  tooltip,
+  methodology
 }) => {
   if (loading) {
     return (
@@ -31,20 +36,22 @@ const KPICard: React.FC<KPICardProps> = ({
   }
 
   return (
-    <div className={`p-4 bg-linear-card border border-linear-border rounded-xl shadow-sm hover:border-linear-accent transition-all ${className}`}>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-wider">{label}</span>
-        {Icon && <Icon size={14} className="text-linear-accent" />}
+    <Tooltip content={tooltip} methodology={methodology} className="w-full">
+      <div className={`p-4 bg-linear-card border border-linear-border rounded-xl shadow-sm hover:border-linear-accent transition-all group/kpi relative h-full ${className}`}>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-wider">{label}</span>
+          {Icon && <Icon size={14} className="text-linear-accent" />}
+        </div>
+        <div className="flex items-end justify-between">
+          <div className="text-2xl font-bold text-white tracking-tight">{value}</div>
+          {trend && (
+            <div className={`text-[10px] font-bold ${trend.isPositive ? 'text-retro-green' : 'text-rose-400'}`}>
+              {trend.value}
+            </div>
+          )}
+        </div>
       </div>
-      <div className="flex items-end justify-between">
-        <div className="text-2xl font-bold text-white tracking-tight">{value}</div>
-        {trend && (
-          <div className={`text-[10px] font-bold ${trend.isPositive ? 'text-retro-green' : 'text-rose-400'}`}>
-            {trend.value}
-          </div>
-        )}
-      </div>
-    </div>
+    </Tooltip>
   );
 };
 

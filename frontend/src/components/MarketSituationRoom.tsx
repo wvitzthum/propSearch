@@ -1,19 +1,17 @@
 import React from 'react';
 import { 
   TrendingUp, 
-  TrendingDown, 
   Activity, 
   Clock, 
   Target, 
-  ArrowRight,
   ChevronRight
 } from 'lucide-react';
 import { useMacroData } from '../hooks/useMacroData';
 
-const MarketVolumeChart: React.FC<{ data: { month: string, listed: number, sold: number }[] }> = ({ data }) => {
+const MarketVolumeChart: React.FC<{ data: { month: string, listed: number, sold?: number }[] }> = ({ data }) => {
   if (!data || data.length === 0) return null;
 
-  const maxVal = Math.max(...data.map(d => Math.max(d.listed, d.sold)));
+  const maxVal = Math.max(...data.map(d => Math.max(d.listed, d.sold || 0)));
   const padding = 20;
   const width = 800;
   const height = 200;
@@ -24,7 +22,7 @@ const MarketVolumeChart: React.FC<{ data: { month: string, listed: number, sold:
   const getY = (val: number) => height - padding - ((val / maxVal) * chartHeight);
 
   const listedPoints = data.map((d, i) => `${getX(i)},${getY(d.listed)}`).join(' ');
-  const soldPoints = data.map((d, i) => `${getX(i)},${getY(d.sold)}`).join(' ');
+  const soldPoints = data.map((d, i) => `${getX(i)},${getY(d.sold || 0)}`).join(' ');
 
   return (
     <div className="relative h-64 w-full bg-linear-bg/30 border border-linear-border rounded-xl p-4 overflow-hidden">
@@ -82,7 +80,7 @@ const MarketVolumeChart: React.FC<{ data: { month: string, listed: number, sold:
 
         {/* Highlight current point */}
         <circle cx={getX(data.length - 1)} cy={getY(data[data.length - 1].listed)} r="3" className="fill-blue-500 shadow-xl" />
-        <circle cx={getX(data.length - 1)} cy={getY(data[data.length - 1].sold)} r="3" className="fill-emerald-500 shadow-xl" />
+        <circle cx={getX(data.length - 1)} cy={getY(data[data.length - 1].sold || 0)} r="3" className="fill-emerald-500 shadow-xl" />
       </svg>
     </div>
   );
@@ -177,7 +175,7 @@ const MarketSituationRoom: React.FC = () => {
                  </div>
               </div>
               <div className="p-6">
-                 <MarketVolumeChart data={data.business_history} />
+                 <MarketVolumeChart data={data.business_history || []} />
                  <div className="mt-8 grid grid-cols-3 gap-6">
                     <div className="flex flex-col gap-1">
                        <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">Inventory Delta</span>

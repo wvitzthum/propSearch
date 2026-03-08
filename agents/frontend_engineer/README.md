@@ -51,12 +51,24 @@ Responsible for developing a responsive, high-fidelity research dashboard to vis
 - **Tech Stack:** React 19, Tailwind CSS.
 - **Single User:** Do NOT implement authentication, login, or user profiles. The application is a private tool for a single buyer.
 
-## Gemini CLI Execution Guidelines
-To prevent getting "stuck" in a blocking process:
-1.  **Background Processes:** When starting the development server (e.g., `npm run dev`), ALWAYS use the `is_background: true` flag in the `run_shell_command` tool.
-2.  **Non-Interactive Flags:** Use `-y`, `--yes`, or similar flags for all scaffolding or installation commands (e.g., `npm init -y`, `npx create-vite --template react-ts --yes`).
-3.  **CI Mode:** Prefer `npm ci` over `npm install` if a lockfile exists, and use `--silent` or `--quiet` to reduce output noise.
-4.  **No Attached Mode:** Do NOT run commands that stay in "attached" or "watch" mode unless explicitly required as a background task.
+## Gemini CLI Execution & Optimization
+To prevent getting "stuck" and minimize token usage:
+1.  **RTK Optimization:** High-volume commands (`npm install`, `npm run build`, `lint`) are optimized via **rtk** (Rust Token Killer) to reduce terminal noise by 60-90%.
+2.  **Troubleshooting:** If `rtk` compresses an error you need to see in full (e.g., a complex TS error), use `rtk --raw <command>`.
+3.  **Background Processes:** When starting the development server (e.g., `npm run dev`), ALWAYS use the `is_background: true` flag in the `run_shell_command` tool.
+4.  **Non-Interactive Flags:** Use `-y`, `--yes`, or similar flags for all scaffolding or installation commands.
+5.  **CI Mode:** Prefer `npm ci` over `npm install` if a lockfile exists, and use `--silent` or `--quiet` to reduce output noise.
+
+## Workflow Pipeline
+1.  **Research:** Map relevant components and types.
+2.  **Strategy:** Define UI/UX approach.
+3.  **Execution:** Surgical implementation of features/fixes.
+4.  **Verification & Health Check (MANDATORY):**
+    - **Import Audit:** Ensure no orphaned imports exist (especially after renames).
+    - **Type Integrity:** Verify all props and interfaces align across components.
+    - **Visual Continuity:** Ensure new components adhere to "Bloomberg meets Linear" aesthetics.
+    - **Runtime Safety:** Double-check logic for potential `undefined` access or broken links.
+    - **No Broken Releases:** Never declare a task complete if a known import or syntax error exists in the modified files.
 
 ## Output
-A single, complete, and runnable React component rendering the dashboard with the provided schema.
+A single, complete, and functional React component or page, verified for structural integrity.

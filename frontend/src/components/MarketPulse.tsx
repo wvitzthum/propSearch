@@ -1,7 +1,6 @@
 import React from 'react';
 import { 
   TrendingUp, 
-  TrendingDown, 
   Activity, 
   Percent, 
   ArrowUpRight, 
@@ -10,6 +9,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useMacroData } from '../hooks/useMacroData';
+import Tooltip from './Tooltip';
 
 const MarketPulse: React.FC = () => {
   const { data, loading, error } = useMacroData();
@@ -35,59 +35,83 @@ const MarketPulse: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 border-b border-linear-border">
         {/* KPI: London HPI */}
-        <div className="p-6 border-r border-linear-border group hover:bg-linear-card/80 transition-colors">
-          <div className="flex justify-between items-start mb-2">
-            <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">London HPI</span>
-            <TrendingUp size={12} className="text-linear-accent" />
+        <Tooltip 
+          content="A localized liquidity score for specific London boroughs, tracking search volume vs. listing duration." 
+          methodology="Aggregated data from Rightmove/Zoopla on search volume vs. listing duration."
+          className="w-full"
+        >
+          <div className="p-6 border-r border-linear-border group hover:bg-linear-card/80 transition-colors h-full">
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">London HPI</span>
+              <TrendingUp size={12} className="text-linear-accent" />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-white tracking-tighter">£{data.london_hpi.avg_price_pcl.toLocaleString()}</span>
+              <span className={`text-[10px] font-black flex items-center gap-0.5 ${data.london_hpi.mom_pct >= 0 ? 'text-retro-green' : 'text-rose-500'}`}>
+                {data.london_hpi.mom_pct >= 0 ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
+                {Math.abs(data.london_hpi.mom_pct)}%
+              </span>
+            </div>
+            <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">YoY Change: <span className="text-white">+{data.london_hpi.yoy_pct}%</span></p>
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-white tracking-tighter">£{data.london_hpi.avg_price_pcl.toLocaleString()}</span>
-            <span className={`text-[10px] font-black flex items-center gap-0.5 ${data.london_hpi.mom_pct >= 0 ? 'text-retro-green' : 'text-rose-500'}`}>
-              {data.london_hpi.mom_pct >= 0 ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
-              {Math.abs(data.london_hpi.mom_pct)}%
-            </span>
-          </div>
-          <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">YoY Change: <span className="text-white">+{data.london_hpi.yoy_pct}%</span></p>
-        </div>
+        </Tooltip>
 
         {/* KPI: Inventory Velocity */}
-        <div className="p-6 border-r border-linear-border group hover:bg-linear-card/80 transition-colors">
-          <div className="flex justify-between items-start mb-2">
-            <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">Inventory Velocity</span>
-            <Activity size={12} className="text-blue-400" />
+        <Tooltip 
+          content="The number of months it would take to sell all current listings at the average monthly absorption rate." 
+          methodology="Active Listings / Avg. Monthly Sales. < 4m = Seller's Market, > 6m = Buyer's Market."
+          className="w-full"
+        >
+          <div className="p-6 border-r border-linear-border group hover:bg-linear-card/80 transition-colors h-full">
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">Inventory Velocity</span>
+              <Activity size={12} className="text-blue-400" />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-white tracking-tighter">{data.inventory_velocity.months_of_supply}</span>
+              <span className="text-[10px] text-linear-text-muted font-bold uppercase tracking-tighter">MOS</span>
+            </div>
+            <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">New Inst Q-Change: <span className="text-white">+{data.inventory_velocity.new_instructions_q_change}%</span></p>
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-white tracking-tighter">{data.inventory_velocity.months_of_supply}</span>
-            <span className="text-[10px] text-linear-text-muted font-bold uppercase tracking-tighter">MOS</span>
-          </div>
-          <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">New Inst Q-Change: <span className="text-white">+{data.inventory_velocity.new_instructions_q_change}%</span></p>
-        </div>
+        </Tooltip>
 
         {/* KPI: Negotiation Delta */}
-        <div className="p-6 border-r border-linear-border group hover:bg-linear-card/80 transition-colors">
-          <div className="flex justify-between items-start mb-2">
-            <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">Negotiation Delta</span>
-            <Percent size={12} className="text-retro-green" />
+        <Tooltip 
+          content="The average difference between the 'Asking Price' and 'Sold Price' in the current quarter." 
+          methodology="Calculation based on Land Registry sold data vs. initial portal asking price."
+          className="w-full"
+        >
+          <div className="p-6 border-r border-linear-border group hover:bg-linear-card/80 transition-colors h-full">
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">Negotiation Delta</span>
+              <Percent size={12} className="text-retro-green" />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-white tracking-tighter">-{data.negotiation_delta.avg_discount_pct}%</span>
+              <span className="text-[10px] text-retro-green font-black uppercase tracking-tighter">{data.negotiation_delta.market_sentiment}</span>
+            </div>
+            <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">Assets Below Asking: <span className="text-white">{data.negotiation_delta.pct_below_asking}%</span></p>
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-white tracking-tighter">-{data.negotiation_delta.avg_discount_pct}%</span>
-            <span className="text-[10px] text-retro-green font-black uppercase tracking-tighter">{data.negotiation_delta.market_sentiment}</span>
-          </div>
-          <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">Assets Below Asking: <span className="text-white">{data.negotiation_delta.pct_below_asking}%</span></p>
-        </div>
+        </Tooltip>
 
         {/* KPI: Economic Rate */}
-        <div className="p-6 group hover:bg-linear-card/80 transition-colors">
-          <div className="flex justify-between items-start mb-2">
-            <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">BoE Base Rate</span>
-            <Info size={12} className="text-amber-500" />
+        <Tooltip 
+          content="Current official Bank of England base interest rate, governing the floor for retail mortgage products." 
+          methodology="Directly sourced from the BoE Monetary Policy Committee (MPC) latest release."
+          className="w-full"
+        >
+          <div className="p-6 group hover:bg-linear-card/80 transition-colors h-full">
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">BoE Base Rate</span>
+              <Info size={12} className="text-amber-500" />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-white tracking-tighter">{data.economic_indicators.boe_base_rate}%</span>
+              <span className="text-[10px] text-amber-500 font-black uppercase tracking-tighter">Stable</span>
+            </div>
+            <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">Inflation CPI: <span className="text-white">{data.economic_indicators.uk_inflation_cpi}%</span></p>
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-white tracking-tighter">{data.economic_indicators.boe_base_rate}%</span>
-            <span className="text-[10px] text-amber-500 font-black uppercase tracking-tighter">Stable</span>
-          </div>
-          <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">Inflation CPI: <span className="text-white">{data.economic_indicators.uk_inflation_cpi}%</span></p>
-        </div>
+        </Tooltip>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3">

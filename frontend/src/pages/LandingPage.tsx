@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { 
   ArrowRight, 
   ShieldCheck, 
-  Zap, 
   Activity, 
   Map as MapIcon, 
   TrendingUp, 

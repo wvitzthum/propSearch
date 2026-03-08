@@ -15,7 +15,12 @@ To build a private, high-precision research tool that enables a single buyer to 
 - **Appreciation Potential:** Calculate and display a 5-year capital growth rating (0-10) for every property.
 - **Tenure & Running Costs:** 
   - The system must capture the total cost of ownership for every asset.
-  - **Required Metrics:** `service_charge` (Annual £), `ground_rent` (Annual £), and `lease_years_remaining` (for Leasehold assets).
+  - **Required Metrics:** `service_charge` (Annual £), `ground_rent` (Annual £), `lease_years_remaining` (for Leasehold assets), and `floor_level`.
+- **Floor Level Intelligence:**
+  - **Requirement:** Capture the specific floor level of the property (e.g., "Ground", "1st", "Penthouse").
+  - **Goal:** Enable the user to filter or evaluate properties based on elevation and accessibility.
+  - **Instruction to Data Agent:** Extract `floor_level` from listing descriptions or technical specs. Normalize to a standard string format.
+  - **Instruction to Frontend Agent:** Display "Floor" as a KPI node in the Detail view and as a column/field in the Table and Preview views.
 - **Multi-Source Linkage:** Every asset must support multiple link references (portal vs. direct agent).
 - **Direct-to-Agent Verification:** Priority must be given to finding and linking to the listing on the estate agent's own website (e.g., Savills, Knight Frank, Dexter's) to mitigate broken portal links.
 - **Instruction to Data Agent:** Maintain a rigorous JSON schema. Prioritize agent-direct listings in the `links` array. Include running costs and lease depth in all captures.
@@ -30,6 +35,11 @@ To build a private, high-precision research tool that enables a single buyer to 
   - The system must support multi-factor sorting across all dashboard views.
   - **Metric Priority:** Default sort must be `Alpha Score` (High to Low).
   - **Dynamic Sorts:** Support for `Value Gap` (Price Efficiency), `Appreciation Potential`, and `Commute Utility` (Minimizing travel to Paternoster/Canada Square).
+- **Default View:** The dashboard must default to the **Table View** to maximize data density and scanning efficiency upon entry.
+- **Table Optimization:**
+  - **Width Management:** Utilize the full width of the viewport to accommodate high column counts.
+  - **Column Prioritization:** Conduct an audit to remove or hide less critical columns, ensuring all high-signal metrics are visible without excessive horizontal scrolling.
+  - **Instruction to Frontend Agent:** Set `viewMode` default to `table`. Refactor `PropertyTable` for maximum horizontal efficiency.
 - **Instruction to Frontend Agent:** Prioritize data density, keyboard-centric navigation, and high-contrast dark mode. Implement a unified sorting state across Grid, Table, and Map views.
 
 ### 3. Visual Context & Market Fidelity
@@ -59,19 +69,13 @@ To build a private, high-precision research tool that enables a single buyer to 
 ### 5. Map-Centric Context & Spatial Intelligence
 - **Requirement:** A high-precision map view that prioritizes readability and spatial relationships.
 - **Goal:** Enable the user to instantly grasp the proximity to Tube/Overground stations and Parks.
-- **London Metro Overlay:** The map must feature a semi-transparent background layer of the London Underground and Overground network (Lines).
+- **Metro Line Refinement:** Metro lines should be visible but subtle (e.g., `weight: 2.5`) to prevent obscuring property markers.
+- **Status Visualization:** Properties with a `Shortlisted` status must be visually distinguished on the map (e.g., a unique marker color, glowing effect, or size increase).
 - **Instruction to Data Agent:** Source and provide a `data/london_metro.geojson` file containing the geometry for all Tube and Overground lines.
 - **Instruction to Frontend Agent:** 
   - **Aesthetic:** "Bloomberg Terminal" style. Use a high-contrast dark tile set (e.g., Carto Dark Matter).
-- **Metro Layer:** Render the GeoJSON lines with high legibility. 
-  - **Thickness:** Lines must be bold enough to be clearly visible (e.g., 3-4px) without obscuring property markers.
-  - **Color:** Use official line colors with refined opacity (e.g., 40-50%).
-- **Base Map Legibility:** 
-  - **Contrast:** Ensure the background tile set provides enough contrast for street names and labels to be legible for a London expert.
-  - **Environmental Shading:** Enhance spatial context with distinct shading/textures for **Water (Rivers/Canals)** and **Green Spaces (Parks/Commons)**.
-- **Instruction to Frontend Agent:** 
   - Adjust Metro line weights and base map opacity/contrast.
-  - Implement custom CSS filters or tile providers to enhance river and park visibility.
+  - Implement a `Shortlisted` visual state for map markers.
 
 ### 6. Commute & Connectivity (Institutional Proximity)
 - **Requirement:** Track travel proximity to key commercial hubs: **Paternoster Square (City)** and **Canada Square (Canary Wharf)**.
@@ -79,15 +83,24 @@ To build a private, high-precision research tool that enables a single buyer to 
 - **Instruction to Data Agent:** Include `commute_paternoster` and `commute_canada_square` (time in minutes or distance) in the schema.
 - **Instruction to Frontend Agent:** Display these as "Commute Nodes" in the Asset Detail and Table views.
 
-### 7. Analyst Annotations & Comparative Intelligence (User Input)
-- **Requirement:** The user must be able to add, edit, and persist "Analyst Notes" for any property in the database.
-- **Goal:** Capture qualitative context (e.g., "Refurbishment potential," "Noise levels during viewing") alongside quantitative metrics.
-- **Persistence:** Notes must be stored in a local JSON sidecar or local storage to ensure they persist across sessions.
-- **Comparative Side-by-Side:** Implement a "Compare" mode where the user can select 2-3 properties and view their KPIs (Alpha, Price/SQFT, Commute) side-by-side in a high-density matrix.
+### 7. Analyst Annotations & Comparative Intelligence (Comparative Intelligence 2.0)
+- **Requirement:** Implement a pro-grade side-by-side comparison engine and qualitative annotation system to enable definitive acquisition decisions.
+- **Goal:** Provide a "High-Density Matrix" that highlights the critical deltas between potential assets.
+- **The Comparison Engine (Enhanced):**
+  - **Selection UX (Global Comparison Basket):** Implement a persistent "Comparison Basket" available across all views (Table, Grid, Map). Users should be able to toggle assets into the basket via a simple keyboard shortcut or click.
+  - **Visual Selection Feedback:** Assets in the comparison basket must be visually highlighted in all dashboard views.
+  - **The Analytics Matrix:** 
+    - **KPI Row Highlight:** Automatically highlight the "Winner" (best value) in each KPI row (e.g., Green text for lowest Price/SQFT, Blue for highest Alpha).
+    - **Visual Delta View:** Instead of just showing raw numbers, show the percentage delta relative to the average of the selected group.
+    - **Image Synchronization:** Hovering over a data point in the matrix should highlight the corresponding property thumbnail.
+  - **Institutional Export:** (Optional) Ability to export the comparison matrix to a clean PDF or PNG for offline review.
+- **Analyst Annotations:**
+  - **Requirement:** Every asset must support persistent "Analyst Notes".
+  - **Rich-Text Context:** Support for markdown or structured lists within notes to track viewing feedback and refurbishment estimates.
 - **Instruction to Frontend Agent:** 
-  - Render a "Notes" textarea in the Property Detail and Preview Drawer.
-  - Implement a "Compare" selection state in the Property Table/Grid.
-  - Create a dedicated `CompareModal` or view for side-by-side analysis.
+  - Implement a global `useComparison` hook to manage the selection state.
+  - Build a "Comparison Bar" (fixed bottom UI) showing current selections.
+  - Overhaul `ComparisonPage.tsx` into a high-density grid with "Winner" highlighting and delta calculations.
 
 ### 8. Precision UX (Linear Pattern)
 - **Requirement:** Every interaction must feel "pro-grade", minimal, and precise.
@@ -118,37 +131,51 @@ To build a private, high-precision research tool that enables a single buyer to 
 - **Instruction to Frontend Agent:** 
   - **Landing Page Overhaul:** Transform the landing page into a "Market Situation Room" with high-density charts showing volume trends and a "Timing Indicator" widget.
 
-### 11. Active Listing Capture & The 'Inbox' Workflow
-- **Requirement:** Capture 100% of "Active Listings" that match the broad geographic criteria, even if they fail specific quality filters (e.g., price/size).
-- **Goal:** Ensure no "diamond in the rough" is missed by automated filtering.
-- **The 'Inbox':** A dedicated dashboard view for reviewing raw, unfiltered listings.
-  - **Actions:** `Approve` (Promote to Master DB), `Reject` (Archive), `Hold`.
-  - **Data Structure:** Raw scrapes are stored in a separate `inbox.json` or local SQLite DB to prevent polluting the high-fidelity `master.json`.
+### 11. Active Listing Capture & The 'Inbox' Workflow (Lead Inbox 2.0)
+- **Requirement:** Capture 100% of "Active Listings" that match the broad geographic criteria and provide a high-velocity triage interface.
+- **Goal:** Transform the Inbox into a "Professional Triage Desk" that minimizes the time between discovery and promotion.
+- **The 'Lead Inbox' (Enhanced):**
+  - **High-Density Split View:** Implement a dual-pane layout. 
+    - **Left Pane:** A scrollable list of all pending leads with "Quick-Scan" metrics (Price, Area, Source).
+    - **Right Pane:** A "Deep Review" card for the selected lead, showing all available raw data, portal links, and high-res thumbnails.
+  - **Keyboard-Centric Navigation:** 
+    - `Up/Down`: Navigate through the pending list.
+    - `A`: Approve (Promote to Master DB).
+    - `R`: Reject (Archive).
+    - `L`: Open Portal Link in new tab.
+  - **Enriched Data Display:**
+    - **Visual Capture:** Display all available `gallery` images in a minimalist grid within the review card.
+    - **Metadata Extraction:** Highlight key raw fields (e.g., `tenure`, `sqft`, `floor_level`) if present in the raw scrape.
+    - **Source Attribution:** Display the scraper or user source with high-contrast badges.
+  - **Batch Actions:** Ability to select multiple leads and perform bulk `Reject` or `Approve`.
+- **Embedded Portal Review (Feasibility Research):**
+  - **Requirement:** Investigate the use of an `iframe` or "Portal Proxy" to render the live property listing directly within the Right Pane of the Inbox.
+  - **Goal:** Eliminate the need to switch tabs, allowing for "Single-Screen Triage."
+  - **Research Constraints:** Identify portal-side blocks (`X-Frame-Options`, `CSP`) and evaluate the potential for a local proxy to bypass these for private use.
 - **Instruction to Data Agent:** 
-  - Update scraper to dump ALL results to `data/inbox/` or the local DB.
-  - Implement a `server/` or CLI tool to manage this ingestion.
+  - Ensure the `/api/inbox` endpoint returns all available raw fields, including images and technical specs.
+  - Implement a `batch_triage` endpoint for bulk operations.
 - **Instruction to Frontend Agent:** 
-  - Implement an "Inbox" view with rapid keyboard shortcuts (e.g., `A` for Accept, `R` for Reject).
-  - Connect to the Local Data Server API to perform these actions.
-### 12. Financial Intelligence & Ownership Modeling
-- **Requirement:** Implement a comprehensive ownership cost model to evaluate the true monthly and annual carrying costs of every asset.
-- **Goal:** Move beyond "List Price" to "Total Monthly Outlay" (Mortgage + Overheads).
-- **Core Components:**
-  - **Mortgage Component:** Calculate monthly payments based on a **90% LTV** (Loan-to-Value) ratio.
-  - **Overhead Component:** Capture and aggregate `service_charge`, `ground_rent`, and **Council Tax** (by area/band).
-  - **Total Monthly Outlay:** A unified KPI reflecting the sum of all monthly costs.
-- **The Mortgage Tracker (Dedicated Page):**
-  - **Purpose:** Monitor the dynamic relationship between central bank policy and retail mortgage products.
-  - **Requirement:** A high-density visualization comparing the **BoE Base Rate** against retail rates for **25-year** and **30-year** mortgages (90% LTV).
-  - **Historical Delta:** Show the spread between the Base Rate and Mortgage Rates over time to identify peak borrowing opportunities.
+  - Refactor `Inbox.tsx` to use a split-pane layout with persistent keyboard focus.
+  - Implement the "Deep Review" card with image support and raw data visualization.
+### 12. Financial Intelligence & Ownership Modeling (Mortgage Intelligence 2.0)
+- **Requirement:** Implement a comprehensive ownership cost model and a dynamic "Mortgage Intelligence" engine to evaluate the true monthly and annual carrying costs of every asset and the optimal time to secure funding.
+- **Goal:** Transform the dashboard from a price viewer into a "Decision Engine" for capital deployment.
+- **The Mortgage Tracker (Enhanced):**
+  - **12-Month Historical Time-Series:** The UI must visualize the relationship between the **BoE Base Rate**, **90% LTV 2yr/5yr Fixed Rates**, and **CPI Inflation** over a rolling 12-month window.
+  - **The "Spread Analyzer":** Monitor the delta between the Base Rate and Retail Rates to identify periods of institutional risk appetite (narrowing spreads) vs. caution (widening spreads).
+  - **Purchasing Power Index (PPI):** A chart showing the maximum loan amount achievable for a fixed monthly budget (e.g., £3,000/month) at current vs. historical rates.
+  - **LTV Arbitrage Calculator:** Visualize the monthly savings achieved by moving between LTV bands (90% -> 80% -> 75%) to inform deposit strategy.
+  - **MPC Meeting Countdown:** Display the date of the next Bank of England Monetary Policy Committee (MPC) meeting and the market consensus (e.g., "75% Probability of 25bps cut").
+  - **Analyst Node (Financial):** Provide a qualitative signal (e.g., "Buyer's Market - Rate Lock Recommended") based on the current rate cycle.
 - **Instruction to Data Agent:** 
-  - Source Council Tax bands and annual costs for target London areas.
-  - Implement a pipeline to fetch/update current retail mortgage rates (90% LTV).
-  - Enrich `macro_trend.json` with historical mortgage rate data.
+  - Source and maintain a 12-month historical time-series for economic indicators in `macro_trend.json`.
+  - Include `mpc_next_meeting` and `market_consensus` in the schema.
+  - Provide LTV band rate data (75%, 80%, 90%).
 - **Instruction to Frontend Agent:** 
-  - Create the `MortgageTracker` page with Bloomberg-style charts and KPI nodes.
-  - Implement the "Total Monthly Outlay" calculator in the Property Detail and Preview Drawer.
-  - Add a "Financial DNA" widget to the Landing Page/Situation Room.
+  - Implement high-density Bloomberg-style charts (using Recharts or similar) for historical trends.
+  - Create the "Purchasing Power Index" widget.
+  - Add a "LTV Advantage" node to the Property Detail page.
 
 ### 13. Manual Lead Ingestion & Submission Tracker
 - **Requirement:** Provide a "Direct Injection" path for the user to submit property URLs, with real-time status feedback in the UI.
@@ -182,30 +209,31 @@ To build a private, high-precision research tool that enables a single buyer to 
 - **Instruction to Frontend Agent:** 
   - Ensure the "Source Hub" correctly attributes these external leads if a `source_name` field is provided.
 
-### 15. Research Expansion: Chelsea (SW3/SW10)
-- **Requirement:** Expand the primary research scope to include the **Chelsea (SW3/SW10)** area.
-- **Goal:** Capture high-stakes luxury assets in prime South West London.
+### 15. Research Expansion: Chelsea (SW3/SW10) & Primrose Hill (NW1)
+- **Requirement:** Expand the primary research scope to include **Chelsea (SW3/SW10)** and **Primrose Hill (NW1)**.
+- **Goal:** Capture high-stakes luxury assets in prime South West and North West London.
 - **Instruction to Data Agent:** 
-  - Update `data/property.schema.json` to include `Chelsea (SW3/SW10)` in the `area` enum.
-  - Synchronize `frontend/src/types/property.ts` to include the new area in the `Area` type.
-  - Update `data/macro_trend.json` to include a "Heat Index" and trend data for Chelsea.
+  - Update `data/property.schema.json` to include `Chelsea (SW3/SW10)` and `Primrose Hill (NW1)` in the `area` enum.
+  - Synchronize `frontend/src/types/property.ts` to include the new areas in the `Area` type.
+  - Update `data/macro_trend.json` to include a "Heat Index" and trend data for Chelsea and Primrose Hill.
 - **Instruction to Frontend Agent:** 
-  - Update `AREA_COORDS` in `useProperties.ts` and `PropertyContext.tsx` to include coordinates for Chelsea (e.g., `[51.4875, -0.1687]`).
-  - Ensure the Sidebar and Search filters correctly reflect the new area.
+  - Update `AREA_COORDS` in `useProperties.ts` and `PropertyContext.tsx` to include coordinates for Chelsea and Primrose Hill (e.g., `[51.5410, -0.1550]` for NW1).
+  - Ensure the Sidebar and Search filters correctly reflect the new areas.
 
-### 16. Robust Visual Extraction & Anti-Detection
-- **Requirement:** Implement resilient, institutional-grade property image extraction to overcome portal-side bot detection and dynamic rendering.
-- **Goal:** Ensure 100% visual fidelity for all assets in the Master DB.
-- **Research Mandate:** 
-  - Investigate the use of headless browsers (e.g., Playwright/Puppeteer) with stealth plugins for dynamic JSON model extraction.
-  - Research direct portal API endpoints that bypass frontend obfuscation.
-- **Fallback Hierarchy:** 
-  - Primary: Extraction from Portal JSON Models (`PAGE_MODEL`, `__NEXT_DATA__`).
-  - Secondary: Direct extraction from Estate Agent website (Knight Frank, Savills, etc.).
-  - Tertiary: Search-based image discovery via property address/ID.
+### 18. Institutional Data Engine (SQLite Migration)
+- **Requirement:** Transition the primary data storage from a flat `master.json` to a structured, on-disk **SQLite database** (`data/immosearch.db`).
+- **Goal:** Minimize context bloat and token usage by enabling surgical data retrieval and indexed search.
+- **Core Architecture:**
+  - **Relational Schema:** Separate tables for `properties`, `submissions`, `analyst_notes`, and `historical_metrics`.
+  - **Surgical API:** The Local API Server (`server/`) must provide endpoints for specific ID lookups and filtered queries (e.g., `GET /api/properties?area=SW3&min_alpha=8`).
+  - **Data Resilience:** Maintain a "Gold Standard" JSON export/import utility for human-readable backups and version control.
 - **Instruction to Data Agent:** 
-  - Document a "Visual Extraction Protocol" that handles common failure modes (403 Forbidden, lazy-loading).
-  - Prioritize links with high resolution (1024px+) and verified longevity.
+  - Design the SQLite schema based on the existing `property.schema.json`.
+  - Implement a migration script to port all existing records from `master.json` and `manual_queue.json` into the new database.
+  - Update the scraping pipeline to write directly to the SQLite `inbox` table.
+- **Instruction to Frontend Agent:** 
+  - Refactor the Local API Server to interface with the SQLite database using a lightweight ORM or raw SQL.
+  - Ensure the Frontend `useProperties` hook utilizes the new filtered API endpoints to reduce the initial payload size.
 
 ---
 
@@ -215,6 +243,9 @@ To build a private, high-precision research tool that enables a single buyer to 
 - **Private Use:** No authentication or user-management required.
 - **Tech Stack:** React 19, Tailwind CSS, Local Node.js API Server (Express/Fastify) for Inbox management.
 - **Agent Governance:** Strict territorial boundaries. No cross-folder modifications.
+- **Token Efficiency (Infrastructure):** 
+  - **Mandate:** All high-volume shell operations (builds, tests, syncs) must be proxied through `rtk` (Rust Token Killer) to minimize context noise and reduce token consumption by 60-90%.
+  - **Auto-Rewrite:** The environment must support global command rewriting to ensure agents receive compressed outputs transparently.
 
 ---
 

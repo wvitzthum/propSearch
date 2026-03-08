@@ -1,9 +1,12 @@
 export type Area =
   | "Islington (N1)"
   | "Islington (N7)"
+  | "Islington (N1/N7)"
   | "Bayswater (W2)"
   | "Belsize Park (NW3)"
-  | "West Hampstead (NW6)";
+  | "West Hampstead (NW6)"
+  | "Chelsea (SW3/SW10)"
+  | "Primrose Hill (NW1)";
 
 export type EPCRating = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
 
@@ -33,9 +36,20 @@ export interface Property {
   is_value_buy: boolean;
   epc: EPCRating;
   tenure: string;
+  service_charge: number;
+  ground_rent: number;
+  lease_years_remaining: number;
+  council_tax_band?: string;
   dom: number;
   neg_strategy: string;
+  floor_level: string;
   alpha_score: number;
   appreciation_potential: number;
   links: string[];
+  link: string;
+}
+
+export interface PropertyWithCoords extends Property {
+  lat: number;
+  lng: number;
 }

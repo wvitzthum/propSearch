@@ -25,7 +25,10 @@
     "neg_strategy",
     "alpha_score",
     "appreciation_potential",
-    "links"
+    "links",
+    "floor_level",
+    "source",
+    "source_name"
   ],
   "properties": {
     "id": {
@@ -67,9 +70,14 @@
       "enum": [
         "Islington (N1)",
         "Islington (N7)",
+        "Islington (N1/N7)",
         "Bayswater (W2)",
         "Belsize Park (NW3)",
-        "West Hampstead (NW6)"
+        "West Hampstead (NW6)",
+        "Chelsea (SW3/SW10)",
+        "Chelsea (SW3)",
+        "Chelsea (SW10)",
+        "Primrose Hill (NW1)"
       ],
       "description": "Target acquisition area and postcode."
     },
@@ -154,6 +162,19 @@
     "neg_strategy": {
       "type": "string",
       "description": "Recommended negotiation strategy (e.g., 'Aggressive: -12% bid')."
+    },
+    "floor_level": {
+      "type": "string",
+      "description": "Asset floor level (e.g., Ground, 1st, 4th)."
+    },
+    "source": {
+      "type": "string",
+      "enum": ["Automated Scrape", "Manual Lead", "External Import"],
+      "description": "The ingestion channel for this asset."
+    },
+    "source_name": {
+      "type": "string",
+      "description": "The specific name of the source (e.g., 'Savills Search')."
     },
     "alpha_score": {
       "type": "number",

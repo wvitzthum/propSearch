@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, GeoJSON } from 'react-leaflet';
 import L from 'leaflet';
 import { 
   Filter, 
@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   Search,
   ShieldAlert,
+  ShieldCheck,
   Table as TableIcon,
   ChevronRight,
   ChevronDown,
@@ -18,26 +19,43 @@ import {
   Maximize2,
   Gem
 } from 'lucide-react';
-import { useProperties } from '../hooks/useProperties';
-import type { PropertyWithCoords } from '../hooks/useProperties';
+import { usePropertyContext } from '../hooks/PropertyContext';
+import type { PropertyWithCoords } from '../types/property';
 import { usePipeline } from '../hooks/usePipeline';
 import type { PropertyStatus } from '../hooks/usePipeline';
+import { useComparison } from '../hooks/useComparison';
 import PropertyTable from '../components/PropertyTable';
 import AlphaBadge from '../components/AlphaBadge';
 import KPICard from '../components/KPICard';
 import LoadingNode from '../components/LoadingNode';
 import PreviewDrawer from '../components/PreviewDrawer';
 import MarketPulse from '../components/MarketPulse';
+import PropertyImage from '../components/PropertyImage';
 import { Bookmark, Archive, RotateCcw } from 'lucide-react';
 
 // Fix Leaflet marker icons with a custom "Linear" style
-const createPropertyIcon = (score: number) => {
+const createPropertyIcon = (score: number, status: PropertyStatus = 'discovered') => {
   const color = score >= 8 ? '#10b981' : score >= 5 ? '#f59e0b' : '#ef4444';
+  const isShortlisted = status === 'shortlisted';
+  const isVetted = status === 'vetted';
+  
+  let statusColor = color;
+  let glowClass = isShortlisted ? 'opacity-80 scale-150' : 'opacity-40';
+  let borderClass = isShortlisted ? 'border-blue-400 ring-2 ring-blue-500/50' : 'border-white';
+  
+  if (isShortlisted) {
+    statusColor = '#3b82f6';
+  } else if (isVetted) {
+    statusColor = '#10b981';
+    glowClass = 'opacity-90 scale-[1.75]';
+    borderClass = 'border-emerald-400 ring-4 ring-emerald-500/30';
+  }
+
   return L.divIcon({
     className: 'property-marker',
     html: `<div class="group relative flex items-center justify-center">
-             <div class="absolute inset-0 rounded-full blur-[6px] opacity-40 group-hover:opacity-80 transition-opacity" style="background-color: ${color}"></div>
-             <div class="relative w-3.5 h-3.5 rounded-full border-[1.5px] border-white shadow-xl flex items-center justify-center transition-transform group-hover:scale-125" style="background-color: ${color}">
+             <div class="absolute inset-0 rounded-full blur-[6px] ${glowClass} group-hover:opacity-80 transition-all duration-500" style="background-color: ${statusColor}"></div>
+             <div class="relative w-3.5 h-3.5 rounded-full border-[1.5px] ${borderClass} shadow-xl flex items-center justify-center transition-all duration-500 group-hover:scale-125" style="background-color: ${color}">
                <div class="w-1 h-1 bg-white/40 rounded-full"></div>
              </div>
            </div>`,
@@ -50,12 +68,12 @@ const createNodeIcon = (type: 'hub' | 'park' | 'station', label: string) => {
   const iconColor = type === 'hub' ? '#60a5fa' : type === 'park' ? '#34d399' : '#94a3b8';
   return L.divIcon({
     className: 'node-marker',
-    html: `<div class="flex items-center gap-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-md border border-white/10 shadow-2xl">
-             <div class="w-2 h-2 rounded-full" style="background-color: ${iconColor}; box-shadow: 0 0 8px ${iconColor}"></div>
-             <span class="text-[9px] font-black text-white uppercase tracking-widest whitespace-nowrap">${label}</span>
+    html: `<div class="flex items-center gap-2 bg-black/80 backdrop-blur-xl px-2.5 py-1.5 rounded-lg border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+             <div class="w-2.5 h-2.5 rounded-full" style="background-color: ${iconColor}; box-shadow: 0 0 12px ${iconColor}"></div>
+             <span class="text-[10px] font-black text-white uppercase tracking-[0.1em] whitespace-nowrap">${label}</span>
            </div>`,
-    iconSize: [100, 24],
-    iconAnchor: [12, 12]
+    iconSize: [120, 30],
+    iconAnchor: [15, 15]
   });
 };
 
@@ -72,6 +90,52 @@ const SPATIAL_CONTEXT = [
   { name: 'Green Park', coords: [51.5040, -0.1418], type: 'park' },
   { name: 'Victoria', coords: [51.4952, -0.1441], type: 'station' }
 ] as const;
+
+const METRO_COLORS: Record<string, string> = {
+  'District': '#00782a',
+  'Piccadilly': '#003688',
+  'Victoria': '#00a1e4',
+  'London Overground': '#e8630a',
+  'Elizabeth line': '#6950a1',
+  'Metropolitan': '#9b0056',
+  'Northern': '#000000',
+  'Central': '#e32017',
+  'Jubilee': '#a0a5a9',
+  'Bakerloo': '#b36305',
+  'Hammersmith & City': '#f3a9bb',
+  'Circle': '#ffd010',
+  'DLR': '#00afad'
+};
+
+const MetroOverlay: React.FC = () => {
+  const [geoData, setGeoData] = useState<any>(null);
+
+  useEffect(() => {
+    // Note: In a real Vite app, these assets should be in /public or handled by the server
+    fetch('/data/london_metro.geojson')
+      .then(res => res.json())
+      .then(data => setGeoData(data))
+      .catch(err => console.error('Failed to load metro data:', err));
+  }, []);
+
+  if (!geoData) return null;
+
+  return (
+    <GeoJSON 
+      data={geoData} 
+      style={(feature) => {
+        const lineName = feature?.properties?.lines?.[0]?.name;
+        const color = METRO_COLORS[lineName] || '#475569';
+        return {
+          color,
+          weight: 2.5,
+          opacity: 0.75,
+          lineJoin: 'round'
+        };
+      }}
+    />
+  );
+};
 
 const AutoFitBounds: React.FC<{ properties: PropertyWithCoords[] }> = ({ properties }) => {
   const map = useMap();
@@ -92,8 +156,12 @@ const PropertyCard: React.FC<{
   onStatusChange: (id: string, status: PropertyStatus) => void;
   onPreview: (property: PropertyWithCoords) => void;
 }> = ({ property, status, onStatusChange, onPreview }) => {
+  const { toggleComparison, isInComparison } = useComparison();
+  const isSelected = isInComparison(property.id);
+
   return (
     <div className={`bg-linear-card border rounded-xl overflow-hidden hover:border-linear-accent transition-all group flex flex-col h-full relative glow-border ${
+      isSelected ? 'ring-2 ring-blue-500/50 border-blue-500/50' : 
       status === 'shortlisted' ? 'border-blue-500/40 shadow-[0_0_15px_rgba(59,130,246,0.1)]' : 'border-linear-border'
     }`}>
       {/* Thumbnail */}
@@ -102,8 +170,8 @@ const PropertyCard: React.FC<{
         className="relative h-40 w-full overflow-hidden bg-linear-bg flex items-center justify-center group-hover:opacity-90 transition-opacity cursor-pointer"
       >
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
-        <img 
-          src={`https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80&sig=${property.id.slice(0, 4)}`}
+        <PropertyImage 
+          src={property.image_url || property.gallery[0]}
           alt={property.address}
           className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
@@ -132,7 +200,7 @@ const PropertyCard: React.FC<{
         <div className="flex justify-between items-start mb-3 cursor-pointer" onClick={() => onPreview(property)}>
           <div className="flex flex-col">
             <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest mb-0.5">
-              {property.area.split(' (')[0]}
+              {(property.area || 'Unknown').split(' (')[0]}
               {property.metadata.discovery_count > 1 && (
                 <span className="ml-2 text-linear-accent">×{property.metadata.discovery_count}</span>
               )}
@@ -158,6 +226,15 @@ const PropertyCard: React.FC<{
             <span className="text-[10px] font-bold text-white tracking-tighter">{property.sqft}</span>
           </div>
           <div className="h-2 w-px bg-linear-border" />
+          {property.floor_level && (
+            <>
+              <div className="flex items-center gap-1.5">
+                <LayoutGrid size={10} className="text-linear-accent" />
+                <span className="text-[10px] font-bold text-white tracking-tighter uppercase">{property.floor_level}</span>
+              </div>
+              <div className="h-2 w-px bg-linear-border" />
+            </>
+          )}
           <div className="flex items-center gap-1.5">
             <Zap size={10} className="text-linear-accent" />
             <span className="text-[10px] font-bold text-white tracking-tighter">{property.epc}</span>
@@ -175,6 +252,16 @@ const PropertyCard: React.FC<{
       <div className="px-4 py-2.5 bg-linear-bg/50 border-t border-linear-border flex justify-between items-center mt-auto">
         <div className="flex items-center gap-2">
           <button 
+            onClick={() => toggleComparison(property.id)}
+            className={`p-1 rounded transition-all hover:scale-110 ${
+              isSelected ? 'text-blue-400 bg-blue-400/10' : 'text-linear-accent hover:text-white'
+            }`}
+            title="Add to Comparison"
+          >
+            <Zap size={14} fill={isSelected ? 'currentColor' : 'none'} />
+          </button>
+          <div className="w-px h-4 bg-linear-border mx-0.5"></div>
+          <button 
             onClick={() => onStatusChange(property.id, status === 'shortlisted' ? 'discovered' : 'shortlisted')}
             className={`p-1 rounded transition-all hover:scale-110 ${
               status === 'shortlisted' ? 'text-blue-400' : 'text-linear-accent hover:text-white'
@@ -182,6 +269,15 @@ const PropertyCard: React.FC<{
             title="Shortlist"
           >
             <Bookmark size={14} fill={status === 'shortlisted' ? 'currentColor' : 'none'} />
+          </button>
+          <button 
+            onClick={() => onStatusChange(property.id, status === 'vetted' ? 'shortlisted' : 'vetted')}
+            className={`p-1 rounded transition-all hover:scale-110 ${
+              status === 'vetted' ? 'text-emerald-400' : 'text-linear-accent hover:text-white'
+            }`}
+            title="Mark as Vetted"
+          >
+            <ShieldCheck size={14} fill={status === 'vetted' ? 'currentColor' : 'none'} />
           </button>
           <button 
             onClick={() => onStatusChange(property.id, status === 'archived' ? 'discovered' : 'archived')}
@@ -200,15 +296,32 @@ const PropertyCard: React.FC<{
           >
             Details
           </Link>
-          <a 
-            href={property.link} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-[9px] font-black text-white hover:text-blue-400 flex items-center gap-1 transition-colors uppercase tracking-[0.1em]"
-          >
-            Link
-            <ExternalLink size={10} />
-          </a>
+          <div className="relative group/hub">
+            <button 
+              className="text-[9px] font-black text-white hover:text-blue-400 flex items-center gap-1 transition-colors uppercase tracking-[0.1em]"
+            >
+              Links
+              <ChevronDown size={10} />
+            </button>
+            <div className="absolute bottom-full right-0 pb-1 mb-0 opacity-0 translate-y-1 pointer-events-none group-hover/hub:opacity-100 group-hover/hub:translate-y-0 group-hover/hub:pointer-events-auto transition-all z-50 min-w-[120px]">
+              <div className="bg-linear-card border border-linear-border rounded-lg shadow-2xl p-1.5">
+                <div className="flex flex-col gap-0.5">
+                  {(property.links || [property.link]).map((url, i) => (
+                    <a 
+                      key={i}
+                      href={url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="p-2 text-[8px] font-bold text-linear-text-muted hover:text-white hover:bg-linear-bg rounded-md transition-all flex items-center justify-between group/link uppercase tracking-tighter"
+                    >
+                      <span>{url.includes('rightmove') ? 'Rightmove' : url.includes('zoopla') ? 'Zoopla' : 'Portal'}</span>
+                      <ExternalLink size={8} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -216,17 +329,18 @@ const PropertyCard: React.FC<{
 };
 
 const Dashboard: React.FC = () => {
-  const { properties, loading, error } = useProperties();
+  const { properties, loading, error } = usePropertyContext();
   const { pipeline, setStatus, getStatus } = usePipeline();
   const [searchParams, setSearchParams] = useSearchParams();
   
   const [filterValueBuys, setFilterValueBuys] = useState(false);
   const [filterNewOnly, setFilterNewOnly] = useState(false);
   const [filterShortlisted, setFilterShortlisted] = useState(false);
+  const [filterVetted, setFilterVetted] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [areaFilter, setAreaFilter] = useState('All Areas');
-  const [sortBy, setSortBy] = useState<'alpha_score' | 'realistic_price' | 'price_per_sqm'>('alpha_score');
-  const [viewMode, setViewMode] = useState<'grid' | 'table' | 'map'>('grid');
+  const [sortBy, setSortBy] = useState<'alpha_score' | 'realistic_price' | 'price_per_sqm' | 'value_gap' | 'commute_utility' | 'appreciation'>('alpha_score');
+  const [viewMode, setViewMode] = useState<'grid' | 'table' | 'map'>('table');
   
   const [selectedProperty, setSelectedProperty] = useState<PropertyWithCoords | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -262,6 +376,7 @@ const Dashboard: React.FC = () => {
     }
 
     if (filterShortlisted) result = result.filter(p => getStatus(p.id) === 'shortlisted');
+    if (filterVetted) result = result.filter(p => getStatus(p.id) === 'vetted');
     if (filterValueBuys) result = result.filter(p => p.is_value_buy);
     if (filterNewOnly) result = result.filter(p => p.metadata.is_new);
     if (areaFilter !== 'All Areas') result = result.filter(p => p.area.includes(areaFilter));
@@ -274,18 +389,22 @@ const Dashboard: React.FC = () => {
       if (sortBy === 'alpha_score') return b.alpha_score - a.alpha_score;
       if (sortBy === 'realistic_price') return a.realistic_price - b.realistic_price;
       if (sortBy === 'price_per_sqm') return a.price_per_sqm - b.price_per_sqm;
+      if (sortBy === 'value_gap') return (b.list_price - b.realistic_price) - (a.list_price - a.realistic_price);
+      if (sortBy === 'commute_utility') return (a.commute_paternoster + a.commute_canada_square) - (b.commute_paternoster + b.commute_canada_square);
+      if (sortBy === 'appreciation') return b.appreciation_potential - a.appreciation_potential;
       return 0;
     });
 
     return result;
-  }, [properties, filterValueBuys, filterNewOnly, areaFilter, sortBy, filterShortlisted, showArchived, getStatus, maxPrice, minSqft]);
+  }, [properties, filterValueBuys, filterNewOnly, areaFilter, sortBy, filterShortlisted, filterVetted, showArchived, getStatus, maxPrice, minSqft]);
 
   const stats = useMemo(() => {
-    if (properties.length === 0) return { total: 0, avgAlpha: 0, shortlisted: 0 };
+    if (properties.length === 0) return { total: 0, avgAlpha: '0.0', shortlisted: 0, vetted: 0 };
     return {
       total: properties.length,
-      avgAlpha: (properties.reduce((acc, p) => acc + p.alpha_score, 0) / properties.length).toFixed(1),
-      shortlisted: Object.values(pipeline).filter(s => s === 'shortlisted').length
+      shortlisted: Object.values(pipeline).filter(s => s === 'shortlisted').length,
+      vetted: Object.values(pipeline).filter(s => s === 'vetted').length,
+      avgAlpha: (properties.reduce((acc, p) => acc + p.alpha_score, 0) / (properties.length || 1)).toFixed(1)
     };
   }, [properties, pipeline]);
 
@@ -329,23 +448,37 @@ const Dashboard: React.FC = () => {
       />
 
       {/* KPI Header */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <KPICard 
           label="Institutional Inventory" 
           value={stats.total} 
           icon={LayoutGrid} 
+          tooltip="Total count of vetted, investment-grade properties currently in the active acquisition pipeline."
+          methodology="Aggregated from Master DB after normalization and quality gate filtering."
         />
         <KPICard 
           label="Alpha Performance" 
           value={stats.avgAlpha} 
           icon={TrendingUp} 
           className="text-blue-400"
+          tooltip="The proprietary 0-10 composite rating representing the overall acquisition quality of all filtered assets."
+          methodology="Weighted average of Tenure Quality (40%), Spatial Alpha (30%), and Price Efficiency (30%)."
         />
         <KPICard 
-          label="Shortlisted Assets" 
+          label="Shortlisted" 
           value={stats.shortlisted} 
           icon={Bookmark} 
           className="text-retro-green"
+          tooltip="Current volume of assets successfully moved from 'Discovered' to 'Shortlisted' status."
+          methodology="User-defined filter status for assets marked for secondary vetting."
+        />
+        <KPICard 
+          label="Vetted Assets" 
+          value={stats.vetted} 
+          icon={ShieldCheck} 
+          className="text-emerald-400"
+          tooltip="Assets that have passed rigorous structural, financial, and spatial vetting."
+          methodology="Third-stage lifecycle status for assets ready for final acquisition protocols."
         />
       </div>
 
@@ -399,6 +532,19 @@ const Dashboard: React.FC = () => {
                 <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all shadow-sm ${filterShortlisted ? 'left-4.5' : 'left-0.5'}`}></div>
               </div>
               <span className="text-[10px] font-bold uppercase tracking-widest text-linear-text-muted group-hover:text-white transition-colors">Shortlist</span>
+            </label>
+
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <input 
+                type="checkbox" 
+                checked={filterVetted} 
+                onChange={(e) => setFilterVetted(e.target.checked)}
+                className="hidden"
+              />
+              <div className={`w-8 h-4 rounded-full relative transition-colors ${filterVetted ? 'bg-emerald-500' : 'bg-linear-accent'}`}>
+                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all shadow-sm ${filterVetted ? 'left-4.5' : 'left-0.5'}`}></div>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-linear-text-muted group-hover:text-white transition-colors">Vetted</span>
             </label>
 
             <label className="flex items-center gap-3 cursor-pointer group">
@@ -468,6 +614,9 @@ const Dashboard: React.FC = () => {
               <option value="alpha_score">Alpha Score (H-L)</option>
               <option value="realistic_price">Target Price (L-H)</option>
               <option value="price_per_sqm">Efficiency (L-H)</option>
+              <option value="value_gap">Value Gap (H-L)</option>
+              <option value="commute_utility">Commute (L-H)</option>
+              <option value="appreciation">Appreciation (H-L)</option>
             </select>
             <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-linear-accent pointer-events-none" />
           </div>
@@ -561,6 +710,7 @@ const Dashboard: React.FC = () => {
                 attribution='&copy; CARTO'
                 url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
               />
+              <MetroOverlay />
               
               {/* Institutional Hubs */}
               {INSTITUTIONAL_NODES.map(node => (
@@ -581,15 +731,14 @@ const Dashboard: React.FC = () => {
               ))}
 
               {filteredProperties.map(property => (
-                <Marker 
-                  key={property.id} 
+                <Marker
+                  key={property.id}
                   position={[property.lat, property.lng]}
-                  icon={createPropertyIcon(property.alpha_score)}
+                  icon={createPropertyIcon(property.alpha_score, getStatus(property.id))}
                   eventHandlers={{
                     click: () => handlePreview(property)
                   }}
-                >
-                  <Popup className="property-popup">
+                >                  <Popup className="property-popup">
                     <div className="w-64">
                       <div className="flex justify-between items-start mb-2">
                         <h4 className="font-bold text-white text-xs m-0 tracking-tight">{property.address}</h4>

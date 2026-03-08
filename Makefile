@@ -4,26 +4,43 @@
 all: install start
 
 # --- Standard Build & Development ---
+# [AGENT OPTIMIZATION]: All high-volume commands (npm, tsc, lint, sync) are 
+# optimized via 'rtk' (Rust Token Killer) to reduce token noise by 60-90%.
+# If a cryptic error occurs, agents should use 'rtk --raw <command>' to 
+# view the unedited terminal output.
 
 # Install all dependencies
 install:
 	@echo "Installing frontend dependencies..."
-	cd frontend && npm install
+	@rtk cd frontend && npm install
 
-# Start the frontend development server
+# Start the immoSearch Full Stack (API + Dashboard)
 start:
-	@echo "Starting immoSearch Dashboard..."
-	cd frontend && npm run dev
+	@echo "Starting immoSearch Full Stack..."
+	node server/index.js & cd frontend && npm run dev
+
+# Start the Data API server
+api:
+	@echo "Starting immoSearch Data API..."
+	node server/index.js
+
+# Alias for start
+dev: start
+
+# Run data sync pipeline
+sync:
+	@echo "Running Data Sync Cycle..."
+	@rtk node scripts/sync_data.js
 
 # Build the frontend for production
 build:
 	@echo "Building frontend for production..."
-	cd frontend && npm run build
+	@rtk cd frontend && npm run build
 
 # Run linting
 lint:
 	@echo "Running linter..."
-	cd frontend && npm run lint
+	@rtk cd frontend && npm run lint
 
 # Clean build artifacts
 clean:
@@ -42,7 +59,7 @@ agent-data:
 	@gemini -i "You are the Senior Real Estate Data Engineer. Please load and follow the instructions in agents/data_gatherer/README.md to maintain the property datasets. Remember the Data Authenticity mandate."
 
 # Invoke the Frontend Engineer agent
-agent-frontend:
+agent-fe:
 	@gemini -i "You are the Lead Frontend Engineer & UX Architect. Please load and follow the instructions in agents/frontend_engineer/README.md to develop the 'Bloomberg meets Linear' dashboard. Follow the Gemini CLI execution guidelines for background processes."
 
 # Invoke the UI/UX QA agent

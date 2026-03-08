@@ -13,10 +13,11 @@ Responsible for generating and maintaining a high-fidelity property dataset to s
 - Any generation of non-empirical or mock data for testing requires explicit user approval via `ask_user`.
 
 ## Task
-Generate a comprehensive JSON dataset of 50 off-market or live prime London properties meeting the user's specific acquisition criteria for Q1 2026.
+Generate a comprehensive JSON dataset of 30 off-market or live prime London properties meeting the user's specific acquisition criteria for Q1 2026.
 
 ## Acquisition Criteria
-- **Locations:** Islington (N1/N7), Bayswater (W2), Belsize Park (NW3), West Hampstead (NW6).
+- **Locations:** Islington (N1/N7), Bayswater (W2), Belsize Park (NW3), West Hampstead (NW6), Chelsea (SW3/SW10).
+  - **Exception:** Properties manually injected by the user (via `manual_queue.json` or `import/`) MUST be processed and included even if they fall outside these specific geographical boundaries. User intent takes precedence over area filters.
 - **List Price:** £600,000 to £775,000.
 - **Size:** 1.5 to 2 Bedrooms. Minimum 600 sq ft (56 sqm).
 - **Hard No's:** No student accommodation, retirement living, or auctions.
@@ -25,6 +26,12 @@ Generate a comprehensive JSON dataset of 50 off-market or live prime London prop
 - **Spatial Intelligence:** Priority given to properties within 800m of a Tube/Overground station and 1km of a major park.
 ## Reference Sources
 - **Strategic Roadmap:** [`../../REQUIREMENTS.md`](../../REQUIREMENTS.md)
+
+## Gemini CLI Execution & Optimization
+To optimize performance and minimize token usage:
+1.  **RTK Optimization:** High-volume commands (`npm`, `node scripts/sync_data.js`, etc.) are optimized via **rtk** (Rust Token Killer) to reduce terminal noise by 60-90%.
+2.  **Troubleshooting:** If `rtk` compresses an error you need to see in full, use `rtk --raw <command>` to bypass the filter.
+3.  **Efficiency:** Combine file reads and searches whenever possible to minimize turns.
 
 ## Logic & Calculations
 

@@ -1,20 +1,24 @@
 [
   {
-    "submission_id": "SUB-001",
-    "url": "https://www.rightmove.co.uk/properties/145107342",
+    "url": "https://www.johndwood.co.uk/properties/21370435/sales/PRH240106#/",
+    "source": "MANUAL_INJECTION",
+    "queued_at": "2026-03-08T17:14:55.670Z",
     "status": "completed",
-    "master_id": "c1a2b3c4-d5e6-4f7g-8h9i-j0k1l2m3n4o5",
-    "added_at": "2026-03-08",
-    "processed_at": "2026-03-08",
-    "notes": "Example: Completed submission"
+    "master_id": "e4f5a6b7-c8d9-4e0a-1b2c-3d4e5f6g7h8i",
+    "processed_at": "2026-03-08T18:50:00.000Z",
+    "notes": "Processed despite being outside initial boundaries (NW1) per user directive."
   },
   {
-    "submission_id": "SUB-002",
-    "url": "https://www.rightmove.co.uk/properties/144785342",
-    "status": "pending",
-    "master_id": null,
-    "added_at": "2026-03-08",
-    "processed_at": null,
-    "notes": "Example: Pending submission"
+    "url": "https://g-h.co.uk/sales/primrose-gardens-london-nw3/ham250290",
+    "source": "MANUAL_INJECTION",
+    "queued_at": "2026-03-08T20:39:19.718Z",
+    "status": "completed",
+    "processed_at": "2026-03-08T21:15:00.000Z",
+    "master_id": "8485292a-..."
+  },
+  {
+    "url": "https://www.primelocation.com/for-sale/details/72607915/?search_identifier=97ebb4af3ac9a458cce9174f45d1d19abdc9fb98442681a44ec5bd1e36731bb5",
+    "source": "MANUAL_INJECTION",
+    "queued_at": "2026-03-08T22:38:58.243Z"
   }
 ]
