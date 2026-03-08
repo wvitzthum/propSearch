@@ -1,54 +1,52 @@
 # immoSearch: Private Property Acquisition Dashboard
 
 ## Project Mission
-immoSearch is a specialized research platform built to identify and acquire a specific prime London property for personal residential use. This is a private tool, designed to automate the heavy lifting of data gathering and analysis, allowing the buyer to focus on high-stakes decision-making.
+**immoSearch** is a bespoke, high-precision research platform designed for a single private buyer to identify and acquire a specific prime London property. Unlike consumer portals (Rightmove/Zoopla), this tool prioritizes data density, institutional-grade metrics, and rapid decision-making.
 
-**Note:** This project is for internal research and personal use only. It is not intended for commercial distribution or external revenue generation.
+> **Note:** This project is for internal research and personal use only. It is not intended for commercial distribution.
+
+## Strategic Pillars
+1.  **Data Integrity:** Zero synthetic data. All listings are empirically sourced from live market data and verified against agent websites.
+2.  **Visual Intelligence:** "Bloomberg Terminal meets Linear." High-contrast dark mode, information density, and keyboard-centric navigation.
+3.  **Spatial Context:** Integrated London Metro and Green Space overlays for immediate location analysis.
+4.  **Institutional Metrics:** Alpha Scores, Cap Rate potential, and Commute Utility calculations for every asset.
+
+---
 
 ## The Agent Ecosystem
-We utilize a multi-agent workflow to separate concerns and ensure a "Bloomberg Terminal meets Linear" high-fidelity experience.
+We utilize a specialized multi-agent workflow to ensure architectural purity and domain expertise.
 
-### Starting Agents in Separate Terminals
-You can easily spawn dedicated terminal windows for each agent role in VS Code:
-1.  Press `Cmd+Shift+P` (macOS) or `Ctrl+Shift+P` (Windows/Linux).
-2.  Search for **Tasks: Run Task**.
-3.  Select the desired agent (e.g., **Agent: Product Owner**, **Agent: Data Gatherer**, etc.).
-This will open a new terminal window and pre-load the Gemini CLI with that agent's specific role and instructions.
+### 1. [Product Owner & Strategy](./agents/product_owner/README.md)
+- **Role:** Vision & Roadmap.
+- **Focus:** Maintains [REQUIREMENTS.md](./REQUIREMENTS.md) and manages the feature backlog in [Tasks.md](./Tasks.md).
+- **Key Output:** Strategic direction and "Inbox" management.
 
----
-## Agent Roles
-...
+### 2. [Data Gatherer (Engineer)](./agents/data_gatherer/README.md)
+- **Role:** Sourcing & Normalization.
+- **Focus:** Scrapes listings, calculates Alpha/Appreciation scores, and maintains the `data/master.json` registry.
+- **Key Output:** High-fidelity JSON datasets and schemas.
 
-    - Maintains the [REQUIREMENTS.md](./REQUIREMENTS.md) strategic roadmap.
-    - Defines new features and strategic priorities in [Tasks.md](./Tasks.md).
-2.  **[Data Gatherer](./agents/data_gatherer/README.md):** 
-    - Scrapes and normalizes property listings from multiple sources.
-...
+### 3. [Frontend Engineer](./agents/frontend_engineer/README.md)
+- **Role:** UI/UX Implementation.
+- **Focus:** Builds the React + Tailwind dashboard using "Linear-style" components and high-performance rendering.
+- **Key Output:** A responsive, read-write dashboard for property analysis.
 
-    - Applies proprietary **Alpha Score** logic and pricing analysis.
-    - Maintains the property registry (`data/master.json`).
-2.  **[Frontend Engineer](./agents/frontend_engineer/README.md):** 
-    - Builds the dashboard using React + Tailwind, optimized for a single buyer.
-    - Implements data-dense views inspired by the clean, precise UI patterns of `linear.app`.
-    - **No Auth:** Directly serves the dashboard without login or user-management layers.
-3.  **[UI/UX QA](./agents/ui_ux_qa/README.md):** 
-    - Audits functionality, dark mode, and visual consistency against "Linear" design standards.
-    - Manages the [Tasks.md](./Tasks.md) backlog for the Frontend Engineer.
-
----
-
-## Best Use Case
-The system is optimized for a single-buyer feedback loop:
-1.  The **Data Gatherer** surfaces a new batch of properties.
-2.  The **QA Agent** ensures the dashboard displays this data correctly (e.g., checking if the Alpha Score logic translates visually).
-3.  The **Frontend Engineer** refines the interface based on QA feedback.
-4.  The **User** (Private Buyer) uses the final dashboard to filter down to the top 1% of opportunities for viewings.
+### 4. [UI/UX QA](./agents/ui_ux_qa/README.md)
+- **Role:** Quality Assurance.
+- **Focus:** Audits visual consistency, dark mode contrast, and functional integrity against the design system.
+- **Key Output:** Bug reports and aesthetic refinements.
 
 ---
 
 ## Project Structure
 - `/agents`: Role-specific instructions and workflows.
-- `/data`: Property datasets, including snapshots and the master registry.
-- `/frontend`: The React + Tailwind CSS dashboard.
-- `Tasks.md`: Centralized bug and feature tracking for the frontend development.
-- `GEMINI.md`: Core system directives and agent coordination rules.
+- `/data`: Property datasets, including snapshots (`DD_MM_YYYY.json`) and the master registry.
+- `/frontend`: The React 19 + Tailwind CSS dashboard.
+- `Tasks.md`: Centralized bug and feature tracking.
+- `REQUIREMENTS.md`: The single source of truth for project goals.
+- `DECISIONS.md`: Architectural Decision Records (ADRs).
+
+## Getting Started
+1.  **Launch Dashboard:** `cd frontend && npm run dev`
+2.  **Run Agents:** Use the VS Code "Run Task" menu to spawn agent-specific terminals.
+3.  **View Reports:** Check `agents/ui_ux_qa/` for the latest audit reports.

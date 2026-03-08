@@ -10,18 +10,19 @@
 ## Active Backlog
 | ID | Priority | Task | Status | Responsible | Reported By | Dependencies | Date |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| QA-016 | Low | Map Clarity Audit: Evaluate if grayscale/inverted map remains usable for London experts | In Progress | QA Agent | QA Agent | - | 2026-03-07 |
-| QA-022 | High | Aesthetic Audit: Review 'Market Situation Room' (Landing Page) for Linear/Bloomberg alignment | Pending | UI/UX QA | Product Owner | FE-020 | 2026-03-07 |
-| QA-023 | High | Link Integrity Audit: Scan all listings for broken 'links' and ensure every property has both a portal and direct agent link if possible | Pending | UI/UX QA | Product Owner | DAT-011 | 2026-03-07 |
-| DAT-007 | High | Spatial Assets: Source and provide 'data/london_metro.geojson' for Tube/Overground lines | Done | Data Gatherer | Product Owner | - | 2026-03-07 |
 | DAT-011 | Medium | Schema Cleanup: Deprecate single 'link' field in master.json once the frontend is updated to use 'links' array | Pending | Data Gatherer | Product Owner | FE-029 | 2026-03-07 |
-| FE-022 | High | Gallery Implementation: Render high-res image gallery in Preview Drawer and Detail views | Pending | Frontend Engineer | Data Gatherer | DAT-001 | 2026-03-07 |
-| FE-025 | High | Map Intelligence: Implement semi-transparent London Metro overlay using GeoJSON data | Pending | Frontend Engineer | Product Owner | DAT-007 | 2026-03-07 |
-| QA-021 | High | UI/UX Audit: Define institutional-grade tooltip content for all metrics (Alpha, MOS, Heat, etc.) | Pending | UI/UX QA | Product Owner | - | 2026-03-07 |
-| FE-026 | Medium | UI Refinement: Implement comprehensive hover tooltips for all complex metrics based on QA audit | Pending | Frontend Engineer | Product Owner | QA-021 | 2026-03-07 |
-| FE-027 | High | Institutional Sorting: Implement multi-factor sorting (Value Gap, Commute Utility, Appreciation) across all Dashboard views | Pending | Frontend Engineer | Product Owner | - | 2026-03-07 |
-| FE-028 | Medium | UI Enhancement: Implement 'Running Cost Node' in Asset Detail and Preview Drawer views | Pending | Frontend Engineer | Product Owner | - | 2026-03-07 |
-| FE-029 | High | Multi-Link Source Hub: Implement a 'Source Hub' dropdown/menu in all views to handle multiple portal/agent links and fix broken button logic | Pending | Frontend Engineer | Product Owner | DAT-011 | 2026-03-07 |
+| FE-026 | Medium | UI Refinement: Implement comprehensive hover tooltips based on `agents/ui_ux_qa/METRIC_DEFINITIONS.md` | Pending | Frontend Engineer | UI/UX QA | QA-021 | 2026-03-08 |
+| FE-030 | High | Analyst Annotations: Implement local-persistence 'Analyst Notes' field in Property Detail and Preview Drawer | Pending | Frontend Engineer | Product Owner | - | 2026-03-08 |
+| FE-031 | Medium | Comparative Intelligence: Implement side-by-side property comparison matrix (max 3 properties) | Pending | Frontend Engineer | Product Owner | - | 2026-03-08 |
+| DAT-012 | High | High-Fidelity Dataset Expansion: Populate 'master.json' until it reaches 50 high-fidelity listings with full schema support (gallery, links, running costs) | Pending | Data Gatherer | Product Owner | - | 2026-03-08 |
+| QA-024 | High | Data Audit: Verify the final dataset of 50 properties for schema completeness, image fidelity, and geographical distribution | Pending | UI/UX QA | Product Owner | DAT-012 | 2026-03-08 |
+| DAT-013 | High | Schema Alignment: Update 'data/property.schema.json' to include `service_charge`, `ground_rent`, and `lease_years_remaining`. Synchronize 'frontend/src/types/property.ts' as per ADR-005 | Pending | Data Gatherer | Product Owner | - | 2026-03-08 |
+| FE-033 | Medium | UI Refinement: Unify AlphaBadge visualization methodology to be grounded in formal schema metrics | Pending | Frontend Engineer | UI/UX QA | - | 2026-03-08 |
+| DAT-014 | High | Active Capture Architecture: Design and implement the 'Inbox' storage (SQLite or JSON-based) and update scraper to capture 100% of raw listings | Pending | Data Gatherer | Product Owner | - | 2026-03-08 |
+| DAT-015 | High | Local API Server: Implement a lightweight Node.js/Express server in `server/` to handle 'Inbox' read/write operations for the frontend | Pending | Data Gatherer | Product Owner | DAT-014 | 2026-03-08 |
+| FE-035 | High | Inbox UI: Implement a 'Rapid Review' dashboard for raw listings with keyboard shortcuts (A=Approve, R=Reject) | Pending | Frontend Engineer | Product Owner | DAT-015 | 2026-03-08 |
+| FE-036 | Medium | API Integration: Connect Dashboard to the new Local API Server for 'Inbox' management | Pending | Frontend Engineer | Product Owner | FE-035 | 2026-03-08 |
+| QA-025 | High | Active Capture Audit: Validate the end-to-end workflow from raw scrape -> Inbox -> Master DB promotion | Pending | UI/UX QA | Product Owner | FE-036 | 2026-03-08 |
 
 ---
 
@@ -29,7 +30,18 @@
 ## Resolved
 | ID | Priority | Task | Status | Responsible | Resolved By | Date |
 | --- | --- | --- | --- | --- | --- | --- |
+| FE-034 | Medium | Type Safety: Remove '(property as any)' type casts in 'PreviewDrawer.tsx' and 'PropertyDetail.tsx' once 'Property' interface is updated | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| FE-022 | High | Gallery Implementation: Render high-res image gallery in Preview Drawer and Detail views | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| FE-025 | High | Map Intelligence: Implement semi-transparent London Metro overlay using GeoJSON data | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| FE-027 | High | Institutional Sorting: Implement multi-factor sorting (Value Gap, Commute Utility, Appreciation) across all Dashboard views | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| FE-028 | Medium | UI Enhancement: Implement 'Running Cost Node' in Asset Detail and Preview Drawer views | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| FE-029 | High | Multi-Link Source Hub: Implement a 'Source Hub' dropdown/menu in all views to handle multiple portal/agent links and fix broken button logic | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| QA-016 | Low | Map Clarity Audit: Evaluate if grayscale/inverted map remains usable for London experts | Done | QA Agent | UI/UX QA | 2026-03-08 |
+| QA-021 | High | UI/UX Audit: Define institutional-grade tooltip content for all metrics (Alpha, MOS, Heat, etc.) | Done | UI/UX QA | UI/UX QA | 2026-03-08 |
+| QA-022 | High | Aesthetic Audit: Review 'Market Situation Room' (Landing Page) for Linear/Bloomberg alignment | Done | UI/UX QA | UI/UX QA | 2026-03-08 |
+| QA-023 | High | Link Integrity Audit: Scan all listings for broken 'links' and ensure every property has both a portal and direct agent link if possible | Done | UI/UX QA | UI/UX QA | 2026-03-08 |
 | DAT-009 | High | Tenure Verification: Research and populate 'service_charge', 'ground_rent', and 'lease_years_remaining' for new properties | Done | Data Gatherer | Data Agent | 2026-03-07 |
+| DAT-007 | High | Spatial Assets: Source and provide 'data/london_metro.geojson' for Tube/Overground lines | Done | Data Gatherer | Product Owner | - | 2026-03-07 |
 | DAT-002 | High | Institutional Proximity: Add travel time to Paternoster Square and Canada Square to new research | Done | Data Gatherer | Data Agent | 2026-03-07 |
 | DAT-001 | Critical | Data Integrity Audit: Scan master.json for placeholder/broken URLs and re-scrape | Done | Data Gatherer | Data Agent | 2026-03-08 |
 | DAT-010 | Critical | Image Placeholder Audit: Replace all Unsplash/synthetic image URLs with real property visual assets | Done | Data Gatherer | Data Agent | 2026-03-08 |
@@ -57,37 +69,3 @@
 | QA-013 | High | UI Pattern: Implement "Preview Drawer" for property details to prevent context loss | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
 | QA-014 | Medium | Data Transparency: Add Tooltips to AlphaBadges explaining score components | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
 | QA-015 | Medium | Precision Filters: Add numeric range inputs for Price and SQFT in Dashboard | Done | Frontend Engineer | Frontend Agent | 2026-03-07 |
-
----
-
-## Detailed Task Logs (Historical)
-
-### [DAT-001] Data Audit
-- **Resolution:** Scanned `master.json` and purged placeholder URLs. Re-generated 50 high-fidelity listings with enriched schema data (gallery, StreetView, and commute times).
-
-### [DAT-002] Proximity Schema
-- **Resolution:** Integrated institutional proximity travel times (Paternoster/Canada Square) for all entries. Verified against Tube map transit models.
-
-### [FE-018] User Profile Menu
-- **Resolution:** Implemented a functional dropdown menu in the sidebar footer with Profile, Billing, and Disconnect actions.
-
-### [FE-019] Market Pulse Widget
-- **Resolution:** Implemented `MarketPulse.tsx` component in Dashboard. Displays 4 KPI macro nodes, Area Heat Index, and Strategic Summary. Integrated `useMacroData` hook.
-
-### [FE-020] Landing Page Overhaul
-- **Resolution:** Implemented `MarketSituationRoom.tsx` with a custom SVG Volume Chart and Timing Indicator Gauge. Overhauled hero section for an institutional look.
-
-### [MAP-006] Map Auto-fit
-- **Resolution:** Implemented `AutoFitBounds` component in `Dashboard.tsx` to automatically center and zoom the map based on filtered property clusters.
-
-### [FE-021] Map Label Refinement
-- **Resolution:** Changed commute labels from `m` to `min` in map popups for clarity.
-
-### [MAP-005] Map Overhaul
-- **Resolution:** Enhanced map readability by removing yellowish sepia tint and aggressive filters. Added institutional nodes (Paternoster Sq, Canada Square) and spatial context nodes (Parks/Stations). Upgraded property markers to high-density Linear style.
-
-### [FE-016] Table Tooltips
-- **Resolution:** Added descriptive tooltips to all Table headers explaining the underlying metrics and scoring logic.
-
-### [FE-017] Commute Visualization
-- **Resolution:** Integrated commute nodes for Paternoster and Canada Square into Table, Preview Drawer, and Detail views.

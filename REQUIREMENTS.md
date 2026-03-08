@@ -65,8 +65,15 @@ To build a private, high-precision research tool that enables a single buyer to 
 - **Instruction to Data Agent:** Include `commute_paternoster` and `commute_canada_square` (time in minutes or distance) in the schema.
 - **Instruction to Frontend Agent:** Display these as "Commute Nodes" in the Asset Detail and Table views.
 
-### 7. Analyst Annotations & Comparative Intelligence
-...
+### 7. Analyst Annotations & Comparative Intelligence (User Input)
+- **Requirement:** The user must be able to add, edit, and persist "Analyst Notes" for any property in the database.
+- **Goal:** Capture qualitative context (e.g., "Refurbishment potential," "Noise levels during viewing") alongside quantitative metrics.
+- **Persistence:** Notes must be stored in a local JSON sidecar or local storage to ensure they persist across sessions.
+- **Comparative Side-by-Side:** Implement a "Compare" mode where the user can select 2-3 properties and view their KPIs (Alpha, Price/SQFT, Commute) side-by-side in a high-density matrix.
+- **Instruction to Frontend Agent:** 
+  - Render a "Notes" textarea in the Property Detail and Preview Drawer.
+  - Implement a "Compare" selection state in the Property Table/Grid.
+  - Create a dedicated `CompareModal` or view for side-by-side analysis.
 
 ### 8. Precision UX (Linear Pattern)
 - **Requirement:** Every interaction must feel "pro-grade", minimal, and precise.
@@ -97,11 +104,24 @@ To build a private, high-precision research tool that enables a single buyer to 
 - **Instruction to Frontend Agent:** 
   - **Landing Page Overhaul:** Transform the landing page into a "Market Situation Room" with high-density charts showing volume trends and a "Timing Indicator" widget.
 
+### 11. Active Listing Capture & The 'Inbox' Workflow
+- **Requirement:** Capture 100% of "Active Listings" that match the broad geographic criteria, even if they fail specific quality filters (e.g., price/size).
+- **Goal:** Ensure no "diamond in the rough" is missed by automated filtering.
+- **The 'Inbox':** A dedicated dashboard view for reviewing raw, unfiltered listings.
+  - **Actions:** `Approve` (Promote to Master DB), `Reject` (Archive), `Hold`.
+  - **Data Structure:** Raw scrapes are stored in a separate `inbox.json` or local SQLite DB to prevent polluting the high-fidelity `master.json`.
+- **Instruction to Data Agent:** 
+  - Update scraper to dump ALL results to `data/inbox/` or the local DB.
+  - Implement a `server/` or CLI tool to manage this ingestion.
+- **Instruction to Frontend Agent:** 
+  - Implement an "Inbox" view with rapid keyboard shortcuts (e.g., `A` for Accept, `R` for Reject).
+  - Connect to the Local Data Server API to perform these actions.
+
 ---
 
 ## Technical Constraints
 - **Private Use:** No authentication or user-management required.
-- **Tech Stack:** React 19, Tailwind CSS, JSON-based local data storage.
+- **Tech Stack:** React 19, Tailwind CSS, Local Node.js API Server (Express/Fastify) for Inbox management.
 - **Agent Governance:** Strict territorial boundaries. No cross-folder modifications.
 
 ---
