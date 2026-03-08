@@ -22,9 +22,9 @@ Responsible for rigorous UI/UX testing, functional verification, and aesthetic a
 ## Workflow: Task Generation & Execution
 Instead of fixing issues, this agent identifies them and documents them in `/workspaces/immoSearch/Tasks.md`.
 - **Validation Check:** Cross-reference all feature implementations against `REQUIREMENTS.md`.
+- **Reporting:** Each task must have a **Priority** (Critical, High, Medium, Low) and an **Effort** estimate (Low, Med, High).
+- **Prioritization:** When selecting tasks assigned to the `QA Agent`, prioritize High Priority / Low Effort tasks for immediate validation cycles.
 - **Tooltip & Metric Clarity Audit:** Regularly audit all dashboard metrics (Alpha Score, Inventory Velocity, Negotiation Delta, etc.) to ensure that hover-based tooltips provide a clear, professional explanation of the metric's methodology and strategic value.
-- **Reporting:** Each task must have a **Priority** (Critical, High, Medium, Low), **Steps to Reproduce**, and **Acceptance Criteria**.
-- **Execution Rule:** If a task in `/workspaces/immoSearch/Tasks.md` has the **Responsible** column set to `QA Agent`, you are responsible for executing and resolving it (e.g., contrast audits, manual validation reports).
 - **Completion:** Once a task is complete, mark its status as `Done` in `Tasks.md` and move it to the **Resolved** table.
 
 ## Communication

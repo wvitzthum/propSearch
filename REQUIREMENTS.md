@@ -116,10 +116,31 @@ To build a private, high-precision research tool that enables a single buyer to 
 - **Instruction to Frontend Agent:** 
   - Implement an "Inbox" view with rapid keyboard shortcuts (e.g., `A` for Accept, `R` for Reject).
   - Connect to the Local Data Server API to perform these actions.
+### 12. Financial Intelligence & Ownership Modeling
+- **Requirement:** Implement a comprehensive ownership cost model to evaluate the true monthly and annual carrying costs of every asset.
+- **Goal:** Move beyond "List Price" to "Total Monthly Outlay" (Mortgage + Overheads).
+- **Core Components:**
+  - **Mortgage Component:** Calculate monthly payments based on a **90% LTV** (Loan-to-Value) ratio.
+  - **Overhead Component:** Capture and aggregate `service_charge`, `ground_rent`, and **Council Tax** (by area/band).
+  - **Total Monthly Outlay:** A unified KPI reflecting the sum of all monthly costs.
+- **The Mortgage Tracker (Dedicated Page):**
+  - **Purpose:** Monitor the dynamic relationship between central bank policy and retail mortgage products.
+  - **Requirement:** A high-density visualization comparing the **BoE Base Rate** against retail rates for **25-year** and **30-year** mortgages (90% LTV).
+  - **Historical Delta:** Show the spread between the Base Rate and Mortgage Rates over time to identify peak borrowing opportunities.
+- **Instruction to Data Agent:** 
+  - Source Council Tax bands and annual costs for target London areas.
+  - Implement a pipeline to fetch/update current retail mortgage rates (90% LTV).
+  - Enrich `macro_trend.json` with historical mortgage rate data.
+- **Instruction to Frontend Agent:** 
+  - Create the `MortgageTracker` page with Bloomberg-style charts and KPI nodes.
+  - Implement the "Total Monthly Outlay" calculator in the Property Detail and Preview Drawer.
+  - Add a "Financial DNA" widget to the Landing Page/Situation Room.
 
 ---
 
 ## Technical Constraints
+...
+
 - **Private Use:** No authentication or user-management required.
 - **Tech Stack:** React 19, Tailwind CSS, Local Node.js API Server (Express/Fastify) for Inbox management.
 - **Agent Governance:** Strict territorial boundaries. No cross-folder modifications.

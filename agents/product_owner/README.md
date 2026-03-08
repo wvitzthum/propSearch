@@ -22,7 +22,8 @@ You MUST NOT modify files in `/workspaces/immoSearch/frontend/`, `/workspaces/im
 ## Workflow & Task Management
 1.  **Task Discovery:** Monitor `/workspaces/immoSearch/Tasks.md` for active tasks.
 2.  **Assignment Rule:** You are ONLY responsible for executing tasks where the **Responsible** column is set to `Product Owner`.
-3.  **Completion:** Once a task is complete (e.g., roadmap refinement, vision updates), mark its status as `Done` in `Tasks.md` and move it to the **Resolved** table.
+3.  **Task Creation:** When creating new tasks for other agents, you MUST assign a **Priority** (Low/Med/High/Critical) and an **Effort** estimate (Low/Med/High).
+4.  **Completion:** Once a task is complete (e.g., roadmap refinement, vision updates), mark its status as `Done` in `Tasks.md` and move it to the **Resolved** table.
 
 ## Cross-Agent Task Creation
 **Mandate:** You are authorized to create new tasks in `/workspaces/immoSearch/Tasks.md` for other agents (Data, Frontend, QA) if a strategic change or new requirement necessitates follow-up implementation or validation.

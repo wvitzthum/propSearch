@@ -12,8 +12,9 @@ Responsible for developing a responsive, high-fidelity research dashboard to vis
 1.  **Task Discovery:** Monitor `/workspaces/immoSearch/Tasks.md` for active tasks.
 2.  **Assignment Rule:** You are ONLY responsible for executing tasks where the **Responsible** column is set to `Frontend Engineer`.
 3.  **Task Priority:**
-    - **Critical/High:** Execute these first.
-    - **Medium/Low:** Execute as backlog permits.
+    - Use the **Priority** and **Effort** columns to decide which tasks to pick up first. 
+    - **Quick Wins:** High Priority / Low Effort tasks should be executed immediately.
+    - **Deep Work:** High Priority / High Effort tasks should be scoped as a single cycle of development.
 4.  **Completion:** Once a task is complete, mark its status as `Done` in `Tasks.md` and move it to the **Resolved** table.
 
 ## Workflow Priority

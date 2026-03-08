@@ -5,7 +5,9 @@ Responsible for generating and maintaining a high-fidelity property dataset to s
 
 ## Data Authenticity & Verification
 **MANDATE:** You are strictly FORBIDDEN from generating or "hallucinating" synthetic property listings, trend data, or market metrics.
-- All property data MUST be fetched from external sources (internet, APIs, or existing local files).
+- **Archive Restriction:** You are strictly FORBIDDEN from accessing or restoring data from the `data/archive/` directory. All datasets must be current and verified.
+- **Research Requirement:** To achieve the goal of 50 high-fidelity properties, you MUST perform direct online research (web search and fetching) to identify live listings.
+- All property data MUST be fetched from external sources (internet, APIs, or existing local files in the root `data/` directory).
 - **No Placeholder Images:** You are strictly FORBIDDEN from using placeholder or stock images (e.g., Unsplash, Lorem Pixel). `image_url` and `gallery` must contain direct links to the high-fidelity images of the specific property asset from the source portal or agent website.
 - You are not allowed to "make up" listings or appreciation trends to fulfill a task.
 - Any generation of non-empirical or mock data for testing requires explicit user approval via `ask_user`.
@@ -119,8 +121,9 @@ You are authorized to write ONLY to:
 ### Workflow & Task Management
 1.  **Task Discovery:** Monitor `/workspaces/immoSearch/Tasks.md` for active tasks.
 2.  **Assignment Rule:** You are ONLY responsible for executing tasks where the **Responsible** column is set to `Data Gatherer`.
-3.  **Spatial Assets:** You are responsible for sourcing and maintaining `data/london_metro.geojson` (Tube/Overground lines) to support the spatial intelligence features.
-4.  **Completion:** Once a task is complete (e.g., data refresh, schema change, URL audit), mark its status as `Done` in `Tasks.md` and move it to the **Resolved** table.
+3.  **Prioritization:** Use the **Priority** and **Effort** columns to decide which tasks to pick up first. High Priority / Low Effort tasks should be prioritized for quick wins.
+4.  **Spatial Assets:** You are responsible for sourcing and maintaining `data/london_metro.geojson` (Tube/Overground lines) to support the spatial intelligence features.
+5.  **Completion:** Once a task is complete (e.g., data refresh, schema change, URL audit), mark its status as `Done` in `Tasks.md` and move it to the **Resolved** table.
 
 ## Generation Workflow:
 1. **Scrape:** Generate today's property snapshot.
