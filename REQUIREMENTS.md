@@ -193,6 +193,20 @@ To build a private, high-precision research tool that enables a single buyer to 
   - Update `AREA_COORDS` in `useProperties.ts` and `PropertyContext.tsx` to include coordinates for Chelsea (e.g., `[51.4875, -0.1687]`).
   - Ensure the Sidebar and Search filters correctly reflect the new area.
 
+### 16. Robust Visual Extraction & Anti-Detection
+- **Requirement:** Implement resilient, institutional-grade property image extraction to overcome portal-side bot detection and dynamic rendering.
+- **Goal:** Ensure 100% visual fidelity for all assets in the Master DB.
+- **Research Mandate:** 
+  - Investigate the use of headless browsers (e.g., Playwright/Puppeteer) with stealth plugins for dynamic JSON model extraction.
+  - Research direct portal API endpoints that bypass frontend obfuscation.
+- **Fallback Hierarchy:** 
+  - Primary: Extraction from Portal JSON Models (`PAGE_MODEL`, `__NEXT_DATA__`).
+  - Secondary: Direct extraction from Estate Agent website (Knight Frank, Savills, etc.).
+  - Tertiary: Search-based image discovery via property address/ID.
+- **Instruction to Data Agent:** 
+  - Document a "Visual Extraction Protocol" that handles common failure modes (403 Forbidden, lazy-loading).
+  - Prioritize links with high resolution (1024px+) and verified longevity.
+
 ---
 
 ## Technical Constraints

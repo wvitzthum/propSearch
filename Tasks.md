@@ -10,9 +10,11 @@
 ## Active Backlog
 | ID | Priority | Effort | Task | Status | Responsible | Reported By | Dependencies | Date |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DAT-022 | High | Low | Research Expansion: Update `agents/data_gatherer/README.md`, `property.schema.json`, and `types/property.ts` to include 'Chelsea (SW3/SW10)' | Pending | Data Gatherer | Product Owner | - | 2026-03-08 |
-| DAT-023 | High | High | Data Gathering: Fetch/Scrape initial 10-15 high-fidelity Chelsea listings to populate the expanded target area | Pending | Data Gatherer | Product Owner | DAT-022 | 2026-03-08 |
+| DAT-023 | High | High | Data Gathering: Fetch/Scrape initial 10-15 high-fidelity Chelsea listings to populate the expanded target area | In Progress | Data Gatherer | Product Owner | DAT-022 | 2026-03-08 |
+| FE-047 | Critical | Medium | Map Institutional Clarity Fix: Implement specific `MAP_USABILITY_GUIDE.md` specs (Remove filters, increase background luminosity to #0c0c0e, and boost Metro weight to 4.5/0.75) | Pending | Frontend Engineer | UI/UX QA | - | 2026-03-08 |
 | FE-046 | High | Low | UI Expansion: Update `AREA_COORDS` and Sidebar/Search filters to support 'Chelsea (SW3/SW10)' | Pending | Frontend Engineer | Product Owner | DAT-022 | 2026-03-08 |
+| DAT-024 | Critical | Medium | Visual Extraction Research: Investigate anti-detection methods (stealth browsers, direct APIs) to overcome portal-side image blocking | Pending | Data Gatherer | Product Owner | - | 2026-03-08 |
+| DAT-025 | High | Medium | Visual Extraction Protocol: Document and implement a multi-stage fallback (Portal JSON -> Agent Site -> Search) for robust image recovery | Pending | Data Gatherer | Product Owner | DAT-024 | 2026-03-08 |
 | QA-028 | High | Low | Map Aesthetic Audit: Review Metro line thickness, background contrast (streetnames), and environmental shading (rivers/parks) | Pending | UI/UX QA | Product Owner | - | 2026-03-08 |
 | QA-025 | High | Medium | Active Capture Audit: Validate the end-to-end workflow from raw scrape -> Inbox -> Master DB promotion | Pending | UI/UX QA | Product Owner | FE-036 | 2026-03-08 |
 | QA-026 | High | Medium | Financial Audit: Verify ownership cost calculation accuracy and mortgage rate visualization fidelity | Pending | UI/UX QA | Product Owner | FE-038 | 2026-03-08 |
@@ -24,6 +26,7 @@
 | ID | Priority | Effort | Task | Status | Responsible | Resolved By | Date |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | FE-045 | Medium | High | Submission History Tracker: Implement a UI component to track lead research status and notify user on completion | Done | Frontend Engineer | Frontend Agent | 2026-03-08 |
+| DAT-022 | High | Low | Research Expansion: Chelsea support | Done | Data Gatherer | Product Owner | 2026-03-08 |
 | DAT-021 | High | Medium | Submission Lifecycle: Status tracking in `manual_queue.json` | Done | Data Gatherer | Data Agent | 2026-03-08 |
 | DAT-019 | High | Low | Manual Ingestion: Automated workflow via `scripts/sync_data.js` | Done | Data Gatherer | Data Agent | 2026-03-08 |
 | DAT-020 | High | Medium | External Data Ingestion: Automated ingestion via `scripts/sync_data.js` and `data/import/` | Done | Data Gatherer | Data Agent | 2026-03-08 |
