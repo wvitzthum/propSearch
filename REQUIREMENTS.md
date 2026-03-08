@@ -150,20 +150,22 @@ To build a private, high-precision research tool that enables a single buyer to 
   - Implement the "Total Monthly Outlay" calculator in the Property Detail and Preview Drawer.
   - Add a "Financial DNA" widget to the Landing Page/Situation Room.
 
-### 13. Manual Lead Ingestion (User-Driven Discovery)
-- **Requirement:** Provide a "Direct Injection" path for the user to suggest specific property URLs for the system to analyze.
-- **Goal:** Allow the user to bypass the automated scraper when they find a high-interest lead manually on a portal.
-- **The Manual Queue:** A dedicated file (`data/manual_queue.json`) where the user can paste raw URLs.
-- **Processing Logic:** 
-  - The Data Agent must monitor this file during every scrape cycle.
-  - For every URL in the queue, the agent must perform a "Deep Scrape", calculate all metrics (Alpha Score, Commute, etc.), and promote it to `master.json`.
-  - Once processed, the entry should be moved to a `processed` state or removed from the queue.
+### 13. Manual Lead Ingestion & Submission Tracker
+- **Requirement:** Provide a "Direct Injection" path for the user to submit property URLs, with real-time status feedback in the UI.
+- **Goal:** Close the loop between user discovery and automated research.
+- **The Submission Tracker:** 
+  - The UI must display a list of "Recently Submitted Leads" with their current status: `Pending`, `Processing`, `Completed`, or `Failed`.
+  - Upon successful promotion to the Master DB, the tracker must provide a direct link to the new Property Detail page.
+- **Data Persistence (`data/manual_queue.json`):** 
+  - Every submission must have a unique `submission_id`.
+  - Status updates must be persisted in the JSON file by the Data Agent.
 - **Instruction to Data Agent:** 
-  - Implement a `process_manual_queue` function that prioritizes these URLs over general scraping.
-  - Ensure the same data integrity and validation rules apply to manual leads.
+  - Update `manual_queue.json` statuses throughout the lifecycle.
+  - Upon completion, populate the `master_id` field to link the submission to the final asset.
 - **Instruction to Frontend Agent:** 
-  - Implement a "Quick Add" input in the Dashboard (Sidebar or Command Menu).
-  - Use the Local API Server to append new URLs to the `manual_queue.json`.
+  - Implement a "Lead Submission" modal or sidebar widget.
+  - Build a "Submission History" view that polls the Local API for status updates.
+  - Use toast notifications (e.g., "Lead Research Complete: [Address]") for a "pro-tool" feel.
 
 ### 14. External Data Import & Ingestion
 - **Requirement:** Provide a "Drop Zone" for external data sources (e.g., third-party scrapers, manual research batches) to be ingested into the immoSearch ecosystem.

@@ -127,16 +127,15 @@ You are authorized to write ONLY to:
 
 ## Generation Workflow:
 1.  **Import Zone Audit:** Check `data/import/*.json` for new external data.
-2.  **External Ingestion:** 
-    - Validate schema (address, area, price).
-    - Perform deep normalization (calculate Alpha Score, Commute).
-    - Merge into `master.json`.
-    - Archive processed files.
-3.  **Manual Queue Audit:** Check `data/manual_queue.json` for `pending` URLs.
-4.  **Deep Scrape:** Perform high-fidelity analysis for manual and external leads.
-5.  **General Scrape:** Proceed with automated background scraping.
-6.  **Registry Sync:** Update `metadata.last_seen` and increment `discovery_count`.
-7.  **Snapshot:** Save to `data/DD_MM_YYYY.json`.
+2.  **Manual Queue Processing (Priority):** 
+    - Identify `pending` submissions in `data/manual_queue.json`.
+    - Update status to `processing`.
+    - Perform deep research and promote to `master.json`.
+    - Update status to `completed` and populate `master_id` and `processed_at`.
+    - If research fails, update status to `failed` and log reason in `notes`.
+3.  **General Scrape:** Proceed with automated background scraping.
+4.  **Registry Sync:** Update `metadata.last_seen` and increment `discovery_count` for all active leads.
+5.  **Snapshot:** Save today's final data to `data/DD_MM_YYYY.json`.
 
 ### Schema Summary:
 #### 1. Property Asset (`data/master.json`)
