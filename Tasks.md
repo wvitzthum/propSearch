@@ -23,6 +23,7 @@
 | QA-025 | High | Medium | Active Capture Audit: Validate the end-to-end workflow from raw scrape -> Inbox -> Master DB promotion | Pending | UI/UX QA | Product Owner | FE-036 | 2026-03-08 |
 | QA-026 | High | Medium | Financial Audit: Verify ownership cost calculation accuracy and mortgage rate visualization fidelity | Pending | UI/UX QA | Product Owner | FE-038 | 2026-03-08 |
 | DAT-019 | High | Low | Manual Ingestion: Update workflow to prioritize and process `data/manual_queue.json` in every cycle | Pending | Data Gatherer | Product Owner | - | 2026-03-08 |
+| DAT-020 | High | Medium | External Data Ingestion: Implement logic to ingest and normalize raw JSON leads from `data/import/` | Pending | Data Gatherer | Product Owner | - | 2026-03-08 |
 | FE-040 | Medium | Medium | Quick Add UI: Implement 'Direct URL Injection' input in Dashboard to write to `manual_queue.json` via local API | Pending | Frontend Engineer | Product Owner | DAT-015 | 2026-03-08 |
 | FE-041 | Medium | Low | Visual Resilience: Implement a 'PropertyImage' component with an `onError` handler and stylized institutional placeholder | Pending | Frontend Engineer | Product Owner | - | 2026-03-08 |
 | QA-027 | High | Low | UX Audit: Verify and document sidebar menu "flicker/disappear" bug and Property Detail page scroll lock | Pending | UI/UX QA | Product Owner | - | 2026-03-08 |

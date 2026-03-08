@@ -165,6 +165,21 @@ To build a private, high-precision research tool that enables a single buyer to 
   - Implement a "Quick Add" input in the Dashboard (Sidebar or Command Menu).
   - Use the Local API Server to append new URLs to the `manual_queue.json`.
 
+### 14. External Data Import & Ingestion
+- **Requirement:** Provide a "Drop Zone" for external data sources (e.g., third-party scrapers, manual research batches) to be ingested into the immoSearch ecosystem.
+- **Goal:** Enable multi-source data aggregation without requiring direct code integration for every new source.
+- **The Import Zone:** A dedicated directory (`data/import/`) for raw JSON files.
+- **Ingestion Workflow:** 
+  - The Data Agent must check this directory upon activation.
+  - Files must follow the `External Lead` schema (defined in `PROMPT_GUIDE.md`).
+  - The Agent must normalize this data, calculate institutional metrics (Alpha Score, Commute), and merge it into `master.json`.
+  - Processed files should be moved to `data/archive/` to prevent duplicate ingestion.
+- **Instruction to Data Agent:** 
+  - Implement an `ingest_external_data` function that runs at the start of every cycle.
+  - Log any schema violations or missing critical fields (Price, Address) to the user.
+- **Instruction to Frontend Agent:** 
+  - Ensure the "Source Hub" correctly attributes these external leads if a `source_name` field is provided.
+
 ---
 
 ## Technical Constraints
