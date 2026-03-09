@@ -3,7 +3,7 @@ import type { MacroTrend } from '../types/macro';
 import type { FinancialContext } from '../types/financial';
 import type { Property } from '../types/property';
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = '/api';
 
 export const useFinancialData = () => {
   const [macroData, setMacroData] = useState<MacroTrend | null>(null);
@@ -28,15 +28,42 @@ export const useFinancialData = () => {
         } catch (e) {
           console.warn('API unavailable, falling back to static files');
           const [macroRes, financialRes] = await Promise.all([
-            fetch('/data/macro_trend.json'),
-            fetch('/data/financial_context.json')
+            fetch('/api/macro'),
+            fetch('/api/financials')
           ]);
           if (!macroRes.ok || !financialRes.ok) throw new Error('Static data unavailable');
           macro = await macroRes.json();
           financial = await financialRes.json();
         }
 
-        setMacroData(macro);
+        // Normalization Layer for Macro
+        const normalizeMacro = (raw: any): MacroTrend => ({
+          economic_indicators: {
+            boe_base_rate: raw.boe_base_rate || 3.75,
+            gbp_usd: raw.gbp_usd || 1.28,
+            uk_inflation_cpi: raw.uk_inflation_cpi || 2.1,
+            mortgage_rates: raw.mortgage_rates ? {
+              "90_ltv_2yr_fixed": raw.mortgage_rates.two_year_fixed_90_ltv || raw.mortgage_rates["90_ltv_2yr_fixed"] || 4.45,
+              "90_ltv_5yr_fixed": raw.mortgage_rates.five_year_fixed_90_ltv || raw.mortgage_rates["90_ltv_5yr_fixed"] || 4.55,
+              avg_fees: raw.mortgage_rates.avg_fees || 995
+            } : {
+              "90_ltv_2yr_fixed": 4.45,
+              "90_ltv_5yr_fixed": 4.55,
+              avg_fees: 995
+            },
+            mpc_next_meeting: raw.mpc_next_meeting,
+            market_consensus: raw.market_consensus
+          },
+          mortgage_history: raw.mortgage_history ? raw.mortgage_history.map((h: any) => ({
+            month: h.date || h.month,
+            boe_rate: h.boe_rate || (raw.boe_base_rate || 3.75),
+            mortgage_2yr: h.rate_90 || h.mortgage_2yr || 4.45,
+            mortgage_5yr: h.rate_90 || h.mortgage_5yr || 4.55,
+            cpi: h.cpi || 2.1
+          })) : []
+        });
+
+        setMacroData(normalizeMacro(macro));
         setFinancialContext(financial);
       } catch (err: any) {
         console.error('Financial data loading error:', err);
@@ -54,7 +81,8 @@ export const useFinancialData = () => {
 
     // 1. Mortgage Calculation (90% LTV, 5yr Fixed)
     const principal = property.realistic_price * 0.9;
-    const annualRate = macroData.economic_indicators.mortgage_rates["90_ltv_5yr_fixed"] / 100;
+    const rates = macroData.economic_indicators?.mortgage_rates;
+    const annualRate = (rates?.["90_ltv_5yr_fixed"] || 4.5) / 100;
     const monthlyRate = annualRate / 12;
     const numberOfPayments = 25 * 12; // Standard 25 year term
 

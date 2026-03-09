@@ -1,6 +1,6 @@
-# immoSearch: Institutional Metric Definitions & Strategy Context
+# propSearch: Institutional Metric Definitions & Strategy Context
 
-This document provides the formal methodology and strategic context for all metrics displayed on the immoSearch dashboard. These definitions must be implemented in the corresponding tooltips across the application.
+This document provides the formal methodology and strategic context for all metrics displayed on the propSearch dashboard. These definitions must be implemented in the corresponding tooltips across the application.
 
 ## 1. Asset Performance Metrics
 

@@ -23,7 +23,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const { properties } = usePropertyContext();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   useEffect(() => {
@@ -91,7 +90,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <div className="h-6 w-6 rounded bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-black italic shadow-lg shadow-blue-500/20">
               IS
             </div>
-            <span className="text-sm font-semibold tracking-tight">immoSearch</span>
+            <span className="text-sm font-semibold tracking-tight">propSearch</span>
             <ChevronDown size={14} className="text-linear-text-muted" />
           </Link>
           <button className="h-6 w-6 rounded border border-linear-border flex items-center justify-center text-linear-text-muted hover:text-white hover:bg-linear-card transition-all">
@@ -160,51 +159,30 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </div>
         </nav>
 
-        <div className="p-4 border-t border-linear-border relative bg-linear-bg">
+        <div className="p-4 border-t border-linear-border bg-linear-bg/50 mt-auto">
           <div className="flex items-center justify-between">
-            <div 
-              className="flex items-center gap-2 group cursor-pointer"
-              onClick={() => setIsProfileOpen(!isProfileOpen)}
-            >
-              <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-[10px] font-bold border border-white/10 shadow-lg ring-1 ring-white/5">
-                AM
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-lg bg-linear-card border border-linear-border flex items-center justify-center text-[10px] font-black text-linear-accent shadow-inner">
+                v1.2
               </div>
-              <span className="text-xs font-medium text-linear-text-muted group-hover:text-white transition-colors">alex.m</span>
-              <ChevronDown size={12} className={`text-linear-accent transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black text-white uppercase tracking-widest leading-none">Terminal</span>
+                <span className="text-[8px] font-bold text-linear-text-muted uppercase tracking-tighter mt-1">Institutional Mode</span>
+              </div>
             </div>
             <div className="flex items-center gap-1">
-              <button className="p-1.5 text-linear-text-muted hover:text-white hover:bg-linear-card rounded-md transition-all relative">
-                <Bell size={16} />
-                <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-blue-500 rounded-full border border-linear-bg"></div>
+              <button 
+                onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+                className={`p-1.5 rounded-md transition-all ${isHistoryOpen ? 'bg-blue-500/10 text-blue-400' : 'text-linear-text-muted hover:text-white hover:bg-linear-card'}`}
+                title="Submission History"
+              >
+                <History size={16} />
               </button>
               <button className="p-1.5 text-linear-text-muted hover:text-white hover:bg-linear-card rounded-md transition-all">
                 <Settings size={16} />
               </button>
             </div>
           </div>
-
-          {/* Profile Dropdown */}
-          {isProfileOpen && (
-            <div className="absolute bottom-full left-4 right-4 mb-2 bg-linear-card border border-linear-border rounded-xl shadow-2xl p-2 animate-in slide-in-from-bottom-2 duration-200 z-[60]">
-               <div className="px-3 py-2 border-b border-linear-border mb-1">
-                  <p className="text-xs font-bold text-white">Alex Morgan</p>
-                  <p className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest mt-0.5">Institutional Access</p>
-               </div>
-               <button className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium text-linear-text-muted hover:text-white hover:bg-linear-bg/50 transition-all text-left">
-                  <Compass size={14} className="text-blue-500" />
-                  View Profile
-               </button>
-               <button className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium text-linear-text-muted hover:text-white hover:bg-linear-bg/50 transition-all text-left">
-                  <Zap size={14} className="text-linear-accent" />
-                  Subscription Plan
-               </button>
-               <div className="h-px bg-linear-border my-1"></div>
-               <button className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/5 transition-all text-left">
-                  <div className="h-1.5 w-1.5 rounded-full bg-rose-500"></div>
-                  Disconnect Terminal
-               </button>
-            </div>
-          )}
         </div>
       </aside>
 

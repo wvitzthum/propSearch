@@ -22,7 +22,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
     
     try {
       setInjectionStatus('loading');
-      const res = await fetch('http://localhost:3001/api/manual-queue', {
+      const res = await fetch('/api/manual-queue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: query, source: 'MANUAL_INJECTION' })

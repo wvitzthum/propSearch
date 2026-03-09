@@ -92,7 +92,7 @@ const LandingPage: React.FC = () => {
               </h3>
             </div>
             <p className="text-linear-text-muted max-w-sm text-sm leading-relaxed font-medium">
-              Built on institutional data schemas, immoSearch provides high-density visualization for rapid asset verification.
+              Built on institutional data schemas, propSearch provides high-density visualization for rapid asset verification.
             </p>
           </div>
 
@@ -153,7 +153,7 @@ const LandingPage: React.FC = () => {
          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="flex items-center gap-3">
                <div className="h-8 w-8 bg-white text-black rounded font-black flex items-center justify-center text-xl tracking-tighter">i</div>
-               <span className="text-lg font-black text-white tracking-tighter uppercase">immoSearch // 2026</span>
+               <span className="text-lg font-black text-white tracking-tighter uppercase">propSearch // 2026</span>
             </div>
             <div className="flex gap-8 text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">
                <span className="hover:text-white cursor-pointer transition-colors">Private Instance</span>

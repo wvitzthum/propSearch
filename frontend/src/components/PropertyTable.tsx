@@ -187,6 +187,11 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                             VALUE
                           </span>
                         )}
+                        {(!property.sqft || !property.epc || property.service_charge === undefined) && (
+                          <span className="flex items-center gap-0.5 text-[8px] font-black text-amber-500 bg-amber-500/10 px-1 rounded border border-amber-500/20" title="Missing critical data points (SQFT, EPC, or Charges)">
+                            SHALLOW
+                          </span>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -195,48 +200,48 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                   </td>
                   <td className="px-2 py-4">
                     <div className="text-xs font-bold text-white tracking-tight">
-                      £{property.realistic_price.toLocaleString()}
+                      £{(property.realistic_price || 0).toLocaleString()}
                     </div>
                   </td>
                   <td className="px-2 py-4">
                     <div className="text-[10px] font-bold text-rose-400">
-                      -£{(property.list_price - property.realistic_price).toLocaleString()}
+                      -£{( (property.list_price || 0) - (property.realistic_price || 0) ).toLocaleString()}
                     </div>
                   </td>
                   <td className="px-2 py-4">
                     <div className={`text-xs font-bold ${property.is_value_buy ? 'text-retro-green' : 'text-zinc-400'}`}>
-                      £{property.price_per_sqm.toLocaleString()}/m²
+                      £{(property.price_per_sqm || 0).toLocaleString()}/m²
                     </div>
                   </td>
                   <td className="px-2 py-4">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold text-white">{property.appreciation_potential}%</span>
+                      <span className="text-xs font-bold text-white">{(property.appreciation_potential || 0)}%</span>
                     </div>
                   </td>
                   <td className="px-2 py-4">
                     <div className="flex items-center gap-1.5">
-                      <span className={`text-xs font-bold ${property.commute_paternoster + property.commute_canada_square <= 50 ? 'text-emerald-400' : 'text-zinc-500'}`}>
-                        {property.commute_paternoster + property.commute_canada_square}m
+                      <span className={`text-xs font-bold ${( (property.commute_paternoster || 0) + (property.commute_canada_square || 0) ) <= 50 ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                        {( (property.commute_paternoster || 0) + (property.commute_canada_square || 0) )}m
                       </span>
                     </div>
                   </td>
                   <td className="px-2 py-4 text-[11px] text-linear-text-muted font-bold">
-                    {property.sqft}
+                    {property.sqft || '—'}
                   </td>
                   <td className="px-2 py-4 text-[10px] text-white font-bold uppercase tracking-widest">
                     {property.floor_level || '—'}
                   </td>
                   <td className="px-2 py-4">
                     <span className={`px-1.5 py-0.5 rounded text-[9px] font-black border ${
-                      ['A', 'B'].includes(property.epc) ? 'text-retro-green border-retro-green/20 bg-retro-green/10' :
-                      ['C', 'D'].includes(property.epc) ? 'text-retro-amber border-retro-amber/20 bg-retro-amber/10' :
+                      ['A', 'B'].includes(property.epc || '') ? 'text-retro-green border-retro-green/20 bg-retro-green/10' :
+                      ['C', 'D'].includes(property.epc || '') ? 'text-retro-amber border-retro-amber/20 bg-retro-amber/10' :
                       'text-rose-400 border-rose-400/20 bg-rose-400/10'
                     }`}>
-                      {property.epc}
+                      {property.epc || 'N/A'}
                     </span>
                   </td>
                   <td className="px-2 py-4 text-[11px] text-zinc-500 font-bold italic">
-                    {property.dom}d
+                    {property.dom || 0}d
                   </td>
                   <td className="px-2 py-4">
                     <span className="px-2 py-0.5 bg-blue-400/5 text-blue-400 rounded text-[9px] font-bold border border-blue-400/10 uppercase tracking-widest whitespace-nowrap">

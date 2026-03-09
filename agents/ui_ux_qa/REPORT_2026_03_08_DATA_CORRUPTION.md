@@ -7,7 +7,7 @@ Verify the integrity of `data/master.json` following the automated sync of exter
 The `master.json` file has been corrupted by two distinct batches of low-fidelity/synthetic data.
 
 ### A. Hallucinated Import Batch (Ingested)
-- **Source:** `immoSearch_listings_20.json` (ID range: `a1b2c3d4-0001-...` to `a1b2c3d4-0020-...`).
+- **Source:** `propSearch_listings_20.json` (ID range: `a1b2c3d4-0001-...` to `a1b2c3d4-0020-...`).
 - **Issues:** 
     - Hallucinated image URLs (e.g., `arundel_sq_main.jpg`).
     - Primary links point to Area Search result pages, not specific properties.
@@ -28,8 +28,8 @@ The `master.json` file has been corrupted by two distinct batches of low-fidelit
 - **Pipeline Trust:** The "Shortlisted" and "Vetted" workflows are compromised by non-empirical data.
 
 ## 3. Mandatory Remediation Plan
-1. **REVERT MASTER:** The Data Gatherer must revert `data/master.json` to the last known good state (`data/archive/master_backup_07_03_2026.json`) OR surgically remove IDs starting with `a1b2c3d4-`.
-2. **PURGE IMPORTS:** Delete `data/import/immoSearch_listings_20.json` immediately.
+1. **REVERT MASTER:** The Data Engineer must revert `data/master.json` to the last known good state (`data/archive/master_backup_07_03_2026.json`) OR surgically remove IDs starting with `a1b2c3d4-`.
+2. **PURGE IMPORTS:** Delete `data/import/propSearch_listings_20.json` immediately.
 3. **STRICT SYNC:** Update `scripts/sync_data.js` to reject items with `list_price: 0` or missing `sqft`.
 4. **RE-ENRICH LEADS:** Triaged leads in `data/triaged/` must be enriched with full schema fields (sqft, epc, alpha) before syncing.
 

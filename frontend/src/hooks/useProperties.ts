@@ -19,28 +19,14 @@ export const useProperties = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('Fetching master registry...');
-    fetch('/data/master.json')
+    console.log('Fetching properties from DuckDB API...');
+    fetch('/api/properties')
       .then((res) => {
-        if (!res.ok) throw new Error(`Failed to fetch master registry: ${res.status} ${res.statusText}`);
-        return res.text();
+        if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
+        return res.json();
       })
-      .then((text: string) => {
-        let data: Property[] = [];
-        const trimmedText = text.trim();
-        
-        // Institutional JSONL vs standard JSON detection
-        if (trimmedText.startsWith('[') && trimmedText.endsWith(']')) {
-          data = JSON.parse(trimmedText);
-        } else {
-          // Parse JSONL
-          data = trimmedText
-            .split('\n')
-            .filter(line => line.trim())
-            .map(line => JSON.parse(line));
-        }
-
-        console.log('Master registry loaded:', data.length, 'properties');
+      .then((data: Property[]) => {
+        console.log('Properties loaded from DB:', data.length);
         
         const propertiesWithCoords = data.map(p => {
           const coords = AREA_COORDS[p.area] || AREA_COORDS['Islington (N1)'];

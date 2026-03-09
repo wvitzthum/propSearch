@@ -25,6 +25,9 @@ export interface AreaHeatIndex {
 export interface MortgageRates {
   "90_ltv_2yr_fixed": number;
   "90_ltv_5yr_fixed": number;
+  "85_ltv_5yr_fixed": number;
+  "75_ltv_5yr_fixed": number;
+  "60_ltv_5yr_fixed": number;
   avg_fees: number;
 }
 
@@ -59,14 +62,14 @@ export interface MortgageHistoryEntry {
 }
 
 export interface MacroTrend {
-  london_hpi: LondonHPI;
-  inventory_velocity: InventoryVelocity;
-  negotiation_delta: NegotiationDelta;
-  area_heat_index: AreaHeatIndex[];
-  economic_indicators: EconomicIndicators;
-  market_business: MarketBusiness[];
+  london_hpi?: LondonHPI;
+  inventory_velocity?: InventoryVelocity;
+  negotiation_delta?: NegotiationDelta;
+  area_heat_index?: AreaHeatIndex[];
+  economic_indicators?: EconomicIndicators;
+  market_business?: MarketBusiness[];
   business_history?: MarketBusiness[]; // For compatibility
-  timing_signals: TimingSignals;
+  timing_signals?: TimingSignals;
   market_pulse_summary?: string;
   mortgage_history?: MortgageHistoryEntry[];
 }

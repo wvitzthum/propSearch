@@ -17,12 +17,13 @@ const SubmissionHistory: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   const fetchHistory = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch('/data/manual_queue.json');
+      const res = await fetch('/api/manual-queue');
       if (!res.ok) throw new Error('History buffer unavailable');
       const data = await res.json();
-      setItems(data.reverse()); // Show newest first
+      setItems(data); // DuckDB query already handles ordering
       setError(null);
     } catch (err: any) {
+
       console.error('Failed to fetch submission history:', err);
       setError('System trace unavailable');
     } finally {

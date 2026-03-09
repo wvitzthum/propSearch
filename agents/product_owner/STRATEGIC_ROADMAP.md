@@ -1,4 +1,4 @@
-# immoSearch: Strategic Roadmap 2026
+# propSearch: Strategic Roadmap 2026
 
 ## Mission
 To leverage real-time market sentiment and high-density data to identify "Alpha" acquisition opportunities in a stabilizing 2026 London market.
@@ -56,7 +56,7 @@ To leverage real-time market sentiment and high-density data to identify "Alpha"
 ---
 
 ## Implementation Tasks (Immediate)
-1. [ ] **DAT-037:** Update Scraper to capture `Price Reductions` and `Days since last reduction`.
-2. [ ] **FE-054:** Implement "Negotiation Buffer" visualization in Property Detail.
-3. [ ] **DAT-038:** Integrate "Urban Village" POI data for SW3/NW3/NW6.
-4. [ ] **QA-031:** Audit EPC improvement data accuracy for period properties.
+1. [ ] **DAT-042:** Update Scraper to capture `Price Reductions` and `Days since last reduction`.
+2. [ ] **FE-061:** Implement "Negotiation Buffer" visualization in Property Detail.
+3. [ ] **DAT-043:** Integrate "Urban Village" POI data for SW3/NW3/NW6.
+4. [ ] **QA-032:** Audit EPC improvement data accuracy for period properties.

@@ -1,4 +1,4 @@
-# immoSearch: Institutional Readiness Audit - 2026-03-08 (FINAL)
+# propSearch: Institutional Readiness Audit - 2026-03-08 (FINAL)
 
 ## Audit Objective
 Final verification of the complete acquisition research pipeline, including Data Triage, Financial Fidelity, and Comparative Analytics.
@@ -13,7 +13,7 @@ Final verification of the complete acquisition research pipeline, including Data
 | **Financial Fidelity** | **PASSED** | RBKC (Chelsea) council tax data ingested. Mortgage logic aligns with 90% LTV mandate. |
 
 ## 2. Outstanding Critical Items (Action Required)
-- **DAT-036 (Critical):** Hallucinated import batch `data/import/immoSearch_listings_20.json` MUST be deleted. It contains non-specific area links and fake image URLs.
+- **DAT-036 (Critical):** Hallucinated import batch `data/import/propSearch_listings_20.json` MUST be deleted. It contains non-specific area links and fake image URLs.
 - **FE-050 (Medium):** "Vetted" pipeline status requires UI transition path.
 
 ## 3. Deployment Readiness

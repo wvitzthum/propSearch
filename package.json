@@ -1,0 +1,26 @@
+{
+  "name": "propsearch",
+  "version": "1.0.0",
+  "description": "**propSearch** is a bespoke, high-precision research platform designed for a single private buyer to identify and acquire a specific prime London property. Unlike consumer portals (Rightmove/Zoopla), this tool prioritizes data density, institutional-grade metrics, and rapid decision-making.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wvitzthum/aiplayground.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/wvitzthum/aiplayground/issues"
+  },
+  "homepage": "https://github.com/wvitzthum/aiplayground#readme",
+  "dependencies": {
+    "better-sqlite3": "^12.6.2",
+    "duckdb": "^1.4.4",
+    "playwright": "^1.58.2"
+  }
+}

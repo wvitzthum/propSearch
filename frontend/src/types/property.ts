@@ -45,6 +45,13 @@ export interface Property {
   floor_level: string;
   alpha_score: number;
   appreciation_potential: number;
+  price_reduction_amount?: number;
+  price_reduction_pct?: number;
+  price_reduction_date?: string;
+  waitrose_distance?: number;
+  wellness_hub_distance?: number;
+  epc_improvement_potential?: EPCRating;
+  est_capex_requirement?: number;
   links: string[];
   link: string;
 }

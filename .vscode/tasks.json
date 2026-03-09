@@ -1,0 +1,60 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Spawn All Agents",
+            "dependsOn": [
+                "Agent: Product Owner",
+                "Agent: Data Analyst",
+                "Agent: Data Engineer",
+                "Agent: Frontend Engineer",
+                "Agent: UI/UX QA"
+            ],
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "Agent: Product Owner",
+            "type": "shell",
+            "command": "make agent-po",
+            "presentation": {
+                "group": "agents"
+            }
+        },
+        {
+            "label": "Agent: Data Analyst",
+            "type": "shell",
+            "command": "make agent-analyst",
+            "presentation": {
+                "group": "agents"
+            }
+        },
+        {
+            "label": "Agent: Data Engineer",
+            "type": "shell",
+            "command": "make agent-data",
+            "presentation": {
+                "group": "agents"
+            }
+        },
+        {
+            "label": "Agent: Frontend Engineer",
+            "type": "shell",
+            "command": "make agent-fe",
+            "presentation": {
+                "group": "agents"
+            }
+        },
+        {
+            "label": "Agent: UI/UX QA",
+            "type": "shell",
+            "command": "make agent-qa",
+            "presentation": {
+                "group": "agents"
+            }
+        }
+    ]
+}

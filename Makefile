@@ -1,4 +1,4 @@
-.PHONY: install start build lint clean agent-po agent-data agent-frontend agent-qa tasks
+.PHONY: install start build lint clean agent-po agent-analyst agent-data agent-fe agent-qa tasks
 
 # Default target
 all: install start
@@ -14,14 +14,14 @@ install:
 	@echo "Installing frontend dependencies..."
 	@rtk cd frontend && npm install
 
-# Start the immoSearch Full Stack (API + Dashboard)
+# Start the propSearch Full Stack (API + Dashboard)
 start:
-	@echo "Starting immoSearch Full Stack..."
+	@echo "Starting propSearch Full Stack..."
 	node server/index.js & cd frontend && npm run dev
 
 # Start the Data API server
 api:
-	@echo "Starting immoSearch Data API..."
+	@echo "Starting propSearch Data API..."
 	node server/index.js
 
 # Alias for start
@@ -54,9 +54,13 @@ clean:
 agent-po:
 	@gemini -i "You are the Product Owner & Strategic Lead. Please load and follow the instructions in agents/product_owner/README.md and REQUIREMENTS.md to guide the project's vision and backlog."
 
-# Invoke the Data Gatherer agent
+# Invoke the Data Analyst agent
+agent-analyst:
+	@gemini -i "You are the Senior Real Estate Data Analyst. Please load and follow the instructions in agents/data_analyst/README.md to perform property research and calculate Alpha signals. Remember the Data Authenticity mandate."
+
+# Invoke the Data Engineer agent
 agent-data:
-	@gemini -i "You are the Senior Real Estate Data Engineer. Please load and follow the instructions in agents/data_gatherer/README.md to maintain the property datasets. Remember the Data Authenticity mandate."
+	@gemini -i "You are the Senior Real Estate Data Engineer. Please load and follow the instructions in agents/data_engineer/README.md to manage the SQLite architecture and ingestion pipeline."
 
 # Invoke the Frontend Engineer agent
 agent-fe:
@@ -67,6 +71,10 @@ agent-qa:
 	@gemini -i "You are the UI/UX Quality Assurance Engineer. Please load and follow the instructions in agents/ui_ux_qa/README.md to audit the dashboard against REQUIREMENTS.md and the 'Linear' design standard."
 
 # --- Project Management ---
+
+# Spawn all agent terminals (Requires VS Code 'code' CLI or Task Runner)
+spawn-agents:
+	@./scripts/spawn_agents.sh
 
 # Display the active backlog from Tasks.md
 tasks:

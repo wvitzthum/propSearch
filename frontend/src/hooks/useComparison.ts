@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 
-const STORAGE_KEY = 'immo_comparison_basket';
+const STORAGE_KEY = 'propsearch_comparison_basket';
 
 export const useComparison = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>(() => {

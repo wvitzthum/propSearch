@@ -150,6 +150,16 @@
       "pattern": "^[A-G]$+",
       "description": "EPC energy efficiency rating."
     },
+    "epc_improvement_potential": {
+      "type": "string",
+      "pattern": "^[A-G]$+",
+      "description": "Potential EPC energy efficiency rating after improvements."
+    },
+    "est_capex_requirement": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Estimated capital expenditure required for property improvements."
+    },
     "tenure": {
       "type": "string",
       "description": "Property tenure status (e.g., 'Share of Freehold', 'Leasehold (999 yrs)')."

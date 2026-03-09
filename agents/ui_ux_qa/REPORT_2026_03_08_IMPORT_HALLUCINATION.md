@@ -1,7 +1,7 @@
 # Data Fidelity Audit Report: 2026-03-08 (IMPORT-FAIL)
 
 ## Audit Objective
-Verify the authenticity and link integrity of the newly imported batch: `data/import/immoSearch_listings_20.json`.
+Verify the authenticity and link integrity of the newly imported batch: `data/import/propSearch_listings_20.json`.
 
 ## 1. Findings: CRITICAL HALLUCINATION
 The imported dataset contains **synthetic/hallucinated property links and image URLs**, violating both `REQUIREMENTS.md` and the `PROMPT_GUIDE.md` mandates.
@@ -27,7 +27,7 @@ If ingested, these 20 listings would pollute the `master.json` database with "br
 - Inaccurate Alpha Score benchmarks for the entire dashboard.
 
 ## 3. Mandatory Action
-- **REJECT IMPORT:** The file `data/import/immoSearch_listings_20.json` must be **DELETED** immediately.
+- **REJECT IMPORT:** The file `data/import/propSearch_listings_20.json` must be **DELETED** immediately.
 - **DO NOT RUN SYNC:** Ingestion of this file will compromise the integrity of the production dataset.
 - **RE-GENERATE:** The Senior Real Estate Data Engineer must re-perform the extraction following the **Direct Property Link** requirement in the `PROMPT_GUIDE.md`.
 

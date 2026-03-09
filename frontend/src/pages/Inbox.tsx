@@ -1,9 +1,26 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import PropertyImage from '../components/PropertyImage';
 import LoadingNode from '../components/LoadingNode';
-import { Inbox as InboxIcon, Check, X, ArrowRight, Keyboard, Zap, ShieldAlert, Split, Layout, Maximize2 } from 'lucide-react';
+import { 
+  Inbox as InboxIcon, 
+  Check, 
+  X, 
+  ArrowRight, 
+  Keyboard, 
+  Zap, 
+  ShieldAlert, 
+  Split, 
+  Layout, 
+  Maximize2,
+  ChevronUp,
+  ChevronDown,
+  ExternalLink,
+  Trash2,
+  CheckCircle2,
+  Layers
+} from 'lucide-react';
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = '/api';
 
 interface RawListing {
   address: string;
@@ -18,8 +35,11 @@ interface RawListing {
 const Inbox: React.FC = () => {
   const [listings, setListings] = useState<RawListing[]>([]);
   const [currentIndex, setCurrentListIndex] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchInbox = useCallback(async () => {
     try {
@@ -40,14 +60,14 @@ const Inbox: React.FC = () => {
     fetchInbox();
   }, [fetchInbox]);
 
-  const handleAction = async (action: 'approve' | 'reject') => {
-    if (listings.length === 0) return;
+  const handleAction = async (action: 'approve' | 'reject', indexToTriage?: number) => {
+    const idx = indexToTriage !== undefined ? indexToTriage : currentIndex;
+    if (listings.length === 0 || idx >= listings.length) return;
     
-    const listing = listings[currentIndex];
+    const listing = listings[idx];
+    setIsProcessing(true);
     
     try {
-      // In a production app, we'd send the actual action to the API
-      // For this prototype, we simulate the handshake
       const res = await fetch(`${API_BASE}/inbox`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,34 +79,90 @@ const Inbox: React.FC = () => {
       });
 
       if (!res.ok) throw new Error('API Rejection');
-
-      console.log(`${action.toUpperCase()}: ${listing.filename} - Synced to buffer.`);
       
-      // Move to next
-      if (currentIndex < listings.length - 1) {
-        setCurrentListIndex(prev => prev + 1);
-      } else {
-        setListings([]); // Finished
+      setListings(prev => prev.filter((_, i) => i !== idx));
+      if (currentIndex >= listings.length - 1 && currentIndex > 0) {
+        setCurrentListIndex(prev => prev - 1);
       }
     } catch (err) {
       console.error('Triage sync error:', err);
-      // Fallback: move to next even if API fails for UX fluidity in demo
-      if (currentIndex < listings.length - 1) {
-        setCurrentListIndex(prev => prev + 1);
-      } else {
-        setListings([]);
-      }
+      // Fallback for demo
+      setListings(prev => prev.filter((_, i) => i !== idx));
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleBatchAction = async (action: 'approve' | 'reject') => {
+    if (selectedIds.size === 0) return;
+    setIsProcessing(true);
+    
+    const toProcess = listings.filter(l => selectedIds.has(l.filename));
+    
+    try {
+      // Parallel processing for prototype
+      await Promise.all(toProcess.map(listing => 
+        fetch(`${API_BASE}/inbox`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...listing, action, triaged_at: new Date().toISOString() })
+        })
+      ));
+      
+      setListings(prev => prev.filter(l => !selectedIds.has(l.filename)));
+      setSelectedIds(new Set());
+      setCurrentListIndex(0);
+    } catch (err) {
+      console.error('Batch error:', err);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   useEffect(() => {
     const handleKeys = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'a') handleAction('approve');
-      if (e.key.toLowerCase() === 'r') handleAction('reject');
+      if (isProcessing) return;
+      
+      const key = e.key.toLowerCase();
+      if (key === 'a') handleAction('approve');
+      if (key === 'r') handleAction('reject');
+      if (key === 'arrowdown' || key === 'j') {
+        e.preventDefault();
+        setCurrentListIndex(prev => Math.min(prev + 1, listings.length - 1));
+      }
+      if (key === 'arrowup' || key === 'k') {
+        e.preventDefault();
+        setCurrentListIndex(prev => Math.max(prev - 1, 0));
+      }
+      if (key === 'l' && listings[currentIndex]) {
+        window.open(listings[currentIndex].url, '_blank');
+      }
+      if (key === ' ' && listings[currentIndex]) {
+        e.preventDefault();
+        toggleSelect(listings[currentIndex].filename);
+      }
     };
     window.addEventListener('keydown', handleKeys);
     return () => window.removeEventListener('keydown', handleKeys);
-  }, [listings, currentIndex]);
+  }, [listings, currentIndex, isProcessing]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      const activeElement = scrollRef.current.children[currentIndex] as HTMLElement;
+      if (activeElement) {
+        activeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  }, [currentIndex]);
+
+  const toggleSelect = (filename: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(filename)) next.delete(filename);
+      else next.add(filename);
+      return next;
+    });
+  };
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -110,117 +186,186 @@ const Inbox: React.FC = () => {
   const currentListing = listings[currentIndex];
 
   return (
-    <div className="bg-linear-bg text-white">
-      <div className="flex items-center justify-between mb-10">
+    <div className="h-[calc(100vh-140px)] flex flex-col">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Lead Inbox</h1>
-          <p className="text-linear-text-muted text-sm">Rapid triage of unfiltered property leads from automated scrapers.</p>
+          <h1 className="text-2xl font-bold tracking-tight mb-1 flex items-center gap-3">
+            Inbox 2.0 <span className="text-[10px] font-black bg-blue-500 text-white px-1.5 py-0.5 rounded">BETA</span>
+          </h1>
+          <p className="text-linear-text-muted text-xs uppercase tracking-widest font-bold opacity-70">
+            {listings.length} Pending Leads • {selectedIds.size} Selected
+          </p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="px-3 py-1.5 bg-linear-card border border-linear-border rounded-lg flex items-center gap-2">
-            <InboxIcon size={14} className="text-linear-accent" />
-            <span className="text-xs font-bold text-white">{listings.length} Pending</span>
+        
+        <div className="flex items-center gap-3">
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-2 mr-4 animate-in fade-in slide-in-from-right-4">
+              <button 
+                onClick={() => handleBatchAction('approve')}
+                className="px-3 py-1.5 bg-retro-green/10 text-retro-green border border-retro-green/20 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-retro-green/20 transition-all"
+              >
+                Approve {selectedIds.size}
+              </button>
+              <button 
+                onClick={() => handleBatchAction('reject')}
+                className="px-3 py-1.5 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-rose-500/20 transition-all"
+              >
+                Reject {selectedIds.size}
+              </button>
+            </div>
+          )}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-linear-card border border-linear-border rounded-lg text-[9px] font-bold text-linear-text-muted">
+            <Keyboard size={12} />
+            <span>J/K NAV • A/R ACTION • SPACE SELECT • L LINK</span>
           </div>
         </div>
       </div>
 
-      {!currentListing ? (
-        <div className="p-20 bg-linear-card border border-linear-border rounded-3xl text-center">
-          <div className="h-16 w-16 bg-retro-green/10 text-retro-green rounded-full flex items-center justify-center mx-auto mb-6 border border-retro-green/20">
-            <Check size={32} />
+      {!listings.length ? (
+        <div className="flex-grow flex flex-col items-center justify-center bg-linear-card/20 border border-dashed border-linear-border rounded-3xl">
+          <div className="h-16 w-16 bg-retro-green/10 text-retro-green rounded-full flex items-center justify-center mb-6 border border-retro-green/20">
+            <CheckCircle2 size={32} />
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">Inbox Zero</h2>
-          <p className="text-linear-text-muted text-sm">All raw leads have been triaged. Waiting for next scrape cycle.</p>
+          <h2 className="text-xl font-bold text-white mb-2 tracking-tight">Lead Buffer Depleted</h2>
+          <p className="text-linear-text-muted text-sm uppercase tracking-widest font-bold">Waiting for next automated scrape cycle</p>
         </div>
       ) : (
-        <div className="grid lg:grid-cols-2 gap-12 items-start">
-          <div className="space-y-8">
-            <div className="aspect-video w-full bg-linear-card rounded-3xl overflow-hidden border border-linear-border relative group shadow-2xl">
-              <PropertyImage src={currentListing.image_url || ''} alt="Raw Lead" className="h-full w-full opacity-40 grayscale" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-3">
-                  {currentListing.image_url ? null : <Zap size={48} className="text-linear-accent animate-pulse" />}
-                  <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-[0.3em]">
-                    {currentListing.image_url ? 'Visual Captured' : 'Awaiting Full Scrape'}
-                  </span>
-                </div>
-              </div>
+        <div className="flex-grow flex gap-6 overflow-hidden">
+          {/* List Pane */}
+          <div className="w-1/3 flex flex-col bg-linear-card/30 border border-linear-border rounded-2xl overflow-hidden">
+            <div className="p-3 border-b border-linear-border bg-linear-card/50 flex items-center justify-between">
+              <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">Lead Stream</span>
+              <button 
+                onClick={() => setSelectedIds(selectedIds.size === listings.length ? new Set() : new Set(listings.map(l => l.filename)))}
+                className="text-[9px] font-bold text-blue-400 hover:text-white transition-colors uppercase tracking-widest"
+              >
+                {selectedIds.size === listings.length ? 'Deselect All' : 'Select All'}
+              </button>
             </div>
-
-            <div className="p-8 bg-linear-card border border-linear-border rounded-3xl space-y-6">
-              <div>
-                <span className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em] mb-2 block">Source: {currentListing.source}</span>
-                <h2 className="text-2xl font-bold text-white tracking-tight leading-tight">{currentListing.address}</h2>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-6 pt-6 border-t border-linear-border">
-                <div className="space-y-1">
-                  <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest">Filename</span>
-                  <div className="text-xs font-mono text-white truncate">{currentListing.filename}</div>
+            <div ref={scrollRef} className="flex-grow overflow-y-auto custom-scrollbar">
+              {listings.map((listing, i) => (
+                <div 
+                  key={listing.filename}
+                  onClick={() => setCurrentListIndex(i)}
+                  className={`p-4 border-b border-linear-border/50 cursor-pointer transition-all flex items-start gap-3 group relative ${
+                    i === currentIndex ? 'bg-blue-500/10 border-l-2 border-l-blue-500' : 'hover:bg-linear-card/40'
+                  }`}
+                >
+                  <input 
+                    type="checkbox"
+                    checked={selectedIds.has(listing.filename)}
+                    onChange={(e) => { e.stopPropagation(); toggleSelect(listing.filename); }}
+                    className="mt-1 h-3.5 w-3.5 rounded border-linear-border bg-linear-bg text-blue-500 focus:ring-0 focus:ring-offset-0 transition-all cursor-pointer"
+                  />
+                  <div className="flex-grow min-w-0">
+                    <div className={`text-xs font-bold truncate tracking-tight transition-colors ${i === currentIndex ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-200'}`}>
+                      {listing.address}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-tighter">{listing.source}</span>
+                      <span className="text-[9px] font-bold text-blue-400/80">£{listing.price.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  {i === currentIndex && <ArrowRight size={14} className="text-blue-500 shrink-0" />}
                 </div>
-                <div className="space-y-1">
-                  <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest">Metadata</span>
-                  <div className="text-xs font-bold text-white uppercase tracking-wider">Unverified Area</div>
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-linear-border">
-                <a href={currentListing.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-[10px] font-black text-linear-accent hover:text-white uppercase tracking-widest transition-colors">
-                  Open Portal Reference <ArrowRight size={12} />
-                </a>
-              </div>
+              ))}
             </div>
           </div>
 
-          <div className="space-y-12">
-            <div className="p-8 bg-linear-card border border-linear-border rounded-3xl space-y-8 shadow-2xl">
-              <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
-                <Keyboard size={16} className="text-linear-accent" />
-                Rapid Triage Protocol
-              </h3>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <button 
-                  onClick={() => handleAction('approve')}
-                  className="group flex flex-col items-center gap-4 p-8 bg-retro-green/5 border border-retro-green/20 rounded-2xl hover:bg-retro-green/10 hover:border-retro-green/40 transition-all active:scale-95"
-                >
-                  <div className="h-12 w-12 bg-retro-green/20 text-retro-green rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Check size={24} />
+          {/* Detail Pane */}
+          <div className="flex-grow flex flex-col bg-linear-card border border-linear-border rounded-2xl overflow-hidden shadow-2xl relative">
+            {isProcessing && (
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center">
+                <LoadingNode label="Syncing Triage Status..." />
+              </div>
+            )}
+            
+            {/* Detail Content */}
+            <div className="flex-grow overflow-y-auto custom-scrollbar">
+              <div className="h-64 relative overflow-hidden bg-linear-bg">
+                <PropertyImage 
+                  src={currentListing.image_url || ''} 
+                  alt="Raw Lead" 
+                  className="h-full w-full object-cover opacity-60 grayscale" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-linear-card via-transparent to-transparent" />
+                <div className="absolute bottom-6 left-8 right-8">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="px-2 py-0.5 bg-blue-500 text-white text-[9px] font-black uppercase rounded tracking-widest">
+                      {currentListing.source}
+                    </span>
+                    <span className="px-2 py-0.5 bg-linear-card/80 backdrop-blur-md text-linear-text-muted text-[9px] font-bold uppercase rounded border border-linear-border">
+                      Lead ID: {currentListing.filename.split('_')[0]}
+                    </span>
                   </div>
-                  <div className="text-center">
-                    <span className="block text-sm font-black text-white uppercase tracking-widest">Approve</span>
-                    <span className="text-[10px] text-retro-green/60 font-bold uppercase tracking-widest">[Press A]</span>
-                  </div>
-                </button>
-
-                <button 
-                  onClick={() => handleAction('reject')}
-                  className="group flex flex-col items-center gap-4 p-8 bg-rose-500/5 border border-rose-500/20 rounded-2xl hover:bg-rose-500/10 hover:border-rose-500/40 transition-all active:scale-95"
-                >
-                  <div className="h-12 w-12 bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <X size={24} />
-                  </div>
-                  <div className="text-center">
-                    <span className="block text-sm font-black text-white uppercase tracking-widest">Reject</span>
-                    <span className="text-[10px] text-rose-500/60 font-bold uppercase tracking-widest">[Press R]</span>
-                  </div>
-                </button>
+                  <h2 className="text-3xl font-bold text-white tracking-tight leading-tight">{currentListing.address}</h2>
+                </div>
               </div>
 
-              <div className="p-6 bg-linear-bg border border-linear-border rounded-2xl">
-                <p className="text-xs text-linear-text-muted leading-relaxed italic">
-                  Approval will promote the lead to the Deep Scraper pipeline for Alpha Scoring and spatial analysis. Rejection will permanently archive the raw listing.
-                </p>
+              <div className="p-8 space-y-8">
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <h3 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest flex items-center gap-2">
+                      <Layers size={12} className="text-linear-accent" /> Asset Metrics
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-linear-bg border border-linear-border rounded-xl">
+                        <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest block mb-1">List Price</span>
+                        <span className="text-lg font-bold text-white">£{currentListing.price.toLocaleString()}</span>
+                      </div>
+                      <div className="p-4 bg-linear-bg border border-linear-border rounded-xl">
+                        <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest block mb-1">Discovery</span>
+                        <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider">Automated Scrape</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest flex items-center gap-2">
+                      <ExternalLink size={12} className="text-linear-accent" /> Portal Intelligence
+                    </h3>
+                    <div className="flex flex-col gap-2">
+                      <a 
+                        href={currentListing.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="p-4 bg-linear-bg border border-linear-border rounded-xl hover:border-blue-400 transition-all group flex items-center justify-between"
+                      >
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">Open Portal Listing</span>
+                          <span className="text-[9px] text-linear-text-muted uppercase tracking-widest">External Reference</span>
+                        </div>
+                        <Maximize2 size={16} className="text-linear-text-muted group-hover:text-blue-400 transition-colors" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-blue-500/5 border border-blue-500/20 rounded-2xl">
+                  <p className="text-xs text-linear-text-muted leading-relaxed italic">
+                    <span className="font-black text-blue-400 uppercase tracking-widest mr-2">Triage Protocol:</span>
+                    Approved leads move to the Deep Scraper pipeline for Alpha Scoring, spatial normalization, and institutional vetting. Rejected leads are removed from the buffer and archived.
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="px-8 flex items-center justify-between text-[10px] font-black text-linear-text-muted uppercase tracking-[0.3em]">
-              <span>Step {currentIndex + 1} of {listings.length}</span>
-              <div className="flex gap-1">
-                {listings.map((_, i) => (
-                  <div key={i} className={`h-1 w-4 rounded-full ${i === currentIndex ? 'bg-linear-accent' : i < currentIndex ? 'bg-retro-green/40' : 'bg-linear-border'}`} />
-                ))}
-              </div>
+            {/* Sticky Actions Footer */}
+            <div className="p-6 bg-linear-card border-t border-linear-border grid grid-cols-2 gap-4">
+              <button 
+                onClick={() => handleAction('approve')}
+                className="flex items-center justify-center gap-3 py-4 bg-retro-green/10 text-retro-green border border-retro-green/20 rounded-xl font-black text-xs uppercase tracking-[0.2em] hover:bg-retro-green/20 hover:border-retro-green/40 transition-all active:scale-95 group shadow-xl shadow-retro-green/5"
+              >
+                <Check size={18} className="group-hover:scale-125 transition-transform" />
+                Approve Lead [A]
+              </button>
+              <button 
+                onClick={() => handleAction('reject')}
+                className="flex items-center justify-center gap-3 py-4 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-xl font-black text-xs uppercase tracking-[0.2em] hover:bg-rose-500/20 hover:border-rose-500/40 transition-all active:scale-95 group shadow-xl shadow-rose-500/5"
+              >
+                <Trash2 size={18} className="group-hover:scale-125 transition-transform" />
+                Reject Lead [R]
+              </button>
             </div>
           </div>
         </div>

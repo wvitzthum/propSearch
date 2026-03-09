@@ -1,11 +1,90 @@
 import React, { useMemo } from 'react';
-import { X, ExternalLink, Zap, TrendingUp, Maximize2, Scale, Info, Bookmark } from 'lucide-react';
+import { X, ExternalLink, Zap, TrendingUp, Maximize2, Scale, Info, Bookmark, LayoutGrid, Clock, CreditCard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import { useComparison } from '../hooks/useComparison';
 import type { PropertyWithCoords } from '../types/property';
 import AlphaBadge from '../components/AlphaBadge';
 import PropertyImage from '../components/PropertyImage';
+
+interface MatrixRowConfig {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  mode: 'min' | 'max' | 'none';
+  isCurrency?: boolean;
+  suffix?: string;
+  getValue: (p: PropertyWithCoords) => number;
+  render: (p: PropertyWithCoords) => React.ReactNode;
+}
+
+const MATRIX_ROWS: MatrixRowConfig[] = [
+  {
+    id: 'alpha_score',
+    label: 'Alpha Score',
+    icon: <TrendingUp size={12} />,
+    mode: 'max',
+    getValue: (p) => p.alpha_score,
+    render: (p) => <AlphaBadge score={p.alpha_score} />
+  },
+  {
+    id: 'realistic_price',
+    label: 'Target Price',
+    icon: <Zap size={12} />,
+    mode: 'min',
+    isCurrency: true,
+    getValue: (p) => p.realistic_price,
+    render: (p) => <div className="text-sm font-bold tracking-tight">£{p.realistic_price.toLocaleString()}</div>
+  },
+  {
+    id: 'price_per_sqm',
+    label: 'Efficiency',
+    icon: <Scale size={12} />,
+    mode: 'min',
+    isCurrency: true,
+    getValue: (p) => p.price_per_sqm,
+    render: (p) => <div className="text-sm font-bold tracking-tight">£{p.price_per_sqm.toLocaleString()}/m²</div>
+  },
+  {
+    id: 'sqft',
+    label: 'Internal Area',
+    icon: <Maximize2 size={12} />,
+    mode: 'max',
+    getValue: (p) => p.sqft,
+    render: (p) => <div className="text-sm font-bold tracking-tight">{p.sqft} SQFT</div>
+  },
+  {
+    id: 'appreciation',
+    label: 'Appreciation',
+    icon: <TrendingUp size={12} />,
+    mode: 'max',
+    suffix: '%',
+    getValue: (p) => p.appreciation_potential,
+    render: (p) => <div className="text-sm font-bold tracking-tight">{p.appreciation_potential}%</div>
+  },
+  {
+    id: 'commute',
+    label: 'Commute',
+    icon: <Clock size={12} />,
+    mode: 'min',
+    suffix: ' MIN',
+    getValue: (p) => p.commute_paternoster + p.commute_canada_square,
+    render: (p) => <div className="text-sm font-bold tracking-tight">{p.commute_paternoster + p.commute_canada_square} MIN</div>
+  },
+  {
+    id: 'running_costs',
+    label: 'Running Costs',
+    icon: <CreditCard size={12} />,
+    mode: 'none',
+    getValue: (p) => p.service_charge + p.ground_rent,
+    render: (p) => (
+      <div className="flex flex-col gap-0.5">
+        <div className="text-xs font-bold text-white">£{(p.service_charge + p.ground_rent).toLocaleString()}/yr</div>
+        <span className="text-[8px] text-white/40 uppercase font-black tracking-tighter">S:{p.service_charge} G:{p.ground_rent}</span>
+      </div>
+    )
+  }
+];
 
 const ComparisonPage: React.FC = () => {
   const { properties, loading } = usePropertyContext();
@@ -17,35 +96,27 @@ const ComparisonPage: React.FC = () => {
   );
 
   const stats = useMemo(() => {
-    if (selectedProperties.length === 0) return null;
+    if (selectedProperties.length === 0) return {};
     
-    return {
-      avgPrice: selectedProperties.reduce((acc, p) => acc + p.realistic_price, 0) / selectedProperties.length,
-      avgAlpha: selectedProperties.reduce((acc, p) => acc + p.alpha_score, 0) / selectedProperties.length,
-      avgSqm: selectedProperties.reduce((acc, p) => acc + p.price_per_sqm, 0) / selectedProperties.length,
-      avgAppreciation: selectedProperties.reduce((acc, p) => acc + p.appreciation_potential, 0) / selectedProperties.length,
-      avgCommute: selectedProperties.reduce((acc, p) => acc + (p.commute_paternoster + p.commute_canada_square), 0) / selectedProperties.length,
-    };
+    const res: Record<string, number> = {};
+    MATRIX_ROWS.forEach(row => {
+      res[row.id] = selectedProperties.reduce((acc, p) => acc + row.getValue(p), 0) / selectedProperties.length;
+    });
+    return res;
   }, [selectedProperties]);
 
-  const getWinner = (rowKey: keyof PropertyWithCoords | 'commute', mode: 'min' | 'max') => {
-    if (selectedProperties.length < 2) return null;
+  const getWinnerId = (row: MatrixRowConfig) => {
+    if (selectedProperties.length < 2 || row.mode === 'none') return null;
     
-    let bestVal = mode === 'min' ? Infinity : -Infinity;
+    let bestVal = row.mode === 'min' ? Infinity : -Infinity;
     let winnerId = '';
 
     selectedProperties.forEach(p => {
-      let val: number;
-      if (rowKey === 'commute') {
-        val = p.commute_paternoster + p.commute_canada_square;
-      } else {
-        val = p[rowKey] as number;
-      }
-
-      if (mode === 'min' && val < bestVal) {
+      const val = row.getValue(p);
+      if (row.mode === 'min' && val < bestVal) {
         bestVal = val;
         winnerId = p.id;
-      } else if (mode === 'max' && val > bestVal) {
+      } else if (row.mode === 'max' && val > bestVal) {
         bestVal = val;
         winnerId = p.id;
       }
@@ -54,7 +125,11 @@ const ComparisonPage: React.FC = () => {
     return winnerId;
   };
 
-  if (loading) return null;
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <LoadingNode />
+    </div>
+  );
 
   return (
     <div className="bg-linear-bg text-white pb-20">
@@ -114,66 +189,15 @@ const ComparisonPage: React.FC = () => {
           </div>
 
           {/* Matrix Rows */}
-          <MatrixRow 
-            label="Alpha Score" 
-            icon={<TrendingUp size={12} />} 
-            properties={selectedProperties} 
-            render={(p) => <AlphaBadge score={p.alpha_score} />}
-            winnerId={getWinner('alpha_score', 'max')}
-          />
-          <MatrixRow 
-            label="Target Price" 
-            icon={<Zap size={12} />} 
-            properties={selectedProperties} 
-            render={(p) => <div className="text-sm font-bold tracking-tight">£{p.realistic_price.toLocaleString()}</div>}
-            winnerId={getWinner('realistic_price', 'min')}
-            avg={stats?.avgPrice}
-            isCurrency
-          />
-          <MatrixRow 
-            label="Efficiency" 
-            icon={<Scale size={12} />} 
-            properties={selectedProperties} 
-            render={(p) => <div className="text-sm font-bold tracking-tight">£{p.price_per_sqm.toLocaleString()}/m²</div>}
-            winnerId={getWinner('price_per_sqm', 'min')}
-            avg={stats?.avgSqm}
-            isCurrency
-          />
-          <MatrixRow 
-            label="Internal Area" 
-            icon={<Maximize2 size={12} />} 
-            properties={selectedProperties} 
-            render={(p) => <div className="text-sm font-bold tracking-tight">{p.sqft} SQFT</div>}
-            winnerId={getWinner('sqft', 'max')}
-          />
-          <MatrixRow 
-            label="Appreciation" 
-            icon={<TrendingUp size={12} />} 
-            properties={selectedProperties} 
-            render={(p) => <div className="text-sm font-bold tracking-tight">{p.appreciation_potential}%</div>}
-            winnerId={getWinner('appreciation_potential', 'max')}
-            avg={stats?.avgAppreciation}
-          />
-          <MatrixRow 
-            label="Commute" 
-            icon={<Info size={12} />} 
-            properties={selectedProperties} 
-            render={(p) => <div className="text-sm font-bold tracking-tight">{p.commute_paternoster + p.commute_canada_square} MIN</div>}
-            winnerId={getWinner('commute', 'min')}
-            avg={stats?.avgCommute}
-          />
-          <MatrixRow 
-            label="Running Costs" 
-            icon={<Info size={12} />} 
-            properties={selectedProperties} 
-            render={(p) => (
-              <div className="flex flex-col gap-0.5">
-                <div className="text-xs font-bold text-white">£{(p.service_charge + p.ground_rent).toLocaleString()}/yr</div>
-                <span className="text-[8px] text-white/40 uppercase font-black tracking-tighter">S:{p.service_charge} G:{p.ground_rent}</span>
-              </div>
-            )}
-            winnerId={null}
-          />
+          {MATRIX_ROWS.map(row => (
+            <MatrixRow 
+              key={row.id}
+              config={row}
+              properties={selectedProperties}
+              winnerId={getWinnerId(row)}
+              avg={stats[row.id]}
+            />
+          ))}
 
           {/* Action Row */}
           <div className="grid grid-cols-[200px_repeat(auto-fit,minmax(0,1fr))] gap-px bg-linear-border border border-linear-border rounded-b-3xl overflow-hidden shadow-xl">
@@ -206,25 +230,22 @@ const ComparisonPage: React.FC = () => {
 };
 
 interface MatrixRowProps {
-  label: string;
-  icon: React.ReactNode;
+  config: MatrixRowConfig;
   properties: PropertyWithCoords[];
-  render: (p: PropertyWithCoords) => React.ReactNode;
   winnerId: string | null;
   avg?: number;
-  isCurrency?: boolean;
 }
 
-const MatrixRow: React.FC<MatrixRowProps> = ({ label, icon, properties, render, winnerId, avg, isCurrency }) => {
+const MatrixRow: React.FC<MatrixRowProps> = ({ config, properties, winnerId, avg }) => {
   return (
     <div className="grid grid-cols-[200px_repeat(auto-fit,minmax(0,1fr))] gap-px bg-linear-border border-x border-linear-border">
       <div className="bg-linear-bg/40 p-6 flex items-center gap-3 group/label">
-        <div className="text-linear-accent group-hover/label:text-blue-400 transition-colors">{icon}</div>
+        <div className="text-linear-accent group-hover/label:text-blue-400 transition-colors">{config.icon}</div>
         <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-white uppercase tracking-widest leading-none">{label}</span>
-          {avg !== undefined && (
+          <span className="text-[10px] font-bold text-white uppercase tracking-widest leading-none">{config.label}</span>
+          {avg !== undefined && config.mode !== 'none' && (
             <span className="text-[8px] text-linear-text-muted font-bold uppercase mt-1">
-              AVG: {isCurrency ? '£' : ''}{avg.toLocaleString()}{!isCurrency && label.includes('Appreciation') ? '%' : ''}
+              AVG: {config.isCurrency ? '£' : ''}{avg.toLocaleString()}{!config.isCurrency && config.label.includes('Appreciation') ? '%' : ''}
             </span>
           )}
         </div>
@@ -234,10 +255,10 @@ const MatrixRow: React.FC<MatrixRowProps> = ({ label, icon, properties, render, 
         let delta = 0;
         let deltaPct = 0;
         
-        if (avg !== undefined) {
-          const val = label === 'Commute' ? (p.commute_paternoster + p.commute_canada_square) : (p[getPropKey(label)] as number);
+        const val = config.getValue(p);
+        if (avg !== undefined && config.mode !== 'none') {
           delta = val - avg;
-          deltaPct = (delta / avg) * 100;
+          deltaPct = (delta / (avg || 1)) * 100;
         }
 
         return (
@@ -249,10 +270,10 @@ const MatrixRow: React.FC<MatrixRowProps> = ({ label, icon, properties, render, 
                 </div>
               </div>
             )}
-            {render(p)}
-            {avg !== undefined && (
+            {config.render(p)}
+            {avg !== undefined && config.mode !== 'none' && (
               <div className={`text-[9px] font-black mt-2 uppercase tracking-tighter ${
-                (label === 'Alpha Score' || label === 'Appreciation' || label === 'Internal Area') 
+                config.mode === 'max'
                   ? (delta >= 0 ? 'text-retro-green' : 'text-rose-400')
                   : (delta <= 0 ? 'text-retro-green' : 'text-rose-400')
               }`}>
@@ -264,17 +285,6 @@ const MatrixRow: React.FC<MatrixRowProps> = ({ label, icon, properties, render, 
       })}
     </div>
   );
-};
-
-const getPropKey = (label: string): keyof PropertyWithCoords => {
-  switch (label) {
-    case 'Alpha Score': return 'alpha_score';
-    case 'Target Price': return 'realistic_price';
-    case 'Efficiency': return 'price_per_sqm';
-    case 'Internal Area': return 'sqft';
-    case 'Appreciation': return 'appreciation_potential';
-    default: return 'realistic_price';
-  }
 };
 
 export default ComparisonPage;

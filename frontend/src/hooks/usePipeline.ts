@@ -8,12 +8,12 @@ export interface PipelineState {
 
 export const usePipeline = () => {
   const [pipeline, setPipeline] = useState<PipelineState>(() => {
-    const saved = localStorage.getItem('immo_pipeline');
+    const saved = localStorage.getItem('propsearch_pipeline');
     return saved ? JSON.parse(saved) : {};
   });
 
   useEffect(() => {
-    localStorage.setItem('immo_pipeline', JSON.stringify(pipeline));
+    localStorage.setItem('propsearch_pipeline', JSON.stringify(pipeline));
   }, [pipeline]);
 
   const setStatus = useCallback((id: string, status: PropertyStatus) => {

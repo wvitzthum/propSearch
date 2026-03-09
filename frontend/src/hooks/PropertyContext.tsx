@@ -33,28 +33,12 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
   const fetchProperties = async () => {
     try {
       setLoading(true);
-      // Try API first, fallback to static file
-      let data: Property[];
-      try {
-        const res = await fetch(`${API_BASE}/properties`);
-        if (!res.ok) throw new Error('API Unavailable');
-        data = await res.json();
-      } catch (e) {
-        console.warn('API unavailable, falling back to static master.json');
-        const res = await fetch('/data/master.json');
-        if (!res.ok) throw new Error('Failed to fetch master registry');
-        const text = (await res.text()).trim();
-        
-        // Institutional JSONL vs standard JSON detection
-        if (text.startsWith('[') && text.endsWith(']')) {
-          data = JSON.parse(text);
-        } else {
-          data = text
-            .split('\n')
-            .filter(line => line.trim())
-            .map(line => JSON.parse(line));
-        }
+      const res = await fetch(`${API_BASE}/properties`);
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'API Unavailable' }));
+        throw new Error(errorData.error || 'Failed to fetch properties');
       }
+      const data: Property[] = await res.json();
 
       const propertiesWithCoords = data.map(p => {
         const areaName = p.area.includes('Islington') ? 'Islington (N1)' : p.area;

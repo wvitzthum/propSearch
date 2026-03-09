@@ -1,4 +1,4 @@
-# immoSearch: Private Acquisition & Research Dashboard
+# propSearch: Private Acquisition & Research Dashboard
 
 ## Project Mission
 A private, high-precision research tool designed for a single user to identify and acquire a specific prime London property. This platform is for personal use only and is not intended for external commercial use or revenue generation.
@@ -19,17 +19,22 @@ A multi-agent system that automates the discovery, normalization, and visualizat
    - **Responsibilities:** Maintains `REQUIREMENTS.md`, prioritizes the backlog in `Tasks.md`, and suggests high-level feature enhancements.
    - **Write Access:** `REQUIREMENTS.md`, `Tasks.md`, `agents/product_owner/`.
 
-2. **Senior Real Estate Data Engineer (`agents/data_gatherer/`):** 
-   - **Primary Goal:** High-fidelity property dataset generation and normalization.
-   - **Responsibilities:** Scrapes listings, calculates Alpha/Appreciation scores, and maintains `data/master.json`.
-   - **Write Access:** `data/`, `agents/data_gatherer/`.
+2. **Senior Real Estate Data Analyst (`agents/data_analyst/`):**
+   - **Primary Goal:** Property research, metric normalization, and "Alpha" signal generation.
+   - **Responsibilities:** Identifies listings, calculates Alpha/Appreciation scores, and maintains macro market trends.
+   - **Write Access:** `data/`, `agents/data_analyst/`.
 
-3. **Lead Frontend Engineer & UX Architect (`agents/frontend_engineer/`):** 
+3. **Senior Real Estate Data Engineer (`agents/data_engineer/`):** 
+   - **Primary Goal:** Data architecture, storage solutions, and automated ingestion pipelines.
+   - **Responsibilities:** Manages DuckDB storage, maintains `sync_data.js`, and builds the backend API.
+   - **Write Access:** `data/`, `agents/data_engineer/`, `scripts/sync_data.js`, `server/index.js`.
+
+4. **Lead Frontend Engineer & UX Architect (`agents/frontend_engineer/`):** 
    - **Primary Goal:** Responsive, "Bloomberg meets Linear" research dashboard.
    - **Responsibilities:** Implements data-dense UI, sorting/filtering, and ensures no-auth architecture.
    - **Write Access:** `frontend/`, `agents/frontend_engineer/`.
 
-4. **UI/UX Quality Assurance Engineer (`agents/ui_ux_qa/`):**
+5. **UI/UX Quality Assurance Engineer (`agents/ui_ux_qa/`):**
    - **Primary Goal:** Rigorous functional and aesthetic audit.
    - **Responsibilities:** Validates against `REQUIREMENTS.md`, conducts dark mode audits, and logs bugs in `Tasks.md`.
    - **Write Access:** `Tasks.md`, `agents/ui_ux_qa/`.
@@ -46,7 +51,8 @@ A multi-agent system that automates the discovery, normalization, and visualizat
 - **Agent Boundaries:** Agents must strictly adhere to their specialized domains. If an agent's task evolves into the domain of another (e.g., Data Engineer starts writing React components), they MUST stop and defer to the appropriate agent. Cross-contamination of responsibilities is a hard failure.
 - **Territorial Boundaries (Write Access):**
   - **Product Owner:** Authorized to write ONLY to `REQUIREMENTS.md`, `Tasks.md`, and `agents/product_owner/`.
-  - **Data Gatherer:** Authorized to write ONLY to `data/` and `agents/data_gatherer/`.
+  - **Data Analyst:** Authorized to write ONLY to `data/` and `agents/data_analyst/`.
+  - **Data Engineer:** Authorized to write ONLY to `data/`, `agents/data_engineer/`, `scripts/sync_data.js`, `server/index.js`, and `frontend/src/types/property.ts`.
   - **Frontend Engineer:** Authorized to write ONLY to `frontend/` and `agents/frontend_engineer/`.
   - **UI/UX QA:** Authorized to write ONLY to `Tasks.md` and `agents/ui_ux_qa/`.
 - **Workflow Pipeline:** Product Owner sets requirements -> QA identifies gaps -> `Tasks.md` -> Frontend/Data implementation.
@@ -55,20 +61,27 @@ A multi-agent system that automates the discovery, normalization, and visualizat
 ## Gemini CLI Usage & Efficiency
 To maximize performance and minimize token usage, follow these orchestration patterns:
 
-### 1. Agent Invocation
+### 1. RTK Optimization (Mandatory Mandate)
+- **ALL high-volume shell operations** (`npm install`, `npm run build`, `lint`, `node scripts/sync_data.js`, large `grep`, `ls -R`, batch file reads) **MUST** be proxied through **rtk** (Rust Token Killer).
+- This is NOT optional. It minimizes context noise and reduces token consumption by 60-90%.
+- Use `rtk --raw <command>` **ONLY** when troubleshooting cryptic errors that `rtk` might be compressing.
+
+### 2. Agent Invocation
 When starting a task, explicitly reference the relevant agent's `README.md` to load its specialized context:
-- `Data Gathering:` "Using the instructions in `agents/data_gatherer/README.md`, generate today's property snapshot."
+- `Property Research:` "Following the instructions in `agents/data_analyst/README.md`, identify 5 new listings in Islington."
+- `Data Infrastructure:` "Using the instructions in `agents/data_engineer/README.md`, optimize the DuckDB schema for Alpha scores."
 - `UI Development:` "Following `agents/frontend_engineer/README.md`, implement the KPI header using the latest data."
 - `QA Audit:` "As the `agents/ui_ux_qa/` engineer, audit the dark mode contrast and update `Tasks.md`."
 
-### 2. Efficiency Strategies
+### 3. Efficiency Strategies
 - **Parallel Research:** Use `generalist` to run data gathering and UI audits simultaneously if they don't depend on the same files.
 - **The "Tasks.md" Trigger:** Instead of giving vague instructions, tell the CLI: "Review `Tasks.md` and implement the highest priority fix."
 - **Context Compression:** Do not load all agent READMEs at once unless performing a cross-agent coordination task. Focus on one agent per turn when possible.
 
-### 3. Verification & Handoff
+### 4. Verification & Handoff
 - Always run the QA agent *after* a frontend change but *before* declaring the task complete.
-- Ensure the Data Gatherer updates `master.json` and `manifest.json` in a single atomic operation to keep the frontend data-source consistent.
+- Ensure the Data Analyst coordinates with the Data Engineer when new metrics require schema changes.
+- The Data Engineer is responsible for the final promotion of data to the DuckDB master store.
 
 ## Project Structure
 - `agents/`: Specialized agent instructions.

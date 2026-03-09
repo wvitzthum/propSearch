@@ -28,6 +28,7 @@ import LoadingNode from '../components/LoadingNode';
 import PropertyImage from '../components/PropertyImage';
 import LocationNodeMap from '../components/LocationNodeMap';
 import PipelineTracker from '../components/PipelineTracker';
+import SourceHub from '../components/SourceHub';
 import type { PropertyWithCoords } from '../types/property';
 import { usePipeline } from '../hooks/usePipeline';
 
@@ -280,24 +281,79 @@ const PropertyDetail: React.FC = () => {
 
               <div>
                 <h2 className="text-xs font-bold text-linear-text-muted uppercase tracking-widest mb-4">Acquisition Strategy</h2>
-                <div className="p-6 bg-linear-card border border-linear-border rounded-2xl relative overflow-hidden group">
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-3 text-white font-bold mb-3">
-                      <Scale size={20} className="text-blue-400" />
-                      {property.neg_strategy || 'Default Protocol'}
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div className="p-6 bg-linear-card border border-linear-border rounded-2xl relative overflow-hidden group">
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3 text-white font-bold mb-3">
+                        <Scale size={20} className="text-blue-400" />
+                        {property.neg_strategy || 'Default Protocol'}
+                      </div>
+                      <p className="text-linear-text-muted text-sm leading-relaxed max-w-lg">
+                        Based on a market duration of {property.dom} days, we recommend an {(property.neg_strategy || '').toLowerCase().includes('aggressive') ? 'aggressive bidding posture' : 'entry at market value'}. 
+                        The Realistic Price of £{property.realistic_price.toLocaleString()} represents a target entry point for immediate equity capture.
+                      </p>
                     </div>
-                    <p className="text-linear-text-muted text-sm leading-relaxed max-w-lg">
-                      Based on a market duration of {property.dom} days, we recommend an {(property.neg_strategy || '').toLowerCase().includes('aggressive') ? 'aggressive bidding posture' : 'entry at market value'}. 
-                      The Realistic Price of £{property.realistic_price.toLocaleString()} represents a target entry point for immediate equity capture.
-                    </p>
+                    <TrendingDown className="absolute -right-8 -bottom-8 text-white/5 group-hover:text-blue-500/10 transition-colors" size={200} />
                   </div>
-                  <TrendingDown className="absolute -right-8 -bottom-8 text-white/5 group-hover:text-blue-500/10 transition-colors" size={200} />
+
+                  {/* Negotiation Buffer Visualization */}
+                  <div className="p-6 bg-linear-card border border-linear-border rounded-2xl flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
+                          <Zap size={14} className="text-retro-green" />
+                          Negotiation Buffer
+                        </h3>
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border ${
+                          property.dom > 90 ? 'text-retro-green border-retro-green/20 bg-retro-green/10' :
+                          property.dom > 30 ? 'text-blue-400 border-blue-400/20 bg-blue-400/10' :
+                          'text-linear-text-muted border-linear-border bg-linear-bg'
+                        }`}>
+                          {property.dom > 90 ? 'Aggressive' : property.dom > 30 ? 'Moderate' : 'Conservative'}
+                        </span>
+                      </div>
+
+                      <div className="space-y-6">
+                        <div className="relative pt-2">
+                          <div className="h-1.5 w-full bg-linear-bg rounded-full overflow-hidden flex">
+                            <div className="h-full bg-linear-accent opacity-20" style={{ width: '70%' }} />
+                            <div className="h-full bg-retro-green" style={{ width: '15%' }} />
+                            <div className="h-full bg-linear-bg" style={{ width: '15%' }} />
+                          </div>
+                          <div className="absolute top-0 left-[70%] h-5 w-px bg-white/20" />
+                          <div className="absolute top-0 left-[85%] h-5 w-px bg-white/20" />
+                          
+                          <div className="flex justify-between mt-3 text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">
+                            <span>Target Bid</span>
+                            <span>Realistic</span>
+                            <span>List Price</span>
+                          </div>
+                          <div className="flex justify-between mt-1 font-mono text-[10px]">
+                            <span className="text-retro-green font-black">£{Math.round(property.realistic_price * 0.95).toLocaleString()}</span>
+                            <span className="text-white">£{property.realistic_price.toLocaleString()}</span>
+                            <span className="text-linear-text-muted opacity-60">£{property.list_price.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 pt-4 border-t border-linear-border flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">Max Capture</span>
+                        <span className="text-xs font-bold text-retro-green tracking-tight">£{Math.round(property.list_price - (property.realistic_price * 0.95)).toLocaleString()}</span>
+                      </div>
+                      <div className="text-right flex flex-col">
+                        <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">Post-90d Delta</span>
+                        <span className="text-xs font-bold text-white tracking-tight">-5.0%</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div>
                 <h2 className="text-xs font-bold text-linear-text-muted uppercase tracking-widest mb-4">Institutional Alpha Analysis</h2>
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid sm:grid-cols-2 gap-4 mb-8">
                   <div className="p-5 border border-linear-border bg-linear-card rounded-2xl shadow-sm">
                     <div className="flex justify-between items-center mb-6">
                       <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">Alpha Score</span>
@@ -350,6 +406,90 @@ const PropertyDetail: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* CAPEX & Retrofit Node */}
+                <h2 className="text-xs font-bold text-linear-text-muted uppercase tracking-widest mb-4">CAPEX & Retrofit Modeling</h2>
+                <div className="p-8 bg-linear-card border border-linear-border rounded-3xl relative overflow-hidden group shadow-2xl">
+                  <div className="relative z-10 grid md:grid-cols-2 gap-12 items-center">
+                    <div>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="h-10 w-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                          <Zap size={20} />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-white tracking-tight">EPC Optimization Path</h3>
+                          <p className="text-xs text-linear-text-muted">Mandatory efficiency upgrades for institutional grade liquidity.</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-8 mb-8">
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px] font-black text-linear-text-muted uppercase tracking-widest mb-2">Current</span>
+                          <div className={`h-14 w-14 rounded-2xl border-2 flex items-center justify-center text-2xl font-black ${
+                            ['A', 'B'].includes(property.epc) ? 'border-retro-green text-retro-green bg-retro-green/5' :
+                            ['C', 'D'].includes(property.epc) ? 'border-retro-amber text-retro-amber bg-retro-amber/5' :
+                            'border-rose-500 text-rose-400 bg-rose-500/5'
+                          }`}>
+                            {property.epc}
+                          </div>
+                        </div>
+                        <ArrowRight size={24} className="text-linear-border mt-4" />
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-2">Potential</span>
+                          <div className="h-14 w-14 rounded-2xl border-2 border-blue-500/50 text-blue-400 bg-blue-500/5 flex items-center justify-center text-2xl font-black shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+                            {property.epc_improvement_potential || 'B'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-linear-text-muted">Efficiency Gain</span>
+                          <span className="text-retro-green font-bold">+22% Thermal Retention</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-linear-bg rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-blue-500 to-retro-green w-[75%]" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-linear-bg/50 border border-linear-border rounded-2xl p-6">
+                      <div className="flex justify-between items-start mb-6">
+                        <div>
+                          <span className="text-[9px] font-black text-linear-text-muted uppercase tracking-widest block mb-1">Est. CAPEX Requirement</span>
+                          <div className="text-3xl font-bold text-white tracking-tighter">
+                            £{(property.est_capex_requirement || 12500).toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-[9px] font-black text-white uppercase">
+                          Class 1 Quote
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3 text-[11px] text-linear-text-muted">
+                          <CheckCircle2 size={14} className="text-retro-green" />
+                          <span>Double-glazing optimization (£4.2k)</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-[11px] text-linear-text-muted">
+                          <CheckCircle2 size={14} className="text-retro-green" />
+                          <span>Internal wall insulation (£6.8k)</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-[11px] text-linear-text-muted">
+                          <CheckCircle2 size={14} className="text-retro-green" />
+                          <span>Smart HVAC & LED swap (£1.5k)</span>
+                        </div>
+                      </div>
+
+                      <button className="w-full mt-6 py-3 bg-linear-accent text-white rounded-xl text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all active:scale-95 shadow-xl shadow-linear-accent/10">
+                        View Detailed CAPEX Breakdown
+                      </button>
+                    </div>
+                  </div>
+                  <div className="absolute -right-20 -bottom-20 opacity-[0.03] pointer-events-none group-hover:opacity-[0.05] transition-opacity">
+                    <TrendingUp size={400} />
+                  </div>
+                </div>
               </div>
 
               {/* Location Node Mini-Map */}
@@ -398,38 +538,7 @@ const PropertyDetail: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                <div className="relative group/hub">
-                  <button 
-                    className="w-full py-4 bg-white text-black rounded-xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all active:scale-95 shadow-2xl shadow-white/5"
-                  >
-                    Asset Source Hub
-                    <ExternalLink size={14} />
-                  </button>
-                  <div className="absolute bottom-full left-0 right-0 pb-2 mb-0 opacity-0 translate-y-4 pointer-events-none group-hover/hub:opacity-100 group-hover/hub:translate-y-0 group-hover/hub:pointer-events-auto transition-all z-50">
-                    <div className="bg-linear-card border border-linear-border rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl p-3">
-                      <div className="flex flex-col gap-2">
-                        <div className="px-3 py-2 text-[9px] font-black text-linear-text-muted uppercase tracking-[0.2em] border-b border-linear-border mb-1">
-                          Select Verification Portal
-                        </div>
-                        {(property.links || [property.link]).map((url, i) => (
-                          <a 
-                            key={i}
-                            href={url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="p-4 text-[10px] font-bold text-linear-text-muted hover:text-white hover:bg-linear-bg rounded-xl transition-all flex items-center justify-between group/link uppercase tracking-wider border border-transparent hover:border-linear-border"
-                          >
-                            <div className="flex flex-col gap-0.5">
-                              <span className="text-white">{url.includes('rightmove') ? 'Rightmove Institutional' : url.includes('zoopla') ? 'Zoopla Analytics' : 'Direct Agent Portal'}</span>
-                              <span className="text-[8px] opacity-50 lowercase truncate max-w-[180px]">{url}</span>
-                            </div>
-                            <ArrowRight size={14} className="opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all text-linear-accent" />
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <SourceHub links={property.links || [property.link]} variant="full" />
                 <button className="w-full py-3.5 bg-linear-card text-white border border-linear-border rounded-xl font-bold hover:bg-linear-accent transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest">
                   Generate PDF Report
                 </button>

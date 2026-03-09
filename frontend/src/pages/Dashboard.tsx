@@ -112,7 +112,7 @@ const MetroOverlay: React.FC = () => {
 
   useEffect(() => {
     // Note: In a real Vite app, these assets should be in /public or handled by the server
-    fetch('/data/london_metro.geojson')
+    fetch('/api/london-metro')
       .then(res => res.json())
       .then(data => setGeoData(data))
       .catch(err => console.error('Failed to load metro data:', err));
@@ -162,6 +162,7 @@ const PropertyCard: React.FC<{
   return (
     <div className={`bg-linear-card border rounded-xl overflow-hidden hover:border-linear-accent transition-all group flex flex-col h-full relative glow-border ${
       isSelected ? 'ring-2 ring-blue-500/50 border-blue-500/50' : 
+      status === 'vetted' ? 'border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/30' :
       status === 'shortlisted' ? 'border-blue-500/40 shadow-[0_0_15px_rgba(59,130,246,0.1)]' : 'border-linear-border'
     }`}>
       {/* Thumbnail */}
@@ -178,8 +179,14 @@ const PropertyCard: React.FC<{
         
         {/* Badges on Image */}
         <div className="absolute top-3 left-3 z-20 flex flex-col gap-2">
-          {property.is_value_buy && (
-            <div className="px-2 py-0.5 bg-emerald-500 text-black text-[9px] font-black uppercase rounded shadow-lg flex items-center gap-1 border border-emerald-400">
+          {status === 'vetted' && (
+            <div className="px-2 py-0.5 bg-emerald-500 text-black text-[9px] font-black uppercase rounded shadow-lg flex items-center gap-1 border border-emerald-400 animate-in zoom-in-90 duration-300">
+              <ShieldCheck size={10} />
+              Vetted Asset
+            </div>
+          )}
+          {property.is_value_buy && status !== 'vetted' && (
+            <div className="px-2 py-0.5 bg-emerald-500/80 backdrop-blur-md text-black text-[9px] font-black uppercase rounded shadow-lg flex items-center gap-1 border border-emerald-400">
               <Gem size={10} />
               Value Buy
             </div>
@@ -375,8 +382,15 @@ const Dashboard: React.FC = () => {
       result = result.filter(p => getStatus(p.id) !== 'archived');
     }
 
-    if (filterShortlisted) result = result.filter(p => getStatus(p.id) === 'shortlisted');
-    if (filterVetted) result = result.filter(p => getStatus(p.id) === 'vetted');
+    if (filterShortlisted || filterVetted) {
+      result = result.filter(p => {
+        const s = getStatus(p.id);
+        if (filterShortlisted && filterVetted) return s === 'shortlisted' || s === 'vetted';
+        if (filterShortlisted) return s === 'shortlisted';
+        if (filterVetted) return s === 'vetted';
+        return true;
+      });
+    }
     if (filterValueBuys) result = result.filter(p => p.is_value_buy);
     if (filterNewOnly) result = result.filter(p => p.metadata.is_new);
     if (areaFilter !== 'All Areas') result = result.filter(p => p.area.includes(areaFilter));
@@ -402,7 +416,7 @@ const Dashboard: React.FC = () => {
     if (properties.length === 0) return { total: 0, avgAlpha: '0.0', shortlisted: 0, vetted: 0 };
     return {
       total: properties.length,
-      shortlisted: Object.values(pipeline).filter(s => s === 'shortlisted').length,
+      shortlisted: Object.values(pipeline).filter(s => s === 'shortlisted' || s === 'vetted').length,
       vetted: Object.values(pipeline).filter(s => s === 'vetted').length,
       avgAlpha: (properties.reduce((acc, p) => acc + p.alpha_score, 0) / (properties.length || 1)).toFixed(1)
     };
@@ -465,12 +479,12 @@ const Dashboard: React.FC = () => {
           methodology="Weighted average of Tenure Quality (40%), Spatial Alpha (30%), and Price Efficiency (30%)."
         />
         <KPICard 
-          label="Shortlisted" 
+          label="Active Pipeline" 
           value={stats.shortlisted} 
           icon={Bookmark} 
           className="text-retro-green"
-          tooltip="Current volume of assets successfully moved from 'Discovered' to 'Shortlisted' status."
-          methodology="User-defined filter status for assets marked for secondary vetting."
+          tooltip="Current volume of assets successfully moved from 'Discovered' to 'Shortlisted' or 'Vetted' status."
+          methodology="User-defined filter status for assets marked for secondary vetting or final approval."
         />
         <KPICard 
           label="Vetted Assets" 

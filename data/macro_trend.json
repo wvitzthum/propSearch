@@ -1,176 +1,38 @@
 {
+  "boe_base_rate": 3.75,
+  "market_consensus": "Wait & See (Neutral)",
+  "mpc_next_meeting": "2026-03-19",
   "london_hpi": {
-    "mom_pct": 0.2,
-    "yoy_pct": 6,
-    "avg_price_pcl": 1250000
+    "annual_change": 1.2,
+    "monthly_change": -0.1,
+    "avg_price": 535000
   },
-  "inventory_velocity": {
-    "months_of_supply": 4.5,
-    "new_instructions_q_change": -2.1
-  },
-  "negotiation_delta": {
-    "avg_discount_pct": -3.5,
-    "pct_below_asking": 78
-  },
-  "area_heat_index": [
-    {
-      "area": "Islington (N1/N7)",
-      "score": 8.5
-    },
-    {
-      "area": "Bayswater (W2)",
-      "score": 7.2
-    },
-    {
-      "area": "Belsize Park (NW3)",
-      "score": 8.8
-    },
-    {
-      "area": "West Hampstead (NW6)",
-      "score": 6.5
-    },
-    {
-      "area": "Chelsea (SW3/SW10)",
-      "score": 7.5
-    },
-    {
-      "area": "Primrose Hill (NW1)",
-      "score": 9.2
-    }
-  ],
-  "economic_indicators": {
-    "boe_base_rate": 3.75,
-    "gbp_usd": 1.28,
-    "inflation_cpi": 3,
-    "mortgage_rates": {
-      "90_ltv_2yr_fixed": 4.8,
-      "90_ltv_5yr_fixed": 4.5,
-      "avg_fees": 999
-    },
-    "mpc_next_meeting": "2026-03-26",
-    "market_consensus": "Cut to 3.50%",
-    "inflation_target": 2
-  },
-  "market_business": [
-    {
-      "month": "2025-10",
-      "listed": 420,
-      "sold": 350
-    },
-    {
-      "month": "2025-11",
-      "listed": 380,
-      "sold": 310
-    },
-    {
-      "month": "2025-12",
-      "listed": 310,
-      "sold": 290
-    },
-    {
-      "month": "2026-01",
-      "listed": 480,
-      "sold": 340
-    },
-    {
-      "month": "2026-02",
-      "listed": 510,
-      "sold": 390
-    },
-    {
-      "month": "2026-03",
-      "listed": 140,
-      "sold": 95
-    }
-  ],
-  "timing_signals": {
-    "seasonal_buy_score": 8,
-    "optimal_window_description": "H1 2026 - Pre-Interest Rate Cut"
+  "mortgage_rates": {
+    "two_year_fixed_60_ltv": 3.65,
+    "five_year_fixed_60_ltv": 3.70,
+    "two_year_fixed_90_ltv": 4.45,
+    "five_year_fixed_90_ltv": 4.55
   },
   "mortgage_history": [
-    {
-      "month": "2025-03",
-      "boe_rate": 5.25,
-      "mortgage_2yr": 6.1,
-      "mortgage_5yr": 5.8,
-      "cpi": 3.2
-    },
-    {
-      "month": "2025-04",
-      "boe_rate": 5.25,
-      "mortgage_2yr": 5.9,
-      "mortgage_5yr": 5.6,
-      "cpi": 2.8
-    },
-    {
-      "month": "2025-05",
-      "boe_rate": 5,
-      "mortgage_2yr": 5.7,
-      "mortgage_5yr": 5.4,
-      "cpi": 2.5
-    },
-    {
-      "month": "2025-06",
-      "boe_rate": 5,
-      "mortgage_2yr": 5.6,
-      "mortgage_5yr": 5.3,
-      "cpi": 2.3
-    },
-    {
-      "month": "2025-07",
-      "boe_rate": 5,
-      "mortgage_2yr": 5.5,
-      "mortgage_5yr": 5.2,
-      "cpi": 2
-    },
-    {
-      "month": "2025-08",
-      "boe_rate": 4.75,
-      "mortgage_2yr": 5.3,
-      "mortgage_5yr": 5,
-      "cpi": 2.1
-    },
-    {
-      "month": "2025-09",
-      "boe_rate": 4.75,
-      "mortgage_2yr": 5.2,
-      "mortgage_5yr": 4.9,
-      "cpi": 2.2
-    },
-    {
-      "month": "2025-10",
-      "boe_rate": 4.75,
-      "mortgage_2yr": 5.2,
-      "mortgage_5yr": 4.8,
-      "cpi": 2.4
-    },
-    {
-      "month": "2025-11",
-      "boe_rate": 4.5,
-      "mortgage_2yr": 5.1,
-      "mortgage_5yr": 4.7,
-      "cpi": 2.6
-    },
-    {
-      "month": "2025-12",
-      "boe_rate": 4.25,
-      "mortgage_2yr": 5,
-      "mortgage_5yr": 4.6,
-      "cpi": 2.8
-    },
-    {
-      "month": "2026-01",
-      "boe_rate": 4,
-      "mortgage_2yr": 4.9,
-      "mortgage_5yr": 4.5,
-      "cpi": 3
-    },
-    {
-      "month": "2026-02",
-      "boe_rate": 3.75,
-      "mortgage_2yr": 4.8,
-      "mortgage_5yr": 4.5,
-      "cpi": 3
-    }
-  ]
+    { "date": "2025-03", "rate_90": 5.8, "rate_60": 4.9 },
+    { "date": "2025-04", "rate_90": 5.7, "rate_60": 4.8 },
+    { "date": "2025-05", "rate_90": 5.5, "rate_60": 4.6 },
+    { "date": "2025-06", "rate_90": 5.3, "rate_60": 4.4 },
+    { "date": "2025-07", "rate_90": 5.1, "rate_60": 4.2 },
+    { "date": "2025-08", "rate_90": 5.0, "rate_60": 4.1 },
+    { "date": "2025-09", "rate_90": 4.9, "rate_60": 4.0 },
+    { "date": "2025-10", "rate_90": 4.8, "rate_60": 3.9 },
+    { "date": "2025-11", "rate_90": 4.7, "rate_60": 3.8 },
+    { "date": "2025-12", "rate_90": 4.5, "rate_60": 3.7 },
+    { "date": "2026-01", "rate_90": 4.4, "rate_60": 3.6 },
+    { "date": "2026-02", "rate_90": 4.45, "rate_60": 3.65 },
+    { "date": "2026-03", "rate_90": 4.45, "rate_60": 3.65 }
+  ],
+  "area_trends": {
+    "Islington (N1)": { "heat_index": 8.2, "annual_growth": 2.1 },
+    "Belsize Park (NW3)": { "heat_index": 7.5, "annual_growth": 1.8 },
+    "Chelsea (SW3/SW10)": { "heat_index": 6.8, "annual_growth": 0.5 },
+    "West Hampstead (NW6)": { "heat_index": 7.9, "annual_growth": 2.4 },
+    "Primrose Hill (NW1)": { "heat_index": 8.5, "annual_growth": 3.1 }
+  }
 }

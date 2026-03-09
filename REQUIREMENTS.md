@@ -1,4 +1,4 @@
-# immoSearch: High-Level Project Requirements
+# propSearch: High-Level Project Requirements
 
 ## Strategic Goal
 To build a private, high-precision research tool that enables a single buyer to find and acquire a specific prime London property for personal residential use.
@@ -7,7 +7,7 @@ To build a private, high-precision research tool that enables a single buyer to 
 
 ## Core Pillars
 
-### 1. Data Integrity & Scoring
+### 1. Data Integrity & Scoring (The Data Analyst)
 - **Requirement:** The system must surface "high-signal" properties based on strict criteria.
 - **Data Authenticity:** All data (Pricing, Metrics, Images) must be empirical and sourced from live or historical market listings.
 - **Placeholder Prohibition:** The use of synthetic, mock, or placeholder data (including stock images) is strictly forbidden in production datasets.
@@ -19,14 +19,19 @@ To build a private, high-precision research tool that enables a single buyer to 
 - **Floor Level Intelligence:**
   - **Requirement:** Capture the specific floor level of the property (e.g., "Ground", "1st", "Penthouse").
   - **Goal:** Enable the user to filter or evaluate properties based on elevation and accessibility.
-  - **Instruction to Data Agent:** Extract `floor_level` from listing descriptions or technical specs. Normalize to a standard string format.
-  - **Instruction to Frontend Agent:** Display "Floor" as a KPI node in the Detail view and as a column/field in the Table and Preview views.
+  - **Instruction to Data Analyst:** Extract `floor_level` from listing descriptions or technical specs. Normalize to a standard string format.
 - **Multi-Source Linkage:** Every asset must support multiple link references (portal vs. direct agent).
 - **Direct-to-Agent Verification:** Priority must be given to finding and linking to the listing on the estate agent's own website (e.g., Savills, Knight Frank, Dexter's) to mitigate broken portal links.
-- **Instruction to Data Agent:** Maintain a rigorous JSON schema. Prioritize agent-direct listings in the `links` array. Include running costs and lease depth in all captures.
-- **Instruction to Frontend Agent:** 
-  - Render a "Source Hub" dropdown or list in the Detail view.
-  - Display "Running Cost Node" (Service/Ground Rent) prominently in the Asset Detail and Preview Drawer.
+- **Instruction to Data Analyst:** Perform deep research to verify listing details, source high-res imagery, and calculate "Alpha" scores. Maintain a rigorous data standard. Reject any records with missing critical financial metrics (e.g., `list_price: 0` or missing `sqft`).
+
+### 1.1 Data Infrastructure (The Data Engineer)
+- **Requirement:** The system must utilize a robust, analytical data backend to ensure speed and precision across all dashboard views.
+- **Engine:** Transition from flat JSON files to a high-performance **DuckDB** instance.
+- **Instruction to Data Engineer:** 
+  - Maintain the primary DuckDB database (`data/propSearch.duckdb`).
+  - Develop and maintain the `sync_data.js` pipeline to automate the promotion of validated leads from the Inbox to the Master DB.
+  - Interface with the Local API Server to provide SQL-backed endpoints for the frontend.
+  - Source and maintain `data/london_metro.geojson` (geometry files).
 
 ### 2. High-Density Visualization (Bloomberg Terminal)
 - **Requirement:** A UI that allows for the comparison of 50+ properties without visual clutter.
@@ -46,7 +51,7 @@ To build a private, high-precision research tool that enables a single buyer to 
 - **Requirement:** Every asset must have high-resolution visual representation (hero thumbnails + gallery).
 - **Goal:** Allow the user to "feel" the property without leaving the dashboard.
 - **Image Sourcing Pipeline:**
-  - **Hero Thumbnail:** The Data Agent must extract a high-quality primary image (`image_url`) from the portal (e.g., Rightmove/Zoopla).
+  - **Hero Thumbnail:** The Data Analyst must extract a high-quality primary image (`image_url`) from the portal (e.g., Rightmove/Zoopla).
   - **Gallery Support:** The schema must support a `gallery` array (strings) for the top 5 high-res property images.
   - **Exterior Fidelity (StreetView):** If possible, provide a `streetview_url` based on coordinates to provide immediate street-level context.
 - **Visual Resilience (Image Fallbacks):** 
@@ -56,7 +61,7 @@ To build a private, high-precision research tool that enables a single buyer to 
 - **Instruction to Frontend Agent:** 
   - Create a reusable `PropertyImage` component with an `onError` handler to swap broken URLs for the institutional placeholder.
   - Ensure the placeholder matches the dark-mode, high-density theme.
-- **Instruction to Data Agent:** Implement robust "Hidden Web Data" extraction from portal JSON blobs (e.g., `PAGE_MODEL` or `__NEXT_DATA__`) to ensure link longevity and high resolution (1024px+).
+- **Instruction to Data Analyst:** Implement robust "Hidden Web Data" extraction from portal JSON blobs (e.g., `PAGE_MODEL` or `__NEXT_DATA__`) to ensure link longevity and high resolution (1024px+).
 - **Instruction to Frontend Agent:** 
   - **Dashboard:** Render high-density thumbnails in `PropertyCard`.
   - **Detail Page:** Implement a "Linear-style" image gallery/carousel with precise spacing and subtle transitions.
@@ -71,7 +76,7 @@ To build a private, high-precision research tool that enables a single buyer to 
 - **Goal:** Enable the user to instantly grasp the proximity to Tube/Overground stations and Parks.
 - **Metro Line Refinement:** Metro lines should be visible but subtle (e.g., `weight: 2.5`) to prevent obscuring property markers.
 - **Status Visualization:** Properties with a `Shortlisted` status must be visually distinguished on the map (e.g., a unique marker color, glowing effect, or size increase).
-- **Instruction to Data Agent:** Source and provide a `data/london_metro.geojson` file containing the geometry for all Tube and Overground lines.
+- **Instruction to Data Engineer:** Source and provide a `data/london_metro.geojson` file containing the geometry for all Tube and Overground lines.
 - **Instruction to Frontend Agent:** 
   - **Aesthetic:** "Bloomberg Terminal" style. Use a high-contrast dark tile set (e.g., Carto Dark Matter).
   - Adjust Metro line weights and base map opacity/contrast.
@@ -80,7 +85,7 @@ To build a private, high-precision research tool that enables a single buyer to 
 ### 6. Commute & Connectivity (Institutional Proximity)
 - **Requirement:** Track travel proximity to key commercial hubs: **Paternoster Square (City)** and **Canada Square (Canary Wharf)**.
 - **Goal:** Enable the user to evaluate assets based on professional lifestyle utility.
-- **Instruction to Data Agent:** Include `commute_paternoster` and `commute_canada_square` (time in minutes or distance) in the schema.
+- **Instruction to Data Analyst:** Include `commute_paternoster` and `commute_canada_square` (time in minutes or distance) in the schema.
 - **Instruction to Frontend Agent:** Display these as "Commute Nodes" in the Asset Detail and Table views.
 
 ### 7. Analyst Annotations & Comparative Intelligence (Comparative Intelligence 2.0)
@@ -115,7 +120,7 @@ To build a private, high-precision research tool that enables a single buyer to 
 ### 9. Macro Market Intelligence (Market Pulse)
 - **Requirement:** Integrate broad market trends and economic indicators at the City (London) and Area levels.
 - **Goal:** Provide context for individual asset pricing by showing if the broader market is heating up or cooling down.
-- **Instruction to Data Agent:** Generate and maintain a `data/macro_trend.json` file containing:
+- **Instruction to Data Analyst:** Generate and maintain a `data/macro_trend.json` file containing:
   - **House Price Index (HPI):** Month-on-month and Year-on-year changes for London and specific boroughs.
   - **Inventory Velocity:** Average "Months of Supply" and new listing volume trends.
   - **Negotiation Delta:** Average discount from asking price for the current quarter.
@@ -125,7 +130,7 @@ To build a private, high-precision research tool that enables a single buyer to 
 ### 10. Market Business Tracker & Seasonal Intelligence (Landing Page)
 - **Requirement:** A high-level overview of market liquidity and timing signals.
 - **Goal:** Provide a "Macro-to-Micro" entry point for the user, establishing the current market phase (e.g., "Buyer's Market - Peak Opportunity").
-- **Instruction to Data Agent:** 
+- **Instruction to Data Analyst:** 
   - **Volume History:** Track `flats_listed` and `flats_sold` per month over a 12-24 month rolling window.
   - **Seasonal Buy Signal:** Calculate an "Optimal Buy Window" indicator based on historical price dips (e.g., December/January) and inventory surges (e.g., Spring).
 - **Instruction to Frontend Agent:** 
@@ -152,7 +157,7 @@ To build a private, high-precision research tool that enables a single buyer to 
   - **Requirement:** Investigate the use of an `iframe` or "Portal Proxy" to render the live property listing directly within the Right Pane of the Inbox.
   - **Goal:** Eliminate the need to switch tabs, allowing for "Single-Screen Triage."
   - **Research Constraints:** Identify portal-side blocks (`X-Frame-Options`, `CSP`) and evaluate the potential for a local proxy to bypass these for private use.
-- **Instruction to Data Agent:** 
+- **Instruction to Data Engineer:** 
   - Ensure the `/api/inbox` endpoint returns all available raw fields, including images and technical specs.
   - Implement a `batch_triage` endpoint for bulk operations.
 - **Instruction to Frontend Agent:** 
@@ -168,7 +173,7 @@ To build a private, high-precision research tool that enables a single buyer to 
   - **LTV Arbitrage Calculator:** Visualize the monthly savings achieved by moving between LTV bands (90% -> 80% -> 75%) to inform deposit strategy.
   - **MPC Meeting Countdown:** Display the date of the next Bank of England Monetary Policy Committee (MPC) meeting and the market consensus (e.g., "75% Probability of 25bps cut").
   - **Analyst Node (Financial):** Provide a qualitative signal (e.g., "Buyer's Market - Rate Lock Recommended") based on the current rate cycle.
-- **Instruction to Data Agent:** 
+- **Instruction to Data Analyst:** 
   - Source and maintain a 12-month historical time-series for economic indicators in `macro_trend.json`.
   - Include `mpc_next_meeting` and `market_consensus` in the schema.
   - Provide LTV band rate data (75%, 80%, 90%).
@@ -185,8 +190,8 @@ To build a private, high-precision research tool that enables a single buyer to 
   - Upon successful promotion to the Master DB, the tracker must provide a direct link to the new Property Detail page.
 - **Data Persistence (`data/manual_queue.json`):** 
   - Every submission must have a unique `submission_id`.
-  - Status updates must be persisted in the JSON file by the Data Agent.
-- **Instruction to Data Agent:** 
+  - Status updates must be persisted in the JSON file by the Data Engineer.
+- **Instruction to Data Engineer:** 
   - Update `manual_queue.json` statuses throughout the lifecycle.
   - Upon completion, populate the `master_id` field to link the submission to the final asset.
 - **Instruction to Frontend Agent:** 
@@ -195,15 +200,15 @@ To build a private, high-precision research tool that enables a single buyer to 
   - Use toast notifications (e.g., "Lead Research Complete: [Address]") for a "pro-tool" feel.
 
 ### 14. External Data Import & Ingestion
-- **Requirement:** Provide a "Drop Zone" for external data sources (e.g., third-party scrapers, manual research batches) to be ingested into the immoSearch ecosystem.
+- **Requirement:** Provide a "Drop Zone" for external data sources (e.g., third-party scrapers, manual research batches) to be ingested into the propSearch ecosystem.
 - **Goal:** Enable multi-source data aggregation without requiring direct code integration for every new source.
 - **The Import Zone:** A dedicated directory (`data/import/`) for raw JSON files.
 - **Ingestion Workflow:** 
-  - The Data Agent must check this directory upon activation.
+  - The Data Engineer must check this directory upon activation.
   - Files must follow the `External Lead` schema (defined in `PROMPT_GUIDE.md`).
-  - The Agent must normalize this data, calculate institutional metrics (Alpha Score, Commute), and merge it into `master.json`.
+  - The Engineer must normalize this data, calculate institutional metrics (Alpha Score, Commute), and merge it into the master database.
   - Processed files should be moved to `data/archive/` to prevent duplicate ingestion.
-- **Instruction to Data Agent:** 
+- **Instruction to Data Engineer:** 
   - Implement an `ingest_external_data` function that runs at the start of every cycle.
   - Log any schema violations or missing critical fields (Price, Address) to the user.
 - **Instruction to Frontend Agent:** 
@@ -220,20 +225,27 @@ To build a private, high-precision research tool that enables a single buyer to 
   - Update `AREA_COORDS` in `useProperties.ts` and `PropertyContext.tsx` to include coordinates for Chelsea and Primrose Hill (e.g., `[51.5410, -0.1550]` for NW1).
   - Ensure the Sidebar and Search filters correctly reflect the new areas.
 
-### 18. Institutional Data Engine (SQLite Migration)
-- **Requirement:** Transition the primary data storage from a flat `master.json` to a structured, on-disk **SQLite database** (`data/immosearch.db`).
-- **Goal:** Minimize context bloat and token usage by enabling surgical data retrieval and indexed search.
+### 18. Institutional Data Engine (DuckDB Migration)
+- **Requirement:** Transition the primary data storage and analytical engine from flat files to a high-performance **DuckDB** database (`data/propSearch.duckdb`).
+- **Goal:** Enable rapid, analytical queries over large property datasets and provide a robust foundation for multi-dimensional filtering.
 - **Core Architecture:**
-  - **Relational Schema:** Separate tables for `properties`, `submissions`, `analyst_notes`, and `historical_metrics`.
-  - **Surgical API:** The Local API Server (`server/`) must provide endpoints for specific ID lookups and filtered queries (e.g., `GET /api/properties?area=SW3&min_alpha=8`).
-  - **Data Resilience:** Maintain a "Gold Standard" JSON export/import utility for human-readable backups and version control.
+  - **Columnar Storage:** Utilize DuckDB's columnar format for efficient scanning of property metrics (Price/SQM, Alpha Scores).
+  - **Surgical API:** The Local API Server (`server/`) must interface with DuckDB to provide endpoints for specific ID lookups and complex analytical queries.
+  - **Data Resilience:** Maintain an automated "Gold Standard" Parquet/JSON export for version control and human-readable backups.
 - **Instruction to Data Agent:** 
-  - Design the SQLite schema based on the existing `property.schema.json`.
-  - Implement a migration script to port all existing records from `master.json` and `manual_queue.json` into the new database.
-  - Update the scraping pipeline to write directly to the SQLite `inbox` table.
+  - Design the DuckDB schema based on the existing `property.schema.json`.
+  - Implement a migration pipeline to ingest all existing records from `master.json` and `manual_queue.json`.
+  - Ensure the scraping pipeline writes new discoveries directly to the database.
 - **Instruction to Frontend Agent:** 
-  - Refactor the Local API Server to interface with the SQLite database using a lightweight ORM or raw SQL.
-  - Ensure the Frontend `useProperties` hook utilizes the new filtered API endpoints to reduce the initial payload size.
+  - Refactor the Local API Server to execute SQL queries against the DuckDB instance.
+  - Utilize filtered API endpoints to minimize frontend data load.
+
+### 19. Data Fidelity Restoration Protocol
+- **Requirement:** During system recovery or migration, the "Empirical Standard" must be maintained.
+- **Goal:** Purge all synthetic or "hallucinated" listings (IDs starting with `a1b2c3d4-`) during any data restoration event.
+- **Instruction to Data Agent:** 
+  - When restoring from backups (e.g., `master_backup_07_03_2026.json`), convert the source (Array) to the target (JSONL) while filtering out invalid IDs.
+  - Ensure all 50 verified listings from the last stable snapshot are preserved.
 
 ---
 

@@ -1,9 +1,11 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const Database = require('better-sqlite3');
 
 const PORT = 3001;
 const DATA_DIR = path.join(__dirname, '../data');
+const DB_PATH = path.join(DATA_DIR, 'propSearch.db');
 const INBOX_DIR = path.join(DATA_DIR, 'inbox');
 const TRIAGED_DIR = path.join(DATA_DIR, 'triaged');
 const ARCHIVE_INBOX_DIR = path.join(DATA_DIR, 'archive/inbox');
@@ -15,8 +17,20 @@ const ARCHIVE_INBOX_DIR = path.join(DATA_DIR, 'archive/inbox');
   }
 });
 
+// Initialize SQLite
+const db = new Database(DB_PATH);
+
+function safeParse(val, defaultVal = []) {
+  if (val === null || val === undefined) return defaultVal;
+  if (typeof val === 'object') return val;
+  try {
+    return JSON.parse(val);
+  } catch (e) {
+    return defaultVal;
+  }
+}
+
 const server = http.createServer((req, res) => {
-  // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -28,140 +42,166 @@ const server = http.createServer((req, res) => {
   }
 
   const url = new URL(req.url, `http://localhost:${PORT}`);
+  console.log(`${req.method} ${url.pathname}`);
 
-  // 1. GET /api/properties -> Serve master.json
-  if (url.pathname === '/api/properties' && req.method === 'GET') {
-    serveJsonFile(path.join(DATA_DIR, 'master.json'), res);
-  }
-  // 2. GET /api/macro -> Serve macro_trend.json
-  else if (url.pathname === '/api/macro' && req.method === 'GET') {
-    serveJsonFile(path.join(DATA_DIR, 'macro_trend.json'), res);
-  }
-  // 3. GET /api/financials -> Serve financial_context.json
-  else if (url.pathname === '/api/financials' && req.method === 'GET') {
-    serveJsonFile(path.join(DATA_DIR, 'financial_context.json'), res);
-  }
-  // 4. GET /api/inbox -> List inbox files with metadata
-  else if (url.pathname === '/api/inbox' && req.method === 'GET') {
-    fs.readdir(INBOX_DIR, (err, files) => {
-      if (err) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Failed to read inbox' }));
-        return;
+  try {
+    // 1. Properties
+    if (url.pathname === '/api/properties' && req.method === 'GET') {
+      const area = url.searchParams.get('area');
+      const limit = parseInt(url.searchParams.get('limit') || '100');
+      const offset = parseInt(url.searchParams.get('offset') || '0');
+      const sortBy = url.searchParams.get('sortBy') || 'alpha_score';
+      const sortOrder = url.searchParams.get('sortOrder') || 'DESC';
+
+      let sql = 'SELECT * FROM properties WHERE 1=1';
+      const params = [];
+      if (area) {
+        sql += ' AND area = ?';
+        params.push(area);
       }
-      
-      const jsonFiles = files.filter(f => f.endsWith('.json'));
-      const fileData = jsonFiles.map(filename => {
+
+      const validSortColumns = ['alpha_score', 'list_price', 'price_per_sqm', 'dom', 'appreciation_potential'];
+      const finalSortBy = validSortColumns.includes(sortBy) ? sortBy : 'alpha_score';
+      const finalSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+      sql += ` ORDER BY ${finalSortBy} ${finalSortOrder} LIMIT ? OFFSET ?`;
+      params.push(limit, offset);
+
+      const rows = db.prepare(sql).all(...params);
+      const results = rows.map(row => ({
+        ...row,
+        gallery: safeParse(row.gallery, []),
+        links: safeParse(row.links, []),
+        metadata: safeParse(row.metadata, {}),
+        is_value_buy: Boolean(row.is_value_buy),
+        vetted: Boolean(row.vetted)
+      }));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(results));
+    }
+    // 2. Macro
+    else if (url.pathname === '/api/macro' && req.method === 'GET') {
+      const row = db.prepare("SELECT data FROM global_context WHERE key = 'macro_trend'").get();
+      if (!row) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Macro data not found' }));
+      } else {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(row.data);
+      }
+    }
+    // 3. Financials
+    else if (url.pathname === '/api/financials' && req.method === 'GET') {
+      const row = db.prepare("SELECT data FROM global_context WHERE key = 'financial_context'").get();
+      if (!row) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Financial data not found' }));
+      } else {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(row.data);
+      }
+    }
+    // 4. London Metro
+    else if (url.pathname === '/api/london-metro' && req.method === 'GET') {
+      const row = db.prepare("SELECT data FROM global_context WHERE key = 'london_metro'").get();
+      if (!row) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Metro data not found' }));
+      } else {
+        try {
+          const parsed = JSON.parse(row.data);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(typeof parsed.content === 'string' ? parsed.content : JSON.stringify(parsed.content));
+        } catch (e) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Failed to parse metro data' }));
+        }
+      }
+    }
+    // 5. Inbox
+    else if (url.pathname === '/api/inbox' && req.method === 'GET') {
+      const files = fs.readdirSync(INBOX_DIR).filter(f => f.endsWith('.json'));
+      const fileData = files.map(filename => {
         try {
           const content = fs.readFileSync(path.join(INBOX_DIR, filename), 'utf8');
-          const data = JSON.parse(content);
-          return { ...data, filename };
+          return { ...JSON.parse(content), filename };
         } catch (e) {
           return { filename, error: 'Malformed JSON' };
         }
       });
-      
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(fileData));
-    });
-  }
-  // 5. POST /api/inbox -> Handle Triage Action (Approve/Reject) or Save New
-  else if (url.pathname === '/api/inbox' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => { body += chunk.toString(); });
-    req.on('end', () => {
-      try {
-        const data = JSON.parse(body);
-        
-        // CASE A: Triage Action from Frontend
-        if (data.action && data.filename) {
-          const sourcePath = path.join(INBOX_DIR, data.filename);
-          const targetDir = data.action === 'approve' ? TRIAGED_DIR : ARCHIVE_INBOX_DIR;
-          const targetPath = path.join(targetDir, data.filename);
-
-          if (!fs.existsSync(sourcePath)) {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Source file not found' }));
-            return;
-          }
-
-          // Move the file
-          fs.rename(sourcePath, targetPath, (err) => {
-            if (err) {
-              res.writeHead(500, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ error: 'Failed to move file' }));
-              return;
+    }
+    else if (url.pathname === '/api/inbox' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          if (data.action && data.filename) {
+            const sourcePath = path.join(INBOX_DIR, data.filename);
+            const targetDir = data.action === 'approve' ? TRIAGED_DIR : ARCHIVE_INBOX_DIR;
+            const targetPath = path.join(targetDir, data.filename);
+            if (fs.existsSync(sourcePath)) {
+              fs.renameSync(sourcePath, targetPath);
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ message: `Listing ${data.action}ed` }));
+            } else {
+              res.writeHead(404, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Not found' }));
             }
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ message: `Listing ${data.action}ed`, filename: data.filename }));
-          });
-        } 
-        // CASE B: Save New Raw Listing from Scraper
-        else {
-          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-          const filename = `${timestamp}_RAW_${data.source || 'UNKNOWN'}.json`;
-          const filePath = path.join(INBOX_DIR, filename);
-
-          fs.writeFile(filePath, JSON.stringify(data, null, 2), (err) => {
-            if (err) throw err;
+          } else {
+            const filename = `${new Date().toISOString().replace(/[:.]/g, '-')}_RAW.json`;
+            fs.writeFileSync(path.join(INBOX_DIR, filename), JSON.stringify(data, null, 2));
             res.writeHead(201, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ message: 'Saved to inbox', filename }));
-          });
+            res.end(JSON.stringify({ message: 'Saved' }));
+          }
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON' }));
         }
-      } catch (e) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Invalid JSON' }));
-      }
-    });
-  }
-  // 6. POST /api/manual-queue -> Add to manual_queue.json
-  else if (url.pathname === '/api/manual-queue' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => { body += chunk.toString(); });
-    req.on('end', () => {
-      try {
-        const newItem = JSON.parse(body);
-        const queuePath = path.join(DATA_DIR, 'manual_queue.json');
-        
-        let queue = [];
-        if (fs.existsSync(queuePath)) {
-          queue = JSON.parse(fs.readFileSync(queuePath, 'utf8'));
-        }
-        
-        queue.push({
-          ...newItem,
-          queued_at: new Date().toISOString()
-        });
-
-        fs.writeFile(queuePath, JSON.stringify(queue, null, 2), (err) => {
-          if (err) throw err;
+      });
+    }
+    // 6. Manual Queue
+    else if (url.pathname === '/api/manual-queue' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const newItem = JSON.parse(body);
+          const { url: itemUrl, source, ...rest } = newItem;
+          const id = `q-${Math.random().toString(36).substr(2, 9)}`;
+          db.prepare(
+            'INSERT INTO manual_queue (id, url, source, raw_data, status, queued_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)'
+          ).run(id, itemUrl, source || 'MANUAL', JSON.stringify(rest), 'Pending');
           res.writeHead(201, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ message: 'Added to manual queue' }));
-        });
-      } catch (e) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Invalid JSON' }));
-      }
-    });
-  }
-  else {
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Not Found' }));
+          res.end(JSON.stringify({ message: 'Added to manual queue', id }));
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        }
+      });
+    }
+    else if (url.pathname === '/api/manual-queue' && req.method === 'GET') {
+      const rows = db.prepare('SELECT * FROM manual_queue ORDER BY queued_at DESC').all();
+      const results = rows.map(row => ({
+        ...row,
+        raw_data: safeParse(row.raw_data, {})
+      }));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(results));
+    }
+    else {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Not Found' }));
+    }
+  } catch (err) {
+    console.error('API Error:', err.message);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: err.message }));
   }
 });
 
-function serveJsonFile(filePath, res) {
-  fs.readFile(filePath, 'utf8', (err, data) => {
-    if (err) {
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'File not found' }));
-      return;
-    }
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(data);
-  });
-}
-
 server.listen(PORT, () => {
-  console.log(`immoSearch Data API running at http://localhost:${PORT}`);
+  console.log(`propSearch Data API (SQLite) running at http://localhost:${PORT}`);
 });

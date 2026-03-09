@@ -9,6 +9,7 @@ import {
   Scale,
   CheckCircle2,
   Gem,
+  ShieldCheck,
   ArrowRight,
   FileText,
   Save
@@ -20,6 +21,7 @@ import { useFinancialData } from '../hooks/useFinancialData';
 import AlphaBadge from './AlphaBadge';
 import PropertyImage from './PropertyImage';
 import PipelineTracker from './PipelineTracker';
+import SourceHub from './SourceHub';
 
 interface PreviewDrawerProps {
   property: PropertyWithCoords | null;
@@ -164,7 +166,7 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
                 <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
                   <Maximize2 size={10} className="text-linear-accent" /> Space
                 </span>
-                <span className="text-sm font-bold text-white tracking-tight">{property.sqft} SQFT</span>
+                <span className="text-sm font-bold text-white tracking-tight">{property.sqft || '—'} SQFT</span>
               </div>
               <div className="flex flex-col gap-1 border-x border-linear-border px-4">
                 <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
@@ -176,13 +178,13 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
                 <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
                   <Scale size={10} className="text-linear-accent" /> Price/m²
                 </span>
-                <span className="text-sm font-bold text-white tracking-tight">£{property.price_per_sqm.toLocaleString()}</span>
+                <span className="text-sm font-bold text-white tracking-tight">£{(property.price_per_sqm || 0).toLocaleString()}</span>
               </div>
               <div className="flex flex-col gap-1 pl-4">
                 <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
                   <Zap size={10} className="text-linear-accent" /> EPC
                 </span>
-                <span className="text-sm font-bold text-white tracking-tight">{property.epc} Rating</span>
+                <span className="text-sm font-bold text-white tracking-tight">{property.epc || 'N/A'} Rating</span>
               </div>
             </div>
 
@@ -193,7 +195,7 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
                 <div className="flex flex-col gap-1">
                   <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest">Est. Service Charge</span>
                   <div className="text-lg font-bold text-white tracking-tight">
-                    £{property.service_charge.toLocaleString()}
+                    £{(property.service_charge || 0).toLocaleString()}
                     <span className="text-[10px] text-linear-text-muted ml-1 font-medium">/ PA</span>
                   </div>
                 </div>
@@ -201,7 +203,7 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
                 <div className="flex flex-col gap-1 items-end text-right">
                   <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest">Ground Rent</span>
                   <div className="text-lg font-bold text-white tracking-tight">
-                    £{property.ground_rent.toLocaleString()}
+                    £{(property.ground_rent || 0).toLocaleString()}
                     <span className="text-[10px] text-linear-text-muted ml-1 font-medium">/ PA</span>
                   </div>
                 </div>
@@ -342,6 +344,16 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
 
         {/* Footer */}
         <div className="p-6 border-t border-linear-border bg-linear-card/30 space-y-3">
+          {status === 'shortlisted' && (
+            <button 
+              onClick={() => onStatusChange(property.id, 'vetted')}
+              className="w-full py-3.5 bg-emerald-500 text-black rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-400 transition-all active:scale-95 shadow-xl shadow-emerald-500/10 mb-2 border border-emerald-400/50"
+            >
+              <ShieldCheck size={16} />
+              Promote to Vetted Status
+            </button>
+          )}
+
           <Link 
             to={`/property/${property.id}`}
             className="w-full py-3.5 bg-white text-black rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all active:scale-95 shadow-xl shadow-white/5"
@@ -350,32 +362,7 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
             <ArrowRight size={14} />
           </Link>
           
-          <div className="relative group/hub">
-            <button 
-              className="w-full py-3.5 bg-linear-card text-white border border-linear-border rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:border-linear-accent transition-all active:scale-95"
-            >
-              Source Hub
-              <ExternalLink size={14} />
-            </button>
-            <div className="absolute bottom-full left-0 right-0 pb-2 mb-0 opacity-0 translate-y-2 pointer-events-none group-hover/hub:opacity-100 group-hover/hub:translate-y-0 group-hover/hub:pointer-events-auto transition-all z-50">
-              <div className="bg-linear-card border border-linear-border rounded-xl shadow-2xl p-2">
-                <div className="flex flex-col gap-1">
-                  {(property.links || [property.link]).map((url, i) => (
-                    <a 
-                      key={i}
-                      href={url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="p-3 text-[10px] font-bold text-linear-text-muted hover:text-white hover:bg-linear-bg rounded-lg transition-all flex items-center justify-between group/link uppercase tracking-wider"
-                    >
-                      <span>{url.includes('rightmove') ? 'Rightmove Portal' : url.includes('zoopla') ? 'Zoopla Portal' : 'Direct Agent Listing'}</span>
-                      <ArrowRight size={12} className="opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all" />
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          <SourceHub links={property.links || [property.link]} variant="compact" />
         </div>
       </div>
     </>

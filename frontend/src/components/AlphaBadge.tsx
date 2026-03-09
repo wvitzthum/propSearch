@@ -2,12 +2,21 @@ import React from 'react';
 import Tooltip from './Tooltip';
 
 interface AlphaBadgeProps {
-  score: number;
+  score: number | null | undefined;
   className?: string;
   showLabel?: boolean;
 }
 
 const AlphaBadge: React.FC<AlphaBadgeProps> = ({ score, className = '', showLabel = false }) => {
+  if (score === null || score === undefined) {
+    return (
+      <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-linear-border bg-linear-card/50 text-linear-text-muted text-[10px] font-black uppercase tracking-wider ${className}`}>
+        <span>N/A</span>
+        {showLabel && <span className="opacity-70">Alpha</span>}
+      </div>
+    );
+  }
+
   const getColors = () => {
     if (score >= 8) return 'bg-retro-green/10 text-retro-green border-retro-green/30';
     if (score >= 5) return 'bg-retro-amber/10 text-retro-amber border-retro-amber/30';
