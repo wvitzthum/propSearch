@@ -8,4 +8,4 @@
 *.log
 .vercel
 .env*.local
-/data/inbox2
+/data/inbox
