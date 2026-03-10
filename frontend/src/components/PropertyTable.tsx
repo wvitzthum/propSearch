@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  ExternalLink, 
   ArrowUp, 
   ArrowDown, 
   ChevronRight,
@@ -37,7 +36,7 @@ const SortIcon = ({
   direction: 'asc' | 'desc' 
 }) => {
   if (currentSort !== columnKey) return <ArrowUpDown size={10} className="opacity-0 group-hover:opacity-40" />;
-  return direction === 'asc' ? <ArrowUp size={10} className="text-blue-400" /> : <ArrowDown size={10} className="text-blue-400" />;
+  return direction === 'asc' ? <ArrowUp size={10} className="text-linear-accent-blue" /> : <ArrowDown size={10} className="text-linear-accent-blue" />;
 };
 
 const TableHeader = ({ 
@@ -60,7 +59,7 @@ const TableHeader = ({
   direction: 'asc' | 'desc'
 }) => (
   <th 
-    className={`px-4 py-3 text-left text-[10px] font-bold text-linear-text-muted uppercase tracking-widest cursor-pointer group hover:bg-linear-card transition-colors relative ${className}`}
+    className={`px-3 py-3 text-left text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] cursor-pointer group hover:bg-linear-card transition-colors relative ${className}`}
     onClick={() => onSort(columnKey)}
   >
     <Tooltip content={tooltip} methodology={methodology} className="w-full">
@@ -148,31 +147,33 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 currentSort={localSort.key}
                 direction={localSort.direction}
               />
-              <TableHeader 
-                label="Target" 
-                columnKey="realistic_price" 
-                tooltip="Calculated bid target based on market conditions, DoM, and area liquidity." 
-                methodology="Derived from Area Average SQFT adjusted by Asset Grade and Days on Market."
-                className="px-2"
-                onSort={handleSort}
-                currentSort={localSort.key}
-                direction={localSort.direction}
-              />
-              <TableHeader 
-                label="Gap" 
-                columnKey="value_gap" 
-                tooltip="Delta between list price and realistic acquisition target." 
-                methodology="(Realistic Price - List Price) / List Price. Negative indicates discount capture."
-                className="px-2"
-                onSort={handleSort}
-                currentSort={localSort.key}
-                direction={localSort.direction}
-              />
+              <th className="px-2 py-3 bg-linear-accent/5 border-x border-linear-border/30">
+                <div className="flex flex-col items-center">
+                  <span className="text-[8px] font-bold text-linear-text-muted uppercase tracking-widest mb-1">Acquisition Model</span>
+                  <div className="flex gap-4">
+                    <TableHeader 
+                      label="Target" 
+                      columnKey="realistic_price" 
+                      tooltip="Calculated bid target based on market conditions, DoM, and area liquidity." 
+                      onSort={handleSort}
+                      currentSort={localSort.key}
+                      direction={localSort.direction}
+                    />
+                    <TableHeader 
+                      label="Gap" 
+                      columnKey="value_gap" 
+                      tooltip="Delta between list price and realistic acquisition target." 
+                      onSort={handleSort}
+                      currentSort={localSort.key}
+                      direction={localSort.direction}
+                    />
+                  </div>
+                </div>
+              </th>
               <TableHeader 
                 label="Eff." 
                 columnKey="price_per_sqm" 
                 tooltip="Pricing efficiency in GBP per square meter relative to micro-location benchmarks." 
-                methodology="Total List Price / Internal Area (SQM). Benchmarked against £9,500/m²."
                 className="px-2"
                 onSort={handleSort}
                 currentSort={localSort.key}
@@ -182,7 +183,6 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 label="App." 
                 columnKey="appreciation_potential" 
                 tooltip="Institutional forecast for 5-year capital appreciation." 
-                methodology="Historical area CAGR + infrastructure investment (Crossrail) + supply constraints."
                 className="px-2"
                 onSort={handleSort}
                 currentSort={localSort.key}
@@ -192,7 +192,6 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 label="Com." 
                 columnKey="commute_utility" 
                 tooltip="Aggregated commute utility score to City/Wharf hubs (lower is better)." 
-                methodology="Door-to-desk travel time (TfL API) during morning peak (08:30)."
                 className="px-2"
                 onSort={handleSort}
                 currentSort={localSort.key}
@@ -201,16 +200,6 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
               <TableHeader 
                 label="SQFT" 
                 columnKey="sqft" 
-                tooltip="Internal floor area in square feet." 
-                className="px-2" 
-                onSort={handleSort}
-                currentSort={localSort.key}
-                direction={localSort.direction}
-              />
-              <TableHeader 
-                label="Floor" 
-                columnKey="floor_level" 
-                tooltip="Asset floor level elevation." 
                 className="px-2" 
                 onSort={handleSort}
                 currentSort={localSort.key}
@@ -219,7 +208,6 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
               <TableHeader 
                 label="EPC" 
                 columnKey="epc" 
-                tooltip="Energy Performance Certificate efficiency rating." 
                 className="px-2" 
                 onSort={handleSort}
                 currentSort={localSort.key}
@@ -228,52 +216,43 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
               <TableHeader 
                 label="DoM" 
                 columnKey="dom" 
-                tooltip="Total days on market across all portal versions." 
                 className="px-2" 
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
               />
-              <TableHeader 
-                label="Protocol" 
-                columnKey="neg_strategy" 
-                tooltip="Recommended negotiation posture." 
-                className="px-2" 
-                onSort={handleSort}
-                currentSort={localSort.key}
-                direction={localSort.direction}
-              />
-              <th className="px-2 py-3 text-right text-[10px] font-bold text-linear-text-muted uppercase tracking-widest whitespace-nowrap">Action</th>
+              <th className="px-2 py-3 text-right text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-linear-border/50">
             {sortedProperties.map((property) => {
               const status = getStatus ? getStatus(property.id) : 'discovered';
               const isSelected = isInComparison(property.id);
+              const isShallow = !property.sqft || !property.epc || property.service_charge === undefined;
               
               return (
                 <tr 
                   key={property.id} 
                   className={`hover:bg-linear-card/40 transition-colors group cursor-pointer ${
-                    status === 'shortlisted' ? 'bg-blue-500/5' : 
-                    status === 'vetted' ? 'bg-emerald-500/10' : ''
-                  } ${isSelected ? 'bg-blue-500/10' : ''}`}
+                    status === 'shortlisted' ? 'bg-linear-accent-blue/5' : 
+                    status === 'vetted' ? 'bg-linear-accent-emerald/10' : ''
+                  } ${isSelected ? 'bg-linear-accent-blue/10' : ''}`}
                   onClick={() => onPreview && onPreview(property)}
                 >
                   <td className="px-4 py-4 sticky left-0 bg-linear-bg/80 backdrop-blur-md group-hover:bg-linear-card/40 z-10 min-w-[280px] border-r border-linear-border/30">
                     <div className="flex flex-col">
-                      <div className="text-xs font-bold text-white group-hover:text-blue-400 truncate tracking-tight transition-colors">
+                      <div className="text-[11px] font-bold text-linear-text-primary group-hover:text-linear-accent-blue truncate tracking-tight transition-colors">
                         {property.address}
                       </div>
                       <div className="flex items-center gap-2 mt-1.5">
-                        <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">{(property.area || 'Unknown').split(' (')[0]}</span>
+                        <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-wider">{(property.area || 'Unknown').split(' (')[0]}</span>
                         {status === 'vetted' && (
-                          <span className="flex items-center gap-0.5 text-[8px] font-black text-emerald-400 bg-emerald-400/10 px-1 rounded border border-emerald-400/20">
+                          <span className="flex items-center gap-0.5 text-[8px] font-black text-linear-accent-emerald bg-linear-accent-emerald/10 px-1 rounded border border-linear-accent-emerald/20">
                             <ShieldCheck size={8} /> VETTED
                           </span>
                         )}
                         {property.metadata.is_new && (
-                          <span className="flex items-center gap-0.5 text-[8px] font-black text-blue-400 bg-blue-400/10 px-1 rounded border border-blue-400/20">
+                          <span className="flex items-center gap-0.5 text-[8px] font-black text-linear-accent-blue bg-linear-accent-blue/10 px-1 rounded border border-linear-accent-blue/20">
                             NEW
                           </span>
                         )}
@@ -282,40 +261,42 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                             VALUE
                           </span>
                         )}
-                        {(!property.sqft || !property.epc || property.service_charge === undefined) && (
-                          <span className="flex items-center gap-0.5 text-[8px] font-black text-amber-500 bg-amber-500/10 px-1 rounded border border-amber-500/20" title="Missing critical data points (SQFT, EPC, or Charges)">
-                            SHALLOW
-                          </span>
-                        )}
                       </div>
                     </div>
                   </td>
                   <td className="px-2 py-4">
-                    <AlphaBadge score={property.alpha_score} />
+                    <div className="flex flex-col items-center gap-1">
+                      <AlphaBadge score={property.alpha_score} />
+                      {isShallow && (
+                        <span className="text-[7px] font-black text-retro-amber bg-retro-amber/10 px-1 rounded border border-retro-amber/20 tracking-tighter uppercase">
+                          Shallow Data
+                        </span>
+                      )}
+                    </div>
                   </td>
-                  <td className="px-2 py-4">
-                    <div className="text-xs font-bold text-white tracking-tight">
-                      £{(property.realistic_price || 0).toLocaleString()}
+                  <td className="px-2 py-4 bg-linear-accent/5 border-x border-linear-border/30">
+                    <div className="flex items-center justify-center gap-4">
+                      <div className="text-[11px] font-bold text-linear-text-primary tracking-tighter">
+                        £{(property.realistic_price || 0).toLocaleString()}
+                      </div>
+                      <div className={`text-[10px] font-bold ${ (property.list_price - property.realistic_price) > 0 ? 'text-linear-accent-rose' : 'text-linear-accent-emerald'}`}>
+                        { (property.list_price - property.realistic_price) > 0 ? '-' : '+' }£{Math.abs( (property.list_price || 0) - (property.realistic_price || 0) ).toLocaleString()}
+                      </div>
                     </div>
                   </td>
                   <td className="px-2 py-4">
-                    <div className="text-[10px] font-bold text-rose-400">
-                      -£{( (property.list_price || 0) - (property.realistic_price || 0) ).toLocaleString()}
-                    </div>
-                  </td>
-                  <td className="px-2 py-4">
-                    <div className={`text-xs font-bold ${property.is_value_buy ? 'text-retro-green' : 'text-zinc-400'}`}>
-                      £{(property.price_per_sqm || 0).toLocaleString()}/m²
+                    <div className={`text-[11px] font-bold ${property.is_value_buy ? 'text-retro-green' : 'text-linear-text-muted'}`}>
+                      £{(property.price_per_sqm || 0).toLocaleString()}
                     </div>
                   </td>
                   <td className="px-2 py-4">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold text-white">{(property.appreciation_potential || 0)}%</span>
+                      <span className="text-[11px] font-bold text-linear-text-primary">{(property.appreciation_potential || 0)}%</span>
                     </div>
                   </td>
                   <td className="px-2 py-4">
                     <div className="flex items-center gap-1.5">
-                      <span className={`text-xs font-bold ${( (property.commute_paternoster || 0) + (property.commute_canada_square || 0) ) <= 50 ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                      <span className={`text-[11px] font-bold ${( (property.commute_paternoster || 0) + (property.commute_canada_square || 0) ) <= 50 ? 'text-linear-accent-emerald' : 'text-linear-text-muted'}`}>
                         {( (property.commute_paternoster || 0) + (property.commute_canada_square || 0) )}m
                       </span>
                     </div>
@@ -323,14 +304,11 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                   <td className="px-2 py-4 text-[11px] text-linear-text-muted font-bold">
                     {property.sqft || '—'}
                   </td>
-                  <td className="px-2 py-4 text-[10px] text-white font-bold uppercase tracking-widest">
-                    {property.floor_level || '—'}
-                  </td>
                   <td className="px-2 py-4">
                     <span className={`px-1.5 py-0.5 rounded text-[9px] font-black border ${
                       ['A', 'B'].includes(property.epc || '') ? 'text-retro-green border-retro-green/20 bg-retro-green/10' :
                       ['C', 'D'].includes(property.epc || '') ? 'text-retro-amber border-retro-amber/20 bg-retro-amber/10' :
-                      'text-rose-400 border-rose-400/20 bg-rose-400/10'
+                      'text-linear-accent-rose border-linear-accent-rose/20 bg-linear-accent-rose/10'
                     }`}>
                       {property.epc || 'N/A'}
                     </span>
@@ -338,17 +316,12 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                   <td className="px-2 py-4 text-[11px] text-zinc-500 font-bold italic">
                     {property.dom || 0}d
                   </td>
-                  <td className="px-2 py-4">
-                    <span className="px-2 py-0.5 bg-blue-400/5 text-blue-400 rounded text-[9px] font-bold border border-blue-400/10 uppercase tracking-widest whitespace-nowrap">
-                      {(property.neg_strategy || 'Default').split(':')[0]}
-                    </span>
-                  </td>
                   <td className="px-2 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-2">
                       <button 
                         onClick={() => toggleComparison(property.id)}
                         className={`p-1 rounded transition-all ${
-                          isSelected ? 'text-blue-400 bg-blue-400/10' : 'text-linear-accent hover:text-white'
+                          isSelected ? 'text-linear-accent-blue bg-linear-accent-blue/10' : 'text-linear-accent hover:text-linear-text-primary'
                         }`}
                         title="Add to Comparison"
                       >
@@ -358,7 +331,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                       <button 
                         onClick={() => onStatusChange && onStatusChange(property.id, status === 'shortlisted' ? 'discovered' : 'shortlisted')}
                         className={`p-1 rounded transition-all hover:scale-110 ${
-                          status === 'shortlisted' ? 'text-blue-400' : 'text-linear-accent hover:text-white'
+                          status === 'shortlisted' ? 'text-linear-accent-blue' : 'text-linear-accent hover:text-linear-text-primary'
                         }`}
                         title="Shortlist"
                       >
@@ -367,7 +340,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                       <button 
                         onClick={() => onStatusChange && onStatusChange(property.id, status === 'vetted' ? 'shortlisted' : 'vetted')}
                         className={`p-1 rounded transition-all hover:scale-110 ${
-                          status === 'vetted' ? 'text-emerald-400' : 'text-linear-accent hover:text-white'
+                          status === 'vetted' ? 'text-linear-accent-emerald' : 'text-linear-accent hover:text-linear-text-primary'
                         }`}
                         title="Mark as Vetted"
                       >
@@ -376,24 +349,16 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                       <button 
                         onClick={() => onStatusChange && onStatusChange(property.id, status === 'archived' ? 'discovered' : 'archived')}
                         className={`p-1 rounded transition-all hover:scale-110 ${
-                          status === 'archived' ? 'text-rose-400' : 'text-linear-accent hover:text-rose-400'
+                          status === 'archived' ? 'text-linear-accent-rose' : 'text-linear-accent hover:text-linear-accent-rose'
                         }`}
                         title="Archive"
                       >
                         {status === 'archived' ? <RotateCcw size={14} /> : <Archive size={14} />}
                       </button>
                       <div className="w-px h-4 bg-linear-border mx-1"></div>
-                      <a 
-                        href={property.link} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="p-1.5 text-linear-text-muted hover:text-white hover:bg-linear-accent rounded transition-all"
-                      >
-                        <ExternalLink size={14} />
-                      </a>
                       <Link 
                         to={`/property/${property.id}`}
-                        className="p-1.5 text-linear-text-muted hover:text-white hover:bg-linear-accent rounded transition-all"
+                        className="p-1.5 text-linear-text-muted hover:text-linear-text-primary hover:bg-linear-accent rounded transition-all"
                       >
                         <ChevronRight size={16} />
                       </Link>

@@ -2,12 +2,33 @@
   "monthly_budget": 4500,
   "mortgage_term": 25,
   "council_tax": [
-    { "area": "Islington (N1)", "band": "D", "annual_cost": 1812 },
-    { "area": "Islington (N7)", "band": "D", "annual_cost": 1812 },
-    { "area": "Belsize Park (NW3)", "band": "D", "annual_cost": 1792 },
-    { "area": "West Hampstead (NW6)", "band": "D", "annual_cost": 1792 },
-    { "area": "Chelsea (SW3/SW10)", "band": "D", "annual_cost": 1650 },
-    { "area": "Primrose Hill (NW1)", "band": "D", "annual_cost": 1792 }
+    { 
+      "areas": ["Islington (N1)", "Islington (N7)"], 
+      "bands": {
+        "A": { "2025_26": 1208 },
+        "D": { "2025_26": 1812 },
+        "E": { "2025_26": 2215 },
+        "H": { "2025_26": 3624 }
+      }
+    },
+    { 
+      "areas": ["Belsize Park (NW3)", "West Hampstead (NW6)", "Primrose Hill (NW1)"], 
+      "bands": {
+        "A": { "2025_26": 1195 },
+        "D": { "2025_26": 1792 },
+        "E": { "2025_26": 2190 },
+        "H": { "2025_26": 3584 }
+      }
+    },
+    { 
+      "areas": ["Chelsea (SW3/SW10)"], 
+      "bands": {
+        "A": { "2025_26": 1100 },
+        "D": { "2025_26": 1650 },
+        "E": { "2025_26": 2016 },
+        "H": { "2025_26": 3300 }
+      }
+    }
   ],
   "stamp_duty_thresholds": [
     { "min": 0, "max": 250000, "rate": 0 },

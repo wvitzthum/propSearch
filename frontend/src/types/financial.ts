@@ -3,9 +3,11 @@ export interface CouncilTaxBand {
 }
 
 export interface CouncilTaxInfo {
-  council: string;
-  areas: string[];
-  bands: {
+  council?: string;
+  area?: string;
+  areas?: string[];
+  annual_cost?: number;
+  bands?: {
     [band: string]: CouncilTaxBand;
   };
 }

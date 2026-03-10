@@ -41,21 +41,21 @@ const createPropertyIcon = (score: number, status: PropertyStatus = 'discovered'
   
   let statusColor = color;
   let glowClass = isShortlisted ? 'opacity-80 scale-150' : 'opacity-40';
-  let borderClass = isShortlisted ? 'border-blue-400 ring-2 ring-blue-500/50' : 'border-white';
+  let borderClass = isShortlisted ? 'border-linear-accent-blue ring-2 ring-linear-accent-blue/50' : 'border-white';
   
   if (isShortlisted) {
     statusColor = '#3b82f6';
   } else if (isVetted) {
     statusColor = '#10b981';
     glowClass = 'opacity-90 scale-[1.75]';
-    borderClass = 'border-emerald-400 ring-4 ring-emerald-500/30';
+    borderClass = 'border-linear-accent-emerald ring-4 ring-linear-accent-emerald/30';
   }
 
   return L.divIcon({
     className: 'property-marker',
     html: `<div class="group relative flex items-center justify-center">
-             <div class="absolute inset-0 rounded-full blur-[6px] ${glowClass} group-hover:opacity-80 transition-all duration-500" style="background-color: ${statusColor}"></div>
-             <div class="relative w-3.5 h-3.5 rounded-full border-[1.5px] ${borderClass} shadow-xl flex items-center justify-center transition-all duration-500 group-hover:scale-125" style="background-color: ${color}">
+             <div class="absolute inset-0 rounded-full blur-[4px] ${glowClass} group-hover:opacity-80 transition-all duration-500" style="background-color: ${statusColor}"></div>
+             <div class="relative w-3 h-3 rounded-full border-[1.5px] ${borderClass} shadow-xl flex items-center justify-center transition-all duration-500 group-hover:scale-125" style="background-color: ${color}">
                <div class="w-1 h-1 bg-white/40 rounded-full"></div>
              </div>
            </div>`,
@@ -65,12 +65,12 @@ const createPropertyIcon = (score: number, status: PropertyStatus = 'discovered'
 };
 
 const createNodeIcon = (type: 'hub' | 'park' | 'station', label: string) => {
-  const iconColor = type === 'hub' ? '#60a5fa' : type === 'park' ? '#34d399' : '#94a3b8';
+  const iconColor = type === 'hub' ? '#3b82f6' : type === 'park' ? '#10b981' : '#a1a1aa';
   return L.divIcon({
     className: 'node-marker',
-    html: `<div class="flex items-center gap-2 bg-black/80 backdrop-blur-xl px-2.5 py-1.5 rounded-lg border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
-             <div class="w-2.5 h-2.5 rounded-full" style="background-color: ${iconColor}; box-shadow: 0 0 12px ${iconColor}"></div>
-             <span class="text-[10px] font-black text-white uppercase tracking-[0.1em] whitespace-nowrap">${label}</span>
+    html: `<div class="flex items-center gap-2 bg-black/80 backdrop-blur-xl px-2.5 py-1.5 rounded-lg border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+             <div class="w-2 h-2 rounded-full" style="background-color: ${iconColor}; box-shadow: 0 0 10px ${iconColor}"></div>
+             <span class="text-[10px] font-bold text-white uppercase tracking-[0.1em] whitespace-nowrap">${label}</span>
            </div>`,
     iconSize: [120, 30],
     iconAnchor: [15, 15]
@@ -104,7 +104,11 @@ const METRO_COLORS: Record<string, string> = {
   'Bakerloo': '#b36305',
   'Hammersmith & City': '#f3a9bb',
   'Circle': '#ffd010',
-  'DLR': '#00afad'
+  'DLR': '#00afad',
+  'Thameslink': '#ffb000',
+  'Tramlink': '#84b817',
+  'Waterloo & City': '#95cdba',
+  'IFS Cloud Cable Car': '#e21836'
 };
 
 const MetroOverlay: React.FC = () => {
@@ -124,12 +128,13 @@ const MetroOverlay: React.FC = () => {
     <GeoJSON 
       data={geoData} 
       style={(feature) => {
-        const lineName = feature?.properties?.name || '';
-        const color = feature?.properties?.color || METRO_COLORS[lineName.replace(' Line', '')] || '#475569';
+        const lines = feature?.properties?.lines || [];
+        const primaryLine = lines[0]?.name || feature?.properties?.name || '';
+        const color = feature?.properties?.color || METRO_COLORS[primaryLine.replace(' Line', '')] || '#475569';
         return {
           color,
           weight: 2.5,
-          opacity: 0.75,
+          opacity: 0.6,
           lineJoin: 'round'
         };
       }}
@@ -161,9 +166,9 @@ const PropertyCard: React.FC<{
 
   return (
     <div className={`bg-linear-card border rounded-xl overflow-hidden hover:border-linear-accent transition-all group flex flex-col h-full relative glow-border ${
-      isSelected ? 'ring-2 ring-blue-500/50 border-blue-500/50' : 
-      status === 'vetted' ? 'border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/30' :
-      status === 'shortlisted' ? 'border-blue-500/40 shadow-[0_0_15px_rgba(59,130,246,0.1)]' : 'border-linear-border'
+      isSelected ? 'ring-2 ring-linear-accent-blue/50 border-linear-accent-blue/50' : 
+      status === 'vetted' ? 'border-linear-accent-emerald/40 shadow-[0_0_20px_rgba(16,185,129,0.15)] ring-1 ring-linear-accent-emerald/30' :
+      status === 'shortlisted' ? 'border-linear-accent-blue/40 shadow-[0_0_15px_rgba(59,130,246,0.1)]' : 'border-linear-border'
     }`}>
       {/* Thumbnail */}
       <div 
@@ -180,25 +185,25 @@ const PropertyCard: React.FC<{
         {/* Badges on Image */}
         <div className="absolute top-3 left-3 z-20 flex flex-col gap-2">
           {status === 'vetted' && (
-            <div className="px-2 py-0.5 bg-emerald-500 text-black text-[9px] font-black uppercase rounded shadow-lg flex items-center gap-1 border border-emerald-400 animate-in zoom-in-90 duration-300">
+            <div className="px-2 py-0.5 bg-linear-accent-emerald text-black text-[9px] font-bold uppercase rounded shadow-lg flex items-center gap-1 border border-linear-accent-emerald/50 animate-in zoom-in-90 duration-300">
               <ShieldCheck size={10} />
               Vetted Asset
             </div>
           )}
           {property.is_value_buy && status !== 'vetted' && (
-            <div className="px-2 py-0.5 bg-emerald-500/80 backdrop-blur-md text-black text-[9px] font-black uppercase rounded shadow-lg flex items-center gap-1 border border-emerald-400">
+            <div className="px-2 py-0.5 bg-linear-accent-emerald/80 backdrop-blur-md text-black text-[9px] font-bold uppercase rounded shadow-lg flex items-center gap-1 border border-linear-accent-emerald/50">
               <Gem size={10} />
               Value Buy
             </div>
           )}
           {property.metadata.is_new && (
-            <div className="px-2 py-0.5 bg-blue-500 text-white text-[9px] font-black uppercase rounded shadow-lg border border-blue-400">
+            <div className="px-2 py-0.5 bg-linear-accent-blue text-linear-text-primary text-[9px] font-bold uppercase rounded shadow-lg border border-linear-accent-blue/50">
               Fresh
             </div>
           )}
         </div>
 
-        <div className="absolute bottom-3 left-3 z-20">
+        <div className="absolute bottom-3 left-3 z-20 scale-90 origin-bottom-left">
           <AlphaBadge score={property.alpha_score} />
         </div>
       </div>
@@ -206,53 +211,53 @@ const PropertyCard: React.FC<{
       <div className="p-4 flex-grow flex flex-col">
         <div className="flex justify-between items-start mb-3 cursor-pointer" onClick={() => onPreview(property)}>
           <div className="flex flex-col">
-            <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest mb-0.5">
+            <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-[0.15em] mb-0.5">
               {(property.area || 'Unknown').split(' (')[0]}
               {property.metadata.discovery_count > 1 && (
                 <span className="ml-2 text-linear-accent">×{property.metadata.discovery_count}</span>
               )}
             </span>
-            <h3 className="font-bold text-white leading-tight group-hover:text-blue-400 transition-colors text-sm tracking-tight truncate w-[180px]">{property.address}</h3>
+            <h3 className="font-bold text-linear-text-primary leading-tight group-hover:text-linear-accent-blue transition-colors text-sm tracking-tight truncate w-[180px]">{property.address}</h3>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-4 flex-grow">
           <div className="space-y-0.5">
             <span className="text-[8px] text-linear-text-muted block uppercase tracking-tighter font-bold opacity-60">Acquisition</span>
-            <div className="text-sm font-bold text-white tracking-tight">£{property.realistic_price.toLocaleString()}</div>
+            <div className="text-sm font-bold text-linear-text-primary tracking-tight">£{property.realistic_price.toLocaleString()}</div>
           </div>
           <div className="text-right space-y-0.5">
             <span className="text-[8px] text-linear-text-muted block uppercase tracking-tighter font-bold opacity-60">Price/SQM</span>
-            <span className={`text-xs font-bold ${property.is_value_buy ? 'text-retro-green' : 'text-zinc-400'}`}>£{property.price_per_sqm.toLocaleString()}</span>
+            <span className={`text-xs font-bold ${property.is_value_buy ? 'text-retro-green' : 'text-linear-text-muted'}`}>£{property.price_per_sqm.toLocaleString()}</span>
           </div>
         </div>
 
         <div className="flex items-center gap-3 py-2 border-y border-linear-border/50 mb-4">
           <div className="flex items-center gap-1.5">
             <Maximize2 size={10} className="text-linear-accent" />
-            <span className="text-[10px] font-bold text-white tracking-tighter">{property.sqft}</span>
+            <span className="text-[10px] font-bold text-linear-text-primary tracking-tighter">{property.sqft}</span>
           </div>
           <div className="h-2 w-px bg-linear-border" />
           {property.floor_level && (
             <>
               <div className="flex items-center gap-1.5">
                 <LayoutGrid size={10} className="text-linear-accent" />
-                <span className="text-[10px] font-bold text-white tracking-tighter uppercase">{property.floor_level}</span>
+                <span className="text-[10px] font-bold text-linear-text-primary tracking-tighter uppercase">{property.floor_level}</span>
               </div>
               <div className="h-2 w-px bg-linear-border" />
             </>
           )}
           <div className="flex items-center gap-1.5">
             <Zap size={10} className="text-linear-accent" />
-            <span className="text-[10px] font-bold text-white tracking-tighter">{property.epc}</span>
+            <span className="text-[10px] font-bold text-linear-text-primary tracking-tighter">{property.epc}</span>
           </div>
           <div className="h-2 w-px bg-linear-border" />
-          <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-tighter truncate">{(property.tenure || 'N/A').split(' ')[0]}</span>
+          <span className="text-[9px] font-medium text-linear-text-muted uppercase tracking-tighter truncate">{(property.tenure || 'N/A').split(' ')[0]}</span>
         </div>
 
-        <div className="px-2.5 py-1.5 bg-blue-500/5 border border-blue-500/10 rounded flex items-center justify-between group-hover:bg-blue-500/10 transition-colors">
-          <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Protocol</span>
-          <span className="text-[10px] font-bold text-blue-100">{(property.neg_strategy || 'Default: 0% bid').split(':')[0]}</span>
+        <div className="px-2.5 py-1.5 bg-linear-accent-blue/5 border border-linear-accent-blue/10 rounded flex items-center justify-between group-hover:bg-linear-accent-blue/10 transition-colors">
+          <span className="text-[8px] font-bold text-linear-accent-blue uppercase tracking-widest">Protocol</span>
+          <span className="text-[10px] font-bold text-linear-text-primary">{(property.neg_strategy || 'Default: 0% bid').split(':')[0]}</span>
         </div>
       </div>
       
@@ -261,7 +266,7 @@ const PropertyCard: React.FC<{
           <button 
             onClick={() => toggleComparison(property.id)}
             className={`p-1 rounded transition-all hover:scale-110 ${
-              isSelected ? 'text-blue-400 bg-blue-400/10' : 'text-linear-accent hover:text-white'
+              isSelected ? 'text-linear-accent-blue bg-linear-accent-blue/10' : 'text-linear-accent hover:text-linear-text-primary'
             }`}
             title="Add to Comparison"
           >
@@ -271,7 +276,7 @@ const PropertyCard: React.FC<{
           <button 
             onClick={() => onStatusChange(property.id, status === 'shortlisted' ? 'discovered' : 'shortlisted')}
             className={`p-1 rounded transition-all hover:scale-110 ${
-              status === 'shortlisted' ? 'text-blue-400' : 'text-linear-accent hover:text-white'
+              status === 'shortlisted' ? 'text-linear-accent-blue' : 'text-linear-accent hover:text-linear-text-primary'
             }`}
             title="Shortlist"
           >
@@ -280,7 +285,7 @@ const PropertyCard: React.FC<{
           <button 
             onClick={() => onStatusChange(property.id, status === 'vetted' ? 'shortlisted' : 'vetted')}
             className={`p-1 rounded transition-all hover:scale-110 ${
-              status === 'vetted' ? 'text-emerald-400' : 'text-linear-accent hover:text-white'
+              status === 'vetted' ? 'text-linear-accent-emerald' : 'text-linear-accent hover:text-linear-text-primary'
             }`}
             title="Mark as Vetted"
           >
@@ -289,7 +294,7 @@ const PropertyCard: React.FC<{
           <button 
             onClick={() => onStatusChange(property.id, status === 'archived' ? 'discovered' : 'archived')}
             className={`p-1 rounded transition-all hover:scale-110 ${
-              status === 'archived' ? 'text-rose-400' : 'text-linear-accent hover:text-rose-400'
+              status === 'archived' ? 'text-linear-accent-rose' : 'text-linear-accent hover:text-linear-accent-rose'
             }`}
             title="Archive"
           >
@@ -299,19 +304,19 @@ const PropertyCard: React.FC<{
         <div className="flex items-center gap-3">
           <Link 
             to={`/property/${property.id}`}
-            className="text-[9px] font-black text-linear-accent hover:text-white transition-colors uppercase tracking-[0.1em]"
+            className="text-[9px] font-bold text-linear-accent hover:text-linear-text-primary transition-colors uppercase tracking-[0.15em]"
           >
             Details
           </Link>
           <div className="relative group/hub">
             <button 
-              className="text-[9px] font-black text-white hover:text-blue-400 flex items-center gap-1 transition-colors uppercase tracking-[0.1em]"
+              className="text-[9px] font-bold text-linear-text-primary hover:text-linear-accent-blue flex items-center gap-1 transition-colors uppercase tracking-[0.15em]"
             >
               Links
               <ChevronDown size={10} />
             </button>
             <div className="absolute bottom-full right-0 pb-1 mb-0 opacity-0 translate-y-1 pointer-events-none group-hover/hub:opacity-100 group-hover/hub:translate-y-0 group-hover/hub:pointer-events-auto transition-all z-50 min-w-[120px]">
-              <div className="bg-linear-card border border-linear-border rounded-lg shadow-2xl p-1.5">
+              <div className="bg-linear-card border border-linear-border rounded-lg shadow-2xl p-1.5 backdrop-blur-xl">
                 <div className="flex flex-col gap-0.5">
                   {(property.links || [property.link]).map((url, i) => (
                     <a 
@@ -319,7 +324,7 @@ const PropertyCard: React.FC<{
                       href={url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="p-2 text-[8px] font-bold text-linear-text-muted hover:text-white hover:bg-linear-bg rounded-md transition-all flex items-center justify-between group/link uppercase tracking-tighter"
+                      className="p-2 text-[9px] font-bold text-linear-text-muted hover:text-linear-text-primary hover:bg-linear-bg rounded-md transition-all flex items-center justify-between group/link uppercase tracking-tighter"
                     >
                       <span>{url.includes('rightmove') ? 'Rightmove' : url.includes('zoopla') ? 'Zoopla' : 'Portal'}</span>
                       <ExternalLink size={8} />
@@ -440,14 +445,14 @@ const Dashboard: React.FC = () => {
   if (error) return (
     <div className="flex items-center justify-center min-h-[60vh] px-6 text-center">
       <div className="flex flex-col items-center gap-4 max-w-md">
-        <div className="h-12 w-12 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center border border-rose-500/20">
+        <div className="h-12 w-12 bg-linear-accent-rose/10 text-linear-accent-rose rounded-full flex items-center justify-center border border-linear-accent-rose/20">
           <ShieldAlert size={24} />
         </div>
-        <h2 className="text-lg font-bold text-white tracking-tight">Sync Failure</h2>
+        <h2 className="text-lg font-bold text-linear-text-primary tracking-tight">Sync Failure</h2>
         <p className="text-linear-text-muted text-xs leading-relaxed">{error}</p>
         <button 
           onClick={() => window.location.reload()}
-          className="px-4 py-2 bg-white text-black rounded-lg font-bold text-xs hover:bg-zinc-200 transition-all shadow-xl shadow-white/5"
+          className="px-4 py-2 bg-linear-text-primary text-linear-bg rounded-lg font-bold text-xs hover:bg-linear-text-secondary transition-all shadow-xl shadow-white/5"
         >
           Re-establish Connection
         </button>
@@ -478,7 +483,7 @@ const Dashboard: React.FC = () => {
           label="Alpha Performance" 
           value={stats.avgAlpha} 
           icon={TrendingUp} 
-          className="text-blue-400"
+          className="text-linear-accent-blue"
           tooltip="The proprietary 0-10 composite rating representing the overall acquisition quality of all filtered assets."
           methodology="Weighted average of Tenure Quality (40%), Spatial Alpha (30%), and Price Efficiency (30%)."
         />
@@ -494,7 +499,7 @@ const Dashboard: React.FC = () => {
           label="Vetted Assets" 
           value={stats.vetted} 
           icon={ShieldCheck} 
-          className="text-emerald-400"
+          className="text-linear-accent-emerald"
           tooltip="Assets that have passed rigorous structural, financial, and spatial vetting."
           methodology="Third-stage lifecycle status for assets ready for final acquisition protocols."
         />
@@ -510,21 +515,21 @@ const Dashboard: React.FC = () => {
             <div className="flex bg-linear-bg p-1 rounded-xl border border-linear-border shadow-inner">
               <button 
                 onClick={() => { setViewMode('grid'); setShowArchived(false); }}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black flex items-center gap-2 transition-all uppercase tracking-[0.15em] ${viewMode === 'grid' && !showArchived ? 'bg-linear-accent text-white shadow-lg shadow-linear-accent/20' : 'text-linear-text-muted hover:text-white'}`}
+                className={`px-4 py-2 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all uppercase tracking-[0.15em] ${viewMode === 'grid' && !showArchived ? 'bg-linear-accent text-linear-text-primary shadow-lg shadow-linear-accent/20' : 'text-linear-text-muted hover:text-linear-text-primary'}`}
               >
                 <LayoutGrid size={12} />
                 Grid
               </button>
               <button 
                 onClick={() => { setViewMode('table'); setShowArchived(false); }}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black flex items-center gap-2 transition-all uppercase tracking-[0.15em] ${viewMode === 'table' && !showArchived ? 'bg-linear-accent text-white shadow-lg shadow-linear-accent/20' : 'text-linear-text-muted hover:text-white'}`}
+                className={`px-4 py-2 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all uppercase tracking-[0.15em] ${viewMode === 'table' && !showArchived ? 'bg-linear-accent text-linear-text-primary shadow-lg shadow-linear-accent/20' : 'text-linear-text-muted hover:text-linear-text-primary'}`}
               >
                 <TableIcon size={12} />
                 Table
               </button>
               <button 
                 onClick={() => { setViewMode('map'); setShowArchived(false); }}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black flex items-center gap-2 transition-all uppercase tracking-[0.15em] ${viewMode === 'map' && !showArchived ? 'bg-linear-accent text-white shadow-lg shadow-linear-accent/20' : 'text-linear-text-muted hover:text-white'}`}
+                className={`px-4 py-2 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all uppercase tracking-[0.15em] ${viewMode === 'map' && !showArchived ? 'bg-linear-accent text-linear-text-primary shadow-lg shadow-linear-accent/20' : 'text-linear-text-muted hover:text-linear-text-primary'}`}
               >
                 <MapIcon size={12} />
                 Map
@@ -532,7 +537,7 @@ const Dashboard: React.FC = () => {
               <div className="w-px h-4 bg-linear-border mx-2 self-center"></div>
               <button 
                 onClick={() => setShowArchived(true)}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black flex items-center gap-2 transition-all uppercase tracking-[0.15em] ${showArchived ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'text-linear-text-muted hover:text-rose-400'}`}
+                className={`px-4 py-2 rounded-lg text-[10px] font-bold flex items-center gap-2 transition-all uppercase tracking-[0.15em] ${showArchived ? 'bg-linear-accent-rose/20 text-linear-accent-rose border border-linear-accent-rose/30' : 'text-linear-text-muted hover:text-linear-accent-rose'}`}
               >
                 <Archive size={12} />
                 Archived
@@ -552,7 +557,7 @@ const Dashboard: React.FC = () => {
                 handleAreaChange('All Areas');
                 updateFilters({ sortBy: 'alpha_score', is_value_buy: false });
               }}
-              className="p-2.5 rounded-xl border border-linear-border bg-linear-bg text-linear-text-muted hover:text-white hover:border-linear-accent transition-all group"
+              className="p-2.5 rounded-xl border border-linear-border bg-linear-bg text-linear-text-muted hover:text-linear-text-primary hover:border-linear-accent-blue transition-all group shadow-sm"
               title="Reset All Parameters"
             >
               <RotateCcw size={16} className="group-hover:rotate-180 transition-transform duration-500" />
@@ -560,20 +565,20 @@ const Dashboard: React.FC = () => {
 
             <button 
               onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${isFilterPanelOpen ? 'bg-blue-500 border-blue-400 text-white shadow-lg shadow-blue-500/20' : 'bg-linear-bg border-linear-border text-linear-text-muted hover:border-linear-accent hover:text-white'}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all text-[10px] font-bold uppercase tracking-widest ${isFilterPanelOpen ? 'bg-linear-accent-blue border-linear-accent-blue/50 text-linear-text-primary shadow-lg shadow-linear-accent-blue/20' : 'bg-linear-bg border-linear-border text-linear-text-muted hover:border-linear-accent-blue hover:text-linear-text-primary'}`}
             >
               <Filter size={14} />
               Precision
             </button>
 
             <div className="relative group">
-              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-linear-accent group-hover:text-blue-400 transition-colors">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-linear-accent group-hover:text-linear-accent-blue transition-colors">
                 <MapIcon size={12} />
               </div>
               <select 
                 value={areaFilter} 
                 onChange={(e) => handleAreaChange(e.target.value)}
-                className="bg-linear-bg border border-linear-border rounded-xl pl-8 pr-10 py-2 text-[10px] font-black text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 appearance-none hover:border-linear-accent transition-all cursor-pointer uppercase tracking-[0.1em]"
+                className="bg-linear-bg border border-linear-border rounded-xl pl-8 pr-10 py-2 text-[10px] font-bold text-linear-text-primary focus:outline-none focus:ring-1 focus:ring-linear-accent-blue/50 appearance-none hover:border-linear-accent-blue transition-all cursor-pointer uppercase tracking-[0.1em]"
               >
                 {areas.map(area => <option key={area} value={area}>{area}</option>)}
               </select>
@@ -581,13 +586,13 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div className="relative group">
-              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-linear-accent group-hover:text-blue-400 transition-colors">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-linear-accent group-hover:text-linear-accent-blue transition-colors">
                 <ArrowUpDown size={12} />
               </div>
               <select 
                 value={filters.sortBy} 
                 onChange={(e) => updateFilters({ sortBy: e.target.value as any })}
-                className="bg-linear-bg border border-linear-border rounded-xl pl-8 pr-10 py-2 text-[10px] font-black text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 appearance-none hover:border-linear-accent transition-all cursor-pointer uppercase tracking-[0.1em]"
+                className="bg-linear-bg border border-linear-border rounded-xl pl-8 pr-10 py-2 text-[10px] font-bold text-linear-text-primary focus:outline-none focus:ring-1 focus:ring-linear-accent-blue/50 appearance-none hover:border-linear-accent-blue transition-all cursor-pointer uppercase tracking-[0.1em]"
               >
                 <option value="alpha_score">Alpha Sort (H-L)</option>
                 <option value="realistic_price">Target Price (L-H)</option>
@@ -609,10 +614,10 @@ const Dashboard: React.FC = () => {
               onChange={(e) => setFilterShortlisted(e.target.checked)}
               className="hidden"
             />
-            <div className={`w-9 h-5 rounded-full relative transition-all duration-300 ${filterShortlisted ? 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'bg-zinc-800'}`}>
+            <div className={`w-9 h-5 rounded-full relative transition-all duration-300 ${filterShortlisted ? 'bg-linear-accent-blue shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'bg-zinc-800'}`}>
               <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${filterShortlisted ? 'left-5' : 'left-1'}`}></div>
             </div>
-            <span className={`text-[10px] font-black uppercase tracking-[0.15em] transition-colors ${filterShortlisted ? 'text-white' : 'text-linear-text-muted group-hover:text-zinc-400'}`}>Shortlist</span>
+            <span className={`text-[10px] font-bold uppercase tracking-[0.15em] transition-colors ${filterShortlisted ? 'text-linear-text-primary' : 'text-linear-text-muted group-hover:text-zinc-400'}`}>Shortlist</span>
           </label>
 
           <label className="flex items-center gap-3 cursor-pointer group">
@@ -622,10 +627,10 @@ const Dashboard: React.FC = () => {
               onChange={(e) => setFilterVetted(e.target.checked)}
               className="hidden"
             />
-            <div className={`w-9 h-5 rounded-full relative transition-all duration-300 ${filterVetted ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-zinc-800'}`}>
+            <div className={`w-9 h-5 rounded-full relative transition-all duration-300 ${filterVetted ? 'bg-linear-accent-emerald shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-zinc-800'}`}>
               <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${filterVetted ? 'left-5' : 'left-1'}`}></div>
             </div>
-            <span className={`text-[10px] font-black uppercase tracking-[0.15em] transition-colors ${filterVetted ? 'text-white' : 'text-linear-text-muted group-hover:text-zinc-400'}`}>Vetted Only</span>
+            <span className={`text-[10px] font-bold uppercase tracking-[0.15em] transition-colors ${filterVetted ? 'text-linear-text-primary' : 'text-linear-text-muted group-hover:text-zinc-400'}`}>Vetted Only</span>
           </label>
 
           <label className="flex items-center gap-3 cursor-pointer group">
@@ -638,7 +643,7 @@ const Dashboard: React.FC = () => {
             <div className={`w-9 h-5 rounded-full relative transition-all duration-300 ${filters.is_value_buy ? 'bg-retro-green shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-zinc-800'}`}>
               <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${filters.is_value_buy ? 'left-5' : 'left-1'}`}></div>
             </div>
-            <span className={`text-[10px] font-black uppercase tracking-[0.15em] transition-colors ${filters.is_value_buy ? 'text-white' : 'text-linear-text-muted group-hover:text-zinc-400'}`}>Value Gap</span>
+            <span className={`text-[10px] font-bold uppercase tracking-[0.15em] transition-colors ${filters.is_value_buy ? 'text-linear-text-primary' : 'text-linear-text-muted group-hover:text-zinc-400'}`}>Value Gap</span>
           </label>
 
           <label className="flex items-center gap-3 cursor-pointer group">
@@ -651,18 +656,18 @@ const Dashboard: React.FC = () => {
             <div className={`w-9 h-5 rounded-full relative transition-all duration-300 ${filterNewOnly ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-zinc-800'}`}>
               <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${filterNewOnly ? 'left-5' : 'left-1'}`}></div>
             </div>
-            <span className={`text-[10px] font-black uppercase tracking-[0.15em] transition-colors ${filterNewOnly ? 'text-white' : 'text-linear-text-muted group-hover:text-zinc-400'}`}>Fresh Only</span>
+            <span className={`text-[10px] font-bold uppercase tracking-[0.15em] transition-colors ${filterNewOnly ? 'text-linear-text-primary' : 'text-linear-text-muted group-hover:text-zinc-400'}`}>Fresh Only</span>
           </label>
         </div>
       </div>
 
       {/* Precision Filter Panel */}
       {isFilterPanelOpen && (
-        <div className="bg-linear-card border border-linear-border rounded-2xl p-6 grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-top-4 duration-300">
+        <div className="bg-linear-card border border-linear-border rounded-2xl p-6 grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-top-4 duration-300 backdrop-blur-xl shadow-3xl">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">Max Target Price</span>
-              <span className="text-sm font-bold text-white tracking-tight">£{maxPrice.toLocaleString()}</span>
+              <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.15em]">Max Target Price</span>
+              <span className="text-sm font-bold text-linear-text-primary tracking-tight">£{maxPrice.toLocaleString()}</span>
             </div>
             <input 
               type="range" 
@@ -671,9 +676,9 @@ const Dashboard: React.FC = () => {
               step="50000" 
               value={maxPrice} 
               onChange={(e) => setMaxPrice(parseInt(e.target.value))}
-              className="w-full h-1.5 bg-linear-bg rounded-lg appearance-none cursor-pointer accent-blue-500"
+              className="w-full h-1 bg-linear-bg rounded-lg appearance-none cursor-pointer accent-linear-accent-blue"
             />
-            <div className="flex justify-between text-[9px] font-bold text-linear-accent uppercase">
+            <div className="flex justify-between text-[9px] font-medium text-linear-text-muted uppercase tracking-widest opacity-60">
               <span>£400k</span>
               <span>£1.5M</span>
             </div>
@@ -681,8 +686,8 @@ const Dashboard: React.FC = () => {
 
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">Min Interior Space</span>
-              <span className="text-sm font-bold text-white tracking-tight">{minSqft} SQFT</span>
+              <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.15em]">Min Interior Space</span>
+              <span className="text-sm font-bold text-linear-text-primary tracking-tight">{minSqft} SQFT</span>
             </div>
             <input 
               type="range" 
@@ -691,9 +696,9 @@ const Dashboard: React.FC = () => {
               step="50" 
               value={minSqft} 
               onChange={(e) => setMinSqft(parseInt(e.target.value))}
-              className="w-full h-1.5 bg-linear-bg rounded-lg appearance-none cursor-pointer accent-blue-500"
+              className="w-full h-1 bg-linear-bg rounded-lg appearance-none cursor-pointer accent-linear-accent-blue"
             />
-            <div className="flex justify-between text-[9px] font-bold text-linear-accent uppercase">
+            <div className="flex justify-between text-[9px] font-medium text-linear-text-muted uppercase tracking-widest opacity-60">
               <span>0 SQFT</span>
               <span>1500 SQFT</span>
             </div>
@@ -719,7 +724,7 @@ const Dashboard: React.FC = () => {
                 <div className="inline-flex items-center justify-center h-12 w-12 bg-linear-card rounded-xl text-linear-accent mb-4 border border-linear-border">
                   <Search size={20} />
                 </div>
-                <h3 className="text-sm font-bold text-white tracking-tight">No matching assets found</h3>
+                <h3 className="text-sm font-bold text-linear-text-primary tracking-tight">No matching assets found</h3>
                 <p className="text-[10px] text-linear-text-muted mt-1 uppercase tracking-widest font-bold">Try expanding your search parameters</p>
               </div>
             )}
@@ -772,32 +777,34 @@ const Dashboard: React.FC = () => {
                     click: () => handlePreview(property)
                   }}
                 >                  <Popup className="property-popup">
-                    <div className="w-64">
+                    <div className="w-64 p-1">
                       <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-bold text-white text-xs m-0 tracking-tight">{property.address}</h4>
-                        <AlphaBadge score={property.alpha_score} />
+                        <h4 className="font-bold text-linear-text-primary text-xs m-0 tracking-tight">{property.address}</h4>
+                        <div className="scale-75 origin-top-right">
+                          <AlphaBadge score={property.alpha_score} />
+                        </div>
                       </div>
-                      <div className="text-[10px] text-linear-text-muted mb-3 uppercase tracking-widest font-bold">{property.area}</div>
+                      <div className="text-[9px] text-linear-text-muted mb-3 uppercase tracking-wider font-bold opacity-80">{property.area}</div>
                       
-                      <div className="flex gap-4 py-2 border-y border-linear-border/30 mb-2">
+                      <div className="flex gap-4 py-2 border-y border-linear-border/30 mb-3">
                          <div className="flex flex-col">
-                            <span className="text-[8px] text-linear-text-muted uppercase font-bold">St Pauls</span>
-                            <span className="text-[10px] font-black text-blue-400">{property.commute_paternoster} min</span>
+                            <span className="text-[8px] text-linear-text-muted uppercase font-bold tracking-tighter">St Pauls</span>
+                            <span className="text-[10px] font-bold text-linear-accent-blue">{property.commute_paternoster} min</span>
                          </div>
                          <div className="flex flex-col border-l border-linear-border/30 pl-3">
-                            <span className="text-[8px] text-linear-text-muted uppercase font-bold">Canary Wharf</span>
-                            <span className="text-[10px] font-black text-emerald-400">{property.commute_canada_square} min</span>
+                            <span className="text-[8px] text-linear-text-muted uppercase font-bold tracking-tighter">Canary Wharf</span>
+                            <span className="text-[10px] font-bold text-linear-accent-emerald">{property.commute_canada_square} min</span>
                          </div>
                       </div>
 
                       <div className="flex justify-between items-end">
                         <div className="flex flex-col">
-                           <span className="text-[9px] text-linear-text-muted uppercase font-bold">Target Price</span>
-                           <span className="text-sm font-bold text-white leading-none">£{property.realistic_price.toLocaleString()}</span>
+                           <span className="text-[8px] text-linear-text-muted uppercase font-bold tracking-widest opacity-60">Target Price</span>
+                           <span className="text-sm font-bold text-linear-text-primary leading-none">£{property.realistic_price.toLocaleString()}</span>
                         </div>
                         <button 
                           onClick={() => handlePreview(property)}
-                          className="text-[10px] font-bold text-blue-400 flex items-center gap-1 hover:text-blue-300 transition-colors uppercase tracking-widest"
+                          className="text-[10px] font-bold text-linear-accent-blue flex items-center gap-1 hover:text-linear-accent-blue/80 transition-colors uppercase tracking-widest"
                         >
                           Deep Scan <ChevronRight size={12} />
                         </button>

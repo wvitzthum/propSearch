@@ -1,0 +1,131 @@
+[
+  {
+    "id": "1f55a0c4-54d8-42ee-9304-88169d41773f",
+    "address": "Highbury New Park, London N5",
+    "area": "Islington (N1/N7)",
+    "image_url": "https://media.rightmove.co.uk:443/dir/crop/10:9-16:9/property-photo/b7f1d03d5/172342250/b7f1d03d582b7ce72893bfe6fc09443d_max_476x317.jpeg",
+    "gallery": [
+      "https://media.rightmove.co.uk:443/dir/crop/10:9-16:9/property-photo/b7f1d03d5/172342250/b7f1d03d582b7ce72893bfe6fc09443d_max_476x317.jpeg",
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1554995207-c18c203602cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+    ],
+    "streetview_url": "https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=51.5,-0.1",
+    "list_price": 675000,
+    "realistic_price": 654750,
+    "sqft": 699,
+    "price_per_sqm": 10394,
+    "nearest_tube_distance": 450,
+    "park_proximity": 300,
+    "commute_paternoster": 20,
+    "commute_canada_square": 35,
+    "is_value_buy": false,
+    "epc": "C",
+    "tenure": "Share of Freehold",
+    "dom": 1,
+    "neg_strategy": "Market Value: -3% bid",
+    "alpha_score": 8,
+    "appreciation_potential": 7.5,
+    "links": [
+      "https://www.rightmove.co.uk/properties/172342250"
+    ],
+    "metadata": {
+      "first_seen": "2026-03-10",
+      "last_seen": "2026-03-10",
+      "discovery_count": 1,
+      "is_new": true
+    },
+    "floor_level": "Garden Flat",
+    "source": "External Import",
+    "source_name": "Rightmove / Element Properties & Co",
+    "service_charge": 3000,
+    "ground_rent": 0
+  },
+  {
+    "id": "fd8a15c5-d6ac-4219-9636-d61bf25d2135",
+    "address": "Finchley Road, West Hampstead NW3",
+    "area": "West Hampstead (NW6)",
+    "image_url": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+    "gallery": [
+      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1554995207-c18c203602cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+    ],
+    "streetview_url": "https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=51.5,-0.1",
+    "list_price": 750000,
+    "realistic_price": 727500,
+    "sqft": 991,
+    "price_per_sqm": 8146,
+    "nearest_tube_distance": 300,
+    "park_proximity": 600,
+    "commute_paternoster": 25,
+    "commute_canada_square": 35,
+    "is_value_buy": true,
+    "epc": "C",
+    "tenure": "Share of Freehold",
+    "dom": 1,
+    "neg_strategy": "Market Value: -3% bid",
+    "alpha_score": 9.6,
+    "appreciation_potential": 8.8,
+    "links": [
+      "https://www.zoopla.co.uk/for-sale/details/71383812/"
+    ],
+    "metadata": {
+      "first_seen": "2026-03-10",
+      "last_seen": "2026-03-10",
+      "discovery_count": 1,
+      "is_new": true
+    },
+    "floor_level": "Raised Ground",
+    "source": "External Import",
+    "source_name": "Zoopla / Goldschmidt & Howland",
+    "service_charge": 4692,
+    "ground_rent": 75
+  },
+  {
+    "id": "0f904501-3781-4ef7-af1b-2f2c83dbfafc",
+    "address": "Goldhurst Terrace, South Hampstead NW6",
+    "area": "West Hampstead (NW6)",
+    "image_url": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+    "gallery": [
+      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1554995207-c18c203602cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+    ],
+    "streetview_url": "https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=51.5,-0.1",
+    "list_price": 595000,
+    "realistic_price": 577150,
+    "sqft": 613,
+    "price_per_sqm": 10448,
+    "nearest_tube_distance": 400,
+    "park_proximity": 500,
+    "commute_paternoster": 22,
+    "commute_canada_square": 32,
+    "is_value_buy": false,
+    "epc": "C",
+    "tenure": "Share of Freehold",
+    "dom": 1,
+    "neg_strategy": "Market Value: -3% bid",
+    "alpha_score": 8.2,
+    "appreciation_potential": 7.8,
+    "links": [
+      "https://www.zoopla.co.uk/for-sale/details/72495505/"
+    ],
+    "metadata": {
+      "first_seen": "2026-03-10",
+      "last_seen": "2026-03-10",
+      "discovery_count": 1,
+      "is_new": true
+    },
+    "floor_level": "1st",
+    "source": "External Import",
+    "source_name": "Zoopla / Dutch & Dutch",
+    "service_charge": 2500,
+    "ground_rent": 0
+  }
+]
