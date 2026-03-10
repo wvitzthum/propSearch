@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Property, PropertyWithCoords } from '../types/property';
 
 const AREA_COORDS: Record<string, [number, number]> = {
@@ -13,40 +13,70 @@ const AREA_COORDS: Record<string, [number, number]> = {
   'Primrose Hill (NW1)': [51.5410, -0.1550],
 };
 
-export const useProperties = () => {
+export interface PropertyFilters {
+  area?: string;
+  limit?: number;
+  offset?: number;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  is_value_buy?: boolean;
+  vetted?: boolean;
+}
+
+export const useProperties = (initialFilters: PropertyFilters = {}) => {
   const [properties, setProperties] = useState<PropertyWithCoords[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<PropertyFilters>(initialFilters);
 
-  useEffect(() => {
-    console.log('Fetching properties from DuckDB API...');
-    fetch('/api/properties')
-      .then((res) => {
-        if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
-        return res.json();
-      })
-      .then((data: Property[]) => {
-        console.log('Properties loaded from DB:', data.length);
-        
-        const propertiesWithCoords = data.map(p => {
-          const coords = AREA_COORDS[p.area] || AREA_COORDS['Islington (N1)'];
-          const [lat, lng] = coords;
-          return {
-            ...p,
-            lat: lat + (Math.random() - 0.5) * 0.01,
-            lng: lng + (Math.random() - 0.5) * 0.01,
-          } as PropertyWithCoords;
-        });
-        
-        setProperties(propertiesWithCoords);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error('Data loading error:', err);
-        setError(err.message);
-        setLoading(false);
+  const fetchProperties = useCallback(async (currentFilters: PropertyFilters) => {
+    try {
+      setLoading(true);
+      console.log('Fetching properties from SQLite API (Server-side optimized)...');
+      
+      const params = new URLSearchParams();
+      if (currentFilters.area && currentFilters.area !== 'All Areas') params.set('area', currentFilters.area);
+      if (currentFilters.limit) params.set('limit', currentFilters.limit.toString());
+      if (currentFilters.offset) params.set('offset', currentFilters.offset.toString());
+      if (currentFilters.sortBy) params.set('sortBy', currentFilters.sortBy);
+      if (currentFilters.sortOrder) params.set('sortOrder', currentFilters.sortOrder);
+      if (currentFilters.is_value_buy) params.set('is_value_buy', 'true');
+      if (currentFilters.vetted) params.set('vetted', 'true');
+
+      const res = await fetch(`/api/properties?${params.toString()}`);
+      if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`);
+      
+      const data: Property[] = await res.json();
+      console.log('Properties loaded from DB:', data.length);
+      
+      const propertiesWithCoords = data.map(p => {
+        const areaName = p.area.includes('Islington') ? 'Islington (N1)' : p.area;
+        const coords = AREA_COORDS[areaName] || AREA_COORDS['Islington (N1)'];
+        const [lat, lng] = coords;
+        return {
+          ...p,
+          lat: lat + (Math.random() - 0.5) * 0.01,
+          lng: lng + (Math.random() - 0.5) * 0.01,
+        } as PropertyWithCoords;
       });
+      
+      setProperties(propertiesWithCoords);
+      setError(null);
+    } catch (err: any) {
+      console.error('Data loading error:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return { properties, loading, error };
+  useEffect(() => {
+    fetchProperties(filters);
+  }, [filters, fetchProperties]);
+
+  const updateFilters = useCallback((newFilters: Partial<PropertyFilters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  }, []);
+
+  return { properties, loading, error, filters, updateFilters, refresh: () => fetchProperties(filters) };
 };

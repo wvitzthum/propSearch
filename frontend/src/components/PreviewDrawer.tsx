@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { 
   X, 
-  ExternalLink, 
   Maximize2, 
   LayoutGrid,
   Zap, 
@@ -31,6 +30,57 @@ interface PreviewDrawerProps {
   onStatusChange: (id: string, status: PropertyStatus) => void;
 }
 
+interface NotesSectionProps {
+  propertyId: string;
+}
+
+const NotesSection: React.FC<NotesSectionProps> = ({ propertyId }) => {
+  const [notes, setLocalNotes] = useState(() => localStorage.getItem(`notes_${propertyId}`) || '');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Update notes when propertyId changes
+  useEffect(() => {
+    setLocalNotes(localStorage.getItem(`notes_${propertyId}`) || '');
+  }, [propertyId]);
+
+  const handleSaveNotes = () => {
+    setIsSaving(true);
+    localStorage.setItem(`notes_${propertyId}`, notes);
+    setTimeout(() => setIsSaving(false), 600);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
+          <FileText size={12} className="text-linear-accent" /> Analyst Annotations
+        </h3>
+        <button 
+          onClick={handleSaveNotes}
+          disabled={isSaving}
+          className={`flex items-center gap-1.5 px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest transition-all ${
+            isSaving ? 'bg-retro-green/20 text-retro-green' : 'bg-linear-card text-linear-text-muted hover:text-white'
+          }`}
+        >
+          <Save size={10} />
+          {isSaving ? 'Secured' : 'Sync Note'}
+        </button>
+      </div>
+      <div className="relative group">
+        <textarea 
+          value={notes}
+          onChange={(e) => setLocalNotes(e.target.value)}
+          placeholder="Record strategic observations, structural concerns, or bidding notes..."
+          className="w-full h-32 bg-linear-card border border-linear-border rounded-xl p-4 text-xs text-white placeholder:text-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 focus:ring-1 focus:ring-linear-accent/20 transition-all resize-none custom-scrollbar"
+        />
+        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[8px] font-mono text-linear-text-muted uppercase">
+          Auto-Sync Enabled
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PreviewDrawer: React.FC<PreviewDrawerProps> = ({ 
   property, 
   isOpen, 
@@ -40,24 +90,8 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
 }) => {
   const drawerRef = useRef<HTMLDivElement>(null);
   const { calculateMonthlyOutlay } = useFinancialData();
-  const [notes, setLocalNotes] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
 
   const outlay = property ? calculateMonthlyOutlay(property) : null;
-
-  useEffect(() => {
-    if (property && isOpen) {
-      const savedNotes = localStorage.getItem(`notes_${property.id}`) || '';
-      setLocalNotes(savedNotes);
-    }
-  }, [property, isOpen]);
-
-  const handleSaveNotes = () => {
-    if (!property) return;
-    setIsSaving(true);
-    localStorage.setItem(`notes_${property.id}`, notes);
-    setTimeout(() => setIsSaving(false), 600);
-  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -115,7 +149,7 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
           {/* Hero Image & Gallery */}
           <div className="relative h-64 w-full bg-linear-card overflow-hidden group">
             <PropertyImage 
-              src={property.image_url || property.gallery[0]}
+              src={property.image_url || property.gallery?.[0]}
               alt={property.address}
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
@@ -218,24 +252,24 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
                   <div className="flex flex-col gap-1 relative z-10">
                     <span className="text-[9px] text-blue-400 uppercase font-black tracking-widest">Total Monthly Outlay</span>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold text-white tracking-tighter">£{outlay.total.toLocaleString()}</span>
+                      <span className="text-2xl font-bold text-white tracking-tighter">£{(outlay.total || 0).toLocaleString()}</span>
                       <span className="text-[10px] text-linear-text-muted font-bold">/ MONTH</span>
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-blue-500/10 pt-3">
                       <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-wider">
                         <span className="text-linear-text-muted">Mortgage</span>
-                        <span className="text-white">£{outlay.mortgage.toLocaleString()}</span>
+                        <span className="text-white">£{(outlay.mortgage || 0).toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-wider">
                         <span className="text-linear-text-muted">Council Tax</span>
-                        <span className="text-white">£{outlay.councilTax.toLocaleString()}</span>
+                        <span className="text-white">£{(outlay.councilTax || 0).toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-wider">
                         <span className="text-linear-text-muted">Overheads</span>
-                        <span className="text-white">£{(outlay.serviceCharge + outlay.groundRent).toLocaleString()}</span>
+                        <span className="text-white">£{( (outlay.serviceCharge || 0) + (outlay.groundRent || 0) ).toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-wider">
-                        <span className="text-blue-400/80">90% LTV @ {outlay.rate}%</span>
+                        <span className="text-blue-400/80">90% LTV @ {outlay.rate || 0}%</span>
                       </div>
                     </div>
                   </div>
@@ -252,7 +286,7 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
                      <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">Paternoster Sq</span>
                      <TrendingDown size={12} className="text-blue-400" />
                    </div>
-                   <div className="text-xl font-bold text-white relative z-10">{property.commute_paternoster}<span className="text-[10px] text-linear-text-muted ml-1">MINS</span></div>
+                   <div className="text-xl font-bold text-white relative z-10">{property.commute_paternoster || 0}<span className="text-[10px] text-linear-text-muted ml-1">MINS</span></div>
                    <div className="absolute top-0 right-0 w-12 h-12 bg-blue-400/5 rounded-full -mr-6 -mt-6 group-hover:bg-blue-400/10 transition-colors" />
                 </div>
                 <div className="p-4 bg-linear-card border border-linear-border rounded-xl flex flex-col gap-2 relative overflow-hidden group hover:border-emerald-400/30 transition-colors">
@@ -260,7 +294,7 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
                      <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">Canada Square</span>
                      <TrendingDown size={12} className="text-emerald-400" />
                    </div>
-                   <div className="text-xl font-bold text-white relative z-10">{property.commute_canada_square}<span className="text-[10px] text-linear-text-muted ml-1">MINS</span></div>
+                   <div className="text-xl font-bold text-white relative z-10">{property.commute_canada_square || 0}<span className="text-[10px] text-linear-text-muted ml-1">MINS</span></div>
                    <div className="absolute top-0 right-0 w-12 h-12 bg-emerald-400/5 rounded-full -mr-6 -mt-6 group-hover:bg-emerald-400/10 transition-colors" />
                 </div>
               </div>
@@ -276,52 +310,24 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
                 <div className="relative z-10">
                   <div className="text-3xl font-bold text-white tracking-tighter mb-1">
                     <span className="text-xl text-linear-accent mr-1">£</span>
-                    {property.realistic_price.toLocaleString()}
+                    {(property.realistic_price || 0).toLocaleString()}
                   </div>
                   <div className="text-[10px] text-linear-text-muted mb-4 uppercase font-bold">
-                    List: <span className="line-through">£{property.list_price.toLocaleString()}</span>
+                    List: <span className="line-through">£{(property.list_price || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs font-bold text-blue-400 mb-2">
                     <TrendingDown size={14} />
-                    {property.neg_strategy}
+                    {property.neg_strategy || 'Standard Protocol'}
                   </div>
                   <p className="text-[11px] text-linear-text-muted leading-relaxed max-w-sm">
-                    Strategic posture based on {property.dom} days on market. Recommend aggressive entry.
+                    Strategic posture based on {property.dom || 0} days on market. Recommend aggressive entry.
                   </p>
                 </div>
                 <Scale className="absolute -right-6 -bottom-6 text-white/5" size={120} />
               </div>
             </div>
 
-            {/* Analyst Annotations */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
-                  <FileText size={12} className="text-linear-accent" /> Analyst Annotations
-                </h3>
-                <button 
-                  onClick={handleSaveNotes}
-                  disabled={isSaving}
-                  className={`flex items-center gap-1.5 px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest transition-all ${
-                    isSaving ? 'bg-retro-green/20 text-retro-green' : 'bg-linear-card text-linear-text-muted hover:text-white'
-                  }`}
-                >
-                  <Save size={10} />
-                  {isSaving ? 'Secured' : 'Sync Note'}
-                </button>
-              </div>
-              <div className="relative group">
-                <textarea 
-                  value={notes}
-                  onChange={(e) => setLocalNotes(e.target.value)}
-                  placeholder="Record strategic observations, structural concerns, or bidding notes..."
-                  className="w-full h-32 bg-linear-card border border-linear-border rounded-xl p-4 text-xs text-white placeholder:text-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 focus:ring-1 focus:ring-linear-accent/20 transition-all resize-none custom-scrollbar"
-                />
-                <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[8px] font-mono text-linear-text-muted uppercase">
-                  Auto-Sync Enabled
-                </div>
-              </div>
-            </div>
+            <NotesSection propertyId={property.id} />
 
             {/* Verification */}
             <div className="space-y-3">
@@ -362,7 +368,7 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
             <ArrowRight size={14} />
           </Link>
           
-          <SourceHub links={property.links || [property.link]} variant="compact" />
+          <SourceHub links={property.links || [property.link]} variant="full" />
         </div>
       </div>
     </>

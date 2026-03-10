@@ -1,24 +1,21 @@
-const duckdb = require('duckdb');
+const Database = require('better-sqlite3');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, '../data/propSearch.duckdb');
-const db = new duckdb.Database(DB_PATH);
+const DB_PATH = path.join(__dirname, '../data/propSearch.db');
+const db = new Database(DB_PATH);
 
-db.all("SELECT data FROM global_context WHERE key = 'macro_trend'", (err, rows) => {
-  if (err) {
-    console.error(err);
-    process.exit(1);
-  }
-  
-  if (rows.length > 0) {
-    const data = JSON.parse(rows[0].data);
-    console.log('Mortgage History Entry Count:', data.mortgage_history?.length || 0);
-    if (data.mortgage_history && data.mortgage_history.length > 0) {
-      console.log('First Entry:', data.mortgage_history[0]);
-      console.log('Last Entry:', data.mortgage_history[data.mortgage_history.length - 1]);
-    }
+try {
+  const row = db.prepare("SELECT data FROM global_context WHERE key = 'macro_trend'").get();
+  if (row) {
+    const data = JSON.parse(row.data);
+    console.log('Macro History Found:', data.mortgage_history.length, 'months');
+    data.mortgage_history.forEach(m => {
+      console.log(`${m.date}: 90 LTV: ${m.rate_90}%, 60 LTV: ${m.rate_60}%`);
+    });
   } else {
-    console.log('No macro_trend data found');
+    console.log('No macro trend data found in SQLite.');
   }
-  process.exit(0);
-});
+} catch (err) {
+  console.error(err);
+  process.exit(1);
+}

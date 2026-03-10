@@ -27,6 +27,51 @@ interface PropertyTableProps {
   getStatus?: (id: string) => PropertyStatus;
 }
 
+const SortIcon = ({ 
+  columnKey, 
+  currentSort, 
+  direction 
+}: { 
+  columnKey: string, 
+  currentSort: string, 
+  direction: 'asc' | 'desc' 
+}) => {
+  if (currentSort !== columnKey) return <ArrowUpDown size={10} className="opacity-0 group-hover:opacity-40" />;
+  return direction === 'asc' ? <ArrowUp size={10} className="text-blue-400" /> : <ArrowDown size={10} className="text-blue-400" />;
+};
+
+const TableHeader = ({ 
+  label, 
+  columnKey, 
+  tooltip, 
+  methodology, 
+  className = "", 
+  onSort, 
+  currentSort, 
+  direction 
+}: { 
+  label: string, 
+  columnKey: string, 
+  tooltip?: string, 
+  methodology?: string, 
+  className?: string,
+  onSort: (key: string) => void,
+  currentSort: string,
+  direction: 'asc' | 'desc'
+}) => (
+  <th 
+    className={`px-4 py-3 text-left text-[10px] font-bold text-linear-text-muted uppercase tracking-widest cursor-pointer group hover:bg-linear-card transition-colors relative ${className}`}
+    onClick={() => onSort(columnKey)}
+  >
+    <Tooltip content={tooltip} methodology={methodology} className="w-full">
+      <div className="flex items-center gap-1.5">
+        {label}
+        <SortIcon columnKey={columnKey} currentSort={currentSort} direction={direction} />
+      </div>
+    </Tooltip>
+  </th>
+);
+
 const PropertyTable: React.FC<PropertyTableProps> = ({ 
   properties, 
   onSortChange, 
@@ -56,43 +101,27 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
     let bValue: any;
 
     if (key === 'value_gap') {
-      aValue = a.list_price - a.realistic_price;
-      bValue = b.list_price - b.realistic_price;
+      aValue = (a.list_price || 0) - (a.realistic_price || 0);
+      bValue = (b.list_price || 0) - (b.realistic_price || 0);
     } else if (key === 'commute_utility') {
-      aValue = a.commute_paternoster + a.commute_canada_square;
-      bValue = b.commute_paternoster + b.commute_canada_square;
+      aValue = (a.commute_paternoster || 0) + (a.commute_canada_square || 0);
+      bValue = (b.commute_paternoster || 0) + (b.commute_canada_square || 0);
     } else if (key.includes('.')) {
-      const parts = key.split('.');
-      aValue = (a as any)[parts[0]][parts[1]];
-      bValue = (b as any)[parts[0]][parts[1]];
+      const [main, sub] = key.split('.') as [keyof PropertyWithCoords, string];
+      aValue = (a[main] as any)?.[sub];
+      bValue = (b[main] as any)?.[sub];
     } else {
       aValue = (a as any)[key];
       bValue = (b as any)[key];
     }
 
+    if (aValue === undefined || aValue === null) return 1;
+    if (bValue === undefined || bValue === null) return -1;
+
     if (aValue < bValue) return localSort.direction === 'asc' ? -1 : 1;
     if (aValue > bValue) return localSort.direction === 'asc' ? 1 : -1;
     return 0;
   });
-
-  const SortIcon = ({ columnKey }: { columnKey: string }) => {
-    if (localSort.key !== columnKey) return <ArrowUpDown size={10} className="opacity-0 group-hover:opacity-40" />;
-    return localSort.direction === 'asc' ? <ArrowUp size={10} className="text-blue-400" /> : <ArrowDown size={10} className="text-blue-400" />;
-  };
-
-  const TableHeader = ({ label, columnKey, tooltip, methodology, className = "" }: { label: string, columnKey: string, tooltip?: string, methodology?: string, className?: string }) => (
-    <th 
-      className={`px-4 py-3 text-left text-[10px] font-bold text-linear-text-muted uppercase tracking-widest cursor-pointer group hover:bg-linear-card transition-colors relative ${className}`}
-      onClick={() => handleSort(columnKey)}
-    >
-      <Tooltip content={tooltip} methodology={methodology} className="w-full">
-        <div className="flex items-center gap-1.5">
-          {label}
-          <SortIcon columnKey={columnKey} />
-        </div>
-      </Tooltip>
-    </th>
-  );
 
   return (
     <div className="bg-linear-bg border border-linear-border rounded-xl overflow-hidden shadow-2xl">
@@ -100,13 +129,24 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-linear-card/50 border-b border-linear-border">
-              <TableHeader label="Asset / Area" columnKey="address" tooltip="Full address and acquisition area zone." className="sticky left-0 bg-linear-bg/80 backdrop-blur-md z-10" />
+              <TableHeader 
+                label="Asset / Area" 
+                columnKey="address" 
+                tooltip="Full address and acquisition area zone." 
+                className="sticky left-0 bg-linear-bg/80 backdrop-blur-md z-10"
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
+              />
               <TableHeader 
                 label="Alpha" 
                 columnKey="alpha_score" 
                 tooltip="A proprietary 0-10 composite rating representing the overall acquisition quality of an asset." 
                 methodology="Weighted: Tenure (40%), Spatial Alpha (30%), Price Efficiency (30%)."
                 className="px-2"
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
               />
               <TableHeader 
                 label="Target" 
@@ -114,6 +154,9 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 tooltip="Calculated bid target based on market conditions, DoM, and area liquidity." 
                 methodology="Derived from Area Average SQFT adjusted by Asset Grade and Days on Market."
                 className="px-2"
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
               />
               <TableHeader 
                 label="Gap" 
@@ -121,6 +164,9 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 tooltip="Delta between list price and realistic acquisition target." 
                 methodology="(Realistic Price - List Price) / List Price. Negative indicates discount capture."
                 className="px-2"
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
               />
               <TableHeader 
                 label="Eff." 
@@ -128,6 +174,9 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 tooltip="Pricing efficiency in GBP per square meter relative to micro-location benchmarks." 
                 methodology="Total List Price / Internal Area (SQM). Benchmarked against £9,500/m²."
                 className="px-2"
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
               />
               <TableHeader 
                 label="App." 
@@ -135,6 +184,9 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 tooltip="Institutional forecast for 5-year capital appreciation." 
                 methodology="Historical area CAGR + infrastructure investment (Crossrail) + supply constraints."
                 className="px-2"
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
               />
               <TableHeader 
                 label="Com." 
@@ -142,12 +194,55 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 tooltip="Aggregated commute utility score to City/Wharf hubs (lower is better)." 
                 methodology="Door-to-desk travel time (TfL API) during morning peak (08:30)."
                 className="px-2"
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
               />
-              <TableHeader label="SQFT" columnKey="sqft" tooltip="Internal floor area in square feet." className="px-2" />
-              <TableHeader label="Floor" columnKey="floor_level" tooltip="Asset floor level elevation." className="px-2" />
-              <TableHeader label="EPC" columnKey="epc" tooltip="Energy Performance Certificate efficiency rating." className="px-2" />
-              <TableHeader label="DoM" columnKey="dom" tooltip="Total days on market across all portal versions." className="px-2" />
-              <TableHeader label="Protocol" columnKey="neg_strategy" tooltip="Recommended negotiation posture." className="px-2" />
+              <TableHeader 
+                label="SQFT" 
+                columnKey="sqft" 
+                tooltip="Internal floor area in square feet." 
+                className="px-2" 
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
+              />
+              <TableHeader 
+                label="Floor" 
+                columnKey="floor_level" 
+                tooltip="Asset floor level elevation." 
+                className="px-2" 
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
+              />
+              <TableHeader 
+                label="EPC" 
+                columnKey="epc" 
+                tooltip="Energy Performance Certificate efficiency rating." 
+                className="px-2" 
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
+              />
+              <TableHeader 
+                label="DoM" 
+                columnKey="dom" 
+                tooltip="Total days on market across all portal versions." 
+                className="px-2" 
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
+              />
+              <TableHeader 
+                label="Protocol" 
+                columnKey="neg_strategy" 
+                tooltip="Recommended negotiation posture." 
+                className="px-2" 
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
+              />
               <th className="px-2 py-3 text-right text-[10px] font-bold text-linear-text-muted uppercase tracking-widest whitespace-nowrap">Action</th>
             </tr>
           </thead>

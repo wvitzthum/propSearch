@@ -17,8 +17,115 @@ const ARCHIVE_INBOX_DIR = path.join(DATA_DIR, 'archive/inbox');
   }
 });
 
-// Initialize SQLite
-const db = new Database(DB_PATH);
+// Initialize SQLite with stabilization
+let db;
+
+function initializeDB() {
+  console.log('Stabilizing SQLite database...');
+  db = new Database(DB_PATH, { verbose: console.log });
+  db.pragma('journal_mode = WAL');
+
+  // 1. properties table
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS properties (
+      id TEXT PRIMARY KEY,
+      address TEXT,
+      area TEXT,
+      image_url TEXT,
+      gallery TEXT,
+      streetview_url TEXT,
+      list_price REAL,
+      realistic_price REAL,
+      sqft REAL,
+      price_per_sqm REAL,
+      nearest_tube_distance REAL,
+      park_proximity REAL,
+      commute_paternoster REAL,
+      commute_canada_square REAL,
+      is_value_buy INTEGER,
+      epc TEXT,
+      tenure TEXT,
+      dom INTEGER,
+      neg_strategy TEXT,
+      alpha_score REAL,
+      appreciation_potential REAL,
+      links TEXT,
+      metadata TEXT,
+      floor_level TEXT,
+      source TEXT,
+      source_name TEXT,
+      service_charge REAL,
+      ground_rent REAL,
+      lease_years_remaining REAL,
+      vetted INTEGER DEFAULT 0,
+      analyst_notes TEXT,
+      price_reduction_amount REAL,
+      price_reduction_percent REAL,
+      days_since_reduction INTEGER
+    )
+  `).run();
+
+  // 2. Add missing columns (DAT-081 & others)
+  const columns = db.prepare("PRAGMA table_info(properties)").all();
+  const columnNames = columns.map(c => c.name);
+
+  const missingColumns = [
+    { name: 'epc_improvement_potential', type: 'TEXT' },
+    { name: 'est_capex_requirement', type: 'REAL' },
+    { name: 'waitrose_distance', type: 'REAL' },
+    { name: 'whole_foods_distance', type: 'REAL' },
+    { name: 'wellness_hub_distance', type: 'REAL' }
+  ];
+
+  for (const col of missingColumns) {
+    if (!columnNames.includes(col.name)) {
+      console.log(`Adding missing column: ${col.name}`);
+      db.prepare(`ALTER TABLE properties ADD COLUMN ${col.name} ${col.type}`).run();
+    }
+  }
+
+  // 3. global_context table
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS global_context (
+      key TEXT PRIMARY KEY,
+      data TEXT
+    )
+  `).run();
+
+  // 4. manual_queue table
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS manual_queue (
+      id TEXT PRIMARY KEY,
+      url TEXT,
+      source TEXT,
+      raw_data TEXT,
+      status TEXT,
+      queued_at TEXT,
+      processed_at TEXT,
+      notes TEXT
+    )
+  `).run();
+
+  // 5. snapshots table
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS snapshots (
+      filename TEXT PRIMARY KEY,
+      data TEXT,
+      created_at TEXT
+    )
+  `).run();
+
+  // DAT-075: Data Purge (Shallow assets)
+  const purge = db.prepare("DELETE FROM properties WHERE sqft IS NULL OR sqft = 0 OR epc IS NULL OR epc = ''");
+  const info = purge.run();
+  if (info.changes > 0) {
+    console.log(`DAT-075: Purged ${info.changes} shallow records.`);
+  }
+
+  console.log('Database initialization complete.');
+}
+
+initializeDB();
 
 function safeParse(val, defaultVal = []) {
   if (val === null || val === undefined) return defaultVal;
@@ -48,6 +155,8 @@ const server = http.createServer((req, res) => {
     // 1. Properties
     if (url.pathname === '/api/properties' && req.method === 'GET') {
       const area = url.searchParams.get('area');
+      const isValueBuy = url.searchParams.get('is_value_buy');
+      const vetted = url.searchParams.get('vetted');
       const limit = parseInt(url.searchParams.get('limit') || '100');
       const offset = parseInt(url.searchParams.get('offset') || '0');
       const sortBy = url.searchParams.get('sortBy') || 'alpha_score';
@@ -55,12 +164,21 @@ const server = http.createServer((req, res) => {
 
       let sql = 'SELECT * FROM properties WHERE 1=1';
       const params = [];
-      if (area) {
-        sql += ' AND area = ?';
-        params.push(area);
+      
+      if (area && area !== 'All Areas') {
+        sql += ' AND area LIKE ?';
+        params.push(`%${area}%`);
       }
 
-      const validSortColumns = ['alpha_score', 'list_price', 'price_per_sqm', 'dom', 'appreciation_potential'];
+      if (isValueBuy === 'true') {
+        sql += ' AND is_value_buy = 1';
+      }
+
+      if (vetted === 'true') {
+        sql += ' AND vetted = 1';
+      }
+
+      const validSortColumns = ['alpha_score', 'list_price', 'realistic_price', 'price_per_sqm', 'dom', 'appreciation_potential'];
       const finalSortBy = validSortColumns.includes(sortBy) ? sortBy : 'alpha_score';
       const finalSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 

@@ -1,11 +1,23 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type { PropertyWithCoords, Property } from '../types/property';
+
+export interface PropertyFilters {
+  area?: string;
+  limit?: number;
+  offset?: number;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  is_value_buy?: boolean;
+  vetted?: boolean;
+}
 
 interface PropertyContextType {
   properties: PropertyWithCoords[];
   loading: boolean;
   error: string | null;
+  filters: PropertyFilters;
+  updateFilters: (newFilters: Partial<PropertyFilters>) => void;
   refreshProperties: () => Promise<void>;
 }
 
@@ -23,24 +35,63 @@ const AREA_COORDS: Record<string, [number, number]> = {
   'Primrose Hill (NW1)': [51.5410, -0.1550],
 };
 
-const API_BASE = 'http://localhost:3001/api';
+const IS_DEMO = import.meta.env.VITE_DEMO_MODE === 'true';
+const API_BASE = IS_DEMO ? '/data' : 'http://localhost:3001/api';
 
 export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [properties, setProperties] = useState<PropertyWithCoords[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<PropertyFilters>({
+    limit: 100,
+    offset: 0,
+    sortBy: 'alpha_score',
+    sortOrder: 'DESC'
+  });
 
-  const fetchProperties = async () => {
+  const fetchProperties = useCallback(async (currentFilters: PropertyFilters) => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/properties`);
+      
+      let url = `${API_BASE}/properties`;
+      const params = new URLSearchParams();
+      
+      if (IS_DEMO) {
+        url = `${API_BASE}/demo_master.json`;
+      } else {
+        if (currentFilters.area && currentFilters.area !== 'All Areas') params.set('area', currentFilters.area);
+        if (currentFilters.limit) params.set('limit', currentFilters.limit.toString());
+        if (currentFilters.offset) params.set('offset', currentFilters.offset.toString());
+        if (currentFilters.sortBy) params.set('sortBy', currentFilters.sortBy);
+        if (currentFilters.sortOrder) params.set('sortOrder', currentFilters.sortOrder);
+        if (currentFilters.is_value_buy) params.set('is_value_buy', 'true');
+        if (currentFilters.vetted) params.set('vetted', 'true');
+        if (params.toString()) url += `?${params.toString()}`;
+      }
+
+      const res = await fetch(url);
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'API Unavailable' }));
         throw new Error(errorData.error || 'Failed to fetch properties');
       }
       const data: Property[] = await res.json();
 
-      const propertiesWithCoords = data.map(p => {
+      let finalData = data;
+      
+      // Client-side filtering for demo mode
+      if (IS_DEMO) {
+        if (currentFilters.area && currentFilters.area !== 'All Areas') {
+          finalData = finalData.filter(p => p.area.includes(currentFilters.area!));
+        }
+        if (currentFilters.is_value_buy) {
+          finalData = finalData.filter(p => p.is_value_buy);
+        }
+        if (currentFilters.vetted) {
+          finalData = finalData.filter(p => p.vetted);
+        }
+      }
+
+      const propertiesWithCoords = finalData.map(p => {
         const areaName = p.area.includes('Islington') ? 'Islington (N1)' : p.area;
         const coords = AREA_COORDS[areaName] || AREA_COORDS['Islington (N1)'];
         const [lat, lng] = coords;
@@ -59,14 +110,27 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchProperties();
   }, []);
 
+  useEffect(() => {
+    fetchProperties(filters);
+  }, [filters, fetchProperties]);
+
+  const updateFilters = useCallback((newFilters: Partial<PropertyFilters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  }, []);
+
+  const refreshProperties = useCallback(() => fetchProperties(filters), [filters, fetchProperties]);
+
   return (
-    <PropertyContext.Provider value={{ properties, loading, error, refreshProperties: fetchProperties }}>
+    <PropertyContext.Provider value={{ 
+      properties, 
+      loading, 
+      error, 
+      filters, 
+      updateFilters, 
+      refreshProperties 
+    }}>
       {children}
     </PropertyContext.Provider>
   );

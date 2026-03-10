@@ -2,3 +2,7 @@
 *.duckdb
 *.duckdb.*
 *duckdb
+*.db
+*.db-shm
+*.db-wal
+*.log

@@ -34,6 +34,7 @@ export interface Property {
   commute_paternoster: number;
   commute_canada_square: number;
   is_value_buy: boolean;
+  vetted: boolean;
   epc: EPCRating;
   tenure: string;
   service_charge: number;

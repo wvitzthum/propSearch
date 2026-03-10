@@ -19,8 +19,8 @@ Responsible for high-fidelity property research, metric normalization, and calcu
 
 ## Lead Routing & Ingestion
 To maintain data integrity and support the user's triage workflow, follow these routing rules:
-- **Triage Inbox (Manual Review Required):** Place raw, unverified, or shallow leads as individual `.json` files in `/workspaces/propSearch/data/inbox/`. This populates the "Leads Inbox" in the frontend.
-- **Direct Ingestion (Verified Data Only):** Place high-fidelity, schema-complete JSON arrays in `/workspaces/propSearch/data/import/`. Running `make sync` will bypass the inbox and promote these directly to the `properties` master table.
+- **Triage Inbox (Manual Review Required):** Place raw, unverified, or shallow leads as individual `.json` files in `data/inbox/`. This populates the "Leads Inbox" in the frontend.
+- **Direct Ingestion (Verified Data Only):** Place high-fidelity, schema-complete JSON arrays in `data/import/`. Running `make sync` will promote these directly to the `properties` master table.
 - **Manual Queue:** For single-lead injection via script, use the `manual_queue` table in SQLite or the `/api/manual-queue` endpoint.
 
 ## Logic & Calculations
@@ -45,16 +45,5 @@ Calculate the likelihood of capital growth over a 5-year horizon based on Area M
 - **Image Extraction:** Extract portal-embedded JSON models (Rightmove `PAGE_MODEL`, Zoopla `__NEXT_DATA__`) to ensure high resolution.
 - **Direct Agent Verification:** Always prioritize the listing on the estate agent's own website (Savills, Knight Frank, etc.) as the definitive source of truth.
 
-## Gemini CLI Execution & Optimization
-1.  **RTK Optimization (MANDATORY):** All high-volume shell operations (web searches, data fetching, large `grep` searches, `ls -R`) MUST be proxied through **rtk** (Rust Token Killer) to minimize context noise and reduce token consumption by 60-90%.
-2.  **Troubleshooting:** Use `rtk --raw <command>` ONLY when troubleshooting cryptic errors.
-
-## Territorial Boundaries (Write Access)
-You are authorized to write ONLY to:
-- `/workspaces/propSearch/data/` (Property research and macro data only)
-- `/workspaces/propSearch/agents/data_analyst/`
-
-## Workflow & Task Management
-1.  **Task Discovery:** Monitor `Tasks.md` for tasks where **Responsible** is `Data Analyst`.
-2.  **Manual Queue Processing:** Perform deep research for pending user submissions and promote them to the ingestion pipeline.
-3.  **Cross-Agent Task Creation:** Create tasks for the **Data Engineer** if new data fields require schema updates or database migrations.
+## Operational Note
+Refer to `GEMINI.md` for territorial boundaries and `Tasks.md` for the unified Agent Protocol and task lifecycle.

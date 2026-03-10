@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import type { MacroTrend, MortgageHistoryEntry } from '../types/macro';
+import type { MacroTrend } from '../types/macro';
+
+const IS_DEMO = import.meta.env.VITE_DEMO_MODE === 'true';
 
 export const useMacroData = () => {
   const [data, setData] = useState<MacroTrend | null>(null);
@@ -7,7 +9,8 @@ export const useMacroData = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/macro')
+    const url = IS_DEMO ? '/data/macro_trend.json' : '/api/macro';
+    fetch(url)
       .then((res) => {
         if (!res.ok) throw new Error(`Failed to fetch macro data: ${res.status} ${res.statusText}`);
         return res.json();

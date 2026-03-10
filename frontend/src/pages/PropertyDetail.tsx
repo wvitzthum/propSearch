@@ -1,25 +1,24 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
   ArrowLeft, 
   MapPin, 
-  ExternalLink, 
   CheckCircle2, 
   ShieldAlert, 
   Calendar, 
   Maximize2, 
-  LayoutGrid,
-  Home,
-  Zap,
-  Gem,
-  TrendingDown,
-  Clock,
-  Scale,
-  FileText,
-  Save,
-  ArrowRight,
-  TrendingUp,
-  BarChart3
+  LayoutGrid, 
+  Home, 
+  Zap, 
+  Gem, 
+  TrendingDown, 
+  Clock, 
+  Scale, 
+  FileText, 
+  Save, 
+  ArrowRight, 
+  BarChart3,
+  TrendingUp 
 } from 'lucide-react';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import { useFinancialData } from '../hooks/useFinancialData';
@@ -37,7 +36,10 @@ const PropertyDetail: React.FC = () => {
   const { properties, loading } = usePropertyContext();
   const { calculateMonthlyOutlay } = useFinancialData();
   const { getStatus, setStatus } = usePipeline();
-  const [notes, setLocalNotes] = useState('');
+  const [notes, setLocalNotes] = useState(() => {
+    if (!id) return '';
+    return localStorage.getItem(`notes_${id}`) || '';
+  });
   const [isSaving, setIsSaving] = useState(false);
 
   const property = useMemo(() => {
@@ -46,13 +48,6 @@ const PropertyDetail: React.FC = () => {
 
   const outlay = property ? calculateMonthlyOutlay(property) : null;
   const status = property ? getStatus(property.id) : 'discovered';
-
-  useEffect(() => {
-    if (id) {
-      const savedNotes = localStorage.getItem(`notes_${id}`) || '';
-      setLocalNotes(savedNotes);
-    }
-  }, [id]);
 
   const handleSaveNotes = () => {
     if (!id) return;
@@ -445,10 +440,16 @@ const PropertyDetail: React.FC = () => {
                       <div className="space-y-3">
                         <div className="flex justify-between text-xs">
                           <span className="text-linear-text-muted">Efficiency Gain</span>
-                          <span className="text-retro-green font-bold">+22% Thermal Retention</span>
+                          <span className="text-retro-green font-bold">
+                            +{property.epc === property.epc_improvement_potential ? '0' : 
+                              (property.epc < (property.epc_improvement_potential || 'B') ? '15' : '22')}% Thermal Retention
+                          </span>
                         </div>
                         <div className="h-1.5 w-full bg-linear-bg rounded-full overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-blue-500 to-retro-green w-[75%]" />
+                          <div 
+                            className="h-full bg-gradient-to-r from-blue-500 to-retro-green transition-all duration-1000" 
+                            style={{ width: property.epc === property.epc_improvement_potential ? '95%' : '75%' }} 
+                          />
                         </div>
                       </div>
                     </div>
@@ -458,31 +459,46 @@ const PropertyDetail: React.FC = () => {
                         <div>
                           <span className="text-[9px] font-black text-linear-text-muted uppercase tracking-widest block mb-1">Est. CAPEX Requirement</span>
                           <div className="text-3xl font-bold text-white tracking-tighter">
-                            £{(property.est_capex_requirement || 12500).toLocaleString()}
+                            £{(property.est_capex_requirement || 0).toLocaleString()}
                           </div>
                         </div>
                         <div className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-[9px] font-black text-white uppercase">
-                          Class 1 Quote
+                          {property.est_capex_requirement ? 'Class 1 Quote' : 'Estimate Needed'}
                         </div>
                       </div>
 
                       <div className="space-y-4">
-                        <div className="flex items-center gap-3 text-[11px] text-linear-text-muted">
-                          <CheckCircle2 size={14} className="text-retro-green" />
-                          <span>Double-glazing optimization (£4.2k)</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-[11px] text-linear-text-muted">
-                          <CheckCircle2 size={14} className="text-retro-green" />
-                          <span>Internal wall insulation (£6.8k)</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-[11px] text-linear-text-muted">
-                          <CheckCircle2 size={14} className="text-retro-green" />
-                          <span>Smart HVAC & LED swap (£1.5k)</span>
-                        </div>
+                        {property.est_capex_requirement ? (
+                          <>
+                            <div className="flex items-center gap-3 text-[11px] text-linear-text-muted">
+                              <CheckCircle2 size={14} className="text-retro-green" />
+                              <span>Optimization target: {property.epc_improvement_potential} Rating</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-[11px] text-linear-text-muted">
+                              <CheckCircle2 size={14} className="text-retro-green" />
+                              <span>Retrofit scope including thermal retention upgrades</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-[11px] text-linear-text-muted">
+                              <CheckCircle2 size={14} className="text-retro-green" />
+                              <span>Smart HVAC & LED institutional standard sync</span>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="py-4 text-center">
+                            <p className="text-[10px] text-linear-text-muted uppercase font-bold italic">No active CAPEX quotes for this asset.</p>
+                          </div>
+                        )}
                       </div>
 
-                      <button className="w-full mt-6 py-3 bg-linear-accent text-white rounded-xl text-xs font-black uppercase tracking-widest hover:brightness-110 transition-all active:scale-95 shadow-xl shadow-linear-accent/10">
-                        View Detailed CAPEX Breakdown
+                      <button 
+                        disabled={!property.est_capex_requirement}
+                        className={`w-full mt-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-xl ${
+                          property.est_capex_requirement 
+                            ? 'bg-linear-accent text-white hover:brightness-110 shadow-linear-accent/10' 
+                            : 'bg-linear-card text-linear-text-muted border border-linear-border cursor-not-allowed'
+                        }`}
+                      >
+                        {property.est_capex_requirement ? 'View Detailed CAPEX Breakdown' : 'Request Retrofit Quote'}
                       </button>
                     </div>
                   </div>

@@ -20,7 +20,7 @@ const SubmissionHistory: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
       const res = await fetch('/api/manual-queue');
       if (!res.ok) throw new Error('History buffer unavailable');
       const data = await res.json();
-      setItems(data); // DuckDB query already handles ordering
+      setItems(data); // SQLite query already handles ordering
       setError(null);
     } catch (err: any) {
 
