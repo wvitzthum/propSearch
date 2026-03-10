@@ -81,10 +81,10 @@ export const useFinancialData = () => {
 
     // 2. Council Tax
     const councilInfo = financialContext.council_tax.find(c => 
-      c.areas.includes(property.area)
+      (c.areas && c.areas.includes(property.area)) || (c.area === property.area)
     );
     const band = property.council_tax_band || 'E'; // Default to E for prime London
-    const annualCouncilTax = councilInfo?.bands[band]?.["2025_26"] || 2000;
+    const annualCouncilTax = councilInfo?.bands?.[band]?.["2025_26"] || councilInfo?.annual_cost || 2000;
     const monthlyCouncilTax = annualCouncilTax / 12;
 
     // 3. Service Charge & Ground Rent

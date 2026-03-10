@@ -4,8 +4,13 @@
   --color-linear-bg: #09090b;
   --color-linear-card: #18181b;
   --color-linear-border: #27272a;
+  --color-linear-text-primary: #ffffff;
+  --color-linear-text-secondary: #e4e4e7;
   --color-linear-text-muted: #a1a1aa;
   --color-linear-accent: #3f3f46;
+  --color-linear-accent-blue: #3b82f6;
+  --color-linear-accent-emerald: #10b981;
+  --color-linear-accent-rose: #f43f5e;
   --color-linear-glow: rgba(59, 130, 246, 0.1);
   --color-retro-amber: #ffb000;
   --color-retro-green: #33ff33;

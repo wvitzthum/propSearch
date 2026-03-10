@@ -39,13 +39,13 @@ const KPICard: React.FC<KPICardProps> = ({
     <Tooltip content={tooltip} methodology={methodology} className="w-full">
       <div className={`p-4 bg-linear-card border border-linear-border rounded-xl shadow-sm hover:border-linear-accent transition-all group/kpi relative h-full ${className}`}>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-wider">{label}</span>
+          <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em]">{label}</span>
           {Icon && <Icon size={14} className="text-linear-accent" />}
         </div>
         <div className="flex items-end justify-between">
-          <div className="text-2xl font-bold text-white tracking-tight">{value}</div>
+          <div className="text-2xl font-bold text-linear-text-primary tracking-tighter">{value}</div>
           {trend && (
-            <div className={`text-[10px] font-bold ${trend.isPositive ? 'text-retro-green' : 'text-rose-400'}`}>
+            <div className={`text-[10px] font-bold ${trend.isPositive ? 'text-linear-accent-emerald' : 'text-linear-accent-rose'}`}>
               {trend.value}
             </div>
           )}

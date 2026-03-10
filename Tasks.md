@@ -30,7 +30,6 @@
 ## Active Backlog
 | ID | Priority | Effort | Task | Status | Responsible | Reported By | Dependencies | Date |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| QA-036 | Critical | Low | UX Audit: Thorough assessment of `MortgageTracker.tsx` (Graph quality, font uniformity, overall usability). | Pending | UI/UX QA | Stakeholder | - | 2026-03-09 |
 | DAT-070 | High | Medium | Data Analysis: Audit current Alpha Scores and suggest refinement to "Spatial" weight based on 2026 Tube connectivity. | Pending | Data Analyst | Product Owner | - | 2026-03-09 |
 
 > **Internal Note:** Remaining build/lint issues are being tracked as individual tasks instead of sub-agent delegation to ensure surgical execution and context preservation.
@@ -40,6 +39,11 @@
 ## Resolved
 | ID | Priority | Effort | Task | Status | Responsible | Resolved By | Date |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| FE-087 | Critical | High | UI Overhaul: Replace MortgageTracker SVGs with high-fidelity, interactive charts (Recharts or refined SVG). Implement crosshair sync, dynamic scaling, and multi-series toggles. | Done | Frontend Engineer | Frontend Engineer | 2026-03-10 |
+| FE-085 | High | Medium | UI/UX Refinement: Normalize typography and color variables across `MortgageTracker`, `Dashboard`, and `PropertyTable` based on `REPORT_2026_03_10_AUDIT.md`. | Done | Frontend Engineer | Frontend Engineer | 2026-03-10 |
+| DAT-085 | High | Medium | Data: Processed 13 new leads from `new-leads.jsonl`. Enriched 3 high-fidelity assets (Highbury, Finchley Rd, Goldhurst) and triaged 7 to Inbox. | Done | Data Analyst | Data Analyst | 2026-03-10 |
+| FE-086 | High | Low | UI: Investigate and implement Iframe/Embed in Lead Inbox for property portals (Note: Many portals block X-Frame-Options). | Done | Frontend Engineer | Frontend Engineer | 2026-03-10 |
+| QA-036 | Critical | Low | UX Audit: Thorough assessment of `MortgageTracker.tsx` (Graph quality, font uniformity, overall usability). | Done | UI/UX QA | UI/UX QA | 2026-03-10 |
 | DAT-084 | Med | Med | DevOps: Configure Vercel/GitHub Actions for automated demo deployment with `VITE_DEMO_MODE=true`. | Done | Data Engineer | Data Engineer | 2026-03-10 |
 | FE-078 | High | Medium | UX Enhancement: Polish "Discovery Dashboard" interaction patterns and visual hierarchy. | Done | Frontend Engineer | Frontend Engineer | 2026-03-10 |
 | FE-074 | High | Medium | UI: Implement "CAPEX & Retrofit Node" in `PropertyDetail.tsx` to visualize EPC improvement path and costs. | Done | Frontend Engineer | Frontend Engineer | 2026-03-10 |

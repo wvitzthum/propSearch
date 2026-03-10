@@ -32,6 +32,7 @@ const Inbox: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [viewMode, setViewMode] = useState<'metrics' | 'portal'>('metrics');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchInbox = useCallback(async () => {
@@ -86,6 +87,11 @@ const Inbox: React.FC = () => {
     }
   }, [listings, currentIndex]);
 
+  const handlePeek = (url: string) => {
+    // Open a focused, smaller window to simulate an "embedded" feel without header pollution
+    window.open(url, 'PortalPeek', 'width=1200,height=900,menubar=no,toolbar=no,location=no,status=no');
+  };
+
   const handleBatchAction = async (action: 'approve' | 'reject') => {
     if (selectedIds.size === 0) return;
     setIsProcessing(true);
@@ -128,6 +134,7 @@ const Inbox: React.FC = () => {
       const key = e.key.toLowerCase();
       if (key === 'a') handleAction('approve');
       if (key === 'r') handleAction('reject');
+      if (key === 'v') setViewMode(prev => prev === 'metrics' ? 'portal' : 'metrics');
       if (key === 'arrowdown' || key === 'j') {
         e.preventDefault();
         setCurrentListIndex(prev => Math.min(prev + 1, listings.length - 1));
@@ -137,7 +144,7 @@ const Inbox: React.FC = () => {
         setCurrentListIndex(prev => Math.max(prev - 1, 0));
       }
       if (key === 'l' && listings[currentIndex]) {
-        window.open(listings[currentIndex].url, '_blank');
+        handlePeek(listings[currentIndex].url);
       }
       if (key === ' ' && listings[currentIndex]) {
         e.preventDefault();
@@ -209,7 +216,7 @@ const Inbox: React.FC = () => {
           )}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-linear-card border border-linear-border rounded-lg text-[9px] font-bold text-linear-text-muted">
             <Keyboard size={12} />
-            <span>J/K NAV • A/R ACTION • SPACE SELECT • L LINK</span>
+            <span>J/K NAV • A/R ACTION • V TOGGLE • L PEEK</span>
           </div>
         </div>
       </div>
@@ -225,7 +232,7 @@ const Inbox: React.FC = () => {
       ) : (
         <div className="flex-grow flex gap-6 overflow-hidden">
           {/* List Pane */}
-          <div className="w-1/3 flex flex-col bg-linear-card/30 border border-linear-border rounded-2xl overflow-hidden">
+          <div className="w-1/4 flex flex-col bg-linear-card/30 border border-linear-border rounded-2xl overflow-hidden">
             <div className="p-3 border-b border-linear-border bg-linear-card/50 flex items-center justify-between">
               <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">Lead Stream</span>
               <button 
@@ -267,81 +274,124 @@ const Inbox: React.FC = () => {
 
           {/* Detail Pane */}
           <div className="flex-grow flex flex-col bg-linear-card border border-linear-border rounded-2xl overflow-hidden shadow-2xl relative">
+            <div className="p-3 border-b border-linear-border bg-linear-card/50 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex bg-linear-bg p-1 rounded-lg border border-linear-border">
+                  <button 
+                    onClick={() => setViewMode('metrics')}
+                    className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'metrics' ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
+                  >
+                    Metrics [M]
+                  </button>
+                  <button 
+                    onClick={() => setViewMode('portal')}
+                    className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'portal' ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
+                  >
+                    Live Portal [V]
+                  </button>
+                </div>
+              </div>
+              <button 
+                onClick={() => handlePeek(currentListing.url)}
+                className="flex items-center gap-2 px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-blue-500/20 transition-all"
+              >
+                <ExternalLink size={12} />
+                Focused Peek [L]
+              </button>
+            </div>
+
             {isProcessing && (
               <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center">
                 <LoadingNode label="Syncing Triage Status..." />
               </div>
             )}
             
-            {/* Detail Content */}
-            <div className="flex-grow overflow-y-auto custom-scrollbar">
-              <div className="h-64 relative overflow-hidden bg-linear-bg">
-                <PropertyImage 
-                  src={currentListing.image_url || ''} 
-                  alt="Raw Lead" 
-                  className="h-full w-full object-cover opacity-60 grayscale" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-linear-card via-transparent to-transparent" />
-                <div className="absolute bottom-6 left-8 right-8">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="px-2 py-0.5 bg-blue-500 text-white text-[9px] font-black uppercase rounded tracking-widest">
-                      {currentListing.source}
-                    </span>
-                    <span className="px-2 py-0.5 bg-linear-card/80 backdrop-blur-md text-linear-text-muted text-[9px] font-bold uppercase rounded border border-linear-border">
-                      Lead ID: {currentListing.filename.split('_')[0]}
-                    </span>
-                  </div>
-                  <h2 className="text-3xl font-bold text-white tracking-tight leading-tight">{currentListing.address}</h2>
-                </div>
-              </div>
-
-              <div className="p-8 space-y-8">
-                <div className="grid grid-cols-2 gap-8">
-                  <div className="space-y-4">
-                    <h3 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest flex items-center gap-2">
-                      <Layers size={12} className="text-linear-accent" /> Asset Metrics
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 bg-linear-bg border border-linear-border rounded-xl">
-                        <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest block mb-1">List Price</span>
-                        <span className="text-lg font-bold text-white">£{currentListing.price.toLocaleString()}</span>
-                      </div>
-                      <div className="p-4 bg-linear-bg border border-linear-border rounded-xl">
-                        <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest block mb-1">Discovery</span>
-                        <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider">Automated Scrape</span>
-                      </div>
+            {viewMode === 'metrics' ? (
+              <div className="flex-grow overflow-y-auto custom-scrollbar">
+                <div className="h-64 relative overflow-hidden bg-linear-bg">
+                  <PropertyImage 
+                    src={currentListing.image_url || ''} 
+                    alt="Raw Lead" 
+                    className="h-full w-full object-cover opacity-60 grayscale" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-linear-card via-transparent to-transparent" />
+                  <div className="absolute bottom-6 left-8 right-8">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-0.5 bg-blue-500 text-white text-[9px] font-black uppercase rounded tracking-widest">
+                        {currentListing.source}
+                      </span>
+                      <span className="px-2 py-0.5 bg-linear-card/80 backdrop-blur-md text-linear-text-muted text-[9px] font-bold uppercase rounded border border-linear-border">
+                        Lead ID: {currentListing.filename.split('_')[0]}
+                      </span>
                     </div>
+                    <h2 className="text-3xl font-bold text-white tracking-tight leading-tight">{currentListing.address}</h2>
                   </div>
+                </div>
 
-                  <div className="space-y-4">
-                    <h3 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest flex items-center gap-2">
-                      <ExternalLink size={12} className="text-linear-accent" /> Portal Intelligence
-                    </h3>
-                    <div className="flex flex-col gap-2">
-                      <a 
-                        href={currentListing.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="p-4 bg-linear-bg border border-linear-border rounded-xl hover:border-blue-400 transition-all group flex items-center justify-between"
-                      >
-                        <div className="flex flex-col">
-                          <span className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">Open Portal Listing</span>
-                          <span className="text-[9px] text-linear-text-muted uppercase tracking-widest">External Reference</span>
+                <div className="p-8 space-y-8">
+                  <div className="grid grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <h3 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest flex items-center gap-2">
+                        <Layers size={12} className="text-linear-accent" /> Asset Metrics
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 bg-linear-bg border border-linear-border rounded-xl">
+                          <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest block mb-1">List Price</span>
+                          <span className="text-lg font-bold text-white">£{currentListing.price.toLocaleString()}</span>
                         </div>
-                        <Maximize2 size={16} className="text-linear-text-muted group-hover:text-blue-400 transition-colors" />
-                      </a>
+                        <div className="p-4 bg-linear-bg border border-linear-border rounded-xl">
+                          <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest block mb-1">Discovery</span>
+                          <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider">Automated Scrape</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest flex items-center gap-2">
+                        <ExternalLink size={12} className="text-linear-accent" /> Portal Intelligence
+                      </h3>
+                      <div className="flex flex-col gap-2">
+                        <button 
+                          onClick={() => handlePeek(currentListing.url)}
+                          className="p-4 bg-linear-bg border border-linear-border rounded-xl hover:border-blue-400 transition-all group flex items-center justify-between w-full text-left"
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">Launch Focused Peek</span>
+                            <span className="text-[9px] text-linear-text-muted uppercase tracking-widest">Isolated Environment</span>
+                          </div>
+                          <Maximize2 size={16} className="text-linear-text-muted group-hover:text-blue-400 transition-colors" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="p-6 bg-blue-500/5 border border-blue-500/20 rounded-2xl">
-                  <p className="text-xs text-linear-text-muted leading-relaxed italic">
-                    <span className="font-black text-blue-400 uppercase tracking-widest mr-2">Triage Protocol:</span>
-                    Approved leads move to the Deep Scraper pipeline for Alpha Scoring, spatial normalization, and institutional vetting. Rejected leads are removed from the buffer and archived.
-                  </p>
+                  <div className="p-6 bg-blue-500/5 border border-blue-500/20 rounded-2xl">
+                    <p className="text-xs text-linear-text-muted leading-relaxed italic">
+                      <span className="font-black text-blue-400 uppercase tracking-widest mr-2">Triage Protocol:</span>
+                      Approved leads move to the Deep Scraper pipeline for Alpha Scoring, spatial normalization, and institutional vetting. Rejected leads are removed from the buffer and archived.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex-grow relative bg-white">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-linear-bg z-0">
+                  <LoadingNode label="Connecting to Portal..." />
+                  <p className="mt-4 text-[10px] text-linear-text-muted uppercase font-black tracking-[0.2em]">Note: Portals may block internal embedding</p>
+                  <button 
+                    onClick={() => handlePeek(currentListing.url)}
+                    className="mt-6 px-6 py-2 bg-white text-black rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-zinc-200 transition-all"
+                  >
+                    Use Focused Peek Instead
+                  </button>
+                </div>
+                <iframe 
+                  src={currentListing.url} 
+                  className="absolute inset-0 w-full h-full border-none z-10"
+                  title="Portal View"
+                />
+              </div>
+            )}
 
             {/* Sticky Actions Footer */}
             <div className="p-6 bg-linear-card border-t border-linear-border grid grid-cols-2 gap-4">
