@@ -6,7 +6,6 @@ import {
   Filter, 
   ArrowUpDown, 
   TrendingUp, 
-  ExternalLink,
   Map as MapIcon,
   LayoutGrid,
   Search,
@@ -17,7 +16,8 @@ import {
   ChevronDown,
   Zap,
   Maximize2,
-  Gem
+  Gem,
+  ExternalLink
 } from 'lucide-react';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import type { PropertyWithCoords } from '../types/property';
@@ -124,8 +124,8 @@ const MetroOverlay: React.FC = () => {
     <GeoJSON 
       data={geoData} 
       style={(feature) => {
-        const lineName = feature?.properties?.lines?.[0]?.name;
-        const color = METRO_COLORS[lineName] || '#475569';
+        const lineName = feature?.properties?.name || '';
+        const color = feature?.properties?.color || METRO_COLORS[lineName.replace(' Line', '')] || '#475569';
         return {
           color,
           weight: 2.5,
@@ -336,17 +336,14 @@ const PropertyCard: React.FC<{
 };
 
 const Dashboard: React.FC = () => {
-  const { properties, loading, error } = usePropertyContext();
+  const { properties, loading, error, filters, updateFilters } = usePropertyContext();
   const { pipeline, setStatus, getStatus } = usePipeline();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  const [filterValueBuys, setFilterValueBuys] = useState(false);
   const [filterNewOnly, setFilterNewOnly] = useState(false);
   const [filterShortlisted, setFilterShortlisted] = useState(false);
   const [filterVetted, setFilterVetted] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
-  const [areaFilter, setAreaFilter] = useState('All Areas');
-  const [sortBy, setSortBy] = useState<'alpha_score' | 'realistic_price' | 'price_per_sqm' | 'value_gap' | 'commute_utility' | 'appreciation'>('alpha_score');
   const [viewMode, setViewMode] = useState<'grid' | 'table' | 'map'>('table');
   
   const [selectedProperty, setSelectedProperty] = useState<PropertyWithCoords | null>(null);
@@ -362,15 +359,19 @@ const Dashboard: React.FC = () => {
     setIsPreviewOpen(true);
   };
 
-  // Handle URL area parameter
-  useEffect(() => {
-    const area = searchParams.get('area');
-    if (area) {
-      setAreaFilter(area);
+  // Derived state from URL
+  const areaFilter = searchParams.get('area') || 'All Areas';
+  
+  const handleAreaChange = (val: string) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (val === 'All Areas') {
+      nextParams.delete('area');
     } else {
-      setAreaFilter('All Areas');
+      nextParams.set('area', val);
     }
-  }, [searchParams]);
+    setSearchParams(nextParams);
+    updateFilters({ area: val });
+  };
 
   const filteredProperties = useMemo(() => {
     let result = [...properties];
@@ -380,29 +381,32 @@ const Dashboard: React.FC = () => {
       result = result.filter(p => getStatus(p.id) === 'archived');
     } else {
       result = result.filter(p => getStatus(p.id) !== 'archived');
+      
+      // Additional status filters (only when not showing archived)
+      if (filterShortlisted) {
+        result = result.filter(p => getStatus(p.id) === 'shortlisted' || getStatus(p.id) === 'vetted');
+      }
+      if (filterVetted) {
+        result = result.filter(p => getStatus(p.id) === 'vetted');
+      }
     }
 
-    if (filterShortlisted || filterVetted) {
-      result = result.filter(p => {
-        const s = getStatus(p.id);
-        if (filterShortlisted && filterVetted) return s === 'shortlisted' || s === 'vetted';
-        if (filterShortlisted) return s === 'shortlisted';
-        if (filterVetted) return s === 'vetted';
-        return true;
-      });
-    }
-    if (filterValueBuys) result = result.filter(p => p.is_value_buy);
     if (filterNewOnly) result = result.filter(p => p.metadata.is_new);
+    
+    // Area filter is now server-side, but we keep it here as a fallback or for All Areas logic
     if (areaFilter !== 'All Areas') result = result.filter(p => p.area.includes(areaFilter));
 
     // Precision Filters
     result = result.filter(p => p.realistic_price <= maxPrice);
     result = result.filter(p => p.sqft >= minSqft);
 
+    // Sorting: Some sorting is server-side, but if we have client-side only sorts, we keep them here
     result.sort((a, b) => {
+      const sortBy = filters.sortBy;
       if (sortBy === 'alpha_score') return b.alpha_score - a.alpha_score;
       if (sortBy === 'realistic_price') return a.realistic_price - b.realistic_price;
       if (sortBy === 'price_per_sqm') return a.price_per_sqm - b.price_per_sqm;
+      // These might not be server-side yet
       if (sortBy === 'value_gap') return (b.list_price - b.realistic_price) - (a.list_price - a.realistic_price);
       if (sortBy === 'commute_utility') return (a.commute_paternoster + a.commute_canada_square) - (b.commute_paternoster + b.commute_canada_square);
       if (sortBy === 'appreciation') return b.appreciation_potential - a.appreciation_potential;
@@ -410,7 +414,7 @@ const Dashboard: React.FC = () => {
     });
 
     return result;
-  }, [properties, filterValueBuys, filterNewOnly, areaFilter, sortBy, filterShortlisted, filterVetted, showArchived, getStatus, maxPrice, minSqft]);
+  }, [properties, filterNewOnly, filterShortlisted, filterVetted, areaFilter, filters.sortBy, showArchived, getStatus, maxPrice, minSqft]);
 
   const stats = useMemo(() => {
     if (properties.length === 0) return { total: 0, avgAlpha: '0.0', shortlisted: 0, vetted: 0 };
@@ -500,140 +504,155 @@ const Dashboard: React.FC = () => {
       <MarketPulse />
 
       {/* Control Panel */}
-      <div className="flex flex-col lg:flex-row gap-6 items-center justify-between bg-linear-card/50 p-4 rounded-2xl border border-linear-border">
-        <div className="flex flex-wrap gap-4 items-center w-full lg:w-auto">
-          <div className="flex bg-linear-bg p-1 rounded-lg border border-linear-border shadow-inner">
-            <button 
-              onClick={() => { setViewMode('grid'); setShowArchived(false); }}
-              className={`px-3 py-1.5 rounded-md text-[10px] font-bold flex items-center gap-2 transition-all uppercase tracking-wider ${viewMode === 'grid' && !showArchived ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
-            >
-              <LayoutGrid size={12} />
-              GRID
-            </button>
-            <button 
-              onClick={() => { setViewMode('table'); setShowArchived(false); }}
-              className={`px-3 py-1.5 rounded-md text-[10px] font-bold flex items-center gap-2 transition-all uppercase tracking-wider ${viewMode === 'table' && !showArchived ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
-            >
-              <TableIcon size={12} />
-              TABLE
-            </button>
-            <button 
-              onClick={() => { setViewMode('map'); setShowArchived(false); }}
-              className={`px-3 py-1.5 rounded-md text-[10px] font-bold flex items-center gap-2 transition-all uppercase tracking-wider ${viewMode === 'map' && !showArchived ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
-            >
-              <MapIcon size={12} />
-              MAP
-            </button>
-            <div className="w-px h-4 bg-linear-border mx-1 self-center"></div>
-            <button 
-              onClick={() => setShowArchived(true)}
-              className={`px-3 py-1.5 rounded-md text-[10px] font-bold flex items-center gap-2 transition-all uppercase tracking-wider ${showArchived ? 'bg-rose-500/20 text-rose-400 shadow-lg border border-rose-500/30' : 'text-linear-text-muted hover:text-rose-400'}`}
-            >
-              <Archive size={12} />
-              ARCHIVED
-            </button>
+      <div className="flex flex-col gap-6 bg-linear-card/40 p-6 rounded-3xl border border-linear-border backdrop-blur-md shadow-2xl">
+        <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
+          <div className="flex flex-wrap gap-4 items-center w-full lg:w-auto">
+            <div className="flex bg-linear-bg p-1 rounded-xl border border-linear-border shadow-inner">
+              <button 
+                onClick={() => { setViewMode('grid'); setShowArchived(false); }}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black flex items-center gap-2 transition-all uppercase tracking-[0.15em] ${viewMode === 'grid' && !showArchived ? 'bg-linear-accent text-white shadow-lg shadow-linear-accent/20' : 'text-linear-text-muted hover:text-white'}`}
+              >
+                <LayoutGrid size={12} />
+                Grid
+              </button>
+              <button 
+                onClick={() => { setViewMode('table'); setShowArchived(false); }}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black flex items-center gap-2 transition-all uppercase tracking-[0.15em] ${viewMode === 'table' && !showArchived ? 'bg-linear-accent text-white shadow-lg shadow-linear-accent/20' : 'text-linear-text-muted hover:text-white'}`}
+              >
+                <TableIcon size={12} />
+                Table
+              </button>
+              <button 
+                onClick={() => { setViewMode('map'); setShowArchived(false); }}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black flex items-center gap-2 transition-all uppercase tracking-[0.15em] ${viewMode === 'map' && !showArchived ? 'bg-linear-accent text-white shadow-lg shadow-linear-accent/20' : 'text-linear-text-muted hover:text-white'}`}
+              >
+                <MapIcon size={12} />
+                Map
+              </button>
+              <div className="w-px h-4 bg-linear-border mx-2 self-center"></div>
+              <button 
+                onClick={() => setShowArchived(true)}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black flex items-center gap-2 transition-all uppercase tracking-[0.15em] ${showArchived ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'text-linear-text-muted hover:text-rose-400'}`}
+              >
+                <Archive size={12} />
+                Archived
+              </button>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-6 ml-2">
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <input 
-                type="checkbox" 
-                checked={filterShortlisted} 
-                onChange={(e) => setFilterShortlisted(e.target.checked)}
-                className="hidden"
-              />
-              <div className={`w-8 h-4 rounded-full relative transition-colors ${filterShortlisted ? 'bg-blue-500' : 'bg-linear-accent'}`}>
-                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all shadow-sm ${filterShortlisted ? 'left-4.5' : 'left-0.5'}`}></div>
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-linear-text-muted group-hover:text-white transition-colors">Shortlist</span>
-            </label>
 
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <input 
-                type="checkbox" 
-                checked={filterVetted} 
-                onChange={(e) => setFilterVetted(e.target.checked)}
-                className="hidden"
-              />
-              <div className={`w-8 h-4 rounded-full relative transition-colors ${filterVetted ? 'bg-emerald-500' : 'bg-linear-accent'}`}>
-                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all shadow-sm ${filterVetted ? 'left-4.5' : 'left-0.5'}`}></div>
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-linear-text-muted group-hover:text-white transition-colors">Vetted</span>
-            </label>
+          <div className="flex flex-wrap gap-3 items-center w-full lg:w-auto justify-end">
+            <button 
+              onClick={() => {
+                setFilterNewOnly(false);
+                setFilterShortlisted(false);
+                setFilterVetted(false);
+                setShowArchived(false);
+                setMaxPrice(1500000);
+                setMinSqft(0);
+                handleAreaChange('All Areas');
+                updateFilters({ sortBy: 'alpha_score', is_value_buy: false });
+              }}
+              className="p-2.5 rounded-xl border border-linear-border bg-linear-bg text-linear-text-muted hover:text-white hover:border-linear-accent transition-all group"
+              title="Reset All Parameters"
+            >
+              <RotateCcw size={16} className="group-hover:rotate-180 transition-transform duration-500" />
+            </button>
 
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <input 
-                type="checkbox" 
-                checked={filterValueBuys} 
-                onChange={(e) => setFilterValueBuys(e.target.checked)}
-                className="hidden"
-              />
-              <div className={`w-8 h-4 rounded-full relative transition-colors ${filterValueBuys ? 'bg-retro-green' : 'bg-linear-accent'}`}>
-                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all shadow-sm ${filterValueBuys ? 'left-4.5' : 'left-0.5'}`}></div>
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-linear-text-muted group-hover:text-white transition-colors">Value Only</span>
-            </label>
+            <button 
+              onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${isFilterPanelOpen ? 'bg-blue-500 border-blue-400 text-white shadow-lg shadow-blue-500/20' : 'bg-linear-bg border-linear-border text-linear-text-muted hover:border-linear-accent hover:text-white'}`}
+            >
+              <Filter size={14} />
+              Precision
+            </button>
 
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <input 
-                type="checkbox" 
-                checked={filterNewOnly} 
-                onChange={(e) => setFilterNewOnly(e.target.checked)}
-                className="hidden"
-              />
-              <div className={`w-8 h-4 rounded-full relative transition-colors ${filterNewOnly ? 'bg-indigo-500' : 'bg-linear-accent'}`}>
-                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all shadow-sm ${filterNewOnly ? 'left-4.5' : 'left-0.5'}`}></div>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-linear-accent group-hover:text-blue-400 transition-colors">
+                <MapIcon size={12} />
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-linear-text-muted group-hover:text-white transition-colors">Fresh</span>
-            </label>
+              <select 
+                value={areaFilter} 
+                onChange={(e) => handleAreaChange(e.target.value)}
+                className="bg-linear-bg border border-linear-border rounded-xl pl-8 pr-10 py-2 text-[10px] font-black text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 appearance-none hover:border-linear-accent transition-all cursor-pointer uppercase tracking-[0.1em]"
+              >
+                {areas.map(area => <option key={area} value={area}>{area}</option>)}
+              </select>
+              <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-linear-accent pointer-events-none" />
+            </div>
+
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-linear-accent group-hover:text-blue-400 transition-colors">
+                <ArrowUpDown size={12} />
+              </div>
+              <select 
+                value={filters.sortBy} 
+                onChange={(e) => updateFilters({ sortBy: e.target.value as any })}
+                className="bg-linear-bg border border-linear-border rounded-xl pl-8 pr-10 py-2 text-[10px] font-black text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 appearance-none hover:border-linear-accent transition-all cursor-pointer uppercase tracking-[0.1em]"
+              >
+                <option value="alpha_score">Alpha Sort (H-L)</option>
+                <option value="realistic_price">Target Price (L-H)</option>
+                <option value="price_per_sqm">Efficiency (L-H)</option>
+                <option value="value_gap">Value Gap (H-L)</option>
+                <option value="commute_utility">Commute (L-H)</option>
+                <option value="appreciation">Growth (H-L)</option>
+              </select>
+              <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-linear-accent pointer-events-none" />
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-3 items-center w-full lg:w-auto justify-end">
-          <button 
-            onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
-            className={`p-2 rounded-lg border transition-all ${isFilterPanelOpen ? 'bg-blue-500 border-blue-400 text-white shadow-lg shadow-blue-500/20' : 'bg-linear-bg border-linear-border text-linear-text-muted hover:border-linear-accent hover:text-white'}`}
-          >
-            <Filter size={16} />
-          </button>
-
-          <div className="relative group">
-            <select 
-              value={areaFilter} 
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === 'All Areas') {
-                  searchParams.delete('area');
-                } else {
-                  searchParams.set('area', val);
-                }
-                setSearchParams(searchParams);
-              }}
-              className="bg-linear-bg border border-linear-border rounded-lg pl-8 pr-8 py-1.5 text-[10px] font-bold text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 appearance-none hover:border-linear-accent transition-all cursor-pointer uppercase tracking-widest"
-            >
-              {areas.map(area => <option key={area} value={area}>{area}</option>)}
-            </select>
-            <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-linear-accent pointer-events-none" />
-          </div>
-
-          <div className="relative group">
-            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-linear-accent group-hover:text-blue-400 transition-colors">
-              <ArrowUpDown size={12} />
+        <div className="flex flex-wrap items-center gap-8 pt-4 border-t border-linear-border/30">
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <input 
+              type="checkbox" 
+              checked={filterShortlisted} 
+              onChange={(e) => setFilterShortlisted(e.target.checked)}
+              className="hidden"
+            />
+            <div className={`w-9 h-5 rounded-full relative transition-all duration-300 ${filterShortlisted ? 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'bg-zinc-800'}`}>
+              <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${filterShortlisted ? 'left-5' : 'left-1'}`}></div>
             </div>
-            <select 
-              value={sortBy} 
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-linear-bg border border-linear-border rounded-lg pl-8 pr-8 py-1.5 text-[10px] font-bold text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 appearance-none hover:border-linear-accent transition-all cursor-pointer uppercase tracking-widest"
-            >
-              <option value="alpha_score">Alpha Score (H-L)</option>
-              <option value="realistic_price">Target Price (L-H)</option>
-              <option value="price_per_sqm">Efficiency (L-H)</option>
-              <option value="value_gap">Value Gap (H-L)</option>
-              <option value="commute_utility">Commute (L-H)</option>
-              <option value="appreciation">Appreciation (H-L)</option>
-            </select>
-            <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-linear-accent pointer-events-none" />
-          </div>
+            <span className={`text-[10px] font-black uppercase tracking-[0.15em] transition-colors ${filterShortlisted ? 'text-white' : 'text-linear-text-muted group-hover:text-zinc-400'}`}>Shortlist</span>
+          </label>
+
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <input 
+              type="checkbox" 
+              checked={filterVetted} 
+              onChange={(e) => setFilterVetted(e.target.checked)}
+              className="hidden"
+            />
+            <div className={`w-9 h-5 rounded-full relative transition-all duration-300 ${filterVetted ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-zinc-800'}`}>
+              <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${filterVetted ? 'left-5' : 'left-1'}`}></div>
+            </div>
+            <span className={`text-[10px] font-black uppercase tracking-[0.15em] transition-colors ${filterVetted ? 'text-white' : 'text-linear-text-muted group-hover:text-zinc-400'}`}>Vetted Only</span>
+          </label>
+
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <input 
+              type="checkbox" 
+              checked={filters.is_value_buy || false} 
+              onChange={(e) => updateFilters({ is_value_buy: e.target.checked })}
+              className="hidden"
+            />
+            <div className={`w-9 h-5 rounded-full relative transition-all duration-300 ${filters.is_value_buy ? 'bg-retro-green shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-zinc-800'}`}>
+              <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${filters.is_value_buy ? 'left-5' : 'left-1'}`}></div>
+            </div>
+            <span className={`text-[10px] font-black uppercase tracking-[0.15em] transition-colors ${filters.is_value_buy ? 'text-white' : 'text-linear-text-muted group-hover:text-zinc-400'}`}>Value Gap</span>
+          </label>
+
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <input 
+              type="checkbox" 
+              checked={filterNewOnly} 
+              onChange={(e) => setFilterNewOnly(e.target.checked)}
+              className="hidden"
+            />
+            <div className={`w-9 h-5 rounded-full relative transition-all duration-300 ${filterNewOnly ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-zinc-800'}`}>
+              <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 ${filterNewOnly ? 'left-5' : 'left-1'}`}></div>
+            </div>
+            <span className={`text-[10px] font-black uppercase tracking-[0.15em] transition-colors ${filterNewOnly ? 'text-white' : 'text-linear-text-muted group-hover:text-zinc-400'}`}>Fresh Only</span>
+          </label>
         </div>
       </div>
 
@@ -709,8 +728,8 @@ const Dashboard: React.FC = () => {
           <div className="animate-in fade-in duration-500">
             <PropertyTable 
               properties={filteredProperties} 
-              onSortChange={(key) => setSortBy(key as any)} 
-              currentSort={sortBy}
+              onSortChange={(key) => updateFilters({ sortBy: key as any })} 
+              currentSort={filters.sortBy}
               onPreview={handlePreview}
               onStatusChange={setStatus}
               getStatus={getStatus}

@@ -1,15 +1,11 @@
-const duckdb = require('duckdb');
+const Database = require('better-sqlite3');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, '../data/propSearch.duckdb');
-const db = new duckdb.Database(DB_PATH);
+const DB_PATH = path.join(__dirname, '../data/propSearch.db');
+const db = new Database(DB_PATH);
 
-db.all('SELECT * FROM properties', (err, rows) => {
-  if (err) {
-    console.error(err);
-    process.exit(1);
-  }
-  
+try {
+  const rows = db.prepare('SELECT * FROM properties').all();
   console.log(`Total Properties: ${rows.length}`);
   
   rows.forEach(p => {
@@ -25,6 +21,7 @@ db.all('SELECT * FROM properties', (err, rows) => {
       console.log(`Property ID ${p.id} (${p.address || 'Unknown'}): ${issues.join(', ')}`);
     }
   });
-  
-  process.exit(0);
-});
+} catch (err) {
+  console.error(err);
+  process.exit(1);
+}

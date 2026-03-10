@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
-import { X, ExternalLink, Zap, TrendingUp, Maximize2, Scale, Info, Bookmark, LayoutGrid, Clock, CreditCard } from 'lucide-react';
+import { X, ExternalLink, Zap, TrendingUp, Maximize2, Scale, Bookmark, Clock, CreditCard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import { useComparison } from '../hooks/useComparison';
 import type { PropertyWithCoords } from '../types/property';
 import AlphaBadge from '../components/AlphaBadge';
 import PropertyImage from '../components/PropertyImage';
+import LoadingNode from '../components/LoadingNode';
 
 interface MatrixRowConfig {
   id: string;

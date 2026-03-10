@@ -49,7 +49,10 @@ Transition to Local API Server + SQLite for Inbox triage.
 Accepted
 
 # ADR-007: Strict Ingestion & Data Fidelity Enforcement
-...
+## Context
+Maintaining the "Empirical Standard" across all property datasets.
+## Decision
+Implement automated schema validation and mandatory metric extraction.
 ## Status
 Accepted
 
@@ -63,7 +66,7 @@ The property research tool requires high-performance filtering, multi-dimensiona
 3.  **Storage:** Maintain a primary Parquet/JSONL backup for interoperability.
 
 ## Status
-Accepted
+Deprecated (Superseded by ADR-011)
 
 # ADR-009: JSONL Format Mandate & Data Integrity Restoration
 ## Context
@@ -86,6 +89,19 @@ As the propSearch platform moves toward a more sophisticated DuckDB-based archit
 Split the Data role into two specialized agents:
 1.  **Data Analyst:** Focuses on the "Property Quality" layer (sourcing, research, metric normalization, and calculating Alpha Scores).
 2.  **Data Engineer:** Focuses on the "Property Storage" layer (DuckDB maintenance, automated ingestion pipelines, and backend API performance).
+
+## Status
+Accepted
+
+# ADR-011: SQLite Migration & DuckDB Decommissioning
+## Context
+While DuckDB provided superior analytical performance, the implementation encountered persistent database locking issues and complex integration overhead with the Node.js environment. Given the single-user, high-stakes nature of the platform, the operational stability of SQLite (`better-sqlite3`) outweighs the columnar performance gains of DuckDB at the current data scale.
+
+## Decision
+1.  **Primary Engine:** Migrate the master data store from DuckDB to **SQLite** (`data/propSearch.db`).
+2.  **Client:** Standardize on `better-sqlite3` for high-performance, synchronous database operations within the Node.js API.
+3.  **Schema Persistence:** Replicate the multi-table analytical schema (Properties, Global Context, Manual Queue) in SQLite.
+4.  **Decommissioning:** Remove `duckdb` dependencies and archive `.duckdb` assets.
 
 ## Status
 Accepted

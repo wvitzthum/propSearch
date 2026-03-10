@@ -26,9 +26,9 @@ To build a private, high-precision research tool that enables a single buyer to 
 
 ### 1.1 Data Infrastructure (The Data Engineer)
 - **Requirement:** The system must utilize a robust, analytical data backend to ensure speed and precision across all dashboard views.
-- **Engine:** Transition from flat JSON files to a high-performance **DuckDB** instance.
+- **Engine:** Transition from flat JSON files to a high-performance **SQLite** instance.
 - **Instruction to Data Engineer:** 
-  - Maintain the primary DuckDB database (`data/propSearch.duckdb`).
+  - Maintain the primary SQLite database (`data/propSearch.db`).
   - Develop and maintain the `sync_data.js` pipeline to automate the promotion of validated leads from the Inbox to the Master DB.
   - Interface with the Local API Server to provide SQL-backed endpoints for the frontend.
   - Source and maintain `data/london_metro.geojson` (geometry files).
@@ -225,19 +225,19 @@ To build a private, high-precision research tool that enables a single buyer to 
   - Update `AREA_COORDS` in `useProperties.ts` and `PropertyContext.tsx` to include coordinates for Chelsea and Primrose Hill (e.g., `[51.5410, -0.1550]` for NW1).
   - Ensure the Sidebar and Search filters correctly reflect the new areas.
 
-### 18. Institutional Data Engine (DuckDB Migration)
-- **Requirement:** Transition the primary data storage and analytical engine from flat files to a high-performance **DuckDB** database (`data/propSearch.duckdb`).
+### 18. Institutional Data Engine (SQLite Migration)
+- **Requirement:** Transition the primary data storage and analytical engine from flat files to a high-performance **SQLite** database (`data/propSearch.db`).
 - **Goal:** Enable rapid, analytical queries over large property datasets and provide a robust foundation for multi-dimensional filtering.
 - **Core Architecture:**
-  - **Columnar Storage:** Utilize DuckDB's columnar format for efficient scanning of property metrics (Price/SQM, Alpha Scores).
-  - **Surgical API:** The Local API Server (`server/`) must interface with DuckDB to provide endpoints for specific ID lookups and complex analytical queries.
-  - **Data Resilience:** Maintain an automated "Gold Standard" Parquet/JSON export for version control and human-readable backups.
+  - **SQL Storage:** Utilize SQLite's relational format for efficient scanning of property metrics (Price/SQM, Alpha Scores).
+  - **Surgical API:** The Local API Server (`server/`) must interface with SQLite to provide endpoints for specific ID lookups and complex analytical queries.
+  - **Data Resilience:** Maintain an automated "Gold Standard" JSON export for version control and human-readable backups.
 - **Instruction to Data Agent:** 
-  - Design the DuckDB schema based on the existing `property.schema.json`.
+  - Design the SQLite schema based on the existing `property.schema.json`.
   - Implement a migration pipeline to ingest all existing records from `master.json` and `manual_queue.json`.
   - Ensure the scraping pipeline writes new discoveries directly to the database.
 - **Instruction to Frontend Agent:** 
-  - Refactor the Local API Server to execute SQL queries against the DuckDB instance.
+  - Refactor the Local API Server to execute SQL queries against the SQLite instance.
   - Utilize filtered API endpoints to minimize frontend data load.
 
 ### 19. Data Fidelity Restoration Protocol
@@ -246,6 +246,22 @@ To build a private, high-precision research tool that enables a single buyer to 
 - **Instruction to Data Agent:** 
   - When restoring from backups (e.g., `master_backup_07_03_2026.json`), convert the source (Array) to the target (JSONL) while filtering out invalid IDs.
   - Ensure all 50 verified listings from the last stable snapshot are preserved.
+
+### 20. Public Demo Standard (Slim/Dummy Mode)
+- **Requirement:** Provide a high-fidelity, standalone "Demo Mode" for public showcasing (e.g., Vercel/GitHub Pages) that operates without a live SQLite backend.
+- **Goal:** Enable prospective reviewers to experience the "Bloomberg meets Linear" UX using a curated, non-private dataset.
+- **Data Anonymization & Security:**
+  - **Property Data:** Use realistic but synthetic property listings. Addresses must be truncated to area level (e.g., "Cadogan Gardens, SW3" instead of "42 Cadogan Gardens").
+  - **Financials:** Use plausible market prices and service charges. Any personal financial data (e.g., specific budget limits) must be replaced with "Institutional Standard" defaults.
+  - **Zero PII:** No real phone numbers, emails, or private analyst notes are permitted in the public dataset.
+- **Aesthetic Guardrails:**
+  - **Fidelity:** The Demo must be visually indistinguishable from the production system. No "Demo" watermarks or reduced functionality.
+  - **Performance:** Utilize static JSON files in `/public/data/` (e.g., `demo_master.json`) to simulate API responses with zero latency.
+- **Instruction to Data Engineer:** Generate a "Gold Standard" dummy dataset (`demo_master.json`, `macro_trend.json`, `financial_context.json`) that showcases a diverse range of Alpha Scores and property types.
+- **Instruction to Frontend Agent:** 
+  - Implement a `VITE_DEMO_MODE` environment toggle.
+  - Refactor all data hooks to fetch from `/data/*.json` when this mode is active.
+  - Ensure the "Inbox" and "Manual Submission" features show a "Demo: Submission Disabled" toast rather than failing.
 
 ---
 

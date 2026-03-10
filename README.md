@@ -68,7 +68,7 @@ Drop raw JSON listings into `data/import/`. The next sync cycle (`make sync`) wi
 We utilize a specialized multi-agent workflow to ensure architectural purity.
 1.  **[Product Owner](./agents/product_owner/README.md):** Vision, Roadmap, and Backlog management ([Tasks.md](./Tasks.md)).
 2.  **[Data Analyst](./agents/data_analyst/README.md):** Property research, metric normalization, Alpha Scoring, and macro market trends.
-3.  **[Data Engineer](./agents/data_engineer/README.md):** Data architecture, storage (DuckDB), ingestion pipelines (`sync_data.js`), and backend API.
+3.  **[Data Engineer](./agents/data_engineer/README.md):** Data architecture, storage (SQLite), ingestion pipelines (`sync_data.js`), and backend API.
 4.  **[Frontend Engineer](./agents/frontend_engineer/README.md):** "Bloomberg meets Linear" UI implementation.
 5.  **[UI/UX QA](./agents/ui_ux_qa/README.md):** Aesthetic audits and functional validation.
 

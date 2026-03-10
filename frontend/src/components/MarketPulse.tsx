@@ -30,7 +30,7 @@ const MarketPulse: React.FC = () => {
           <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
           <h2 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Market Pulse // Macro Intelligence</h2>
         </div>
-        <div className="text-[9px] font-mono text-linear-text-muted">LATEST_SYNC: {data.london_hpi.last_updated}</div>
+        <div className="text-[9px] font-mono text-linear-text-muted">LATEST_SYNC: {data?.london_hpi?.last_updated}</div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 border-b border-linear-border">
@@ -46,13 +46,13 @@ const MarketPulse: React.FC = () => {
               <TrendingUp size={12} className="text-linear-accent" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-white tracking-tighter">£{data.london_hpi.avg_price_pcl.toLocaleString()}</span>
-              <span className={`text-[10px] font-black flex items-center gap-0.5 ${data.london_hpi.mom_pct >= 0 ? 'text-retro-green' : 'text-rose-500'}`}>
-                {data.london_hpi.mom_pct >= 0 ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
-                {Math.abs(data.london_hpi.mom_pct)}%
+              <span className="text-2xl font-bold text-white tracking-tighter">£{data?.london_hpi?.avg_price_pcl?.toLocaleString() ?? '0'}</span>
+              <span className={`text-[10px] font-black flex items-center gap-0.5 ${(data?.london_hpi?.mom_pct ?? 0) >= 0 ? 'text-retro-green' : 'text-rose-500'}`}>
+                {(data?.london_hpi?.mom_pct ?? 0) >= 0 ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
+                {Math.abs(data?.london_hpi?.mom_pct ?? 0)}%
               </span>
             </div>
-            <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">YoY Change: <span className="text-white">+{data.london_hpi.yoy_pct}%</span></p>
+            <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">YoY Change: <span className="text-white">+{data?.london_hpi?.yoy_pct ?? 0}%</span></p>
           </div>
         </Tooltip>
 
@@ -68,10 +68,10 @@ const MarketPulse: React.FC = () => {
               <Activity size={12} className="text-blue-400" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-white tracking-tighter">{data.inventory_velocity.months_of_supply}</span>
+              <span className="text-2xl font-bold text-white tracking-tighter">{data?.inventory_velocity?.months_of_supply ?? '0.0'}</span>
               <span className="text-[10px] text-linear-text-muted font-bold uppercase tracking-tighter">MOS</span>
             </div>
-            <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">New Inst Q-Change: <span className="text-white">+{data.inventory_velocity.new_instructions_q_change}%</span></p>
+            <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">New Inst Q-Change: <span className="text-white">+{data?.inventory_velocity?.new_instructions_q_change ?? 0}%</span></p>
           </div>
         </Tooltip>
 
@@ -87,10 +87,10 @@ const MarketPulse: React.FC = () => {
               <Percent size={12} className="text-retro-green" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-white tracking-tighter">-{data.negotiation_delta.avg_discount_pct}%</span>
-              <span className="text-[10px] text-retro-green font-black uppercase tracking-tighter">{data.negotiation_delta.market_sentiment}</span>
+              <span className="text-2xl font-bold text-white tracking-tighter">-{data?.negotiation_delta?.avg_discount_pct ?? 0}%</span>
+              <span className="text-[10px] text-retro-green font-black uppercase tracking-tighter">{data?.negotiation_delta?.market_sentiment ?? 'Stable'}</span>
             </div>
-            <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">Assets Below Asking: <span className="text-white">{data.negotiation_delta.pct_below_asking}%</span></p>
+            <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">Assets Below Asking: <span className="text-white">{data?.negotiation_delta?.pct_below_asking ?? 0}%</span></p>
           </div>
         </Tooltip>
 
@@ -106,10 +106,10 @@ const MarketPulse: React.FC = () => {
               <Info size={12} className="text-amber-500" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-white tracking-tighter">{data.economic_indicators.boe_base_rate}%</span>
+              <span className="text-2xl font-bold text-white tracking-tighter">{data?.economic_indicators?.boe_base_rate ?? '0.0'}%</span>
               <span className="text-[10px] text-amber-500 font-black uppercase tracking-tighter">Stable</span>
             </div>
-            <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">Inflation CPI: <span className="text-white">{data.economic_indicators.uk_inflation_cpi}%</span></p>
+            <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">Inflation CPI: <span className="text-white">{data?.economic_indicators?.uk_inflation_cpi ?? 0}%</span></p>
           </div>
         </Tooltip>
       </div>
@@ -121,7 +121,7 @@ const MarketPulse: React.FC = () => {
             Area Heat Index <ChevronRight size={10} className="text-linear-accent" />
           </h3>
           <div className="space-y-3">
-            {data.area_heat_index.map((area) => (
+            {data?.area_heat_index?.map((area) => (
               <div key={area.area} className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-white tracking-tight">{area.area}</span>
                 <div className="flex items-center gap-3">
@@ -153,7 +153,7 @@ const MarketPulse: React.FC = () => {
           </h3>
           <div className="relative z-10">
             <p className="text-xs text-linear-text-muted leading-relaxed font-medium italic">
-              "{data.market_pulse_summary}"
+              "{data?.market_pulse_summary}"
             </p>
           </div>
           <div className="mt-4 flex items-center gap-4 relative z-10">

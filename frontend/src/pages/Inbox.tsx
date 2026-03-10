@@ -2,22 +2,15 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import PropertyImage from '../components/PropertyImage';
 import LoadingNode from '../components/LoadingNode';
 import { 
-  Inbox as InboxIcon, 
   Check, 
-  X, 
   ArrowRight, 
   Keyboard, 
-  Zap, 
   ShieldAlert, 
-  Split, 
-  Layout, 
-  Maximize2,
-  ChevronUp,
-  ChevronDown,
   ExternalLink,
   Trash2,
   CheckCircle2,
-  Layers
+  Layers,
+  Maximize2
 } from 'lucide-react';
 
 const API_BASE = '/api';
@@ -60,7 +53,7 @@ const Inbox: React.FC = () => {
     fetchInbox();
   }, [fetchInbox]);
 
-  const handleAction = async (action: 'approve' | 'reject', indexToTriage?: number) => {
+  const handleAction = useCallback(async (action: 'approve' | 'reject', indexToTriage?: number) => {
     const idx = indexToTriage !== undefined ? indexToTriage : currentIndex;
     if (listings.length === 0 || idx >= listings.length) return;
     
@@ -91,7 +84,7 @@ const Inbox: React.FC = () => {
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [listings, currentIndex]);
 
   const handleBatchAction = async (action: 'approve' | 'reject') => {
     if (selectedIds.size === 0) return;
@@ -119,6 +112,15 @@ const Inbox: React.FC = () => {
     }
   };
 
+  const toggleSelect = useCallback((filename: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(filename)) next.delete(filename);
+      else next.add(filename);
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     const handleKeys = (e: KeyboardEvent) => {
       if (isProcessing) return;
@@ -144,7 +146,7 @@ const Inbox: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeys);
     return () => window.removeEventListener('keydown', handleKeys);
-  }, [listings, currentIndex, isProcessing]);
+  }, [listings, currentIndex, isProcessing, handleAction, toggleSelect]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -154,15 +156,6 @@ const Inbox: React.FC = () => {
       }
     }
   }, [currentIndex]);
-
-  const toggleSelect = (filename: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(filename)) next.delete(filename);
-      else next.add(filename);
-      return next;
-    });
-  };
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">

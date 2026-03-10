@@ -26,7 +26,7 @@ A multi-agent system that automates the discovery, normalization, and visualizat
 
 3. **Senior Real Estate Data Engineer (`agents/data_engineer/`):** 
    - **Primary Goal:** Data architecture, storage solutions, and automated ingestion pipelines.
-   - **Responsibilities:** Manages DuckDB storage, maintains `sync_data.js`, and builds the backend API.
+   - **Responsibilities:** Manages SQLite storage, maintains `sync_data.js`, and builds the backend API.
    - **Write Access:** `data/`, `agents/data_engineer/`, `scripts/sync_data.js`, `server/index.js`.
 
 4. **Lead Frontend Engineer & UX Architect (`agents/frontend_engineer/`):** 
@@ -69,19 +69,20 @@ To maximize performance and minimize token usage, follow these orchestration pat
 ### 2. Agent Invocation
 When starting a task, explicitly reference the relevant agent's `README.md` to load its specialized context:
 - `Property Research:` "Following the instructions in `agents/data_analyst/README.md`, identify 5 new listings in Islington."
-- `Data Infrastructure:` "Using the instructions in `agents/data_engineer/README.md`, optimize the DuckDB schema for Alpha scores."
+- `Data Infrastructure:` "Using the instructions in `agents/data_engineer/README.md`, optimize the SQLite schema for Alpha scores."
 - `UI Development:` "Following `agents/frontend_engineer/README.md`, implement the KPI header using the latest data."
 - `QA Audit:` "As the `agents/ui_ux_qa/` engineer, audit the dark mode contrast and update `Tasks.md`."
 
 ### 3. Efficiency Strategies
 - **Parallel Research:** Use `generalist` to run data gathering and UI audits simultaneously if they don't depend on the same files.
 - **The "Tasks.md" Trigger:** Instead of giving vague instructions, tell the CLI: "Review `Tasks.md` and implement the highest priority fix."
+- **Task Resolution:** Agents MUST mark completed tasks as `Done` in the `Status` column of `Tasks.md` and move them to the `Resolved` section immediately upon verification.
 - **Context Compression:** Do not load all agent READMEs at once unless performing a cross-agent coordination task. Focus on one agent per turn when possible.
 
 ### 4. Verification & Handoff
 - Always run the QA agent *after* a frontend change but *before* declaring the task complete.
 - Ensure the Data Analyst coordinates with the Data Engineer when new metrics require schema changes.
-- The Data Engineer is responsible for the final promotion of data to the DuckDB master store.
+- The Data Engineer is responsible for the final promotion of data to the SQLite master store.
 
 ## Project Structure
 - `agents/`: Specialized agent instructions.

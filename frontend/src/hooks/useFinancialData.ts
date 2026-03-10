@@ -3,7 +3,8 @@ import type { MacroTrend } from '../types/macro';
 import type { FinancialContext } from '../types/financial';
 import type { Property } from '../types/property';
 
-const API_BASE = '/api';
+const IS_DEMO = import.meta.env.VITE_DEMO_MODE === 'true';
+const API_BASE = IS_DEMO ? '/data' : '/api';
 
 export const useFinancialData = () => {
   const [macroData, setMacroData] = useState<MacroTrend | null>(null);
@@ -14,42 +15,30 @@ export const useFinancialData = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        let macro: MacroTrend;
-        let financial: FinancialContext;
+        const macroRes = await fetch(IS_DEMO ? `${API_BASE}/macro_trend.json` : `${API_BASE}/macro`);
+        const financialRes = await fetch(IS_DEMO ? `${API_BASE}/financial_context.json` : `${API_BASE}/financials`);
 
-        try {
-          const [macroRes, financialRes] = await Promise.all([
-            fetch(`${API_BASE}/macro`),
-            fetch(`${API_BASE}/financials`)
-          ]);
-          if (!macroRes.ok || !financialRes.ok) throw new Error('API Unavailable');
-          macro = await macroRes.json();
-          financial = await financialRes.json();
-        } catch (e) {
-          console.warn('API unavailable, falling back to static files');
-          const [macroRes, financialRes] = await Promise.all([
-            fetch('/api/macro'),
-            fetch('/api/financials')
-          ]);
-          if (!macroRes.ok || !financialRes.ok) throw new Error('Static data unavailable');
-          macro = await macroRes.json();
-          financial = await financialRes.json();
+        if (!macroRes.ok || !financialRes.ok) {
+          throw new Error('Data fetch failed');
         }
+
+        const macro = await macroRes.json();
+        const financial = await financialRes.json();
 
         // Normalization Layer for Macro
         const normalizeMacro = (raw: any): MacroTrend => ({
+          ...raw,
           economic_indicators: {
             boe_base_rate: raw.boe_base_rate || 3.75,
             gbp_usd: raw.gbp_usd || 1.28,
             uk_inflation_cpi: raw.uk_inflation_cpi || 2.1,
-            mortgage_rates: raw.mortgage_rates ? {
-              "90_ltv_2yr_fixed": raw.mortgage_rates.two_year_fixed_90_ltv || raw.mortgage_rates["90_ltv_2yr_fixed"] || 4.45,
-              "90_ltv_5yr_fixed": raw.mortgage_rates.five_year_fixed_90_ltv || raw.mortgage_rates["90_ltv_5yr_fixed"] || 4.55,
-              avg_fees: raw.mortgage_rates.avg_fees || 995
-            } : {
-              "90_ltv_2yr_fixed": 4.45,
-              "90_ltv_5yr_fixed": 4.55,
-              avg_fees: 995
+            mortgage_rates: {
+              "90_ltv_2yr_fixed": raw.mortgage_rates?.two_year_fixed_90_ltv || raw.mortgage_rates?.["90_ltv_2yr_fixed"] || 4.45,
+              "90_ltv_5yr_fixed": raw.mortgage_rates?.five_year_fixed_90_ltv || raw.mortgage_rates?.["90_ltv_5yr_fixed"] || 4.55,
+              "85_ltv_5yr_fixed": raw.mortgage_rates?.five_year_fixed_85_ltv || raw.mortgage_rates?.["85_ltv_5yr_fixed"] || 4.25,
+              "75_ltv_5yr_fixed": raw.mortgage_rates?.five_year_fixed_75_ltv || raw.mortgage_rates?.["75_ltv_5yr_fixed"] || 4.05,
+              "60_ltv_5yr_fixed": raw.mortgage_rates?.five_year_fixed_60_ltv || raw.mortgage_rates?.["60_ltv_5yr_fixed"] || 3.85,
+              avg_fees: raw.mortgage_rates?.avg_fees || 995
             },
             mpc_next_meeting: raw.mpc_next_meeting,
             market_consensus: raw.market_consensus
