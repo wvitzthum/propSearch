@@ -3,7 +3,7 @@
 ## Project Mission
 **propSearch** is a bespoke, high-precision research platform designed for a single private buyer to identify and acquire a specific prime London property. Unlike consumer portals (Rightmove/Zoopla), this tool prioritizes data density, institutional-grade metrics, and rapid decision-making.
 
-**🔗 [Live Demo (Slim/Dummy Mode)](https://prop-search-51sp2637w-uniquexs-projects.vercel.app/)**
+**🔗 [Live Demo (Slim/Dummy Mode)](https://prop-search.vercel.app/)**
 
 > **Note:** This project is for internal research and personal use only. It is not intended for commercial distribution. No-Auth architecture is intentional.
 
