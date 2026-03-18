@@ -25,7 +25,7 @@ A multi-agent system that automates the discovery, normalization, and visualizat
 1. **RTK Mandatory:** ALL high-volume shell operations (`npm install`, `npm run build`, `lint`, `node scripts/sync_data.js`, large `grep`, `ls -R`, batch file reads) **MUST** be proxied through **rtk** (Rust Token Killer). Use `rtk --raw <command>` only for troubleshooting.
 2. **Data Authenticity:** Agents are FORBIDDEN from creating synthetic or "hallucinated" property listings or market metrics. Use empirical data only.
 3. **Aesthetic Direction:** Adhere strictly to the "Bloomberg Terminal meets Linear" standards in all UI changes.
-4. **Workflow Lifecycle:** `Select (identify highest priority task from Tasks.md) -> Claim (Status: In Progress) -> Execute (follow logic in agent README) -> Verify (build/lint/QA) -> Resolve (Status: Done)`.
+4. **Workflow Lifecycle:** `Select (identify highest priority task from Tasks.md) -> Claim (Status: In Progress) -> Execute (follow logic in agent README + MANDATORY external enrichment for Analyst) -> Verify (build/lint/QA) -> Resolve (Status: Done)`.
 5. **Cross-Agent Task Creation:** Any agent is authorized to create new tasks in `Tasks.md` if a completed task requires a follow-up.
 
 ## Surgical Workflow & Efficiency (Token Killer)

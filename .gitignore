@@ -9,3 +9,6 @@
 .vercel
 .env*.local
 /data/inbox
+/data/archive/inbox/*
+/data/archive/imports/*
+/data/archive/triaged/*
