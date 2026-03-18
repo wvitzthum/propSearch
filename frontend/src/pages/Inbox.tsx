@@ -22,6 +22,7 @@ interface RawListing {
   url: string;
   source: string;
   image_url?: string;
+  floorplan_url?: string;
   filename: string;
 }
 
@@ -32,7 +33,7 @@ const Inbox: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [viewMode, setViewMode] = useState<'metrics' | 'portal'>('metrics');
+  const [viewMode, setViewMode] = useState<'metrics' | 'portal' | 'floorplan'>('metrics');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchInbox = useCallback(async () => {
@@ -53,6 +54,17 @@ const Inbox: React.FC = () => {
   useEffect(() => {
     fetchInbox();
   }, [fetchInbox]);
+
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+
+  useEffect(() => {
+    setIframeLoaded(false);
+  }, [currentIndex]);
+
+  const isKnownBlocker = (url: string) => {
+    const blockers = ['rightmove.co.uk', 'zoopla.co.uk', 'onthemarket.com', 'savills.com', 'knightfrank.com', 'dexters.co.uk'];
+    return blockers.some(b => url.includes(b));
+  };
 
   const handleAction = useCallback(async (action: 'approve' | 'reject', indexToTriage?: number) => {
     const idx = indexToTriage !== undefined ? indexToTriage : currentIndex;
@@ -134,7 +146,9 @@ const Inbox: React.FC = () => {
       const key = e.key.toLowerCase();
       if (key === 'a') handleAction('approve');
       if (key === 'r') handleAction('reject');
-      if (key === 'v') setViewMode(prev => prev === 'metrics' ? 'portal' : 'metrics');
+      if (key === 'm') setViewMode('metrics');
+      if (key === 'f') setViewMode('floorplan');
+      if (key === 'v') setViewMode('portal');
       if (key === 'arrowdown' || key === 'j') {
         e.preventDefault();
         setCurrentListIndex(prev => Math.min(prev + 1, listings.length - 1));
@@ -216,7 +230,7 @@ const Inbox: React.FC = () => {
           )}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-linear-card border border-linear-border rounded-lg text-[9px] font-bold text-linear-text-muted">
             <Keyboard size={12} />
-            <span>J/K NAV • A/R ACTION • V TOGGLE • L PEEK</span>
+            <span>J/K NAV • A/R ACTION • M/F/V TOGGLE • L PEEK</span>
           </div>
         </div>
       </div>
@@ -282,6 +296,12 @@ const Inbox: React.FC = () => {
                     className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'metrics' ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
                   >
                     Metrics [M]
+                  </button>
+                  <button 
+                    onClick={() => setViewMode('floorplan')}
+                    className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'floorplan' ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
+                  >
+                    Floorplan [F]
                   </button>
                   <button 
                     onClick={() => setViewMode('portal')}
@@ -373,23 +393,72 @@ const Inbox: React.FC = () => {
                   </div>
                 </div>
               </div>
+            ) : viewMode === 'floorplan' ? (
+              <div className="flex-grow overflow-hidden bg-linear-bg flex items-center justify-center p-8">
+                {currentListing.floorplan_url ? (
+                  <div className="relative w-full h-full flex items-center justify-center bg-white/5 rounded-2xl border border-linear-border overflow-hidden">
+                    <PropertyImage 
+                      src={currentListing.floorplan_url} 
+                      alt="Floorplan" 
+                      className="max-w-full max-h-full object-contain"
+                    />
+                    <div className="absolute bottom-4 right-4 px-3 py-1 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold rounded-lg border border-white/10 uppercase tracking-widest">
+                      Spatial Blueprint
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-center px-8">
+                    <div className="h-16 w-16 bg-linear-card text-linear-text-muted rounded-2xl flex items-center justify-center mb-6 border border-linear-border">
+                      <Layers size={32} />
+                    </div>
+                    <h2 className="text-xl font-bold text-white mb-2 tracking-tight">Floorplan Unavailable</h2>
+                    <p className="text-linear-text-muted text-xs uppercase tracking-widest font-bold opacity-70 max-w-xs">
+                      The automated scraper was unable to isolate a spatial blueprint for this lead. Review manually in the live portal.
+                    </p>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="flex-grow relative bg-white">
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-linear-bg z-0">
-                  <LoadingNode label="Connecting to Portal..." />
-                  <p className="mt-4 text-[10px] text-linear-text-muted uppercase font-black tracking-[0.2em]">Note: Portals may block internal embedding</p>
-                  <button 
-                    onClick={() => handlePeek(currentListing.url)}
-                    className="mt-6 px-6 py-2 bg-white text-black rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-zinc-200 transition-all"
-                  >
-                    Use Focused Peek Instead
-                  </button>
-                </div>
-                <iframe 
-                  src={currentListing.url} 
-                  className="absolute inset-0 w-full h-full border-none z-10"
-                  title="Portal View"
-                />
+                {isKnownBlocker(currentListing.url) ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-linear-bg z-20 px-8 text-center">
+                    <div className="h-16 w-16 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center mb-6 border border-rose-500/20">
+                      <ShieldAlert size={32} />
+                    </div>
+                    <h2 className="text-xl font-bold text-white mb-2 tracking-tight uppercase tracking-widest">Security Block Active</h2>
+                    <p className="text-linear-text-muted text-xs uppercase tracking-widest font-bold opacity-70 mb-8 max-w-sm">
+                      {new URL(currentListing.url).hostname} blocks internal framing (CSP). Use the focused peek to review this lead.
+                    </p>
+                    <button 
+                      onClick={() => handlePeek(currentListing.url)}
+                      className="px-8 py-3 bg-blue-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-blue-500/10 flex items-center gap-3"
+                    >
+                      <ExternalLink size={14} />
+                      Launch Focused Peek [L]
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {!iframeLoaded && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-linear-bg z-20">
+                        <LoadingNode label={`Connecting to ${new URL(currentListing.url).hostname}...`} />
+                        <p className="mt-4 text-[10px] text-linear-text-muted uppercase font-black tracking-[0.2em]">Note: Portals may block internal embedding</p>
+                        <button 
+                          onClick={() => handlePeek(currentListing.url)}
+                          className="mt-6 px-6 py-2 bg-white/5 text-linear-text-muted border border-white/10 rounded-lg font-black text-[10px] uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all"
+                        >
+                          Use Focused Peek Instead
+                        </button>
+                      </div>
+                    )}
+                    <iframe 
+                      src={currentListing.url} 
+                      className="absolute inset-0 w-full h-full border-none z-10"
+                      title="Portal View"
+                      onLoad={() => setIframeLoaded(true)}
+                    />
+                  </>
+                )}
               </div>
             )}
 

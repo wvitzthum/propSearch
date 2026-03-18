@@ -23,16 +23,22 @@ Extract **[NUMBER]** unique, live, and available property listings in London tha
 
 ## 3. Visual & Technical Fidelity
 *   **Institutional Images:** Do NOT use stock photos or generic area shots. `image_url` and `gallery` must be direct, high-res links (1024px+) from the source portal or agent site.
+*   **Floorplan Extraction:** You MUST extract the `floorplan_url`.
+    *   **Rightmove:** Extract from the `floorplans` array in the `PAGE_MODEL`.
+    *   **Zoopla:** Extract from the `floorplan` object in `__NEXT_DATA__`.
 *   **Direct Agent Link:** For every property, search for the listing on the **Estate Agent's own website** (e.g., Knight Frank, Savills, Dexters, Foxtons). This must be the primary link in the `links` array.
 
 ## 4. Logic & Scoring (The "Alpha" Framework)
 Calculate the following metrics based on empirical evidence:
 *   **Alpha Score (0-10):**
-    *   **Value (40%):** Price per sqm vs. area average (~£10.5k-£12k).
-    *   **Tenure (20%):** Share of Freehold = 10, Leasehold (>125yr) = 8, Leasehold (90-125yr) = 6.
-    *   **Efficiency (20%):** EPC Rating (A=10, B=9, C=8, D=6, E=2).
-    *   **Spatial (20%):** Proximity to Tube (<400m = 10) and elevation (Floor Level).
-*   **Appreciation Potential (0-10):** Rate 5-year capital growth likelihood based on infrastructure (e.g., proximity to Crossrail/Elizabeth Line) and area momentum.
+    *   **Value (35%):** Price per sqm vs. area average (~£10,500 - £12,000).
+    *   **Tenure (20%):** Share of Freehold = 10, Leasehold (>999yr) = 10, Leasehold (>125yr) = 8, Leasehold (90-125yr) = 6.
+    *   **Efficiency (15%):** EPC Rating (A=10, B=9, C=8, D=6, E=2).
+    *   **Spatial (30%):** 
+        *   **Proximity:** <400m to Tube = 8 pts, 400-800m = 5 pts.
+        *   **Connectivity Bonus:** +2 pts if within 500m of an Elizabeth Line station or major Interchange (e.g., Highbury & Islington, Farringdon).
+        *   **Floor Level:** 1st/2nd floor or Penthouse = 10, Ground (with private garden) = 8, Ground (no garden) = 5, Basement = 0.
+*   **Appreciation Potential (0-10):** Rate 5-year capital growth likelihood based on infrastructure (e.g., proximity to Elizabeth Line), area momentum (Islington/Belsize Park), and asset scarcity.
 
 ## 5. Required JSON Schema
 Return a single JSON array of objects following this exact schema. Do not include markdown commentary, only the raw JSON.
@@ -51,6 +57,7 @@ Return a single JSON array of objects following this exact schema. Do not includ
     "area": "Islington (N1) | Islington (N7) | Bayswater (W2) | Belsize Park (NW3) | West Hampstead (NW6) | Chelsea (SW3/SW10) | Primrose Hill (NW1)",
     "floor_level": "e.g., Ground | 1st | 4th | Penthouse",
     "image_url": "Direct link to high-res hero image",
+    "floorplan_url": "Direct link to the property floorplan image",
     "gallery": ["Array of exactly 5 interior/exterior image URLs"],
     "streetview_url": "Direct Google StreetView link based on coordinates",
     "list_price": number,

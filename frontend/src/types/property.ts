@@ -25,6 +25,7 @@ export interface Property {
   image_url: string;
   gallery: string[];
   streetview_url: string;
+  floorplan_url?: string;
   list_price: number;
   realistic_price: number;
   sqft: number;

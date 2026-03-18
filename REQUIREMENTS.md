@@ -48,11 +48,12 @@ To build a private, high-precision research tool that enables a single buyer to 
 - **Instruction to Frontend Agent:** Prioritize data density, keyboard-centric navigation, and high-contrast dark mode. Implement a unified sorting state across Grid, Table, and Map views.
 
 ### 3. Visual Context & Market Fidelity
-- **Requirement:** Every asset must have high-resolution visual representation (hero thumbnails + gallery).
+- **Requirement:** Every asset must have high-resolution visual representation (hero thumbnails + gallery + floorplan).
 - **Goal:** Allow the user to "feel" the property without leaving the dashboard.
 - **Image Sourcing Pipeline:**
   - **Hero Thumbnail:** The Data Analyst must extract a high-quality primary image (`image_url`) from the portal (e.g., Rightmove/Zoopla).
   - **Gallery Support:** The schema must support a `gallery` array (strings) for the top 5 high-res property images.
+  - **Floorplan Visualization:** The Data Analyst must identify and isolate a `floorplan_url` from listing data to allow for spatial volume assessment within the dashboard.
   - **Exterior Fidelity (StreetView):** If possible, provide a `streetview_url` based on coordinates to provide immediate street-level context.
 - **Visual Resilience (Image Fallbacks):** 
   - **Requirement:** The UI must never show a "broken image" icon or an empty container if a property image fails to load or is missing from the dataset.

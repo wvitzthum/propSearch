@@ -101,6 +101,11 @@
       "format": "uri",
       "description": "A direct link to a Google StreetView or similar based on lat/lng."
     },
+    "floorplan_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "A direct link to the property floorplan image."
+    },
     "list_price": {
       "type": "number",
       "minimum": 0,

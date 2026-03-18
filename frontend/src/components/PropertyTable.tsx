@@ -47,7 +47,9 @@ const TableHeader = ({
   className = "", 
   onSort, 
   currentSort, 
-  direction 
+  direction,
+  rowSpan,
+  colSpan
 }: { 
   label: string, 
   columnKey: string, 
@@ -56,11 +58,15 @@ const TableHeader = ({
   className?: string,
   onSort: (key: string) => void,
   currentSort: string,
-  direction: 'asc' | 'desc'
+  direction: 'asc' | 'desc',
+  rowSpan?: number,
+  colSpan?: number
 }) => (
   <th 
     className={`px-3 py-3 text-left text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] cursor-pointer group hover:bg-linear-card transition-colors relative ${className}`}
     onClick={() => onSort(columnKey)}
+    rowSpan={rowSpan}
+    colSpan={colSpan}
   >
     <Tooltip content={tooltip} methodology={methodology} className="w-full">
       <div className="flex items-center gap-1.5">
@@ -136,6 +142,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
+                rowSpan={2}
               />
               <TableHeader 
                 label="Alpha" 
@@ -146,29 +153,10 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
+                rowSpan={2}
               />
-              <th className="px-2 py-3 bg-linear-accent/5 border-x border-linear-border/30">
-                <div className="flex flex-col items-center">
-                  <span className="text-[8px] font-bold text-linear-text-muted uppercase tracking-widest mb-1">Acquisition Model</span>
-                  <div className="flex gap-4">
-                    <TableHeader 
-                      label="Target" 
-                      columnKey="realistic_price" 
-                      tooltip="Calculated bid target based on market conditions, DoM, and area liquidity." 
-                      onSort={handleSort}
-                      currentSort={localSort.key}
-                      direction={localSort.direction}
-                    />
-                    <TableHeader 
-                      label="Gap" 
-                      columnKey="value_gap" 
-                      tooltip="Delta between list price and realistic acquisition target." 
-                      onSort={handleSort}
-                      currentSort={localSort.key}
-                      direction={localSort.direction}
-                    />
-                  </div>
-                </div>
+              <th colSpan={2} className="px-2 py-2 bg-linear-accent/5 border-x border-linear-border/30 text-center text-[8px] font-bold text-linear-text-muted uppercase tracking-widest border-b border-linear-border/30">
+                Acquisition Model
               </th>
               <TableHeader 
                 label="Eff." 
@@ -178,6 +166,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
+                rowSpan={2}
               />
               <TableHeader 
                 label="App." 
@@ -187,6 +176,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
+                rowSpan={2}
               />
               <TableHeader 
                 label="Com." 
@@ -196,6 +186,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
+                rowSpan={2}
               />
               <TableHeader 
                 label="SQFT" 
@@ -204,6 +195,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
+                rowSpan={2}
               />
               <TableHeader 
                 label="EPC" 
@@ -212,6 +204,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
+                rowSpan={2}
               />
               <TableHeader 
                 label="DoM" 
@@ -220,8 +213,29 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
+                rowSpan={2}
               />
-              <th className="px-2 py-3 text-right text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap">Action</th>
+              <th rowSpan={2} className="px-2 py-3 text-right text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap">Action</th>
+            </tr>
+            <tr className="bg-linear-card/30 border-b border-linear-border">
+              <TableHeader 
+                label="Target" 
+                columnKey="realistic_price" 
+                tooltip="Calculated bid target based on market conditions, DoM, and area liquidity." 
+                className="border-l border-linear-border/30"
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
+              />
+              <TableHeader 
+                label="Gap" 
+                columnKey="value_gap" 
+                tooltip="Delta between list price and realistic acquisition target." 
+                className="border-r border-linear-border/30"
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
+              />
             </tr>
           </thead>
           <tbody className="divide-y divide-linear-border/50">
@@ -274,14 +288,14 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                       )}
                     </div>
                   </td>
-                  <td className="px-2 py-4 bg-linear-accent/5 border-x border-linear-border/30">
-                    <div className="flex items-center justify-center gap-4">
-                      <div className="text-[11px] font-bold text-linear-text-primary tracking-tighter">
-                        £{(property.realistic_price || 0).toLocaleString()}
-                      </div>
-                      <div className={`text-[10px] font-bold ${ (property.list_price - property.realistic_price) > 0 ? 'text-linear-accent-rose' : 'text-linear-accent-emerald'}`}>
-                        { (property.list_price - property.realistic_price) > 0 ? '-' : '+' }£{Math.abs( (property.list_price || 0) - (property.realistic_price || 0) ).toLocaleString()}
-                      </div>
+                  <td className="px-2 py-4 bg-linear-accent/5 border-l border-linear-border/30">
+                    <div className="text-[11px] font-bold text-linear-text-primary tracking-tighter text-center">
+                      £{(property.realistic_price || 0).toLocaleString()}
+                    </div>
+                  </td>
+                  <td className="px-2 py-4 bg-linear-accent/5 border-r border-linear-border/30">
+                    <div className={`text-[10px] font-bold text-center ${ (property.list_price - property.realistic_price) > 0 ? 'text-linear-accent-rose' : 'text-linear-accent-emerald'}`}>
+                      { (property.list_price - property.realistic_price) > 0 ? '-' : '+' }£{Math.abs( (property.list_price || 0) - (property.realistic_price || 0) ).toLocaleString()}
                     </div>
                   </td>
                   <td className="px-2 py-4">

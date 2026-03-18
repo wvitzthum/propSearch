@@ -105,3 +105,13 @@ While DuckDB provided superior analytical performance, the implementation encoun
 
 ## Status
 Accepted
+
+# ADR-012: Visual Intelligence & Spatial Research (Floorplans)
+## Context
+Floorplans are a critical data point for judging spatial volume and flow before an acquisition decision. Standard property imagery often fails to provide this context, leading to inefficient triage.
+## Decision
+1.  **Extraction:** Implement specialized "Hidden Web Data" research to isolate `floorplan_url` from portal JSON blobs (Rightmove/Zoopla).
+2.  **Schema:** Expand the SQLite `properties` table and JSON schema to support `floorplan_url` as a first-class metric.
+3.  **Visualization:** Integrate a dedicated "Floorplan Preview" in the Lead Inbox and Property Detail page to enable rapid spatial assessment.
+## Status
+Accepted

@@ -18,7 +18,9 @@ import {
   Save, 
   ArrowRight, 
   BarChart3,
-  TrendingUp 
+  TrendingUp,
+  Layers,
+  ExternalLink
 } from 'lucide-react';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import { useFinancialData } from '../hooks/useFinancialData';
@@ -36,6 +38,7 @@ const PropertyDetail: React.FC = () => {
   const { properties, loading } = usePropertyContext();
   const { calculateMonthlyOutlay } = useFinancialData();
   const { getStatus, setStatus } = usePipeline();
+  const [activeTab, setActiveTab] = useState<'gallery' | 'floorplan'>('gallery');
   const [notes, setLocalNotes] = useState(() => {
     if (!id) return '';
     return localStorage.getItem(`notes_${id}`) || '';
@@ -113,38 +116,103 @@ const PropertyDetail: React.FC = () => {
               />
             </div>
 
-            {/* Gallery Implementation */}
-            <div className="mb-12 space-y-4">
-              <div className="relative aspect-[16/9] w-full bg-linear-card rounded-2xl overflow-hidden group border border-linear-border/50">
-                <PropertyImage 
-                  src={property.image_url || property.gallery[0]}
-                  alt={property.address}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-linear-bg/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute bottom-6 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all">
-                  <span className="px-3 py-1.5 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold rounded-lg border border-white/10 uppercase tracking-widest">
-                    Primary View
-                  </span>
-                </div>
+            {/* Gallery & Floorplan Tabs */}
+            <div className="mb-12">
+              <div className="flex items-center gap-6 border-b border-linear-border mb-6">
+                <button 
+                  onClick={() => setActiveTab('gallery')}
+                  className={`pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === 'gallery' ? 'text-white' : 'text-linear-text-muted hover:text-white'}`}
+                >
+                  Gallery Stream
+                  {activeTab === 'gallery' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-accent" />}
+                </button>
+                <button 
+                  onClick={() => setActiveTab('floorplan')}
+                  className={`pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === 'floorplan' ? 'text-white' : 'text-linear-text-muted hover:text-white'}`}
+                >
+                  Spatial Blueprint
+                  {activeTab === 'floorplan' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-accent" />}
+                </button>
               </div>
-              
-              {property.gallery && property.gallery.length > 0 && (
-                <div className="grid grid-cols-4 gap-4">
-                  {property.gallery.slice(0, 4).map((url, i) => (
-                    <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden border border-linear-border group cursor-pointer relative">
-                      <PropertyImage 
-                        src={url} 
-                        className="h-full w-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500" 
-                        alt={`Gallery ${i}`} 
-                      />
-                      {i === 3 && property.gallery.length > 4 && (
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center text-white font-bold group-hover:bg-black/40 transition-colors">
-                          +{property.gallery.length - 4} More
-                        </div>
-                      )}
+
+              {activeTab === 'gallery' ? (
+                <div className="space-y-4 animate-in fade-in duration-500">
+                  <div className="relative aspect-[16/9] w-full bg-linear-card rounded-2xl overflow-hidden group border border-linear-border/50">
+                    <PropertyImage 
+                      src={property.image_url || property.gallery[0]}
+                      alt={property.address}
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-linear-bg/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute bottom-6 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all">
+                      <span className="px-3 py-1.5 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold rounded-lg border border-white/10 uppercase tracking-widest">
+                        Primary Perspective
+                      </span>
                     </div>
-                  ))}
+                  </div>
+                  
+                  {property.gallery && property.gallery.length > 0 && (
+                    <div className="grid grid-cols-4 gap-4">
+                      {property.gallery.slice(0, 4).map((url, i) => (
+                        <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden border border-linear-border group cursor-pointer relative">
+                          <PropertyImage 
+                            src={url} 
+                            className="h-full w-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500" 
+                            alt={`Gallery ${i}`} 
+                          />
+                          {i === 3 && property.gallery.length > 4 && (
+                            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center text-white font-bold group-hover:bg-black/40 transition-colors">
+                              +{property.gallery.length - 4} More
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="animate-in fade-in duration-500">
+                  {property.floorplan_url ? (
+                    <div className="relative bg-linear-card rounded-2xl border border-linear-border overflow-hidden group p-4">
+                      <div className="relative aspect-[4/3] w-full bg-white/5 rounded-xl overflow-hidden flex items-center justify-center">
+                        <PropertyImage 
+                          src={property.floorplan_url} 
+                          alt="Floorplan" 
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      </div>
+                      <div className="mt-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-lg bg-linear-bg border border-linear-border flex items-center justify-center text-linear-accent">
+                            <Layers size={16} />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold text-white block">Institutional Floorplan</span>
+                            <span className="text-[9px] text-linear-text-muted uppercase tracking-widest">Verified spatial volume analysis</span>
+                          </div>
+                        </div>
+                        <a 
+                          href={property.floorplan_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-linear-bg border border-linear-border rounded-lg text-[9px] font-black uppercase tracking-widest text-linear-text-muted hover:text-white hover:border-linear-accent transition-all flex items-center gap-2"
+                        >
+                          <ExternalLink size={12} />
+                          Open Full Res
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="py-20 bg-linear-card/30 border border-dashed border-linear-border rounded-2xl flex flex-col items-center justify-center text-center px-8">
+                       <div className="h-16 w-16 bg-linear-card text-linear-text-muted rounded-2xl flex items-center justify-center mb-6 border border-linear-border">
+                          <Layers size={32} />
+                        </div>
+                        <h2 className="text-xl font-bold text-white mb-2 tracking-tight">Spatial Data Missing</h2>
+                        <p className="text-linear-text-muted text-xs uppercase tracking-widest font-bold opacity-70 max-w-xs">
+                          No floorplan was detected during the automated scan of this asset. Spatial volume assessment limited to on-site inspection.
+                        </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
