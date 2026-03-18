@@ -92,7 +92,7 @@ async function sync() {
   // 4. Update Properties in SQLite
   const insertStmt = db.prepare(`
     INSERT INTO properties (
-      id, address, area, image_url, gallery, streetview_url, 
+      id, address, area, image_url, gallery, streetview_url, floorplan_url,
       list_price, realistic_price, sqft, price_per_sqm, 
       nearest_tube_distance, park_proximity, commute_paternoster, 
       commute_canada_square, is_value_buy, epc, tenure, 
@@ -101,7 +101,7 @@ async function sync() {
       metadata, floor_level, source, source_name, vetted, analyst_notes,
       price_reduction_amount, price_reduction_percent, days_since_reduction,
       epc_improvement_potential, est_capex_requirement
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const updateStmt = db.prepare(`
@@ -138,7 +138,7 @@ async function sync() {
         };
 
         insertStmt.run(
-          id, newItem.address, newItem.area, newItem.image_url, JSON.stringify(newItem.gallery || []), newItem.streetview_url || null,
+          id, newItem.address, newItem.area, newItem.image_url, JSON.stringify(newItem.gallery || []), newItem.streetview_url || null, newItem.floorplan_url || null,
           newItem.list_price || null, newItem.realistic_price || null, newItem.sqft || null, newItem.price_per_sqm || null,
           newItem.nearest_tube_distance || null, newItem.park_proximity || null, newItem.commute_paternoster || null,
           newItem.commute_canada_square || null, newItem.is_value_buy ? 1 : 0, newItem.epc || null, newItem.tenure || null,

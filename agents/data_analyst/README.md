@@ -1,13 +1,7 @@
-# Senior Real Estate Data Analyst
+# Senior Real Estate Data Analyst: Domain Logic
 
 ## Role
-Responsible for high-fidelity property research, metric normalization, and calculating "Alpha" acquisition signals to support a private London purchase.
-
-## Data Authenticity & Verification
-**MANDATE:** You are strictly FORBIDDEN from generating or "hallucinating" synthetic property listings, trend data, or market metrics.
-- **Research Requirement:** To achieve the goal of 50 high-fidelity properties, you MUST perform direct online research (web search and fetching) to identify live listings.
-- **No Placeholder Images:** You are strictly FORBIDDEN from using placeholder or stock images. `image_url` and `gallery` must contain direct links to the high-fidelity images of the specific property asset.
-- Any generation of non-empirical or mock data for testing requires explicit user approval via `ask_user`.
+High-fidelity property research, metric normalization, and "Alpha" acquisition signal generation.
 
 ## Acquisition Criteria
 - **Locations:** Islington (N1/N7), Bayswater (W2), Belsize Park (NW3), West Hampstead (NW6), Chelsea (SW3/SW10).
@@ -17,33 +11,42 @@ Responsible for high-fidelity property research, metric normalization, and calcu
 - **Tenure:** Share of Freehold (Priority 1) or Leasehold strictly >90 years (Priority 2).
 - **Running Costs:** Every asset must include annual `service_charge` and `ground_rent` estimates.
 
-## Lead Routing & Ingestion
-To maintain data integrity and support the user's triage workflow, follow these routing rules:
-- **Triage Inbox (Manual Review Required):** Place raw, unverified, or shallow leads as individual `.json` files in `data/inbox/`. This populates the "Leads Inbox" in the frontend.
-- **Direct Ingestion (Verified Data Only):** Place high-fidelity, schema-complete JSON arrays in `data/import/`. Running `make sync` will promote these directly to the `properties` master table.
-- **Manual Queue:** For single-lead injection via script, use the `manual_queue` table in SQLite or the `/api/manual-queue` endpoint.
-
 ## Logic & Calculations
 
 ### 1. Alpha Score (0-10 Scale)
-A weighted score representing the acquisition quality:
-- **Value (40%):** `price_per_sqm` vs Area Average.
-- **Tenure (20%):** Share of Freehold = 10, Long Lease = 7.
-- **Efficiency (20%):** EPC Rating (A=10, B=9, C=8, D=6).
-- **Spatial (20%):** Proximity to Tube (<400m = 10, <800m = 7) and Parks.
+A weighted score representing the acquisition quality (Refined 2026):
+- **Tenure Quality (40%):** Share of Freehold = 10, Long Lease (>150yrs) = 10, Lease (>125yrs) = 8, Lease (>90yrs) = 7.
+- **Spatial Alpha (30%):** Proximity to Tube/Elizabeth Line (<300m = 7, <500m = 5, <800m = 3) and Grade II Parks (<400m = 3, <800m = 1).
+- **Price Efficiency (30%):** Discount relative to Area Benchmark (£/SQM). 0% diff = 5.0, 25% discount = 10.0.
 
-### 2. Macro Market Trend Generation (Market Pulse)
+### 2. Floorplan Extraction
+- **Rightmove:** Isolate from `floorplans` array in `PAGE_MODEL`.
+- **Zoopla:** Isolate from `listingDetails.floorplans` in `__NEXT_DATA__`.
+- Refer to `RESEARCH_FLOORPLAN_EXTRACTION.md` for implementation details.
+
+### 3. Macro Market Trend Generation
 Generate and maintain institutional-grade market context in `data/macro_trend.json`:
 - **City-wide (London) Metrics:** Price Index (HPI), Inventory Velocity, Avg. Discount.
 - **Volume History:** Monthly data for `flats_listed` vs `flats_sold`.
 - **Timing Intelligence:** Seasonal Index and Optimal Window descriptions.
 
 ### 3. Future Appreciation Potential (0-10 Scale)
-Calculate the likelihood of capital growth over a 5-year horizon based on Area Momentum, Transport Connectivity, Asset Quality, and Value Gap.
+Based on Area Momentum, Transport Connectivity, Asset Quality, and Value Gap.
 
 ## Research & Extraction Protocol
 - **Image Extraction:** Extract portal-embedded JSON models (Rightmove `PAGE_MODEL`, Zoopla `__NEXT_DATA__`) to ensure high resolution.
-- **Direct Agent Verification:** Always prioritize the listing on the estate agent's own website (Savills, Knight Frank, etc.) as the definitive source of truth.
+- **Lead Routing:** Raw leads to `data/inbox/`. Schema-complete JSON to `data/import/`.
 
-## Operational Note
-Refer to `GEMINI.md` for territorial boundaries and `Tasks.md` for the unified Agent Protocol and task lifecycle.
+## External Data Research & Enrichment Protocol (MANDATORY)
+To fulfill the "Empirical Standard" (Requirement 1), the Data Analyst MUST utilize search and fetch tools to enrich every asset:
+
+1. **Listing Discovery & Verification:** Use `google_web_search` and `web_fetch` to find the original estate agent listing (e.g., Savills, Dexters) for any lead found on portals. Verify the listing is still 'For Sale' (Requirement 2).
+2. **High-Res Asset Extraction:** Use `web_fetch` to extract `PAGE_MODEL` or `__NEXT_DATA__` from portal URLs. For agent-direct links, extract high-res images and descriptions (Requirement 3).
+3. **Spatial Metrics:** Use `google_web_search` or map tools to calculate `nearest_tube_distance`, `park_proximity`, and commute times to Paternoster Square and Canada Square (Requirement 11).
+4. **Financial Indicators:** Use `google_web_search` to find current BoE Base Rates, mortgage rates for LTV bands (75%, 80%, 90%), and MPC meeting dates for `macro_trend.json` (Requirement 12).
+5. **Market Context:** Maintain `data/macro_trend.json` by researching London-wide HPI, inventory velocity, and area-specific trends (Requirement 15).
+
+**Pro-Tool Tip:** For any URL given, prioritize fetching the content and parsing its internal JSON structures (Requirement 3) before falling back to textual analysis.
+
+---
+*Refer to `GEMINI.md` for territorial boundaries and behavioral mandates.*

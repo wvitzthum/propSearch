@@ -1,4 +1,4 @@
-.PHONY: install start build lint clean agent-po agent-analyst agent-data agent-fe agent-qa tasks
+Y.PHONY: install start build lint clean agent-po agent-analyst agent-data agent-fe agent-qa tasks
 
 # Default target
 all: install start
@@ -56,11 +56,11 @@ agent-po:
 
 # Invoke the Data Analyst agent
 agent-analyst:
-	@gemini -i "You are the Senior Real Estate Data Analyst. Please load and follow the instructions in agents/data_analyst/README.md to perform property research and calculate Alpha signals. Remember the Data Authenticity mandate."
+	@gemini -i "You are the Senior Real Estate Data Analyst. Please load and follow the instructions in agents/data_analyst/README.md and REQUIREMENTS.md to perform property research and calculate Alpha signals. Enrich all assets using live internet data per Requirement 1, 11, and 12, following the schema in data/import/PROMPT_GUIDE.md. Remember the Data Authenticity mandate."
 
 # Invoke the Data Engineer agent
 agent-data:
-	@gemini -i "You are the Senior Real Estate Data Engineer. Please load and follow the instructions in agents/data_engineer/README.md to manage the SQLite architecture and ingestion pipeline."
+	@gemini -i "You are the Senior Real Estate Data Engineer. Please load and follow the instructions in agents/data_engineer/README.md and REQUIREMENTS.md to manage the SQLite architecture and ingestion pipeline."
 
 # Invoke the Frontend Engineer agent
 agent-fe:

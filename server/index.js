@@ -52,6 +52,7 @@ function initializeDB() {
       links TEXT,
       metadata TEXT,
       floor_level TEXT,
+      floorplan_url TEXT,
       source TEXT,
       source_name TEXT,
       service_charge REAL,
@@ -74,7 +75,8 @@ function initializeDB() {
     { name: 'est_capex_requirement', type: 'REAL' },
     { name: 'waitrose_distance', type: 'REAL' },
     { name: 'whole_foods_distance', type: 'REAL' },
-    { name: 'wellness_hub_distance', type: 'REAL' }
+    { name: 'wellness_hub_distance', type: 'REAL' },
+    { name: 'floorplan_url', type: 'TEXT' }
   ];
 
   for (const col of missingColumns) {

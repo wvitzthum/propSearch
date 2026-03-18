@@ -12,79 +12,40 @@ A multi-agent system that automates the discovery, normalization, and visualizat
   - **Bloomberg:** High data density, dark-mode first, real-time feedback, "pro tool" feel.
   - **Linear:** Precision typography, subtle border/surface shadows, high-quality focus states, and a clean, minimalist layout (see: `linear.app`).
 
-### Agents
-
-1. **Product Owner & Strategic Lead (`agents/product_owner/`):**
-   - **Primary Goal:** Long-term vision and strategic roadmap.
-   - **Responsibilities:** Maintains `REQUIREMENTS.md`, prioritizes the backlog in `Tasks.md`, and suggests high-level feature enhancements.
-   - **Write Access:** `REQUIREMENTS.md`, `Tasks.md`, `agents/product_owner/`.
-
-2. **Senior Real Estate Data Analyst (`agents/data_analyst/`):**
-   - **Primary Goal:** Property research, metric normalization, and "Alpha" signal generation.
-   - **Responsibilities:** Identifies listings, calculates Alpha/Appreciation scores, and maintains macro market trends.
-   - **Write Access:** `data/`, `agents/data_analyst/`.
-
-3. **Senior Real Estate Data Engineer (`agents/data_engineer/`):** 
-   - **Primary Goal:** Data architecture, storage solutions, and automated ingestion pipelines.
-   - **Responsibilities:** Manages SQLite storage, maintains `sync_data.js`, and builds the backend API.
-   - **Write Access:** `data/`, `agents/data_engineer/`, `scripts/sync_data.js`, `server/index.js`.
-
-4. **Lead Frontend Engineer & UX Architect (`agents/frontend_engineer/`):** 
-   - **Primary Goal:** Responsive, "Bloomberg meets Linear" research dashboard.
-   - **Responsibilities:** Implements data-dense UI, sorting/filtering, and ensures no-auth architecture.
-   - **Write Access:** `frontend/`, `agents/frontend_engineer/`.
-
-5. **UI/UX Quality Assurance Engineer (`agents/ui_ux_qa/`):**
-   - **Primary Goal:** Rigorous functional and aesthetic audit.
-   - **Responsibilities:** Validates against `REQUIREMENTS.md`, conducts dark mode audits, and logs bugs in `Tasks.md`.
-   - **Write Access:** `Tasks.md`, `agents/ui_ux_qa/`.
+### Agents & Territorial Boundaries (Write Access)
+1. **Product Owner & Strategic Lead (`agents/product_owner/`):** Authorized to write to `REQUIREMENTS.md`, `Tasks.md`, and `agents/product_owner/`.
+2. **Senior Real Estate Data Analyst (`agents/data_analyst/`):** Authorized to write to `data/` and `agents/data_analyst/`.
+3. **Senior Real Estate Data Engineer (`agents/data_engineer/`):** Authorized to write to `data/`, `agents/data_engineer/`, `scripts/sync_data.js`, `server/index.js`, and `frontend/src/types/property.ts`.
+4. **Lead Frontend Engineer & UX Architect (`agents/frontend_engineer/`):** Authorized to write to `frontend/` and `agents/frontend_engineer/`.
+5. **UI/UX Quality Assurance Engineer (`agents/ui_ux_qa/`):** Authorized to write to `Tasks.md` and `agents/ui_ux_qa/`.
 
 ---
 
-### Cross-Agent Task Creation
-**Mandate:** Any agent is authorized to create new tasks in `Tasks.md` for other agents if a completed task requires a follow-up (e.g., Data Engineer adds a new field and creates a task for the Frontend Engineer to display it). This ensures the "Research -> Strategy -> Execution" cycle remains continuous across domains.
+## Unified Agent Protocol
+1. **RTK Mandatory:** ALL high-volume shell operations (`npm install`, `npm run build`, `lint`, `node scripts/sync_data.js`, large `grep`, `ls -R`, batch file reads) **MUST** be proxied through **rtk** (Rust Token Killer). Use `rtk --raw <command>` only for troubleshooting.
+2. **Data Authenticity:** Agents are FORBIDDEN from creating synthetic or "hallucinated" property listings or market metrics. Use empirical data only.
+3. **Aesthetic Direction:** Adhere strictly to the "Bloomberg Terminal meets Linear" standards in all UI changes.
+4. **Workflow Lifecycle:** `Select (identify highest priority task from Tasks.md) -> Claim (Status: In Progress) -> Execute (follow logic in agent README) -> Verify (build/lint/QA) -> Resolve (Status: Done)`.
+5. **Cross-Agent Task Creation:** Any agent is authorized to create new tasks in `Tasks.md` if a completed task requires a follow-up.
 
-### Coordination Rules
-- **Data Authenticity:** Agents are FORBIDDEN from creating synthetic or "hallucinated" property/trend data. All property datasets must be fetched from external sources (internet, APIs, or existing local files). Any generation of non-empirical data (e.g., test mocks or manual trend estimation) requires explicit user approval via `ask_user`.
-- **Schema Integrity:** All data must strictly follow the JSON schema defined in the agent READMEs.
-- **Aesthetic Direction:** "Bloomberg Terminal meets Linear (via linear.app patterns)."
-- **Agent Boundaries:** Agents must strictly adhere to their specialized domains. If an agent's task evolves into the domain of another (e.g., Data Engineer starts writing React components), they MUST stop and defer to the appropriate agent. Cross-contamination of responsibilities is a hard failure.
-- **Territorial Boundaries (Write Access):**
-  - **Product Owner:** Authorized to write ONLY to `REQUIREMENTS.md`, `Tasks.md`, and `agents/product_owner/`.
-  - **Data Analyst:** Authorized to write ONLY to `data/` and `agents/data_analyst/`.
-  - **Data Engineer:** Authorized to write ONLY to `data/`, `agents/data_engineer/`, `scripts/sync_data.js`, `server/index.js`, and `frontend/src/types/property.ts`.
-  - **Frontend Engineer:** Authorized to write ONLY to `frontend/` and `agents/frontend_engineer/`.
-  - **UI/UX QA:** Authorized to write ONLY to `Tasks.md` and `agents/ui_ux_qa/`.
-- **Workflow Pipeline:** Product Owner sets requirements -> QA identifies gaps -> `Tasks.md` -> Frontend/Data implementation.
+## Surgical Workflow & Efficiency (Token Killer)
+To maximize performance and minimize token usage, follow these surgical patterns:
 
+### A. "Grep-First" Discovery
+- **DO NOT** read entire files or directories if a specific task, symbol, or requirement is needed.
+- **MANDATE:** Use `grep_search` to find your Task ID (e.g., `DAT-070`) in `Tasks.md` before reading the file.
+- **MANDATE:** Use `grep_search` to find requirement IDs (e.g., `Requirement 11`) in `REQUIREMENTS.md`.
 
-## Gemini CLI Usage & Efficiency
-To maximize performance and minimize token usage, follow these orchestration patterns:
+### B. Range-Limited Reads
+- When reading `Tasks.md`, `REQUIREMENTS.md`, or large source files, use `start_line` and `end_line` based on your `grep` results to read ONLY the relevant context.
 
-### 1. RTK Optimization (Mandatory Mandate)
-- **ALL high-volume shell operations** (`npm install`, `npm run build`, `lint`, `node scripts/sync_data.js`, large `grep`, `ls -R`, batch file reads) **MUST** be proxied through **rtk** (Rust Token Killer).
-- This is NOT optional. It minimizes context noise and reduces token consumption by 60-90%.
-- Use `rtk --raw <command>` **ONLY** when troubleshooting cryptic errors that `rtk` might be compressing.
+### C. Agent Instruction Loading
+- Reference your specialized `agents/<role>/README.md` for logic-heavy tasks, but rely on `GEMINI.md` for all behavioral and territorial rules. Do not load all agent READMEs at once.
 
-### 2. Agent Invocation
-When starting a task, explicitly reference the relevant agent's `README.md` to load its specialized context:
-- `Property Research:` "Following the instructions in `agents/data_analyst/README.md`, identify 5 new listings in Islington."
-- `Data Infrastructure:` "Using the instructions in `agents/data_engineer/README.md`, optimize the SQLite schema for Alpha scores."
-- `UI Development:` "Following `agents/frontend_engineer/README.md`, implement the KPI header using the latest data."
-- `QA Audit:` "As the `agents/ui_ux_qa/` engineer, audit the dark mode contrast and update `Tasks.md`."
-
-### 3. Efficiency Strategies
-- **Parallel Research:** Use `generalist` to run data gathering and UI audits simultaneously if they don't depend on the same files.
-- **The "Tasks.md" Trigger:** Instead of giving vague instructions, tell the CLI: "Review `Tasks.md` and implement the highest priority fix."
-- **Task Resolution:** Agents MUST mark completed tasks as `Done` in the `Status` column of `Tasks.md` and move them to the `Resolved` section immediately upon verification.
-- **Context Compression:** Do not load all agent READMEs at once unless performing a cross-agent coordination task. Focus on one agent per turn when possible.
-
-### 4. Verification & Handoff
-- Always run the QA agent *after* a frontend change but *before* declaring the task complete.
-- Ensure the Data Analyst coordinates with the Data Engineer when new metrics require schema changes.
-- The Data Engineer is responsible for the final promotion of data to the SQLite master store.
+---
 
 ## Project Structure
-- `agents/`: Specialized agent instructions.
-- `data/`: Property datasets (e.g., `07_03_2026.json`).
+- `agents/`: Specialized agent logic and domain rules.
+- `data/`: Property datasets and master database.
 - `frontend/`: React + Tailwind application.
+- `tasks/`: Task backlog and archives.
