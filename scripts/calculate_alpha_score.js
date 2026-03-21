@@ -44,18 +44,21 @@ function calculateAlphaScore(property) {
     spatialScore = Math.min(10, spatialScore);
 
     // Price Efficiency (30%) - Based on Price per SQM vs Area Benchmark
-    // Benchmarks (Approximated for 2026)
+    // Benchmarks (Empirical 2026)
     const benchmarks = {
         'Islington (N1)': 11000,
-        'Islington (N7)': 9000,
-        'Bayswater (W2)': 13000,
-        'Belsize Park (NW3)': 12500,
-        'West Hampstead (NW6)': 10500,
-        'Chelsea (SW3)': 18000,
-        'Chelsea (SW10)': 15000
+        'Islington (N7)': 9500,
+        'Bayswater (W2)': 14550,
+        'Belsize Park (NW3)': 12000,
+        'West Hampstead (NW6)': 9500,
+        'Chelsea (SW3/SW10)': 18000,
+        'Primrose Hill (NW1)': 13500
     };
 
-    const areaBenchmark = benchmarks[property.area] || 11000;
+    const areaKey = property.area;
+    const areaBenchmark = benchmarks[areaKey] || 11000;
+    
+    // Alpha Calculation logic...
     const efficiency = (areaBenchmark - property.price_per_sqm) / areaBenchmark;
     let priceScore = 5 + (efficiency * 20); // 0% diff = 5, 25% cheaper = 10
     priceScore = Math.max(0, Math.min(10, priceScore));

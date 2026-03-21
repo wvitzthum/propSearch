@@ -117,11 +117,95 @@ function initializeDB() {
     )
   `).run();
 
-  // DAT-075: Data Purge (Shallow assets)
-  const purge = db.prepare("DELETE FROM properties WHERE sqft IS NULL OR sqft = 0 OR epc IS NULL OR epc = ''");
-  const info = purge.run();
-  if (info.changes > 0) {
-    console.log(`DAT-075: Purged ${info.changes} shallow records.`);
+  // 6. archived_properties table (Fidelity & History)
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS archived_properties (
+      id TEXT PRIMARY KEY,
+      address TEXT,
+      area TEXT,
+      image_url TEXT,
+      gallery TEXT,
+      streetview_url TEXT,
+      list_price REAL,
+      realistic_price REAL,
+      sqft REAL,
+      price_per_sqm REAL,
+      nearest_tube_distance REAL,
+      park_proximity REAL,
+      commute_paternoster REAL,
+      commute_canada_square REAL,
+      is_value_buy INTEGER,
+      epc TEXT,
+      tenure TEXT,
+      dom INTEGER,
+      neg_strategy TEXT,
+      alpha_score REAL,
+      appreciation_potential REAL,
+      links TEXT,
+      metadata TEXT,
+      floor_level TEXT,
+      floorplan_url TEXT,
+      source TEXT,
+      source_name TEXT,
+      service_charge REAL,
+      ground_rent REAL,
+      lease_years_remaining REAL,
+      vetted INTEGER DEFAULT 0,
+      analyst_notes TEXT,
+      price_reduction_amount REAL,
+      price_reduction_percent REAL,
+      days_since_reduction INTEGER,
+      epc_improvement_potential TEXT,
+      est_capex_requirement REAL,
+      waitrose_distance REAL,
+      whole_foods_distance REAL,
+      wellness_hub_distance REAL,
+      archived_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      archive_reason TEXT
+    )
+  `).run();
+
+  // DAT-075: Enrich & Archive Protocol (Shallow assets)
+  // Instead of deleting, we move to archived_properties for later enrichment
+  const shallowQuery = "sqft IS NULL OR sqft = 0 OR epc IS NULL OR epc = ''";
+  const move = db.prepare(`
+    INSERT OR REPLACE INTO archived_properties (
+      id, address, area, image_url, gallery, streetview_url, floorplan_url,
+      list_price, realistic_price, sqft, price_per_sqm, 
+      nearest_tube_distance, park_proximity, commute_paternoster, 
+      commute_canada_square, is_value_buy, epc, tenure, 
+      service_charge, ground_rent, lease_years_remaining,
+      dom, neg_strategy, alpha_score, appreciation_potential, links, 
+      metadata, floor_level, source, source_name, vetted, analyst_notes,
+      price_reduction_amount, price_reduction_percent, days_since_reduction,
+      epc_improvement_potential, est_capex_requirement,
+      waitrose_distance, whole_foods_distance, wellness_hub_distance,
+      archived_at, archive_reason
+    )
+    SELECT 
+      id, address, area, image_url, gallery, streetview_url, floorplan_url,
+      list_price, realistic_price, sqft, price_per_sqm, 
+      nearest_tube_distance, park_proximity, commute_paternoster, 
+      commute_canada_square, is_value_buy, epc, tenure, 
+      service_charge, ground_rent, lease_years_remaining,
+      dom, neg_strategy, alpha_score, appreciation_potential, links, 
+      metadata, floor_level, source, source_name, vetted, analyst_notes,
+      price_reduction_amount, price_reduction_percent, days_since_reduction,
+      epc_improvement_potential, est_capex_requirement,
+      waitrose_distance, whole_foods_distance, wellness_hub_distance,
+      CURRENT_TIMESTAMP as archived_at, 'Shallow data: Needs Enrichment' as archive_reason 
+    FROM properties WHERE ${shallowQuery}
+  `);
+  const purge = db.prepare(`DELETE FROM properties WHERE ${shallowQuery}`);
+  
+  try {
+    const moveInfo = move.run();
+    if (moveInfo.changes > 0) {
+      const purgeInfo = purge.run();
+      console.log(`DAT-075: Archived ${moveInfo.changes} shallow records for enrichment.`);
+    }
+  } catch (e) {
+    console.error('Failed to archive shallow records:', e.message);
   }
 
   console.log('Database initialization complete.');
@@ -239,6 +323,42 @@ const server = http.createServer((req, res) => {
       }
     }
     // 5. Inbox
+    else if (url.pathname === '/api/inbox/batch' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const data = JSON.parse(body); // { action: 'approve' | 'reject', filenames: string[] }
+          if (data.action && Array.isArray(data.filenames)) {
+            const results = { success: [], failed: [] };
+            const targetDir = data.action === 'approve' ? TRIAGED_DIR : ARCHIVE_INBOX_DIR;
+            
+            for (const filename of data.filenames) {
+              const sourcePath = path.join(INBOX_DIR, filename);
+              const targetPath = path.join(targetDir, filename);
+              if (fs.existsSync(sourcePath)) {
+                try {
+                  fs.renameSync(sourcePath, targetPath);
+                  results.success.push(filename);
+                } catch (e) {
+                  results.failed.push({ filename, error: e.message });
+                }
+              } else {
+                results.failed.push({ filename, error: 'File not found' });
+              }
+            }
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ message: `Batch ${data.action} completed`, results }));
+          } else {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Missing action or filenames array' }));
+          }
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        }
+      });
+    }
     else if (url.pathname === '/api/inbox' && req.method === 'GET') {
       const files = fs.readdirSync(INBOX_DIR).filter(f => f.endsWith('.json'));
       const fileData = files.map(filename => {

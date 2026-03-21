@@ -22,6 +22,8 @@ import PropertyImage from './PropertyImage';
 import PipelineTracker from './PipelineTracker';
 import SourceHub from './SourceHub';
 
+import FloorplanViewer from './FloorplanViewer';
+
 interface PreviewDrawerProps {
   property: PropertyWithCoords | null;
   isOpen: boolean;
@@ -161,11 +163,10 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
               />
             </div>
             
-            <div className={`h-full w-full bg-white/5 flex items-center justify-center p-4 transition-all duration-500 ${activeView === 'floorplan' ? 'opacity-100 scale-100' : 'opacity-0 scale-95 invisible absolute inset-0'}`}>
-              <PropertyImage 
-                src={property.floorplan_url || ''}
-                alt="Floorplan"
-                className="max-w-full max-h-full object-contain"
+            <div className={`h-full w-full bg-linear-bg flex items-center justify-center p-4 transition-all duration-500 ${activeView === 'floorplan' ? 'opacity-100 scale-100' : 'opacity-0 scale-95 invisible absolute inset-0'}`}>
+              <FloorplanViewer 
+                url={property.floorplan_url || ''}
+                address={property.address}
               />
             </div>
 

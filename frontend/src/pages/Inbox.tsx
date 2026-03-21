@@ -13,6 +13,8 @@ import {
   Maximize2
 } from 'lucide-react';
 
+import FloorplanViewer from '../components/FloorplanViewer';
+
 const API_BASE = '/api';
 
 interface RawListing {
@@ -394,20 +396,14 @@ const Inbox: React.FC = () => {
                 </div>
               </div>
             ) : viewMode === 'floorplan' ? (
-              <div className="flex-grow overflow-hidden bg-linear-bg flex items-center justify-center p-8">
+              <div className="flex-grow overflow-hidden p-6 bg-linear-bg">
                 {currentListing.floorplan_url ? (
-                  <div className="relative w-full h-full flex items-center justify-center bg-white/5 rounded-2xl border border-linear-border overflow-hidden">
-                    <PropertyImage 
-                      src={currentListing.floorplan_url} 
-                      alt="Floorplan" 
-                      className="max-w-full max-h-full object-contain"
-                    />
-                    <div className="absolute bottom-4 right-4 px-3 py-1 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold rounded-lg border border-white/10 uppercase tracking-widest">
-                      Spatial Blueprint
-                    </div>
-                  </div>
+                  <FloorplanViewer 
+                    url={currentListing.floorplan_url} 
+                    address={currentListing.address} 
+                  />
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-center px-8">
+                  <div className="h-full flex flex-col items-center justify-center text-center px-8 bg-linear-card/20 rounded-2xl border border-dashed border-linear-border">
                     <div className="h-16 w-16 bg-linear-card text-linear-text-muted rounded-2xl flex items-center justify-center mb-6 border border-linear-border">
                       <Layers size={32} />
                     </div>

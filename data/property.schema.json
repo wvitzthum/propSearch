@@ -203,6 +203,37 @@
       "maximum": 10,
       "description": "Calculated likelihood of capital growth over a 5-year horizon (0-10)."
     },
+    "price_reduction_amount": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total amount the asking price has been reduced by."
+    },
+    "price_reduction_percent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Percentage of the asking price that has been reduced."
+    },
+    "days_since_reduction": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of days since the last price reduction."
+    },
+    "waitrose_distance": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Distance (in meters) to the nearest Waitrose."
+    },
+    "whole_foods_distance": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Distance (in meters) to the nearest Whole Foods."
+    },
+    "wellness_hub_distance": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Distance (in meters) to the nearest Wellness hub."
+    },
     "links": {
       "type": "array",
       "items": {

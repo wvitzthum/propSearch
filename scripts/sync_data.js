@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const Database = require('better-sqlite3');
+const { execSync } = require('child_process');
 
 const DATA_DIR = path.join(__dirname, '../data');
 const DB_PATH = path.join(DATA_DIR, 'propSearch.db');
@@ -10,6 +11,36 @@ const TRIAGED_DIR = path.join(DATA_DIR, 'triaged');
 const IMPORT_DIR = path.join(DATA_DIR, 'import');
 
 const db = new Database(DB_PATH);
+
+/**
+ * Call the visual scraper to enrich property data.
+ */
+function enrichVisuals(item) {
+  if (!item.url) return item;
+  
+  // Only enrich if images or floorplan are missing
+  if (item.image_url && item.floorplan_url && item.gallery && item.gallery.length > 0) {
+    return item;
+  }
+
+  console.log(`Enriching visuals for: ${item.address || item.url}`);
+  try {
+    const output = execSync(`node ${path.join(__dirname, 'scrape_visuals.js')} "${item.url}"`, { encoding: 'utf8' });
+    const match = output.match(/--- Extraction Complete ---\n([\s\S]*)/);
+    if (match) {
+      const result = JSON.parse(match[1]);
+      return {
+        ...item,
+        image_url: item.image_url || result.image_url,
+        floorplan_url: item.floorplan_url || result.floorplan_url,
+        gallery: (item.gallery && item.gallery.length > 0) ? item.gallery : result.gallery
+      };
+    }
+  } catch (e) {
+    console.error(`Visual enrichment failed for ${item.url}: ${e.message}`);
+  }
+  return item;
+}
 
 async function sync() {
   console.log('--- propSearch Data Sync Cycle (SQLite) Started ---');
@@ -30,7 +61,8 @@ async function sync() {
           
           if (!mergedItem.address || !mergedItem.area) throw new Error('Missing address or area');
           
-          const processedItem = processItem(mergedItem);
+          const enrichedItem = enrichVisuals(mergedItem);
+          const processedItem = processItem(enrichedItem);
           dailySnapshot.push(processedItem);
           
           db.prepare("UPDATE manual_queue SET status = 'Completed', processed_at = CURRENT_TIMESTAMP WHERE id = ?").run(item.id);
@@ -51,8 +83,10 @@ async function sync() {
       console.log(`Importing ${file}...`);
       try {
         const items = JSON.parse(fs.readFileSync(path.join(IMPORT_DIR, file), 'utf8'));
-        for (const item of items) {
-          const processedItem = processItem(item);
+        const itemsArray = Array.isArray(items) ? items : [items];
+        for (const item of itemsArray) {
+          const enrichedItem = enrichVisuals(item);
+          const processedItem = processItem(enrichedItem);
           dailySnapshot.push(processedItem);
         }
         
@@ -75,7 +109,8 @@ async function sync() {
       for (const file of triagedFiles) {
         try {
           const item = JSON.parse(fs.readFileSync(path.join(TRIAGED_DIR, file), 'utf8'));
-          const processedItem = processItem(item);
+          const enrichedItem = enrichVisuals(item);
+          const processedItem = processItem(enrichedItem);
           dailySnapshot.push(processedItem);
           
           // Archive triaged lead
@@ -100,15 +135,17 @@ async function sync() {
       dom, neg_strategy, alpha_score, appreciation_potential, links, 
       metadata, floor_level, source, source_name, vetted, analyst_notes,
       price_reduction_amount, price_reduction_percent, days_since_reduction,
-      epc_improvement_potential, est_capex_requirement
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      epc_improvement_potential, est_capex_requirement,
+      waitrose_distance, whole_foods_distance, wellness_hub_distance
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const updateStmt = db.prepare(`
     UPDATE properties SET 
       list_price = ?, realistic_price = ?, dom = ?, metadata = ?,
       price_reduction_amount = ?, price_reduction_percent = ?, days_since_reduction = ?,
-      epc_improvement_potential = ?, est_capex_requirement = ?
+      epc_improvement_potential = ?, est_capex_requirement = ?,
+      waitrose_distance = ?, whole_foods_distance = ?, wellness_hub_distance = ?
     WHERE id = ?
   `);
 
@@ -126,6 +163,7 @@ async function sync() {
           newItem.list_price, newItem.realistic_price, newItem.dom || null, JSON.stringify(metadata),
           newItem.price_reduction_amount || null, newItem.price_reduction_percent || null, newItem.days_since_reduction || null,
           newItem.epc_improvement_potential || null, newItem.est_capex_requirement || null,
+          newItem.waitrose_distance || null, newItem.whole_foods_distance || null, newItem.wellness_hub_distance || null,
           existing.id
         );
       } else {
@@ -147,7 +185,8 @@ async function sync() {
           JSON.stringify(metadata), newItem.floor_level || null, newItem.source || 'Automated Scrape', 
           newItem.source_name || null, newItem.vetted ? 1 : 0, newItem.analyst_notes || null,
           newItem.price_reduction_amount || null, newItem.price_reduction_percent || null, newItem.days_since_reduction || null,
-          newItem.epc_improvement_potential || null, newItem.est_capex_requirement || null
+          newItem.epc_improvement_potential || null, newItem.est_capex_requirement || null,
+          newItem.waitrose_distance || null, newItem.whole_foods_distance || null, newItem.wellness_hub_distance || null
         );
       }
     } catch (e) {

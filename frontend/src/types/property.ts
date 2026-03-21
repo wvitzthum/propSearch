@@ -6,6 +6,8 @@ export type Area =
   | "Belsize Park (NW3)"
   | "West Hampstead (NW6)"
   | "Chelsea (SW3/SW10)"
+  | "Chelsea (SW3)"
+  | "Chelsea (SW10)"
   | "Primrose Hill (NW1)";
 
 export type EPCRating = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
@@ -48,9 +50,11 @@ export interface Property {
   alpha_score: number;
   appreciation_potential: number;
   price_reduction_amount?: number;
-  price_reduction_pct?: number;
+  price_reduction_percent?: number;
+  days_since_reduction?: number;
   price_reduction_date?: string;
   waitrose_distance?: number;
+  whole_foods_distance?: number;
   wellness_hub_distance?: number;
   epc_improvement_potential?: EPCRating;
   est_capex_requirement?: number;

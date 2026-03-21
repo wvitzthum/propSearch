@@ -37,7 +37,8 @@
     "source_name": "Portal Alpha",
     "service_charge": 3500,
     "ground_rent": 0,
-    "lease_years_remaining": 999
+    "lease_years_remaining": 999,
+    "waitrose_distance": 350
   },
   {
     "id": "demo-002",
@@ -77,7 +78,8 @@
     "source_name": "Portal Beta",
     "service_charge": 2196,
     "ground_rent": 150,
-    "lease_years_remaining": 105
+    "lease_years_remaining": 105,
+    "waitrose_distance": 600
   },
   {
     "id": "demo-003",
@@ -118,5 +120,84 @@
     "service_charge": 4500,
     "ground_rent": 160,
     "lease_years_remaining": 165
+  },
+  {
+    "id": "demo-004",
+    "address": "Hillmarton Road, N7",
+    "area": "Islington (N7)",
+    "image_url": "https://media.rightmove.co.uk/31k/30123/12711096/30123_12711096_IMG_00_0000_max_1176x786.jpeg",
+    "gallery": [
+      "https://media.rightmove.co.uk/31k/30123/12711096/30123_12711096_IMG_01_0000_max_1176x786.jpeg",
+      "https://media.rightmove.co.uk/31k/30123/12711096/30123_12711096_IMG_02_0000_max_1176x786.jpeg",
+      "https://media.rightmove.co.uk/31k/30123/12711096/30123_12711096_IMG_03_0000_max_1176x786.jpeg"
+    ],
+    "streetview_url": "https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=51.5514,-0.1234",
+    "list_price": 600000,
+    "realistic_price": 582000,
+    "sqft": 864,
+    "price_per_sqm": 7476,
+    "nearest_tube_distance": 700,
+    "park_proximity": 500,
+    "commute_paternoster": 25,
+    "commute_canada_square": 35,
+    "is_value_buy": true,
+    "epc": "D",
+    "tenure": "Share of Freehold",
+    "dom": 8,
+    "neg_strategy": "Market Value: -3% bid",
+    "alpha_score": 8.4,
+    "appreciation_potential": 7.6,
+    "links": ["https://www.rightmove.co.uk/demo-listing-004"],
+    "metadata": {
+      "first_seen": "2026-03-08",
+      "last_seen": "2026-03-10",
+      "discovery_count": 1,
+      "is_new": true
+    },
+    "floor_level": "Ground",
+    "source": "Automated Scrape",
+    "source_name": "Portal Delta",
+    "service_charge": 1200,
+    "ground_rent": 0,
+    "lease_years_remaining": 999
+  },
+  {
+    "id": "demo-005",
+    "address": "Mill Lane, NW6",
+    "area": "West Hampstead (NW6)",
+    "image_url": "https://media.rightmove.co.uk/11k/10433/144785342/10433_144785342_IMG_00_0000_max_1176x786.jpeg",
+    "gallery": [
+      "https://media.rightmove.co.uk/11k/10433/144785342/10433_144785342_IMG_01_0000_max_1176x786.jpeg",
+      "https://media.rightmove.co.uk/11k/10433/144785342/10433_144785342_IMG_02_0000_max_1176x786.jpeg"
+    ],
+    "streetview_url": "https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=51.5490,-0.1895",
+    "list_price": 599950,
+    "realistic_price": 599950,
+    "sqft": 734,
+    "price_per_sqm": 8797,
+    "nearest_tube_distance": 280,
+    "park_proximity": 80,
+    "commute_paternoster": 22,
+    "commute_canada_square": 28,
+    "is_value_buy": true,
+    "epc": "D",
+    "tenure": "Share of Freehold",
+    "dom": 80,
+    "neg_strategy": "N/A",
+    "alpha_score": 9.2,
+    "appreciation_potential": 7.5,
+    "links": ["https://www.rightmove.co.uk/demo-listing-005"],
+    "metadata": {
+      "first_seen": "2026-03-01",
+      "last_seen": "2026-03-10",
+      "discovery_count": 1,
+      "is_new": false
+    },
+    "floor_level": "1st",
+    "source": "Automated Scrape",
+    "source_name": "Portal Epsilon",
+    "service_charge": 3339,
+    "ground_rent": 0,
+    "lease_years_remaining": 993
   }
 ]

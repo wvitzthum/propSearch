@@ -37,7 +37,8 @@
     "source_name": "Portal Alpha",
     "service_charge": 3500,
     "ground_rent": 0,
-    "lease_years_remaining": 999
+    "lease_years_remaining": 999,
+    "waitrose_distance": 350
   },
   {
     "id": "demo-002",
@@ -77,7 +78,8 @@
     "source_name": "Portal Beta",
     "service_charge": 2196,
     "ground_rent": 150,
-    "lease_years_remaining": 105
+    "lease_years_remaining": 105,
+    "waitrose_distance": 600
   },
   {
     "id": "demo-003",

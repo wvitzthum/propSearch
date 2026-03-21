@@ -19,8 +19,7 @@ import {
   ArrowRight, 
   BarChart3,
   TrendingUp,
-  Layers,
-  ExternalLink
+  Layers
 } from 'lucide-react';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import { useFinancialData } from '../hooks/useFinancialData';
@@ -32,6 +31,8 @@ import PipelineTracker from '../components/PipelineTracker';
 import SourceHub from '../components/SourceHub';
 import type { PropertyWithCoords } from '../types/property';
 import { usePipeline } from '../hooks/usePipeline';
+
+import FloorplanViewer from '../components/FloorplanViewer';
 
 const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -171,39 +172,14 @@ const PropertyDetail: React.FC = () => {
                   )}
                 </div>
               ) : (
-                <div className="animate-in fade-in duration-500">
+                <div className="animate-in fade-in duration-500 h-[600px]">
                   {property.floorplan_url ? (
-                    <div className="relative bg-linear-card rounded-2xl border border-linear-border overflow-hidden group p-4">
-                      <div className="relative aspect-[4/3] w-full bg-white/5 rounded-xl overflow-hidden flex items-center justify-center">
-                        <PropertyImage 
-                          src={property.floorplan_url} 
-                          alt="Floorplan" 
-                          className="max-w-full max-h-full object-contain"
-                        />
-                      </div>
-                      <div className="mt-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-lg bg-linear-bg border border-linear-border flex items-center justify-center text-linear-accent">
-                            <Layers size={16} />
-                          </div>
-                          <div>
-                            <span className="text-[10px] font-bold text-white block">Institutional Floorplan</span>
-                            <span className="text-[9px] text-linear-text-muted uppercase tracking-widest">Verified spatial volume analysis</span>
-                          </div>
-                        </div>
-                        <a 
-                          href={property.floorplan_url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="px-4 py-2 bg-linear-bg border border-linear-border rounded-lg text-[9px] font-black uppercase tracking-widest text-linear-text-muted hover:text-white hover:border-linear-accent transition-all flex items-center gap-2"
-                        >
-                          <ExternalLink size={12} />
-                          Open Full Res
-                        </a>
-                      </div>
-                    </div>
+                    <FloorplanViewer 
+                      url={property.floorplan_url} 
+                      address={property.address} 
+                    />
                   ) : (
-                    <div className="py-20 bg-linear-card/30 border border-dashed border-linear-border rounded-2xl flex flex-col items-center justify-center text-center px-8">
+                    <div className="py-20 h-full bg-linear-card/30 border border-dashed border-linear-border rounded-2xl flex flex-col items-center justify-center text-center px-8">
                        <div className="h-16 w-16 bg-linear-card text-linear-text-muted rounded-2xl flex items-center justify-center mb-6 border border-linear-border">
                           <Layers size={32} />
                         </div>

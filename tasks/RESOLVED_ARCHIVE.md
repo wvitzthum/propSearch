@@ -2,6 +2,9 @@
 
 | ID | Priority | Effort | Task | Status | Responsible | Resolved By | Date |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| DAT-070 | High | Medium | Data Analysis: Audit current Alpha Scores and suggest refinement to "Spatial" weight based on 2026 Tube connectivity. | Done | Data Analyst | Product Owner | - | 2026-03-09 |
+| DAT-090 | High | Medium | Data: Research and implement floorplan-specific extraction from portal JSON blobs (Rightmove/Zoopla). | Done | Data Analyst | Product Owner | DE-090 | 2026-03-16 |
+| DAT-095 | High | Medium | Data: Enriched Hatherley Grove property (W2) with high-fidelity Alpha Score (8.54) and live data. | Done | Data Analyst | Senior Analyst | - | 2026-03-18 |
 | DE-090 | High | Low | Infrastructure: Add `floorplan_url` to SQLite `properties` table, `property.schema.json`, and `property.ts` types. | Done | Data Engineer | Data Engineer | 2026-03-16 |
 | FE-088 | High | Low | UI Fix: Resolve React DOM nesting error in `PropertyTable.tsx` by refactoring to a two-row header for 'Acquisition Model' grouping. | Done | Frontend Engineer | Frontend Engineer | 2026-03-16 |
 | FE-089 | High | Low | UI/UX: Enhance `Inbox.tsx` to gracefully handle CSP framing blocks from property portals. Added detection for known blockers and a prominent 'Focused Peek' workflow. | Done | Frontend Engineer | Frontend Engineer | 2026-03-16 |
