@@ -1,7 +1,7 @@
 {
-  "name": "Gemini CLI Environment",
+  "name": "Claude CLI Environment",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  
+
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
       "version": "latest"
@@ -17,7 +17,7 @@
     ".env"
   ],
 
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y sqlite3 && pip install google-generativeai && npm install -g @google/gemini-cli && curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh && ~/.local/bin/rtk init --global",
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y sqlite3 && curl -fsSL https://download.anthropic.com/claude-code/install.sh | sh && curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh && ~/.local/bin/rtk init --global",
 
   "customizations": {
     "vscode": {

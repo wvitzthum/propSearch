@@ -9,7 +9,7 @@ Core data architecture, storage solutions (SQLite), and automated ingestion pipe
 ### 1. Database & Storage Architecture
 - **SQLite Management:** Ensure efficient schema design, indexing, and WAL (Write-Ahead Logging) mode.
 - **Data Resilience:** Maintain automated JSONL backups of the master dataset.
-- **Local API Integration:** Maintain Express server for optimized SQL queries.
+- **Local API Integration:** Maintain Node.js HTTP server (`server/index.js`) for optimized SQL queries via `better-sqlite3`. No Express dependency.
 
 ### 2. Automated Ingestion Pipeline
 - **`sync_data.js` Maintenance:** Optimize sync script for multi-source data ingestion (Manual Queue, Import Zone, Analyst-curated leads).
@@ -20,5 +20,8 @@ Core data architecture, storage solutions (SQLite), and automated ingestion pipe
 - **Spatial Assets:** Source and maintain `data/london_metro.geojson`.
 - **Coordinate Precision:** Ensure correct geocoding for markers.
 
+## Data Integrity & Approval Protocol
+- **MANDATORY:** You must explicitly ask for user approval before deleting any property records, modifying the SQLite schema, or performing bulk updates (e.g., re-syncing `dom` or `price_reduction` for all items).
+- **Zero-Byte Deletions:** Any file deletion (JSON, JSONL, DB) requires prior confirmation with the user.
+
 ---
-*Refer to `GEMINI.md` for territorial boundaries and behavioral mandates.*

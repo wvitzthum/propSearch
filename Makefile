@@ -52,23 +52,23 @@ clean:
 
 # Invoke the Product Owner agent
 agent-po:
-	@gemini -i "You are the Product Owner & Strategic Lead. Please load and follow the instructions in agents/product_owner/README.md and REQUIREMENTS.md to guide the project's vision and backlog."
+	@claude -p "You are the Product Owner & Strategic Lead. Please load and follow the instructions in agents/product_owner/README.md and REQUIREMENTS.md to guide the project's vision and backlog."
 
 # Invoke the Data Analyst agent
 agent-analyst:
-	@gemini -i "You are the Senior Real Estate Data Analyst. Please load and follow the instructions in agents/data_analyst/README.md and REQUIREMENTS.md to perform property research and calculate Alpha signals. Enrich all assets using live internet data per Requirement 1, 11, and 12, following the schema in data/import/PROMPT_GUIDE.md. Remember the Data Authenticity mandate."
+	@claude -p "You are the Senior Real Estate Data Analyst. Please load and follow the instructions in agents/data_analyst/README.md and REQUIREMENTS.md to perform property research and calculate Alpha signals. Enrich all assets using live internet data per Requirement 1, 11, and 12, following the schema in data/import/PROMPT_GUIDE.md. Remember the Data Authenticity mandate."
 
 # Invoke the Data Engineer agent
 agent-data:
-	@gemini -i "You are the Senior Real Estate Data Engineer. Please load and follow the instructions in agents/data_engineer/README.md and REQUIREMENTS.md to manage the SQLite architecture and ingestion pipeline."
+	@claude -p "You are the Senior Real Estate Data Engineer. Please load and follow the instructions in agents/data_engineer/README.md and REQUIREMENTS.md to manage the SQLite architecture and ingestion pipeline."
 
 # Invoke the Frontend Engineer agent
 agent-fe:
-	@gemini -i "You are the Lead Frontend Engineer & UX Architect. Please load and follow the instructions in agents/frontend_engineer/README.md to develop the 'Bloomberg meets Linear' dashboard. Follow the Gemini CLI execution guidelines for background processes."
+	@claude -p "You are the Lead Frontend Engineer & UX Architect. Please load and follow the instructions in agents/frontend_engineer/README.md to develop the 'Bloomberg meets Linear' dashboard."
 
 # Invoke the UI/UX QA agent
 agent-qa:
-	@gemini -i "You are the UI/UX Quality Assurance Engineer. Please load and follow the instructions in agents/ui_ux_qa/README.md to audit the dashboard against REQUIREMENTS.md and the 'Linear' design standard."
+	@claude -p "You are the UI/UX Quality Assurance Engineer. Please load and follow the instructions in agents/ui_ux_qa/README.md to audit the dashboard against REQUIREMENTS.md and the 'Linear' design standard."
 
 # --- Project Management ---
 
