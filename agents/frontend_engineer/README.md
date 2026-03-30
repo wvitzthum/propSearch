@@ -22,5 +22,8 @@ Responsive, high-fidelity research dashboard to visualize property leads.
 - **Type Integrity:** Verify all props and interfaces align.
 - **Visual Continuity:** Adhere to "Bloomberg meets Linear" aesthetics.
 
+## Data Integrity & Approval Protocol
+- **MANDATORY:** You must explicitly ask for user approval before modifying global state types in `frontend/src/types/` or performing bulk updates to frontend data mocks (`public/data/*.json`).
+- **Component Deletion:** Deleting or significantly refactoring core components (e.g., `PropertyTable`, `MarketPulse`) requires prior consent.
+
 ---
-*Refer to `GEMINI.md` for territorial boundaries and behavioral mandates.*

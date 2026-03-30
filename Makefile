@@ -1,12 +1,12 @@
-Y.PHONY: install start build lint clean agent-po agent-analyst agent-data agent-fe agent-qa tasks
+.PHONY: install start build lint clean agent agent-po agent-analyst agent-data agent-fe agent-qa agent-de tasks help
 
 # Default target
 all: install start
 
 # --- Standard Build & Development ---
-# [AGENT OPTIMIZATION]: All high-volume commands (npm, tsc, lint, sync) are 
+# [AGENT OPTIMIZATION]: All high-volume commands (npm, tsc, lint, sync) are
 # optimized via 'rtk' (Rust Token Killer) to reduce token noise by 60-90%.
-# If a cryptic error occurs, agents should use 'rtk --raw <command>' to 
+# If a cryptic error occurs, agents should use 'rtk --raw <command>' to
 # view the unedited terminal output.
 
 # Install all dependencies
@@ -48,35 +48,69 @@ clean:
 	rm -rf frontend/dist
 	rm -rf frontend/node_modules/.vite
 
-# --- Agent Aliases ---
+# --- Agent Orchestrator ---
+# Usage: make agent agent=po
+#        make agent agent=analyst task=DE-140
+#        make agent agent=fe "refactor PropertyTable"
+agent:
+	@./agents/run.sh $(agent) $(task) "$(context)"
+
+# --- Individual Agent Aliases ---
+# These use the orchestrator which loads AGENTS.md + agent README automatically
 
 # Invoke the Product Owner agent
 agent-po:
-	@claude -p "You are the Product Owner & Strategic Lead. Please load and follow the instructions in agents/product_owner/README.md and REQUIREMENTS.md to guide the project's vision and backlog."
+	@./agents/run.sh po
 
 # Invoke the Data Analyst agent
 agent-analyst:
-	@claude -p "You are the Senior Real Estate Data Analyst. Please load and follow the instructions in agents/data_analyst/README.md and REQUIREMENTS.md to perform property research and calculate Alpha signals. Enrich all assets using live internet data per Requirement 1, 11, and 12, following the schema in data/import/PROMPT_GUIDE.md. Remember the Data Authenticity mandate."
+	@./agents/run.sh analyst
 
 # Invoke the Data Engineer agent
-agent-data:
-	@claude -p "You are the Senior Real Estate Data Engineer. Please load and follow the instructions in agents/data_engineer/README.md and REQUIREMENTS.md to manage the SQLite architecture and ingestion pipeline."
+agent-de:
+	@./agents/run.sh de
+
+# Alias for backward compatibility
+agent-data: agent-de
 
 # Invoke the Frontend Engineer agent
 agent-fe:
-	@claude -p "You are the Lead Frontend Engineer & UX Architect. Please load and follow the instructions in agents/frontend_engineer/README.md to develop the 'Bloomberg meets Linear' dashboard."
+	@./agents/run.sh fe
 
 # Invoke the UI/UX QA agent
 agent-qa:
-	@claude -p "You are the UI/UX Quality Assurance Engineer. Please load and follow the instructions in agents/ui_ux_qa/README.md to audit the dashboard against REQUIREMENTS.md and the 'Linear' design standard."
+	@./agents/run.sh qa
 
 # --- Project Management ---
-
-# Spawn all agent terminals (Requires VS Code 'code' CLI or Task Runner)
-spawn-agents:
-	@./scripts/spawn_agents.sh
 
 # Display the active backlog from Tasks.md
 tasks:
 	@echo "--- Active Backlog ---"
 	@grep -v "Done" Tasks.md | grep -E "^\| [A-Z]+-[0-9]+" || echo "No active tasks found."
+
+# Display available make targets
+help:
+	@echo "propSearch Makefile"
+	@echo ""
+	@echo "Development:"
+	@echo "  make install    - Install frontend dependencies"
+	@echo "  make start      - Start API server + frontend dev"
+	@echo "  make api        - Start API server only"
+	@echo "  make sync       - Run data sync pipeline"
+	@echo "  make build      - Build frontend for production"
+	@echo "  make lint       - Run linter"
+	@echo "  make clean      - Clean build artifacts"
+	@echo ""
+	@echo "Agents (via orchestrator):"
+	@echo "  make agent-po      - Product Owner"
+	@echo "  make agent-analyst - Data Analyst"
+	@echo "  make agent-de      - Data Engineer"
+	@echo "  make agent-fe      - Frontend Engineer"
+	@echo "  make agent-qa      - UI/UX QA"
+	@echo ""
+	@echo "  make agent agent=po                    - Generic agent invocation"
+	@echo "  make agent agent=analyst task=DE-140   - With task context"
+	@echo "  make agent agent=fe \"custom context\"   - With extra context"
+	@echo ""
+	@echo "Also available:"
+	@echo "  source agents/aliases.sh  - Shell aliases (po, analyst, de, fe, qa)"
