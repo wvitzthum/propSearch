@@ -51,6 +51,7 @@ To fulfill the "Empirical Standard" (Requirement 1), the Data Analyst MUST utili
 ## Research Assets
 - **Portal Proxy Research:** See `agents/data_analyst/RESEARCH_PORTAL_PROXY.md` for iframe embedding feasibility (X-Frame-Options, CSP analysis).
 - **Metric Definitions:** See `agents/ui_ux_qa/METRIC_DEFINITIONS.md` for formal Alpha Score and market metric methodology.
+- **Lead Enrichment Script:** Run `agents/data_analyst/enrich_leads.js` to automatically enrich inbox leads with visuals (images, floorplans, streetview) via the scraper.
 
 ## Data Integrity & Approval Protocol
 - **MANDATORY:** You must explicitly ask for user approval before modifying core property metrics (`list_price`, `sqft`, `floor_level`) or deleting any macro-economic indicators from `data/macro_trend.json`.

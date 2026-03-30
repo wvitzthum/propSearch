@@ -15,6 +15,7 @@ Core data architecture, storage solutions (SQLite), and automated ingestion pipe
 - **`sync_data.js` Maintenance:** Optimize sync script for multi-source data ingestion (Manual Queue, Import Zone, Analyst-curated leads).
 - **Surgical Promotion Logic:** Moving triaged leads from Inbox to Master DB with 100% integrity.
 - **Validation:** Enforce strict JSON schema validation.
+- **Price History Backfill:** Run `agents/data_engineer/backfill_price_history.js` to populate the `price_history` table for existing properties (DE-140).
 
 ### 3. Spatial Intelligence Infrastructure
 - **Spatial Assets:** Source and maintain `data/london_metro.geojson`.
