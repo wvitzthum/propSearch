@@ -142,10 +142,19 @@ fi
 # Build the prompt
 SYSTEM_PROMPT="You are the ${AGENTS[$AGENT]:-Agent} for the propSearch project (private London property acquisition research dashboard)."
 
-# Execute via claude with project directory as working dir
+# Execute via claude in interactive mode with context pre-loaded
+# --bare: minimal mode, skip auto-discovery
+# --system-prompt: inject our custom context
+# Type 'exit' when done
 cd "$PROJECT_DIR"
-claude -p "$SYSTEM_PROMPT
+
+# Build system prompt with agent role and context
+SYSTEM_PROMPT="You are the ${AGENTS[$AGENT]:-Agent} for the propSearch project (private London property acquisition research dashboard).
 
 $CONTEXT
 
-Begin your work now."
+You have access to the full project. Review your responsibilities in the agent README above. Begin working on tasks or answer questions."
+
+ANTHROPIC_API_KEY=$($API_KEY_HELPER) \
+ANTHROPIC_BASE_URL="https://api.minimax.io/anthropic" \
+exec claude --bare --system-prompt "$SYSTEM_PROMPT"
