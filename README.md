@@ -14,6 +14,7 @@
 ### 1. Prerequisites
 - **Node.js:** v20.x or higher.
 - **Make:** Standard Unix `make` (optional but recommended).
+- **RTK:** Rust Token Killer (installed via `curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh`)
 
 ### 2. Installation
 From the root directory, run:
@@ -64,31 +65,105 @@ Drop raw JSON listings into `data/import/`. The next sync cycle (`make sync`) wi
 
 ---
 
-## 🛠 Developer & Agent Ecosystem
+## 🤖 Agent System
+
+We utilize a specialized multi-agent workflow to ensure architectural purity. All agents run via Claude CLI with MiniMax 2.7 backend.
 
 ### Agent Responsibilities
-We utilize a specialized multi-agent workflow to ensure architectural purity.
-1.  **[Product Owner](./agents/product_owner/README.md):** Vision, Roadmap, and Backlog management ([Tasks.md](./Tasks.md)).
+1.  **[Product Owner](./agents/product_owner/README.md):** Vision, Roadmap, and Backlog management.
 2.  **[Data Analyst](./agents/data_analyst/README.md):** Property research, metric normalization, Alpha Scoring, and macro market trends.
-3.  **[Data Engineer](./agents/data_engineer/README.md):** Data architecture, storage (SQLite), ingestion pipelines (`sync_data.js`), and backend API.
+3.  **[Data Engineer](./agents/data_engineer/README.md):** Data architecture, storage (SQLite), ingestion pipelines, and backend API.
 4.  **[Frontend Engineer](./agents/frontend_engineer/README.md):** "Bloomberg meets Linear" UI implementation.
 5.  **[UI/UX QA](./agents/ui_ux_qa/README.md):** Aesthetic audits and functional validation.
 
-### Management Commands
-- `make sync`: Manually trigger the data ingestion and normalization pipeline.
-- `make build`: Prepare the frontend for production deployment.
-- `make lint`: Run the linter to ensure code quality.
-- `make tasks`: View the currently active backlog from `Tasks.md`.
+### Running Agents
+
+**Using Make:**
+```bash
+make agent-po              # Product Owner
+make agent-analyst         # Data Analyst
+make agent-de             # Data Engineer
+make agent-fe             # Frontend Engineer
+make agent-qa             # UI/UX QA
+```
+
+**With task context:**
+```bash
+make agent agent=analyst task=DE-140
+```
+
+**Direct script:**
+```bash
+./agents/run.sh analyst
+./agents/run.sh fe "refactor PropertyTable"
+```
+
+**Shell aliases** (source `agents/aliases.sh`):
+```bash
+source agents/aliases.sh
+po        # Product Owner
+analyst   # Data Analyst
+de        # Data Engineer
+fe        # Frontend Engineer
+qa        # UI/UX QA
+```
+
+See [agents/README.md](./agents/README.md) for full documentation.
+
+### Agent Behavioral Rules
+All agents must follow [AGENTS.md](./AGENTS.md) which defines:
+- Territorial boundaries (no cross-folder writes without approval)
+- RTK mandatory for high-volume operations
+- Grep-first discovery pattern
+- Data authenticity mandate (no synthetic/hallucinated data)
+
+---
+
+## 🛠 Developer Commands
+
+| Command | Description |
+|---------|-------------|
+| `make install` | Install frontend dependencies |
+| `make start` | Start API server + frontend dev |
+| `make api` | Start API server only |
+| `make sync` | Run data sync pipeline |
+| `make build` | Build frontend for production |
+| `make lint` | Run linter |
+| `make clean` | Clean build artifacts |
+| `make tasks` | View active backlog |
+| `make help` | Show all available commands |
+
+### RTK Token Tracking
+```bash
+rtk gain           # Show token savings
+rtk gain --history # Show usage history
+```
 
 ---
 
 ## 📁 Project Structure
-- `/agents`: Role-specific instructions and workflows.
-- `/data`: Property datasets, including snapshots, master registry, and `london_metro.geojson`.
-- `/frontend`: The React 19 + Tailwind CSS dashboard.
-- `/server`: Node.js Express API for data persistence and inbox triage.
-- `REQUIREMENTS.md`: The single source of truth for all project goals.
-- `DECISIONS.md`: Architectural Decision Records (ADRs).
+```
+/agents              Role-specific instructions, domain logic, and utility scripts
+  /product_owner     Vision, roadmap, strategic decisions
+  /data_analyst      Property research, Alpha scoring, macro trends
+  /data_engineer     SQLite architecture, pipelines, backend API
+  /frontend_engineer React dashboard implementation
+  /ui_ux_qa         Audits, testing, metric validation
+  /docs/archive      Archived/superseded documents
+/data                Property datasets, SQLite DB, GeoJSON
+/frontend            React 19 + Tailwind CSS dashboard
+/server              Node.js HTTP API server
+/tasks               Task backlog and archives
+```
+
+---
+
+## 📄 Key Documentation
+- [REQUIREMENTS.md](./REQUIREMENTS.md) - Project goals and requirements
+- [DECISIONS.md](./DECISIONS.md) - Architectural Decision Records (ADRs)
+- [Tasks.md](./Tasks.md) - Active task backlog
+- [AGENTS.md](./AGENTS.md) - Agent behavioral rules and territorial boundaries
+- [agents/README.md](./agents/README.md) - Agent system quick reference
 
 ---
 
