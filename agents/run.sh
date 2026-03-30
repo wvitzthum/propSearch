@@ -12,17 +12,14 @@ AGENTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROJECT_DIR="$(dirname "$AGENTS_DIR")"
 cd "$PROJECT_DIR"
 
-# Source the project's .claude/settings.json.env if it exists
-# This exports the env vars from claude settings
-if [ -f "$PROJECT_DIR/.claude/settings.json.env" ]; then
-    set -a
-    source "$PROJECT_DIR/.claude/settings.json.env"
-    set +a
+# Get MiniMax API key from api-key-helper
+API_KEY_HELPER="${HOME}/.claude/api-key-helper.sh"
+if [ -f "$API_KEY_HELPER" ]; then
+    export ANTHROPIC_API_KEY=$($API_KEY_HELPER)
 fi
 
-# Ensure we have a login token by running claude auth first
-# This uses the api_key_helper to refresh credentials
-claude auth status > /dev/null 2>&1 || true
+# Set MiniMax endpoint
+export ANTHROPIC_BASE_URL="https://api.minimax.io/anthropic"
 
 # Agent definitions: name -> display_name
 declare -A AGENTS
