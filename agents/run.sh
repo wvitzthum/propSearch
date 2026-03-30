@@ -20,6 +20,10 @@ if [ -f "$PROJECT_DIR/.claude/settings.json.env" ]; then
     set +a
 fi
 
+# Ensure we have a login token by running claude auth first
+# This uses the api_key_helper to refresh credentials
+claude auth status > /dev/null 2>&1 || true
+
 # Agent definitions: name -> display_name
 declare -A AGENTS
 AGENTS[po]="Product Owner & Strategic Lead"
@@ -142,9 +146,8 @@ fi
 SYSTEM_PROMPT="You are the ${AGENTS[$AGENT]:-Agent} for the propSearch project (private London property acquisition research dashboard)."
 
 # Execute via claude with project directory as working dir
-# This ensures claude picks up .claude/settings.json
 cd "$PROJECT_DIR"
-exec claude -p "$SYSTEM_PROMPT
+claude -p "$SYSTEM_PROMPT
 
 $CONTEXT
 
