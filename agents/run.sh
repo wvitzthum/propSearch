@@ -12,7 +12,15 @@ AGENTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROJECT_DIR="$(dirname "$AGENTS_DIR")"
 cd "$PROJECT_DIR"
 
-# Agent definitions: name -> display_name, prompt_suffix
+# Source the project's .claude/settings.json.env if it exists
+# This exports the env vars from claude settings
+if [ -f "$PROJECT_DIR/.claude/settings.json.env" ]; then
+    set -a
+    source "$PROJECT_DIR/.claude/settings.json.env"
+    set +a
+fi
+
+# Agent definitions: name -> display_name
 declare -A AGENTS
 AGENTS[po]="Product Owner & Strategic Lead"
 AGENTS[analyst]="Senior Real Estate Data Analyst"
@@ -102,8 +110,8 @@ show_help() {
     echo ""
     echo "Examples:"
     echo "  agents/run.sh po                              # Start PO agent with full context"
-    echo "  agents/run.sh analyst DE-140                 # Start Analyst with specific task"
-    echo "  agents/run.sh fe \"refactor PropertyTable\"   # Start FE with custom context"
+    echo "  agents/run.sh analyst DE-140                  # Start Analyst with specific task"
+    echo "  agents/run.sh fe \"refactor PropertyTable\"     # Start FE with custom context"
     echo ""
     echo "RTK is used automatically for all operations."
 }
@@ -133,8 +141,9 @@ fi
 # Build the prompt
 SYSTEM_PROMPT="You are the ${AGENTS[$AGENT]:-Agent} for the propSearch project (private London property acquisition research dashboard)."
 
-# Execute via claude with RTK (transparent rewriting happens automatically)
-# Using --dangerously-skip-permissions for automated agent runs if needed
+# Execute via claude with project directory as working dir
+# This ensures claude picks up .claude/settings.json
+cd "$PROJECT_DIR"
 exec claude -p "$SYSTEM_PROMPT
 
 $CONTEXT
