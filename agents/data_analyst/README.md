@@ -48,5 +48,12 @@ To fulfill the "Empirical Standard" (Requirement 1), the Data Analyst MUST utili
 
 **Pro-Tool Tip:** For any URL given, prioritize fetching the content and parsing its internal JSON structures (Requirement 3) before falling back to textual analysis.
 
+## Research Assets
+- **Portal Proxy Research:** See `agents/data_analyst/RESEARCH_PORTAL_PROXY.md` for iframe embedding feasibility (X-Frame-Options, CSP analysis).
+- **Metric Definitions:** See `agents/ui_ux_qa/METRIC_DEFINITIONS.md` for formal Alpha Score and market metric methodology.
+
+## Data Integrity & Approval Protocol
+- **MANDATORY:** You must explicitly ask for user approval before modifying core property metrics (`list_price`, `sqft`, `floor_level`) or deleting any macro-economic indicators from `data/macro_trend.json`.
+- **Alpha Score Recalculation:** If a change in logic affects >10% of existing records, you must request permission before performing the update.
+
 ---
-*Refer to `GEMINI.md` for territorial boundaries and behavioral mandates.*

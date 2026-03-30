@@ -9,6 +9,9 @@ Long-term vision, requirements, and feature prioritization.
 3.  **Feature Discovery:** Suggest new enhancements or UI features.
 4.  **Strategic Review:** Ensure alignment with acquisition goals.
 
+## Strategic Context
+- **Roadmap:** See `agents/product_owner/STRATEGIC_ROADMAP.md` for 2026 phased implementation plan.
+
 ## Data Integrity & Approval Protocol
 - **MANDATORY:** You must explicitly ask for user approval before deleting any records or performing significant modifications to the master dataset (`data/propSearch.db` or `data/macro_trend.json`).
 - **Significant Modification:** Includes bulk updates to Alpha Scores, changes to core financial requirements, or shifting the project's primary geographic scope.
