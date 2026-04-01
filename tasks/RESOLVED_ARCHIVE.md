@@ -1,5 +1,7 @@
 # propSearch: Resolved Tasks Archive
 
+> **DEPRECATED (2026-04-01):** This file is no longer maintained. All resolved tasks are now in `tasks_resolved.json` (canonical source). This file is retained for git history only.
+
 | ID | Priority | Effort | Task | Status | Responsible | Resolved By | Date |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | DAT-070 | High | Medium | Data Analysis: Audit current Alpha Scores and suggest refinement to "Spatial" weight based on 2026 Tube connectivity. | Done | Data Analyst | Product Owner | - | 2026-03-09 |

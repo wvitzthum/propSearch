@@ -33,6 +33,17 @@ Generate and maintain institutional-grade market context in `data/macro_trend.js
 ### 3. Future Appreciation Potential (0-10 Scale)
 Based on Area Momentum, Transport Connectivity, Asset Quality, and Value Gap.
 
+## Task Discovery
+Before reading the task backlog, use `jq` against `tasks/tasks.json`:
+```
+jq '.tasks[] | select(.responsible=="Data Analyst" and .status=="Todo")' tasks/tasks.json
+jq '.tasks[] | select(.section=="data_research")' tasks/tasks.json
+jq '.tasks[] | select(.id=="DAT-155")' tasks/tasks.json
+```
+After updating any task status, run `make tasks-regen` to regenerate `Tasks.md`.
+
+---
+
 ## Research & Extraction Protocol
 - **Image Extraction:** Extract portal-embedded JSON models (Rightmove `PAGE_MODEL`, Zoopla `__NEXT_DATA__`) to ensure high resolution.
 - **Lead Routing:** Raw leads to `data/inbox/`. Schema-complete JSON to `data/import/`.

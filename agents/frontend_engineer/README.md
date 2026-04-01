@@ -1,5 +1,16 @@
 # Lead Frontend Engineer: Domain Logic
 
+## Task Discovery
+Before reading the task backlog, use `jq` against `tasks/tasks.json`:
+```
+jq '.tasks[] | select(.responsible=="Frontend Engineer" and .status=="Todo")' tasks/tasks.json
+jq '.tasks[] | select(.section=="new_approved")' tasks/tasks.json
+jq '.tasks[] | select(.id=="FE-150")' tasks/tasks.json
+```
+After updating any task status, run `make tasks-regen` to regenerate `Tasks.md`.
+
+---
+
 ## Role
 Responsive, high-fidelity research dashboard to visualize property leads.
 

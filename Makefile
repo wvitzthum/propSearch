@@ -152,10 +152,25 @@ guard-install:
 	@cp scripts/pre-commit-data-guard.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 	@echo "✓ Data guard hook installed. All commits will be validated."
 
-# Display the active backlog from Tasks.md
+# --- Task Management ---
+# [AGENT OPTIMIZATION]: Task queries use tasks/tasks.json (JSON source of truth).
+# RTK-optimised jq queries (replace grep + range reads):
+#   jq '.tasks[] | select(.id=="DAT-155")'              tasks/tasks.json
+#   jq '.tasks[] | select(.status=="Todo")'             tasks/tasks.json
+#   jq '.tasks[] | select(.section=="data_research")'   tasks/tasks.json
+#   jq '.tasks[] | select(.responsible=="Data Analyst")' tasks/tasks.json
+# To mark a task Done: edit tasks/tasks.json directly (object-level write, no column risk).
+# To regenerate Tasks.md: make tasks-regen
+
+# Display the active backlog (human-readable, from generated Tasks.md)
 tasks:
 	@echo "--- Active Backlog ---"
-	@grep -v "Done" Tasks.md | grep -E "^\| [A-Z]+-[0-9]+" || echo "No active tasks found."
+	@grep -E "^\| [A-Z]+-[0-9]+" Tasks.md | grep -vE "^\| ID \|" || echo "No active tasks found."
+
+# Regenerate Tasks.md from tasks/tasks.json (run after any task status change)
+tasks-regen:
+	@python3 tasks/scripts/generate_tasks_markdown.py --write
+	@echo "✓ Tasks.md regenerated from tasks/tasks.json"
 
 # Display available make targets
 help:

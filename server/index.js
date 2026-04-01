@@ -254,48 +254,10 @@ function initializeDB() {
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_price_history_property_id ON price_history(property_id)`).run();
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_price_history_date ON price_history(date)`).run();
 
-  // DAT-075: Enrich & Archive Protocol (Shallow assets)
-  // Instead of deleting, we move to archived_properties for later enrichment
-  const shallowQuery = "sqft IS NULL OR sqft = 0 OR epc IS NULL OR epc = ''";
-  const move = db.prepare(`
-    INSERT OR REPLACE INTO archived_properties (
-      id, address, area, image_url, gallery, streetview_url, floorplan_url,
-      list_price, realistic_price, sqft, price_per_sqm, 
-      nearest_tube_distance, park_proximity, commute_paternoster, 
-      commute_canada_square, is_value_buy, epc, tenure, 
-      service_charge, ground_rent, lease_years_remaining,
-      dom, neg_strategy, alpha_score, appreciation_potential, links, 
-      metadata, floor_level, source, source_name, vetted, analyst_notes,
-      price_reduction_amount, price_reduction_percent, days_since_reduction,
-      epc_improvement_potential, est_capex_requirement,
-      waitrose_distance, whole_foods_distance, wellness_hub_distance,
-      archived_at, archive_reason
-    )
-    SELECT 
-      id, address, area, image_url, gallery, streetview_url, floorplan_url,
-      list_price, realistic_price, sqft, price_per_sqm, 
-      nearest_tube_distance, park_proximity, commute_paternoster, 
-      commute_canada_square, is_value_buy, epc, tenure, 
-      service_charge, ground_rent, lease_years_remaining,
-      dom, neg_strategy, alpha_score, appreciation_potential, links, 
-      metadata, floor_level, source, source_name, vetted, analyst_notes,
-      price_reduction_amount, price_reduction_percent, days_since_reduction,
-      epc_improvement_potential, est_capex_requirement,
-      waitrose_distance, whole_foods_distance, wellness_hub_distance,
-      CURRENT_TIMESTAMP as archived_at, 'Shallow data: Needs Enrichment' as archive_reason 
-    FROM properties WHERE ${shallowQuery}
-  `);
-  const purge = db.prepare(`DELETE FROM properties WHERE ${shallowQuery}`);
-  
-  try {
-    const moveInfo = move.run();
-    if (moveInfo.changes > 0) {
-      const purgeInfo = purge.run();
-      console.log(`DAT-075: Archived ${moveInfo.changes} shallow records for enrichment.`);
-    }
-  } catch (e) {
-    console.error('Failed to archive shallow records:', e.message);
-  }
+  // Policy (2026-04-01): NO record is ever deleted from properties.
+  // Shallow/incomplete records are flagged with archived=1 + archive_reason
+  // for Data Analyst enrichment. No auto-purge — analyst reviews flagged records.
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_properties_archived ON properties(archived)`).run();
 
   console.log('Database initialization complete.');
 }
@@ -339,7 +301,14 @@ const server = http.createServer((req, res) => {
 
       let sql = 'SELECT * FROM properties WHERE 1=1';
       const params = [];
-      
+
+      // Default: show active records only (archived=0)
+      // Pass ?archived=true to include flagged/enrichment-pending records
+      const showArchived = url.searchParams.get('archived') === 'true';
+      if (!showArchived) {
+        sql += ' AND (archived IS NULL OR archived = 0)';
+      }
+
       if (area && area !== 'All Areas') {
         sql += ' AND area LIKE ?';
         params.push(`%${area}%`);
@@ -367,7 +336,8 @@ const server = http.createServer((req, res) => {
         links: safeParse(row.links, []),
         metadata: safeParse(row.metadata, {}),
         is_value_buy: Boolean(row.is_value_buy),
-        vetted: Boolean(row.vetted)
+        vetted: Boolean(row.vetted),
+        archived: Boolean(row.archived)
       }));
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(results));
@@ -389,6 +359,7 @@ const server = http.createServer((req, res) => {
           metadata: safeParse(property.metadata, {}),
           is_value_buy: Boolean(property.is_value_buy),
           vetted: Boolean(property.vetted),
+          archived: Boolean(property.archived),
           price_history: history
         };
         res.writeHead(200, { 'Content-Type': 'application/json' });

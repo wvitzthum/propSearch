@@ -1,0 +1,84 @@
+{
+  "_schema_version": "1.0",
+  "_note": "Archive of resolved tasks. Auto-managed — do not edit by hand.",
+  "_resolved_count": 11,
+  "resolved": [
+    {
+      "id": "DE-140",
+      "title": "Create `price_history` table and update sync pipeline",
+      "status": "Done",
+      "resolved_by": "Data Engineer",
+      "date": "2026-03-21"
+    },
+    {
+      "id": "FE-091",
+      "title": "Fix Floorplan view (image clipping + drag-to-pan) and repair Image Carousel",
+      "status": "Done",
+      "resolved_by": "Frontend Engineer",
+      "date": "2026-03-21"
+    },
+    {
+      "id": "DE-130",
+      "title": "Expand `macro_trend.json` with `sdlt_countdown` and `epc_deadline_risk`",
+      "status": "Done",
+      "resolved_by": "Data Engineer",
+      "date": "2026-03-21"
+    },
+    {
+      "id": "DE-120",
+      "title": "Create SQLite analytical views for `regional_velocity`",
+      "status": "Done",
+      "resolved_by": "Data Engineer",
+      "date": "2026-03-21"
+    },
+    {
+      "id": "FE-090",
+      "title": "Implement Floorplan preview in Lead Inbox and Property Detail tab",
+      "status": "Done",
+      "resolved_by": "Frontend Engineer",
+      "date": "2026-03-21"
+    },
+    {
+      "id": "DE-110",
+      "title": "Implement `/api/inbox/batch` for bulk triage and schema sync",
+      "status": "Done",
+      "resolved_by": "Data Engineer",
+      "date": "2026-03-20"
+    },
+    {
+      "id": "DAT-070",
+      "title": "Data Analysis: Audit current Alpha Scores and suggest refinement to 'Spatial' weight based on 2026 Tube connectivity.",
+      "status": "Done",
+      "resolved_by": "Data Analyst",
+      "date": "2026-03-09"
+    },
+    {
+      "id": "DAT-090",
+      "title": "Data: Research and implement floorplan-specific extraction from portal JSON blobs (Rightmove/Zoopla).",
+      "status": "Done",
+      "resolved_by": "Data Analyst",
+      "date": "2026-03-16"
+    },
+    {
+      "id": "DAT-095",
+      "title": "Data: Enriched Hatherley Grove property (W2) with high-fidelity Alpha Score (8.54) and live data.",
+      "status": "Done",
+      "resolved_by": "Data Analyst",
+      "date": "2026-03-18"
+    },
+    {
+      "id": "FE-088",
+      "title": "UI Fix: Resolve React DOM nesting error in `PropertyTable.tsx` by refactoring to a two-row header for 'Acquisition Model' grouping.",
+      "status": "Done",
+      "resolved_by": "Frontend Engineer",
+      "date": "2026-03-16"
+    },
+    {
+      "id": "FE-089",
+      "title": "UI/UX: Enhance `Inbox.tsx` to gracefully handle CSP framing blocks from property portals. Added detection for known blockers and a prominent 'Focused Peek' workflow.",
+      "status": "Done",
+      "resolved_by": "Frontend Engineer",
+      "date": "2026-03-16"
+    }
+  ]
+}

@@ -1,0 +1,388 @@
+{
+  "_schema_version": "1.0",
+  "_generated": "2026-04-01T18:30:00Z",
+  "_note": "Source of truth for propSearch task backlog. NEVER edit by hand. Use agent tooling to update task status. Run 'python3 tasks/scripts/generate_tasks_markdown.py' to render Markdown view.",
+  "_sections": [
+    {
+      "id": "new_approved",
+      "title": "\ud83c\udd95 New Approved Features",
+      "cols": 8,
+      "order": 1
+    },
+    {
+      "id": "bug_fixes",
+      "title": "\ud83d\udc1b Bug Fixes",
+      "cols": 8,
+      "order": 2
+    },
+    {
+      "id": "data_research",
+      "title": "\ud83d\udcca Data & Research (Unblocked First)",
+      "cols": 8,
+      "order": 3
+    },
+    {
+      "id": "blocked",
+      "title": "\ud83d\udd17 Blocked by Outstanding Data",
+      "cols": 8,
+      "order": 4
+    },
+    {
+      "id": "superseded",
+      "title": "\u26a0\ufe0f Superseded",
+      "cols": 4,
+      "order": 5
+    },
+    {
+      "id": "completed",
+      "title": "\u2705 Completed",
+      "cols": 4,
+      "order": 6
+    }
+  ],
+  "tasks": [
+    {
+      "id": "FE-150",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "new_approved",
+      "title": "UI: Implement \u2318K Global Command Palette \u2014 fuzzy property search, pipeline shortcuts, navigation, macro filters, and recent actions with full keyboard support.",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-03-30",
+      "notes": []
+    },
+    {
+      "id": "FE-161",
+      "priority": "High",
+      "effort": "High",
+      "section": "new_approved",
+      "title": "UI: Create a dedicated 'Affordability Settings' page \u2014 personal mortgage tracker for monthly budget, LTV band, loan term, and deposit. Build a unified `useMortgageCalculator` hook as single source of truth for all mortgage math, reading live rates from `macro_trend.json` via `useFinancialData` (not hardcoded 4.5%). Deprecate inline `BudgetSlider` and `AffordabilityNode` in PropertyDetail \u2014 replace with a compact summary card linking to the new page. `LTVMatchBadge` and `BudgetSlider` both consume the shared hook. MortgageTracker page remains independent but shares the same rate data.",
+      "status": "In Progress",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-03-30",
+      "notes": []
+    },
+    {
+      "id": "FE-153",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "new_approved",
+      "title": "UI: Implement Investment Thesis Tags \u2014 persistent tagging system for strategic property narratives with batch support and Dashboard filter integration.",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-03-30",
+      "notes": []
+    },
+    {
+      "id": "FE-152",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "new_approved",
+      "title": "UI: Implement 5-Year Capital Appreciation Model \u2014 Bloomberg-style fan chart (Bear/Base/Bull scenarios) with IRR vs. risk-free rate signal in PropertyDetail.",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [
+        "DAT-151",
+        "DAT-120"
+      ],
+      "date": "2026-03-30",
+      "notes": []
+    },
+    {
+      "id": "FE-154",
+      "priority": "High",
+      "effort": "High",
+      "section": "new_approved",
+      "title": "UI: Implement Monte Carlo Property Price Simulator \u2014 run 1,000+ iteration price simulation per property with configurable time horizon (1-5 years), display probability distribution (P10/P50/P90), and overlay on the 5-Year Appreciation fan chart.",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [
+        "DAT-151",
+        "DAT-152"
+      ],
+      "date": "2026-03-30",
+      "notes": []
+    },
+    {
+      "id": "FE-155",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "new_approved",
+      "title": "UI: Implement Data Provenance UI \u2014 \u24d8 source attribution tooltips on every metric, \"Data Provenance\" collapsible section in PropertyDetail, and freshness indicators (green/amber/red) with links to live source URLs.",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [
+        "DAT-153"
+      ],
+      "date": "2026-03-30",
+      "notes": []
+    },
+    {
+      "id": "QA-156",
+      "priority": "High",
+      "effort": "Low",
+      "section": "bug_fixes",
+      "title": "Data: 4 Legacy Migration properties have malformed UUIDs (`c1a2b3c4...`, `d2e3f4g5...`, `e3f4g5h6...`, `1773181669681`). These IDs contain non-hex characters or numeric-only format, violating UUID spec. Regenerate proper UUIDs for all 4 records in `propSearch.db`. All are `source='Legacy Migration'`.",
+      "status": "Todo",
+      "responsible": "Data Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": []
+    },
+    {
+      "id": "DAT-154",
+      "priority": "High",
+      "effort": "Low",
+      "section": "data_research",
+      "title": "Data: Establish automated backup protocol for `data/` directory \u2014 create `data/backups/` directory, implement dated snapshot script, maintain `data/backups/LOG.md`, enforce weekly + pre-operation snapshot discipline per analyst README.",
+      "status": "Done",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-03-30",
+      "notes": []
+    },
+    {
+      "id": "DAT-157",
+      "priority": "Medium",
+      "effort": "Medium",
+      "section": "data_research",
+      "title": "Historical mortgage rates lack 2yr/5yr term split. The `mortgage_history` table in SQLite only contains rates by LTV band (`rate_90`, `rate_85`, `rate_75`, `rate_60`) but no term length differentiation (2yr vs 5yr). Currently `mortgage_2yr` uses `rate_90` as a proxy which conflates LTV band with term length. Source 2yr and 5yr historical rates by LTV band from BoE Effective Interest Rates database: https://www.bankofengland.co.uk/boeapps/database/. Populate `mortgage_history` with `{ date, boe_rate, mortgage_2yr_90ltv, mortgage_5yr_75ltv, ... }`. See DAT-131.",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [
+        "DAT-131"
+      ],
+      "date": "2026-03-30",
+      "notes": []
+    },
+    {
+      "id": "DAT-153",
+      "priority": "High",
+      "effort": "High",
+      "section": "data_research",
+      "title": "Data: Design and implement provenance schema in `macro_trend.json` \u2014 every field must carry `source`, `source_url`, `methodology`, and `last_refreshed` metadata. Maintain `data/sources/` directory with citation files per feed. Implement automated freshness validation with stale-data warnings in Market Pulse.",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-03-30",
+      "notes": []
+    },
+    {
+      "id": "DAT-150",
+      "priority": "High",
+      "effort": "Low",
+      "section": "data_research",
+      "title": "SDLT MILESTONE HIT (2026-04-01) \u2014 SDLT tiers now live. Refresh macro_trend.json. Data: Add SDLT tier thresholds to `macro_trend.json` and calculate LTV Match Score for all properties based on current mortgage rates.",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-03-30",
+      "notes": [
+        "URGENT: SDLT tiers now live \u2014 macro_trend.json needs refresh"
+      ]
+    },
+    {
+      "id": "DAT-155",
+      "priority": "High",
+      "effort": "High",
+      "section": "data_research",
+      "title": "SDLT MILESTONE HIT (2026-04-01) \u2014 Claim immediately. CRITICAL DATA GAP \u2014 BoE Chart empty. The `market_business` and `business_history` fields are `undefined` in `global_context` SQLite (`key='macro_trend'`). `MarketSituationRoom`'s `MarketVolumeChart` renders no data. Source: populate these fields with 12-month listings/sold volume per month from Rightmove/Zoopla Land Registry data. Structure: `MarketBusiness[]` with `{ month: string, listed: ProvenanceOrValue<number>, sold?: ProvenanceOrValue<number> }`. The chart expects `month`, `listed`, `sold` fields per row.",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-03-30",
+      "notes": [
+        "URGENT: SDLT milestone \u2014 BoE chart empty in production",
+        "CRITICAL: blocks FE-152, FE-154"
+      ]
+    },
+    {
+      "id": "DAT-156",
+      "priority": "High",
+      "effort": "High",
+      "section": "data_research",
+      "title": "SDLT MILESTONE HIT (2026-04-01) \u2014 Claim immediately. Market Pulse missing data. The following fields are `undefined` in `global_context` (`key='macro_trend'`): `inventory_velocity`, `negotiation_delta`, `timing_signals`, `market_pulse_summary`. `MarketPulse` component renders all four KPIs with hardcoded fallbacks (e.g. `months_of_supply: 4.2`, `avg_discount_pct: -7.4`, `seasonal_buy_score: 8.5`). Source/provide real data for: `inventory_velocity.months_of_supply` (MOS, <4 seller's market, >6 buyer's), `negotiation_delta.avg_discount_pct` (% between asking and sold price), `timing_signals.seasonal_buy_score` (0-10), `market_pulse_summary` (string analyst summary).",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-03-30",
+      "notes": [
+        "URGENT: SDLT milestone \u2014 MarketPulse hardcoded fallbacks in production"
+      ]
+    },
+    {
+      "id": "DAT-151",
+      "priority": "High",
+      "effort": "High",
+      "section": "data_research",
+      "title": "Research: Source postcode-level HPI history, regional velocity, and BoE rate consensus for appreciation engine. Build appreciation calculation logic (10th/50th/90th percentile scenarios) with property-specific adjustments (lease risk, EPC, floor level, area velocity).",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [
+        "DAT-120",
+        "DE-120"
+      ],
+      "date": "2026-03-30",
+      "notes": []
+    },
+    {
+      "id": "DAT-152",
+      "priority": "High",
+      "effort": "High",
+      "section": "data_research",
+      "title": "Research: Source all data inputs required for Monte Carlo price simulation \u2014 postcode-level HPI volatility (variance/std dev), quarterly rental yield estimates by area, BoE rate path fan. Cross-validate with Land Registry / ONS / BoE published datasets. Maintain source citations and freshness timestamps in `macro_trend.json`.",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [
+        "DAT-120",
+        "DE-120"
+      ],
+      "date": "2026-03-30",
+      "notes": []
+    },
+    {
+      "id": "QA-155",
+      "priority": "High",
+      "effort": "Low",
+      "section": "data_research",
+      "title": "Audit: Quarterly data integrity audit \u2014 scan all records in `propSearch.db` and `master.jsonl` for hallucinated IDs (`a1b2c3d4-` pattern), missing mandatory fields, and records with `is_estimated=false` but no source citation. Report findings to user.",
+      "status": "Todo",
+      "responsible": "UI/UX QA",
+      "dependencies": [],
+      "date": "2026-03-30",
+      "notes": []
+    },
+    {
+      "id": "DAT-120",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "blocked",
+      "title": "Research: Source 12-month regional HPI forecasts and \"Market Consensus\" for BoE rates (Q3 2026 - Q2 2027).",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-03-21",
+      "notes": []
+    },
+    {
+      "id": "DAT-130",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "blocked",
+      "title": "Macro: Integrate a 5-year GBP/USD \"Effective Discount\" calculator for international arbitrage.",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-03-21",
+      "notes": []
+    },
+    {
+      "id": "DAT-131",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "blocked",
+      "title": "Data: Source 2yr and 5yr Swap Rate feeds to provide leading indicators for mortgage pricing.",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-03-21",
+      "notes": []
+    },
+    {
+      "id": "FE-120",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "blocked",
+      "title": "UI/UX: Implement \"Price Projection\" sparklines with Bloomberg-style confidence intervals in the Market Pulse dashboard.",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [
+        "DAT-120"
+      ],
+      "date": "2026-03-21",
+      "notes": []
+    },
+    {
+      "id": "FE-121",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "blocked",
+      "title": "UI: Implement regional heatmaps for London postcodes to visualize Micro-Market Velocity.",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [
+        "DE-120"
+      ],
+      "date": "2026-03-21",
+      "notes": []
+    },
+    {
+      "id": "FE-140",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "blocked",
+      "title": "UI: Implement \"Price Evolution\" chart in Property Detail view using historical data points.",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [
+        "DE-140"
+      ],
+      "date": "2026-03-21",
+      "notes": []
+    },
+    {
+      "id": "DAT-140",
+      "priority": "Medium",
+      "effort": "Low",
+      "section": "blocked",
+      "title": "Research: Backfill price history for existing properties using historical snapshots in SQLite.",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [
+        "DE-140"
+      ],
+      "date": "2026-03-21",
+      "notes": []
+    },
+    {
+      "id": "FE-151",
+      "priority": null,
+      "effort": null,
+      "section": "superseded",
+      "title": "Reverse Mortgage Calculator scope fully covered by the dedicated Affordability Settings page in FE-161. The LTV Match Score badges and Budget Slider are now part of FE-161's shared hook scope.",
+      "status": "Superseded",
+      "responsible": null,
+      "replaced_by": "FE-161",
+      "superseded_date": "2026-03-30",
+      "notes": []
+    },
+    {
+      "id": "DE-160",
+      "priority": "High",
+      "effort": "High",
+      "section": "data_research",
+      "title": "CRITICAL \u2014 25 flagged records restored. As of 2026-04-01, the auto-archive/purge policy has been replaced by an `archived` flag on `properties`. All 25 records previously in `archived_properties` have been restored to `properties` with `archived=1` and `archive_reason='Shallow data: Needs Enrichment'`. **Enrich all 25 flagged records**: source missing EPC ratings, sqft, and other missing fields via re-scrape. Once enriched, set `archived=0`. Records without valid addresses (1 null-address record: `ab5c0faa-b051-414d-a427-bf7ba4c39d5d`) should be investigated \u2014 if they cannot be enriched, set `archived=1` with `archive_reason='Cannot Verify \u2014 Discard'` (do not delete). See API: `GET /api/properties?archived=true`.",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": []
+    },
+    {
+      "id": "DE-161",
+      "priority": "High",
+      "effort": "Low",
+      "section": "data_research",
+      "title": "Policy update \u2014 No deletions from `properties` table. Per user directive 2026-04-01, no production data is ever deleted from `properties`. Incomplete/shallow/duplicate records are flagged with `archived=1` + `archive_reason` text. Review and update the Data Analyst README to reflect: (1) all enrichment candidates are accessed via `properties WHERE archived=1`, never via deletion; (2) analyst sets `archived=1` with a descriptive `archive_reason` for any record they cannot immediately verify; (3) analyst never deletes from `archived_properties` or `properties` without user approval per DATA_GUARDRAILS Rule 2.",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": []
+    }
+  ]
+}

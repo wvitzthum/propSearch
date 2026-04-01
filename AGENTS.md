@@ -33,13 +33,23 @@ A multi-agent system that automates the discovery, normalization, and visualizat
 
 To maximize performance and minimize token usage, follow these surgical patterns:
 
-### A. "Grep-First" Discovery
-- **DO NOT** read entire files or directories if a specific task, symbol, or requirement is needed.
-- **MANDATE:** Use `grep_search` to find your Task ID (e.g., `DAT-070`) in `Tasks.md` before reading the file.
-- **MANDATE:** Use `grep_search` to find requirement IDs (e.g., `Requirement 11`) in `REQUIREMENTS.md`.
+### A. "jq-First" Task Discovery (tasks/tasks.json)
+- **DO NOT** read `Tasks.md` by hand — it is a generated file and will be overwritten.
+- **MANDATE:** All task reads MUST use `jq` against `tasks/tasks.json` (backed by RTK for high-volume shell ops):
+  ```
+  jq '.tasks[] | select(.id=="DAT-155")'               tasks/tasks.json   # read one task
+  jq '.tasks[] | select(.status=="Todo")'              tasks/tasks.json   # all Todo
+  jq '.tasks[] | select(.section=="data_research")'    tasks/tasks.json   # by section
+  jq '.tasks[] | select(.responsible=="Data Analyst")' tasks/tasks.json   # by owner
+  jq '.tasks[] | select(.status!="Done" and .section!="superseded")' tasks/tasks.json  # live
+  ```
+- **Task Status Updates:** Edit `tasks/tasks.json` directly — single object replacement, no column-count risk.
+- **Regenerate Markdown:** After updating `tasks/tasks.json`, run `python3 tasks/scripts/generate_tasks_markdown.py --write` or `make tasks-regen` to update `Tasks.md`.
+- **MANDATE:** Use `grep_search` for requirement IDs (e.g., `Requirement 11`) in `REQUIREMENTS.md`.
 
 ### B. Range-Limited Reads
-- When reading `Tasks.md`, `REQUIREMENTS.md`, or large source files, use `start_line` and `end_line` based on your `grep` results to read ONLY the relevant context.
+- When reading `REQUIREMENTS.md` or large source files, use `start_line` and `end_line` based on your `grep` results to read ONLY the relevant context.
+- `Tasks.md` is excluded from range-limited reads — use jq instead (see A above).
 
 ### C. Agent Instruction Loading
 - Reference your specialized `agents/<role>/README.md` for logic-heavy tasks, but rely on `AGENTS.md` for all behavioral and territorial rules. Do not load all agent READMEs at once.

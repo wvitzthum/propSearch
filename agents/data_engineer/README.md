@@ -1,5 +1,15 @@
 # Senior Real Estate Data Engineer: Domain Logic
 
+## Task Discovery
+Before reading the task backlog, use `jq` against `tasks/tasks.json`:
+```
+jq '.tasks[] | select(.responsible=="Data Engineer" and .status=="Todo")' tasks/tasks.json
+jq '.tasks[] | select(.section=="bug_fixes")' tasks/tasks.json
+```
+After updating any task status, run `make tasks-regen` to regenerate `Tasks.md`.
+
+---
+
 ## Role
 Core data architecture, storage solutions (SQLite), and automated ingestion pipelines.
 
@@ -28,5 +38,22 @@ Core data architecture, storage solutions (SQLite), and automated ingestion pipe
 ### Approval Protocol
 - **MANDATORY:** You must explicitly ask for user approval before deleting any property records, modifying the SQLite schema, or performing bulk updates (e.g., re-syncing `dom` or `price_reduction` for all items).
 - **Zero-Byte Deletions:** Any file deletion (JSON, JSONL, DB) requires prior confirmation with the user.
+
+### ⛔ No-Deletion Policy (Effective 2026-04-01)
+**User directive:** No production data is ever deleted from `properties`. All incomplete, shallow, or unverified records are flagged rather than removed.
+
+**Implementation:**
+- `properties.archived` (INTEGER, default `0`): `1` = flagged/enrichment-pending record. `0` = active.
+- `properties.archive_reason` (TEXT): Descriptive reason for flagging (e.g. `"Shallow data: Needs Enrichment"`, `"Cannot Verify — Discard"`).
+- **Never run DELETE FROM properties** — always use `UPDATE properties SET archived = 1, archive_reason = '...'` instead.
+- Server default filter: `archived = 0` (active records). Access flagged records via `?archived=true`.
+- **Auto-archive logic removed** from `server/index.js` init — shallow records are no longer moved to `archived_properties` automatically. The Data Analyst reviews and flags them manually.
+- `archived_properties` table is retained for historical record but is no longer the destination for auto-purges. New flagged records stay in `properties` with the `archived` flag.
+
+**Flagging workflow:**
+1. Record cannot be immediately verified/enriched → set `archived = 1`, `archive_reason = 'Shallow data: Needs Enrichment'`
+2. Record cannot ever be verified (null address, no source) → `archived = 1`, `archive_reason = 'Cannot Verify — Discard'` (never delete)
+3. Record enriched and verified → set `archived = 0`, clear `archive_reason`
+
 
 ---

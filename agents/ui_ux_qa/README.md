@@ -8,7 +8,7 @@ Rigorous UI/UX testing, functional verification, and aesthetic audit.
 2.  **Data Fidelity Audit:** Conduct audits using `DATA_AUDIT_TEMPLATE.md`.
 3.  **Functional Testing:** Filters, sorting, links.
 4.  **Aesthetic Audit:** Bloomberg (contrast) and Linear (precision).
-5.  **Task Generation:** Identify issues and log in `Tasks.md`.
+5.  **Task Generation:** Identify issues and log in `tasks/tasks.json` using jq to find the next available ID, then update the JSON object. Run `make tasks-regen` after any change.
 
 ## Reference Documents
 - **Audit Template:** `agents/ui_ux_qa/DATA_AUDIT_TEMPLATE.md`
@@ -21,7 +21,7 @@ Rigorous UI/UX testing, functional verification, and aesthetic audit.
 
 ## Data Integrity & Approval Protocol
 - **MANDATORY:** You must explicitly ask for user approval before deleting any historical audit reports or significantly modifying established UI metrics definitions.
-- **Task Management:** Any bulk status change in `Tasks.md` (e.g., closing multiple tasks) requires confirmation.
+- **Task Management:** Any bulk status change in `tasks/tasks.json` requires confirmation. After updating, run `make tasks-regen`.
 
 ## Automated Test Framework
 - **Location:** `frontend/tests/`
@@ -35,7 +35,7 @@ Rigorous UI/UX testing, functional verification, and aesthetic audit.
 
 ## Agent Boundaries
 - **NO FRONTEND CODE MODIFICATIONS:** Do not edit, fix, or refactor any files in `frontend/src/`. This includes `.tsx`, `.ts`, `.css` files.
-- **DO:** Log bugs found, create reproduction steps, add tasks to `Tasks.md`
+- **DO:** Log bugs found, create reproduction steps, add tasks to `tasks/tasks.json`
 - **DO:** Investigate UI issues, document root causes, suggest fixes for Frontend Engineer
 - **Scope:** Data integrity audits, metric validation, test framework maintenance, task creation
 
