@@ -196,7 +196,9 @@ def render_live(tasks_data):
     all_tasks = tasks_data["tasks"]
     parts = []
     for sid in ["new_approved", "bug_fixes", "data_research", "blocked"]:
-        section_tasks = [t for t in all_tasks if t.get("section") == sid]
+        section_tasks = [t for t in all_tasks
+                         if t.get("section") == sid
+                         and t.get("status") != "Done"]
         if not section_tasks:
             continue
         meta = SECTION_META[sid]
