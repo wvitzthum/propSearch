@@ -39,7 +39,10 @@ import { usePipeline } from '../hooks/usePipeline';
 import FloorplanViewer from '../components/FloorplanViewer';
 import ThesisTagSelector from '../components/ThesisTagSelector';
 import AffordabilityNode from '../components/AffordabilityNode';
+import CapitalAppreciationChart from '../components/CapitalAppreciationChart';
+import DataProvenanceSection from '../components/DataProvenanceSection';
 import { useThesisTags } from '../hooks/useThesisTags';
+import { useMacroData } from '../hooks/useMacroData';
 
 const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -47,6 +50,7 @@ const PropertyDetail: React.FC = () => {
   const { calculateMonthlyOutlay } = useFinancialData();
   const { getStatus, setStatus } = usePipeline();
   const { getTags } = useThesisTags();
+  const { data: macroData } = useMacroData();
   const [activeTab, setActiveTab] = useState<'gallery' | 'floorplan'>('gallery');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showLightbox, setShowLightbox] = useState(false);
@@ -388,6 +392,21 @@ const PropertyDetail: React.FC = () => {
                 groundRent={property.ground_rent}
               />
             </div>
+
+            {/* 5-Year Capital Appreciation Model */}
+            <div className="mb-12">
+              <CapitalAppreciationChart
+                propertyPrice={property.realistic_price}
+                leaseYears={property.lease_years_remaining}
+                epc={property.epc}
+                floorLevel={property.floor_level}
+                serviceCharge={property.service_charge}
+                area={property.area}
+              />
+            </div>
+
+            {/* Data Provenance */}
+            <DataProvenanceSection lastRefreshed={macroData?.sdlt_countdown ? '2026-04-01' : undefined} sources={macroData?._source_citations} />
 
             <div className="space-y-12">
               <div>

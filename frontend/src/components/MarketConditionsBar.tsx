@@ -138,7 +138,7 @@ const MarketConditionsBar: React.FC<MarketConditionsBarProps> = ({ compact = fal
           <div className="h-4 w-px bg-linear-border shrink-0" />
           <div className="flex items-center gap-1 shrink-0">
             <AlertCircle size={9} className="text-amber-400" />
-            <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest">SDLT {data.sdlt_countdown}</span>
+            <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest">SDLT {extractValue(data.sdlt_countdown)}</span>
           </div>
         </>
       )}

@@ -101,6 +101,12 @@ export interface MacroTrend {
   swap_rates?: SwapRates;
   hpi_forecasts?: HPIForecast[];
   area_trends?: AreaTrend[];
+  // FE-155: Data Provenance
+  _source_citations?: Record<string, {
+    name: string;
+    url?: string;
+    data_used?: string[];
+  }>;
 }
 
 // FE-164: BoE Rate Consensus (Q3 2026 - Q2 2027)
@@ -152,4 +158,112 @@ export interface AreaTrend {
   london_benchmark?: ProvenanceOrValue<number>;
   delta?: number; // computed
   months_of_supply?: ProvenanceOrValue<number>;
+}
+
+// FE-152: Appreciation Model types
+export interface AppreciationScenarios {
+  bear: AppreciationScenario;
+  base: AppreciationScenario;
+  bull: AppreciationScenario;
+}
+
+export interface AppreciationScenario {
+  probability: number;       // e.g. 15
+  annual_return: number;     // e.g. -1.5 (%)
+  five_year_total: number;   // e.g. -7.3 (%)
+  trigger: string;           // market trigger description
+}
+
+export interface PropertyAdjustmentFactors {
+  lease_risk: {
+    under_80_years: number;
+    '80_to_90_years': number;
+    '90_to_125_years': number;
+    over_125_years: number;
+  };
+  epc_rating: {
+    rating_a_to_b: number;
+    rating_c: number;
+    rating_d: number;
+    rating_e_to_g: number;
+  };
+  floor_level: {
+    ground_floor: number;
+    standard_floor: number;
+    upper_floor_with_lift: number;
+    penthouse: number;
+  };
+  service_charge: {
+    high_charge_penalty: number;
+    threshold_annual: number;
+  };
+}
+
+export interface PostcodeVolatility {
+  annual_volatility: number;
+  standard_deviation: number;
+  correlation_with_london: number;
+}
+
+export interface RentalYieldEstimate {
+  gross_yield: number;
+  net_yield: number;
+}
+
+export interface AppreciationModel {
+  scenario_definitions: AppreciationScenarios;
+  property_adjustments: PropertyAdjustmentFactors;
+  postcode_volatility: Record<string, PostcodeVolatility>;
+  rental_yield_estimates: Record<string, RentalYieldEstimate>;
+  boe_rate_path_fan: {
+    scenarios: Array<{
+      q: string;
+      bear: number;
+      base: number;
+      bull: number;
+    }>;
+  };
+  monte_carlo_parameters: {
+    iterations: number;
+    time_horizon_years: number;
+    confidence_intervals: Record<string, string>;
+    random_walk_parameters: {
+      drift: number;
+      volatility_range: [number, number];
+    };
+  };
+  appreciation_calculation: {
+    scenario_definitions: {
+      bear: { five_year_total_pct: number; annual_avg_pct: number };
+      base: { five_year_total_pct: number; annual_avg_pct: number };
+      bull: { five_year_total_pct: number; annual_avg_pct: number };
+    };
+    example_600k_property: {
+      current_price_gbp: number;
+      bear_5yr_gbp: number;
+      base_5yr_gbp: number;
+      bull_5yr_gbp: number;
+    };
+  };
+}
+
+// FE-152: Computed appreciation result per scenario
+export interface ScenarioResult {
+  scenario: 'bear' | 'base' | 'bull';
+  label: string;
+  color: string;
+  annual_return: number;
+  five_year_total: number;
+  five_year_value: number;
+  probability: number;
+  cumulative_gain: number;
+}
+
+export interface AppreciationProfile {
+  currentPrice: number;
+  riskFreeRate: number; // current BoE base rate
+  scenarios: ScenarioResult[];
+  expectedValue: number;
+  weightedIRR: number;
+  portfolioAlpha: number; // vs risk-free
 }

@@ -1,23 +1,50 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { ExternalLink } from 'lucide-react';
+
+interface FreshnessLevel {
+  label: string;
+  color: string;
+  bg: string;
+}
+
+function computeFreshness(lastRefreshed: string | undefined): FreshnessLevel {
+  if (!lastRefreshed) return { label: 'UNKNOWN', color: '#a1a1aa', bg: 'bg-zinc-600' };
+  const refreshed = new Date(lastRefreshed);
+  const now = new Date();
+  const daysDiff = (now.getTime() - refreshed.getTime()) / (1000 * 60 * 60 * 24);
+  if (daysDiff <= 7) return { label: 'CURRENT', color: '#22c55e', bg: 'bg-emerald-500' };
+  if (daysDiff <= 14) return { label: 'STALE', color: '#f59e0b', bg: 'bg-amber-500' };
+  return { label: 'OUTDATED', color: '#ef4444', bg: 'bg-red-500' };
+}
 
 interface TooltipProps {
   children: React.ReactNode;
   content?: string;
   methodology?: string;
+  source?: string;
+  sourceUrl?: string;
+  lastRefreshed?: string;
   renderContent?: () => React.ReactNode;
   className?: string;
   width?: string;
+  showFreshness?: boolean;
 }
 
-const Tooltip: React.FC<TooltipProps> = ({ 
-  children, 
-  content, 
-  methodology, 
+const Tooltip: React.FC<TooltipProps> = ({
+  children,
+  content,
+  methodology,
+  source,
+  sourceUrl,
+  lastRefreshed,
   renderContent,
   className = '',
-  width = 'w-64'
+  width = 'w-72',
+  showFreshness = true,
 }) => {
+  const freshness = computeFreshness(lastRefreshed);
+  const hasContent = content || methodology || source;
   const [isVisible, setIsVisible] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -45,7 +72,7 @@ const Tooltip: React.FC<TooltipProps> = ({
     };
   }, [isVisible]);
 
-  if (!content && !methodology && !renderContent) return <>{children}</>;
+  if (!hasContent && !renderContent) return <>{children}</>;
 
   const tooltipElement = (
     <div 
@@ -63,7 +90,7 @@ const Tooltip: React.FC<TooltipProps> = ({
         ) : (
           <>
             {content && (
-              <div className={`${methodology ? 'mb-4' : ''}`}>
+              <div className={`${methodology || source ? 'mb-4' : ''}`}>
                 <div className="text-[9px] font-black text-blue-400 uppercase tracking-[0.2em] border-b border-linear-border/50 pb-2 mb-2">
                   Institutional Definition
                 </div>
@@ -73,13 +100,47 @@ const Tooltip: React.FC<TooltipProps> = ({
               </div>
             )}
             {methodology && (
-              <div>
+              <div className={`${source ? 'mb-4' : ''}`}>
                 <div className="text-[9px] font-black text-retro-green uppercase tracking-[0.2em] border-b border-linear-border/50 pb-2 mb-2">
                   Calculation Methodology
                 </div>
                 <div className="text-[10px] text-white/60 leading-relaxed font-mono italic normal-case tracking-normal">
                   {methodology}
                 </div>
+              </div>
+            )}
+            {source && (
+              <div className={`${showFreshness && lastRefreshed ? 'mb-3' : ''}`}>
+                <div className="flex items-center justify-between">
+                  <div className="text-[9px] font-black text-linear-text-muted uppercase tracking-[0.2em] border-b border-linear-border/50 pb-1.5 mb-1.5 flex-1">
+                    Data Source
+                  </div>
+                  {showFreshness && lastRefreshed && (
+                    <div className={`ml-2 text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${freshness.bg}`}
+                      style={{ color: freshness.color }}
+                      title={`Last refreshed: ${lastRefreshed}`}
+                    >
+                      {freshness.label}
+                    </div>
+                  )}
+                </div>
+                {sourceUrl ? (
+                  <a
+                    href={sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-blue-400 hover:text-blue-300 underline font-medium flex items-center gap-1"
+                  >
+                    {source} <ExternalLink size={8} />
+                  </a>
+                ) : (
+                  <span className="text-[10px] text-white/60 font-medium">{source}</span>
+                )}
+                {lastRefreshed && (
+                  <div className="text-[8px] text-linear-text-muted/60 mt-1">
+                    Refreshed: {lastRefreshed}
+                  </div>
+                )}
               </div>
             )}
           </>

@@ -101,7 +101,16 @@ const Inbox: React.FC = () => {
         return [];
       });
 
-      setListings(normalized);
+      // QA-171: deduplicate by filename to prevent React duplicate-key warnings
+      const deduped = Array.from(
+        normalized.reduce((acc: Map<string, RawListing>, item) => {
+          if (!acc.has(item.filename)) acc.set(item.filename, item);
+          return acc;
+        }, new Map()),
+        ([, v]) => v
+      );
+
+      setListings(deduped);
     } catch (err: any) {
       console.error('Inbox error:', err);
       setError('Local API Server (port 3001) is required for Inbox management.');

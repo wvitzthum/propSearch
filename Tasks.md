@@ -31,7 +31,6 @@
 <tbody>
 <tr><td><strong>FE-166</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UI: Build &#x27;Property Price Evolution&#x27; component — a Bloomberg-density price history visualization for PropertyDetail. Visualize the `price_history` table data (DAT-140) as an SVG area chart showing historical price movement per property with snapshot dates (2026-03-07 through 2026-03-30). Add: (1) price-per-sqm trend line overlay, (2) listing-to-sold pipeline delta markers, (3) price reduction event flags (dom, reduction_pct), (4) London-wide HPI benchmark line for the same period for comparison. Integrate into PropertyDetail tab. Requires `price_history` table data (already created by DE-140; requires DAT-140 backfill to populate).'>UI: Build &#x27;Property Price Evolution&#x27; component — a Bloomberg-density price history visualization for PropertyDetail. Visualize the <code>price_history</code> table data (DAT-140) as an SVG area chart showing historical price movement per property with snapshot dates (2026-03-07 through 2026-03-30). Add: (1) price-per-sqm trend line overlay, (2) listing-to-sold pipeline delta markers, (3) price reduction event flags (dom, reduction_pct), (4) London-wide HPI benchmark line for the same period for comparison. Integrate into PropertyDetail tab. Requires <code>price_history</code> table data (already created by DE-140; requires DAT-140 backfill to populate).</td><td>Todo</td><td>Frontend Engineer</td><td>DAT-140</td><td>2026-04-01</td></tr>
 <tr><td><strong>FE-169</strong></td><td>High</td><td>High</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UI: Deposit Configuration + Additional Purchase Costs on AffordabilitySettings — add user-configurable deposit (auto vs fixed), implement calculateTotalPurchaseCost hook (deposit + SDLT + solicitor fees + survey fees + mortgage arrangement fee), build AdditionalCostsCard component, add DepositPanel to AffordabilitySettings with % shortcut buttons, wire all to localStorage persistence, update BudgetSlider to reflect selected deposit percentage.'>UI: Deposit Configuration + Additional Purchase Costs on AffordabilitySettings — add user-configurable deposit (auto vs fixed), implement calculateTotalPurchaseCost hook (deposit + SDLT + solicitor fees + survey fees + mortgage arrangement fee), build AdditionalCostsCard component, add DepositPanel to AffordabilitySettings with % shortcut buttons, wire all to localStorage persistence, update BudgetSlider to reflect selected deposit percentage.</td><td>Todo</td><td>Frontend Engineer</td><td>FE-167</td><td>2026-04-01</td></tr>
-<tr><td><strong>DAT-165</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Data: Add purchase_cost_benchmarks to macro_trend.json — solicitor fees (low/high/typical), RICS survey tiers (HomeBuyer Report / Building Survey / valuation), mortgage arrangement fees, moving costs. Add provenance metadata. Update _source_citations.'>Data: Add purchase_cost_benchmarks to macro_trend.json — solicitor fees (low/high/typical), RICS survey tiers (HomeBuyer Report / Building Survey / valuation), mortgage arrangement fees, moving costs. Add provenance metadata. Update _source_citations.</td><td>Todo</td><td>Data Analyst</td><td>None</td><td>2026-04-01</td></tr>
 <tr><td><strong>QA-166</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Verify deposit + additional costs flow on AffordabilitySettings — deposit panel renders in auto/fixed modes, SDLT calculates correctly at £400K FTB / £700K standard / £1.2M additional property price points, totalCashNeeded equals sum of all components, loan term change (FE-167) does not break costs display, LTV band updates reactively on deposit change.'>QA: Verify deposit + additional costs flow on AffordabilitySettings — deposit panel renders in auto/fixed modes, SDLT calculates correctly at £400K FTB / £700K standard / £1.2M additional property price points, totalCashNeeded equals sum of all components, loan term change (FE-167) does not break costs display, LTV band updates reactively on deposit change.</td><td>Todo</td><td>UI/UX QA</td><td>FE-169, FE-167</td><td>2026-04-01</td></tr>
 </tbody>
 </table>
@@ -56,27 +55,6 @@
 </tbody>
 </table>
 
-## 📊 Data & Research (Unblocked First)
-
-<table>
-<thead>
-<tr>
-  <th align="left">ID</th>
-  <th align="left">Priority</th>
-  <th align="left">Effort</th>
-  <th align="left" style="width:480px">Task</th>
-  <th align="left">Status</th>
-  <th align="left">Responsible</th>
-  <th align="left">Dependencies</th>
-  <th align="left">Date</th>
-</tr>
-</thead>
-<tbody>
-<tr><td><strong>DAT-168</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Data: Source floor_level for 6 active properties from agent-direct websites. Rightmove/Zoopla scraping works for portal listings but these properties have agent-direct URLs only (Hotblack Desiato, Winkworth, Chancellors, KFH, Ellis &amp; Co) and the scraper heuristic fallback does not extract floor_level. Properties: Belsize Avenue (Knight Frank), Coleridge Court (Hotblack Desiato), Hillmarton Road (Winkworth), Peters Court (Zoopla), Gloucester Terrace (Zoopla), Danbury Street (Rightmove). For any property where floor_level cannot be determined, leave NULL — do not estimate.'>Data: Source floor_level for 6 active properties from agent-direct websites. Rightmove/Zoopla scraping works for portal listings but these properties have agent-direct URLs only (Hotblack Desiato, Winkworth, Chancellors, KFH, Ellis &amp; Co) and the scraper heuristic fallback does not extract floor_level. Properties: Belsize Avenue (Knight Frank), Coleridge Court (Hotblack Desiato), Hillmarton Road (Winkworth), Peters Court (Zoopla), Gloucester Terrace (Zoopla), Danbury Street (Rightmove). For any property where floor_level cannot be determined, leave NULL — do not estimate.</td><td>In Progress</td><td>Data Analyst</td><td>None</td><td></td></tr>
-<tr><td><strong>DAT-169</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Data: Audit all properties for missing EPC ratings. Earlier session noted 24 properties missing EPC — current active DB shows 15/15 with EPC. Verify whether any active properties genuinely lack EPC, and whether any of the 25 archived_properties (pre-enrichment duplicates) have verifiable EPC. Manual lookup via UK EPC Register (https://www.epcregister.com/ or https://www.mezh.org/) for any unverifiable records. Per DE-161 policy: set archived=1 with archive_reason=Cannot Verify — Discard: EPC unverifiable for any property where EPC cannot be sourced.'>Data: Audit all properties for missing EPC ratings. Earlier session noted 24 properties missing EPC — current active DB shows 15/15 with EPC. Verify whether any active properties genuinely lack EPC, and whether any of the 25 archived_properties (pre-enrichment duplicates) have verifiable EPC. Manual lookup via UK EPC Register (https://www.epcregister.com/ or https://www.mezh.org/) for any unverifiable records. Per DE-161 policy: set archived=1 with archive_reason=Cannot Verify — Discard: EPC unverifiable for any property where EPC cannot be sourced.</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
-</tbody>
-</table>
-
 ## 🔗 Blocked by Outstanding Data (Clear Dependencies)
 
 <table>
@@ -93,9 +71,7 @@
 </tr>
 </thead>
 <tbody>
-<tr><td><strong>FE-120</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UI/UX: Implement &quot;Price Projection&quot; sparklines with Bloomberg-style confidence intervals in the Market Pulse dashboard.'>UI/UX: Implement &quot;Price Projection&quot; sparklines with Bloomberg-style confidence intervals in the Market Pulse dashboard.</td><td>Todo</td><td>Frontend Engineer</td><td>DAT-120</td><td>2026-03-21</td></tr>
 <tr><td><strong>FE-121</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UI: Implement regional heatmaps for London postcodes to visualize Micro-Market Velocity.'>UI: Implement regional heatmaps for London postcodes to visualize Micro-Market Velocity.</td><td>Todo</td><td>Frontend Engineer</td><td>DE-120</td><td>2026-03-21</td></tr>
-<tr><td><strong>FE-140</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UI: Implement &quot;Price Evolution&quot; chart in Property Detail view using historical data points.'>UI: Implement &quot;Price Evolution&quot; chart in Property Detail view using historical data points.</td><td>Todo</td><td>Frontend Engineer</td><td>DE-140</td><td>2026-03-21</td></tr>
 </tbody>
 </table>
 

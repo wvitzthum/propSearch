@@ -292,7 +292,7 @@
       "effort": "Medium",
       "section": "blocked",
       "title": "UI/UX: Implement \"Price Projection\" sparklines with Bloomberg-style confidence intervals in the Market Pulse dashboard.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "DAT-120"
@@ -320,7 +320,7 @@
       "effort": "Medium",
       "section": "blocked",
       "title": "UI: Implement \"Price Evolution\" chart in Property Detail view using historical data points.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "DE-140"
@@ -841,7 +841,7 @@
     {
       "id": "DAT-168",
       "title": "Data: Source floor_level for 6 active properties from agent-direct websites. Rightmove/Zoopla scraping works for portal listings but these properties have agent-direct URLs only (Hotblack Desiato, Winkworth, Chancellors, KFH, Ellis & Co) and the scraper heuristic fallback does not extract floor_level. Properties: Belsize Avenue (Knight Frank), Coleridge Court (Hotblack Desiato), Hillmarton Road (Winkworth), Peters Court (Zoopla), Gloucester Terrace (Zoopla), Danbury Street (Rightmove). For any property where floor_level cannot be determined, leave NULL \u2014 do not estimate.",
-      "status": "In Progress",
+      "status": "Done",
       "priority": "Medium",
       "effort": "Low",
       "section": "data_research",
@@ -851,12 +851,13 @@
         "manual-research",
         "floor-level",
         "agent-direct"
-      ]
+      ],
+      "resolved_date": "2026-04-01"
     },
     {
       "id": "DAT-169",
       "title": "Data: Audit all properties for missing EPC ratings. Earlier session noted 24 properties missing EPC \u2014 current active DB shows 15/15 with EPC. Verify whether any active properties genuinely lack EPC, and whether any of the 25 archived_properties (pre-enrichment duplicates) have verifiable EPC. Manual lookup via UK EPC Register (https://www.epcregister.com/ or https://www.mezh.org/) for any unverifiable records. Per DE-161 policy: set archived=1 with archive_reason=Cannot Verify \u2014 Discard: EPC unverifiable for any property where EPC cannot be sourced.",
-      "status": "Todo",
+      "status": "Done",
       "priority": "Medium",
       "effort": "Medium",
       "section": "data_research",
@@ -866,7 +867,8 @@
         "manual-research",
         "epc",
         "audit"
-      ]
+      ],
+      "resolved_date": "2026-04-01"
     },
     {
       "id": "FE-169",
@@ -892,7 +894,7 @@
       "effort": "Low",
       "section": "new_approved",
       "title": "Data: Add purchase_cost_benchmarks to macro_trend.json \u2014 solicitor fees (low/high/typical), RICS survey tiers (HomeBuyer Report / Building Survey / valuation), mortgage arrangement fees, moving costs. Add provenance metadata. Update _source_citations.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Data Analyst",
       "dependencies": [],
       "date": "2026-04-01",

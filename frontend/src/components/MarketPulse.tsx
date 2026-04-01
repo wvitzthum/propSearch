@@ -1,9 +1,9 @@
 import React from 'react';
-import { 
-  TrendingUp, 
-  Activity, 
-  Percent, 
-  ArrowUpRight, 
+import {
+  TrendingUp,
+  Activity,
+  Percent,
+  ArrowUpRight,
   ArrowDownRight,
   Info,
   ChevronRight
@@ -11,6 +11,7 @@ import {
 import { useMacroData } from '../hooks/useMacroData';
 import Tooltip from './Tooltip';
 import { extractValue } from '../types/macro';
+import SparklineChart from './SparklineChart';
 
 const MarketPulse: React.FC = () => {
   const { data, loading, error } = useMacroData();
@@ -225,6 +226,138 @@ const MarketPulse: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* FE-120: Rate Trajectory Sparklines */}
+      {data?.mortgage_history && data.mortgage_history.length > 0 && (
+        <div className="border-t border-linear-border bg-linear-card/20">
+          <div className="px-6 py-3 border-b border-linear-border/50">
+            <h3 className="text-[9px] font-black text-linear-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
+              <TrendingUp size={9} className="text-linear-accent-blue" />
+              Bloomberg // Rate Trajectory - 13M History
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-linear-border/50">
+            {/* 90% LTV */}
+            <div className="px-5 py-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">90% LTV -2yr Fixed</span>
+                <span className="text-[10px] font-black text-rose-400">
+                  {data.mortgage_history[data.mortgage_history.length - 1]?.rate_90?.toFixed(2)}%
+                </span>
+              </div>
+              <div className="flex items-end gap-2">
+                <SparklineChart
+                  data={data.mortgage_history.map((m) => m.rate_90 as number)}
+                  width={120}
+                  height={36}
+                  color="#f87171"
+                  fillColor="#f87171"
+                  showDot
+                />
+                <div className="flex flex-col items-start pb-0.5">
+                  <span className="text-[8px] text-linear-text-muted/60">peak</span>
+                  <span className="text-[9px] font-black text-rose-400/70">
+                    {Math.max(...data.mortgage_history.map((m) => m.rate_90 as number)).toFixed(2)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 85% LTV */}
+            <div className="px-5 py-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">85% LTV -5yr Fixed</span>
+                <span className="text-[10px] font-black text-amber-400">
+                  {data.mortgage_history[data.mortgage_history.length - 1]?.rate_85?.toFixed(2)}%
+                </span>
+              </div>
+              <div className="flex items-end gap-2">
+                <SparklineChart
+                  data={data.mortgage_history.map((m) => m.rate_85 as number)}
+                  width={120}
+                  height={36}
+                  color="#fbbf24"
+                  fillColor="#fbbf24"
+                  showDot
+                />
+                <div className="flex flex-col items-start pb-0.5">
+                  <span className="text-[8px] text-linear-text-muted/60">peak</span>
+                  <span className="text-[9px] font-black text-amber-400/70">
+                    {Math.max(...data.mortgage_history.map((m) => m.rate_85 as number)).toFixed(2)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 75% LTV */}
+            <div className="px-5 py-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">75% LTV -5yr Fixed</span>
+                <span className="text-[10px] font-black text-blue-400">
+                  {data.mortgage_history[data.mortgage_history.length - 1]?.rate_75?.toFixed(2)}%
+                </span>
+              </div>
+              <div className="flex items-end gap-2">
+                <SparklineChart
+                  data={data.mortgage_history.map((m) => m.rate_75 as number)}
+                  width={120}
+                  height={36}
+                  color="#60a5fa"
+                  fillColor="#60a5fa"
+                  showDot
+                />
+                <div className="flex flex-col items-start pb-0.5">
+                  <span className="text-[8px] text-linear-text-muted/60">peak</span>
+                  <span className="text-[9px] font-black text-blue-400/70">
+                    {Math.max(...data.mortgage_history.map((m) => m.rate_75 as number)).toFixed(2)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 60% LTV */}
+            <div className="px-5 py-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">60% LTV -5yr Fixed</span>
+                <span className="text-[10px] font-black text-emerald-400">
+                  {data.mortgage_history[data.mortgage_history.length - 1]?.rate_60?.toFixed(2)}%
+                </span>
+              </div>
+              <div className="flex items-end gap-2">
+                <SparklineChart
+                  data={data.mortgage_history.map((m) => m.rate_60 as number)}
+                  width={120}
+                  height={36}
+                  color="#34d399"
+                  fillColor="#34d399"
+                  showDot
+                />
+                <div className="flex flex-col items-start pb-0.5">
+                  <span className="text-[8px] text-linear-text-muted/60">peak</span>
+                  <span className="text-[9px] font-black text-emerald-400/70">
+                    {Math.max(...data.mortgage_history.map((m) => m.rate_60 as number)).toFixed(2)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Confidence band annotation */}
+          <div className="px-5 pb-2 flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <div className="h-0.5 w-6 bg-rose-400/50 rounded-full" />
+              <span className="text-[7px] text-linear-text-muted/50 font-bold uppercase tracking-wider">Rate Spread (90-60% LTV)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="h-0.5 w-6 bg-linear-text-muted/30 rounded-full" />
+              <span className="text-[7px] text-linear-text-muted/50 font-bold uppercase tracking-wider">Peak vs Current</span>
+            </div>
+            <span className="text-[7px] text-linear-text-muted/40 font-mono ml-auto">
+              {data.mortgage_history[0]?.date}{' -> '}{data.mortgage_history[data.mortgage_history.length - 1]?.date}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
