@@ -505,6 +505,18 @@
       "dependencies": [],
       "date": "2026-04-01",
       "notes": []
+    },
+    {
+      "id": "FE-167",
+      "priority": "High",
+      "effort": "Low",
+      "section": "new_approved",
+      "title": "UI: Make loan term configurable on the Affordability Settings page. Currently `termYears` is hardcoded to 25 years in `useAffordability.ts` (useState(25)) and the Loan Term panel in `AffordabilitySettings.tsx` shows a static non-interactive placeholder ('Standard 25-Year Term'). (1) In `useAffordability.ts`: change `[termYears]` from `useState(25)` to `[termYears, setTermYears]` settable state. Persist `termYears` to localStorage under a `propSearch_loan_term` key. Expose `setTermYears` via an `updateTermYears` callback in the hook return. (2) In `AffordabilitySettings.tsx`: replace the static '25 Years' display in the Loan Term section (line 259) with an interactive segmented control or dropdown allowing the user to select from [15, 20, 25, 30] year terms. Wire `updateTermYears` to the control. The selected term should persist across sessions. (3) All downstream calculations (getAffordablePrice, getBudgetProfile, calculateMortgageFromPayment) already accept `years` as a parameter and are correctly reactive \u2014 no logic changes needed. (4) Add term-year selector to `BudgetSlider` if it is present on the same page. Verify all payment scenarios recalculate in real-time when term changes.",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": []
     }
   ]
 }
