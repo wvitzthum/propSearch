@@ -1,4 +1,4 @@
-.PHONY: install start build lint clean agent agent-po agent-analyst agent-data agent-fe agent-qa agent-de tasks help
+.PHONY: install start build lint clean agent agent-po agent-analyst agent-data agent-fe agent-qa agent-de tasks help guard-install agent-windows agent-tmux-all agent-po-tmux agent-analyst-tmux agent-de-tmux agent-fe-tmux agent-qa-tmux
 
 # Default target
 all: install start
@@ -62,6 +62,69 @@ agent:
 agent-po:
 	@./agents/run.sh po
 
+# ====================
+# OPTION 2: tmux (Recommended for Agents)
+# ====================
+
+# Open all agents in a single window with 5 panes (grid view)
+agent-tmux-grid:
+	@tmux kill-session -t propSearch 2>/dev/null || true
+	@tmux new-session -d -s propSearch -n "Agents"
+	
+	# Use a custom variable (@agent) so applications can't overwrite it
+	@tmux set-window-option -t propSearch:Agents automatic-rename off
+	@tmux set-window-option -t propSearch:Agents allow-rename off
+	@tmux set-option -t propSearch:Agents pane-border-status top
+	@tmux set-option -t propSearch:Agents pane-border-format "── #P: #[fg=cyan,bold]#{@agent}#[default] ──"
+	
+	# Pane 0: PO
+	@tmux set-option -p -t propSearch:Agents.0 @agent "PRODUCT OWNER"
+	@tmux send-keys -t propSearch:Agents.0 "./agents/run.sh po" Enter
+	
+	# Pane 1: Analyst (Split H from 0)
+	@tmux split-window -h -t propSearch:Agents
+	@tmux set-option -p -t propSearch:Agents.1 @agent "DATA ANALYST"
+	@tmux send-keys -t propSearch:Agents.1 "./agents/run.sh analyst" Enter
+	
+	@tmux select-pane -t 0
+	@tmux split-window -v -t propSearch:Agents
+	@tmux set-option -p -t propSearch:Agents.1 @agent "DATA ENGINEER"
+	@tmux send-keys -t propSearch:Agents.1 "./agents/run.sh de" Enter
+	
+	@tmux select-pane -t 2
+	@tmux split-window -v -t propSearch:Agents
+	@tmux set-option -p -t propSearch:Agents.3 @agent "FRONTEND ENGINEER"
+	@tmux send-keys -t propSearch:Agents.3 "./agents/run.sh fe" Enter
+	
+	@tmux split-window -v -t propSearch:Agents
+	@tmux set-option -p -t propSearch:Agents.4 @agent "UI/UX QA"
+	@tmux send-keys -t propSearch:Agents.4 "./agents/run.sh qa" Enter
+	
+	@tmux select-layout -t propSearch:Agents tiled
+	@tmux attach-session -t propSearch
+
+# Open all agents in separate tmux windows (parallel)
+agent-tmux-all:
+	@tmux kill-session -t propSearch 2>/dev/null || true
+	@tmux new-session -d -s propSearch -n "PO" "./agents/run.sh po"
+	@tmux new-window -t propSearch -n "ANALYST" "./agents/run.sh analyst"
+	@tmux new-window -t propSearch -n "DE" "./agents/run.sh de"
+	@tmux new-window -t propSearch -n "FE" "./agents/run.sh fe"
+	@tmux new-window -t propSearch -n "QA" "./agents/run.sh qa"
+	@tmux select-window -t propSearch:PO
+	@tmux attach-session -t propSearch
+
+# ====================
+# OPTION 3: VSCode windows only (run commands manually)
+# ====================
+agent-windows:
+	@code --new-window . & \
+	 code --new-window . & \
+	 code --new-window . & \
+	 code --new-window . & \
+	 code --new-window . &
+	@echo "Opened 5 VSCode windows. Run in each: ./agents/run.sh <po|analyst|de|fe|qa>"
+
 # Invoke the Data Analyst agent
 agent-analyst:
 	@./agents/run.sh analyst
@@ -82,6 +145,12 @@ agent-qa:
 	@./agents/run.sh qa
 
 # --- Project Management ---
+
+# Install the pre-commit data guard hook (blocks accidental data commits)
+guard-install:
+	@echo "Installing pre-commit data guard hook..."
+	@cp scripts/pre-commit-data-guard.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+	@echo "✓ Data guard hook installed. All commits will be validated."
 
 # Display the active backlog from Tasks.md
 tasks:
@@ -111,6 +180,13 @@ help:
 	@echo "  make agent agent=po                    - Generic agent invocation"
 	@echo "  make agent agent=analyst task=DE-140   - With task context"
 	@echo "  make agent agent=fe \"custom context\"   - With extra context"
+	@echo ""
+	@echo "New Windows (tmux - recommended):"
+	@echo "  make agent-tmux-grid       - Open all 5 agents in 1 window (grid layout)"
+	@echo "  make agent-tmux-all        - Open all 5 agents in separate windows (tabs)"
+	@echo ""
+	@echo "New Windows (VSCode - type commands manually):"
+	@echo "  make agent-windows         - Open 5 VSCode windows"
 	@echo ""
 	@echo "Also available:"
 	@echo "  source agents/aliases.sh  - Shell aliases (po, analyst, de, fe, qa)"

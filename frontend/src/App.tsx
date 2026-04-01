@@ -6,6 +6,7 @@ import PropertyDetail from './pages/PropertyDetail';
 import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import ComparisonPage from './pages/ComparisonPage';
 import MortgageTracker from './pages/MortgageTracker';
+import AffordabilitySettings from './pages/AffordabilitySettings';
 import Inbox from './pages/Inbox';
 import { PropertyProvider } from './hooks/PropertyContext';
 
@@ -19,6 +20,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/compare" element={<ComparisonPage />} />
             <Route path="/mortgage" element={<MortgageTracker />} />
+            <Route path="/affordability" element={<AffordabilitySettings />} />
             <Route path="/inbox" element={<Inbox />} />
             <Route path="/property/:id" element={<PropertyDetail />} />
             <Route path="*" element={

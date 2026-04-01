@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useFinancialData } from '../hooks/useFinancialData';
 import KPICard from '../components/KPICard';
 import LoadingNode from '../components/LoadingNode';
+import { extractValue } from '../types/macro';
 import { 
   TrendingUp, 
   Landmark, 
@@ -54,12 +55,16 @@ const MortgageTracker: React.FC = () => {
     const { economic_indicators, mortgage_history = [] } = macroData;
     const mortgageRates = economic_indicators?.mortgage_rates;
 
-    // Rate Corridor Scaling
+    // Rate Corridor Scaling — extract values from ProvenanceOrValue wrappers
+    const boeRates = mortgage_history.map(h => extractValue(h.boe_rate) ?? 0);
+    const m2yrRates = mortgage_history.map(h => extractValue(h.mortgage_2yr) ?? 0);
+    const m5yrRates = mortgage_history.map(h => extractValue(h.mortgage_5yr) ?? 0);
+
     const activeRates: number[] = [];
-    if (visibleSeries.boe) activeRates.push(...mortgage_history.map(h => h.boe_rate));
-    if (visibleSeries.m2yr) activeRates.push(...mortgage_history.map(h => h.mortgage_2yr));
-    if (visibleSeries.m5yr) activeRates.push(...mortgage_history.map(h => h.mortgage_5yr));
-    
+    if (visibleSeries.boe) activeRates.push(...boeRates);
+    if (visibleSeries.m2yr) activeRates.push(...m2yrRates);
+    if (visibleSeries.m5yr) activeRates.push(...m5yrRates);
+
     const maxRate = Math.max(...activeRates, 1) * 1.1;
     const minRate = Math.min(...activeRates, 10) * 0.9;
     const range = maxRate - minRate;
@@ -68,7 +73,7 @@ const MortgageTracker: React.FC = () => {
     const getY = (rate: number) => 100 - ((rate - minRate) / Math.max(range, 0.1)) * 100;
 
     // PPI Logic
-    const ppiHistory = mortgage_history.map(h => calculateMaxLoan(h.mortgage_5yr, monthlyBudget, mortgageTerm));
+    const ppiHistory = mortgage_history.map((_, idx) => calculateMaxLoan(m5yrRates[idx], monthlyBudget, mortgageTerm));
     const maxLoanVal = Math.max(...ppiHistory, 1) * 1.05;
     const minLoanVal = Math.min(...ppiHistory, 1000000) * 0.95;
     const loanRange = maxLoanVal - minLoanVal;
@@ -84,15 +89,15 @@ const MortgageTracker: React.FC = () => {
       buyingPowerStatus = ppiDelta > 2 ? 'Expanding' : ppiDelta < -2 ? 'Contracting' : 'Stable';
     }
 
-    const currentRate = mortgageRates?.[`${activeLTV}_ltv_5yr_fixed` as keyof typeof mortgageRates] as number || 4.5;
+    const currentRate = extractValue(mortgageRates?.[`${activeLTV}_ltv_5yr_fixed` as keyof typeof mortgageRates]) ?? 4.5;
     const currentMaxLoan = calculateMaxLoan(currentRate, monthlyBudget, mortgageTerm);
     const sensitivity = calculateMaxLoan(currentRate - 0.25, monthlyBudget, mortgageTerm) - currentMaxLoan;
 
-    // Series Definitions
+    // Series Definitions — use pre-extracted arrays
     const series: ChartSeries[] = [
-      { id: 'boe', label: 'BoE Base', color: '#3b82f6', visible: visibleSeries.boe, data: mortgage_history.map(h => h.boe_rate), points: mortgage_history.map((h, i) => `${getX(i)},${getY(h.boe_rate)}`).join(' ') },
-      { id: 'm5yr', label: '5Y Fixed', color: '#10b981', visible: visibleSeries.m5yr, data: mortgage_history.map(h => h.mortgage_5yr), points: mortgage_history.map((h, i) => `${getX(i)},${getY(h.mortgage_5yr)}`).join(' ') },
-      { id: 'm2yr', label: '2Y Fixed', color: '#f43f5e', visible: visibleSeries.m2yr, data: mortgage_history.map(h => h.mortgage_2yr), points: mortgage_history.map((h, i) => `${getX(i)},${getY(h.mortgage_2yr)}`).join(' ') },
+      { id: 'boe', label: 'BoE Base', color: '#3b82f6', visible: visibleSeries.boe, data: boeRates, points: mortgage_history.map((_, i) => `${getX(i)},${getY(boeRates[i])}`).join(' ') },
+      { id: 'm5yr', label: '5Y Fixed', color: '#10b981', visible: visibleSeries.m5yr, data: m5yrRates, points: mortgage_history.map((_, i) => `${getX(i)},${getY(m5yrRates[i])}`).join(' ') },
+      { id: 'm2yr', label: '2Y Fixed', color: '#f43f5e', visible: visibleSeries.m2yr, data: m2yrRates, points: mortgage_history.map((_, i) => `${getX(i)},${getY(m2yrRates[i])}`).join(' ') },
     ];
 
     const ppiPoints = ppiHistory.map((l, i) => `${getX(i)},${getLoanY(l)}`).join(' ');
@@ -101,7 +106,7 @@ const MortgageTracker: React.FC = () => {
       maxRate, minRate, range, getX, getY,
       ppiHistory, maxLoanVal, minLoanVal, loanRange, getLoanY,
       ppiDelta, buyingPowerStatus, currentMaxLoan, sensitivity, currentRate,
-      series, ppiPoints
+      series, ppiPoints, boeRates
     };
   }, [macroData, monthlyBudget, mortgageTerm, activeLTV, visibleSeries]);
 
@@ -191,28 +196,28 @@ const MortgageTracker: React.FC = () => {
 
       {/* KPI Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <KPICard 
-          label="BoE Base Rate" 
-          value={`${economic_indicators?.boe_base_rate || '—'}%`} 
-          icon={Landmark} 
+        <KPICard
+          label="BoE Base Rate"
+          value={`${extractValue(economic_indicators?.boe_base_rate)?.toFixed(2) ?? '—'}%`}
+          icon={Landmark}
           tooltip="Current official Bank of England base interest rate."
           methodology="Sourced from MPC latest release."
         />
-        <KPICard 
-          label={`${activeLTV}% LTV (5yr Fixed)`} 
-          value={`${currentRate}%`} 
-          icon={Percent} 
+        <KPICard
+          label={`${activeLTV}% LTV (5yr Fixed)`}
+          value={`${currentRate}%`}
+          icon={Percent}
           className="text-linear-accent-blue"
           tooltip={`Average retail rate for a 5-year fixed mortgage at ${activeLTV}% LTV.`}
           methodology="Market-leading rate for high-liquidity residential debt."
         />
-        <KPICard 
-          label="Next MPC Meeting" 
-          value={economic_indicators?.mpc_next_meeting || 'TBD'} 
-          icon={Calendar} 
+        <KPICard
+          label="Next MPC Meeting"
+          value={economic_indicators?.mpc_next_meeting || 'TBD'}
+          icon={Calendar}
           className="text-retro-amber"
           tooltip="The next scheduled meeting of the Bank of England's Monetary Policy Committee."
-          methodology={`Consensus: ${economic_indicators?.market_consensus || 'Unknown'}`}
+          methodology={`Consensus: ${extractValue(economic_indicators?.market_consensus) || 'Unknown'}`}
         />
       </div>
 
@@ -264,12 +269,15 @@ const MortgageTracker: React.FC = () => {
                         <span className="text-[8px] font-bold text-linear-text-muted uppercase">Month</span>
                         <span className="text-[10px] font-bold text-white uppercase">{currentHoverData.month}</span>
                       </div>
-                      {series.filter(s => s.visible).map(s => (
+                      {series.filter(s => s.visible).map(s => {
+                        const raw = s.id === 'boe' ? currentHoverData.boe_rate : s.id === 'm5yr' ? currentHoverData.mortgage_5yr : currentHoverData.mortgage_2yr;
+                        const val = extractValue(raw) ?? 0;
+                        return (
                         <div key={s.id} className="flex flex-col border-l border-linear-border/50 pl-4">
                           <span className="text-[8px] font-bold uppercase" style={{ color: s.color }}>{s.label}</span>
-                          <span className="text-[10px] font-bold text-white">{currentHoverData[s.id === 'boe' ? 'boe_rate' : s.id === 'm5yr' ? 'mortgage_5yr' : 'mortgage_2yr'].toFixed(2)}%</span>
+                          <span className="text-[10px] font-bold text-white">{val.toFixed(2)}%</span>
                         </div>
-                      ))}
+                      )})}
                     </div>
                   </div>
                 )}
@@ -347,13 +355,13 @@ const MortgageTracker: React.FC = () => {
               <div className="space-y-1.5">
                 <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest opacity-60">12M Peak</span>
                 <div className="text-xl font-bold text-linear-text-primary tracking-tighter">
-                  {Math.max(...mortgage_history.map(h => h.boe_rate)).toFixed(2)}%
+                  {Math.max(...(processedData.boeRates ?? [])).toFixed(2)}%
                 </div>
               </div>
               <div className="space-y-1.5">
                 <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest opacity-60">12M Low</span>
                 <div className="text-xl font-bold text-linear-text-primary tracking-tighter">
-                  {Math.min(...mortgage_history.map(h => h.boe_rate)).toFixed(2)}%
+                  {Math.min(...(processedData.boeRates ?? [])).toFixed(2)}%
                 </div>
               </div>
               <div className="space-y-1.5">
@@ -362,7 +370,7 @@ const MortgageTracker: React.FC = () => {
               </div>
               <div className="space-y-1.5">
                 <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest opacity-60">Consensus</span>
-                <div className="text-xl font-bold text-linear-accent-blue tracking-tighter uppercase">{economic_indicators?.market_consensus?.split(' ')[0] || 'Neutral'}</div>
+                <div className="text-xl font-bold text-linear-accent-blue tracking-tighter uppercase">{extractValue(economic_indicators?.market_consensus)?.split(' ')[0] || 'Neutral'}</div>
               </div>
             </div>
           </div>
@@ -538,11 +546,11 @@ const MortgageTracker: React.FC = () => {
                 
                 <div className="space-y-1">
                   <div className="text-3xl font-bold text-linear-text-primary tracking-tighter">
-                    {band.rate || '—'}%
+                    {band.rate != null ? `${extractValue(band.rate)?.toFixed(2) ?? '—'}%` : '—%'}
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-[0.15em]">Spread to Base</span>
-                    <span className="text-[10px] font-bold text-linear-accent-blue">+{((band.rate || 0) - (economic_indicators?.boe_base_rate || 0)).toFixed(2)}%</span>
+                    <span className="text-[10px] font-bold text-linear-accent-blue">+{((extractValue(band.rate) ?? 0) - (extractValue(economic_indicators?.boe_base_rate) ?? 0)).toFixed(2)}%</span>
                   </div>
                 </div>
               </button>
@@ -557,8 +565,8 @@ const MortgageTracker: React.FC = () => {
               <div className="space-y-1">
                 <h3 className="text-xs font-bold text-linear-text-primary uppercase tracking-widest">Arbitrage Opportunity Identified</h3>
                 <p className="text-[10px] text-linear-text-muted leading-relaxed max-w-xl font-medium">
-                  Increasing equity from 10% to 25% (75% LTV) reduces carrying cost by 
-                  <span className="text-linear-text-primary font-bold mx-1">£{Math.round(calculateMaxLoan(mortgageRates?.["90_ltv_5yr_fixed"] || 4.5, monthlyBudget, mortgageTerm) / 0.9 * 0.005 / 12).toLocaleString()}</span> 
+                  Increasing equity from 10% to 25% (75% LTV) reduces carrying cost by
+                  <span className="text-linear-text-primary font-bold mx-1">£{Math.round(calculateMaxLoan(extractValue(mortgageRates?.["90_ltv_5yr_fixed"]) ?? 4.5, monthlyBudget, mortgageTerm) / 0.9 * 0.005 / 12).toLocaleString()}</span>
                   per month relative to debt volume.
                 </p>
               </div>

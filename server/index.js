@@ -90,9 +90,17 @@ function initializeDB() {
   db.prepare(`
     CREATE TABLE IF NOT EXISTS global_context (
       key TEXT PRIMARY KEY,
-      data TEXT
+      data TEXT,
+      updated_at TEXT
     )
   `).run();
+
+  // Ensure updated_at column exists in existing DB (schema drift guard)
+  const gcCols = db.prepare("PRAGMA table_info(global_context)").all().map(c => c.name);
+  if (!gcCols.includes('updated_at')) {
+    console.log('Migrating global_context: adding updated_at column');
+    db.prepare("ALTER TABLE global_context ADD COLUMN updated_at TEXT").run();
+  }
 
   // 4. manual_queue table
   db.prepare(`
@@ -117,7 +125,18 @@ function initializeDB() {
     )
   `).run();
 
-  // 6. archived_properties table (Fidelity & History)
+  // 6. price_history table (DAT-140)
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS price_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      property_id TEXT,
+      price REAL,
+      date TEXT,
+      FOREIGN KEY(property_id) REFERENCES properties(id)
+    )
+  `).run();
+
+  // 7. archived_properties table (Fidelity & History)
   db.prepare(`
     CREATE TABLE IF NOT EXISTS archived_properties (
       id TEXT PRIMARY KEY,
@@ -164,6 +183,76 @@ function initializeDB() {
       archive_reason TEXT
     )
   `).run();
+
+  // 8. DE-120: regional_velocity analytical view
+  // Calculates Listings vs. Sales intensity per area to determine Buyer's/Seller's Market
+  db.prepare(`
+    CREATE VIEW IF NOT EXISTS regional_velocity AS
+    SELECT
+      COALESCE(p.area, 'Unknown') AS area,
+      COUNT(DISTINCT p.id) AS active_listings,
+      COUNT(DISTINCT a.id) AS sold_count,
+      COUNT(DISTINCT p.id) + COUNT(DISTINCT a.id) AS total_transactions,
+      ROUND(
+        CAST(COUNT(DISTINCT p.id) AS REAL) /
+        NULLIF(COUNT(DISTINCT p.id) + COUNT(DISTINCT a.id), 0),
+        4
+      ) AS supply_ratio,
+      -- supply_ratio > 0.65: Buyer's Market (high supply = buyer leverage)
+      -- supply_ratio < 0.35: Seller's Market (tight supply = seller leverage)
+      CASE
+        WHEN ROUND(
+          CAST(COUNT(DISTINCT p.id) AS REAL) /
+          NULLIF(COUNT(DISTINCT p.id) + COUNT(DISTINCT a.id), 0),
+          4
+        ) >= 0.65 THEN 'Buyer''s Market'
+        WHEN ROUND(
+          CAST(COUNT(DISTINCT p.id) AS REAL) /
+          NULLIF(COUNT(DISTINCT p.id) + COUNT(DISTINCT a.id), 0),
+          4
+        ) <= 0.35 THEN 'Seller''s Market'
+        ELSE 'Neutral'
+      END AS market_signal,
+      -- Days-on-market avg as a secondary velocity signal
+      ROUND(AVG(CAST(p.dom AS REAL)), 1) AS avg_dom,
+      -- Average alpha score as quality signal for the area
+      ROUND(AVG(CAST(p.alpha_score AS REAL)), 2) AS avg_alpha_score
+    FROM properties p
+    LEFT JOIN archived_properties a ON a.area = p.area
+    GROUP BY p.area
+    UNION ALL
+    SELECT
+      'Market-Wide' AS area,
+      COUNT(DISTINCT p.id) AS active_listings,
+      COUNT(DISTINCT a.id) AS sold_count,
+      COUNT(DISTINCT p.id) + COUNT(DISTINCT a.id) AS total_transactions,
+      ROUND(
+        CAST(COUNT(DISTINCT p.id) AS REAL) /
+        NULLIF(COUNT(DISTINCT p.id) + COUNT(DISTINCT a.id), 0),
+        4
+      ) AS supply_ratio,
+      CASE
+        WHEN ROUND(
+          CAST(COUNT(DISTINCT p.id) AS REAL) /
+          NULLIF(COUNT(DISTINCT p.id) + COUNT(DISTINCT a.id), 0),
+          4
+        ) >= 0.65 THEN 'Buyer''s Market'
+        WHEN ROUND(
+          CAST(COUNT(DISTINCT p.id) AS REAL) /
+          NULLIF(COUNT(DISTINCT p.id) + COUNT(DISTINCT a.id), 0),
+          4
+        ) <= 0.35 THEN 'Seller''s Market'
+        ELSE 'Neutral'
+      END AS market_signal,
+      ROUND(AVG(CAST(p.dom AS REAL)), 1) AS avg_dom,
+      ROUND(AVG(CAST(p.alpha_score AS REAL)), 2) AS avg_alpha_score
+    FROM properties p
+    LEFT JOIN archived_properties a ON a.area IS NOT NULL
+  `).run();
+
+  // 9. DE-120: Performance index on price_history.property_id for fast lookups
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_price_history_property_id ON price_history(property_id)`).run();
+  db.prepare(`CREATE INDEX IF NOT EXISTS idx_price_history_date ON price_history(date)`).run();
 
   // DAT-075: Enrich & Archive Protocol (Shallow assets)
   // Instead of deleting, we move to archived_properties for later enrichment
@@ -283,6 +372,29 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(results));
     }
+    // 1.5. Single Property Detail (DAT-140)
+    else if (url.pathname.startsWith('/api/properties/') && req.method === 'GET') {
+      const id = url.pathname.split('/').pop();
+      const property = db.prepare('SELECT * FROM properties WHERE id = ?').get(id);
+      
+      if (!property) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Property not found' }));
+      } else {
+        const history = db.prepare('SELECT price, date FROM price_history WHERE property_id = ? ORDER BY date ASC').all(id);
+        const result = {
+          ...property,
+          gallery: safeParse(property.gallery, []),
+          links: safeParse(property.links, []),
+          metadata: safeParse(property.metadata, {}),
+          is_value_buy: Boolean(property.is_value_buy),
+          vetted: Boolean(property.vetted),
+          price_history: history
+        };
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(result));
+      }
+    }
     // 2. Macro
     else if (url.pathname === '/api/macro' && req.method === 'GET') {
       const row = db.prepare("SELECT data FROM global_context WHERE key = 'macro_trend'").get();
@@ -312,14 +424,20 @@ const server = http.createServer((req, res) => {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Metro data not found' }));
       } else {
-        try {
-          const parsed = JSON.parse(row.data);
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(typeof parsed.content === 'string' ? parsed.content : JSON.stringify(parsed.content));
-        } catch (e) {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Failed to parse metro data' }));
-        }
+        // Raw GeoJSON stored directly — send as-is with correct content type
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(row.data);
+      }
+    }
+    // 4.5. DE-120: Regional Velocity (Buyer's Market intensity per area)
+    else if (url.pathname === '/api/regional-velocity' && req.method === 'GET') {
+      try {
+        const rows = db.prepare('SELECT * FROM regional_velocity ORDER BY area ASC').all();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(rows));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to load regional velocity data: ' + e.message }));
       }
     }
     // 5. Inbox
@@ -430,6 +548,41 @@ const server = http.createServer((req, res) => {
       }));
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(results));
+    }
+    // 7. Health check (infrastructure monitoring)
+    else if (url.pathname === '/api/health' && req.method === 'GET') {
+      try {
+        const counts = {
+          properties: db.prepare('SELECT COUNT(*) as n FROM properties').get().n,
+          archived: db.prepare('SELECT COUNT(*) as n FROM archived_properties').get().n,
+          price_history: db.prepare('SELECT COUNT(*) as n FROM price_history').get().n,
+          manual_queue: db.prepare('SELECT COUNT(*) as n FROM manual_queue WHERE status = ?').get('Pending').n,
+        };
+        const contextKeys = db.prepare("SELECT key, updated_at, LENGTH(data) as len FROM global_context").all();
+        const dbSize = require('fs').statSync(DB_PATH).size;
+        const health = {
+          status: 'ok',
+          timestamp: new Date().toISOString(),
+          db: {
+            path: DB_PATH,
+            size_kb: Math.round(dbSize / 1024),
+            journal_mode: db.pragma('journal_mode', { simple: true }),
+            foreign_keys: db.pragma('foreign_keys', { simple: true }),
+          },
+          counts,
+          context_freshness: contextKeys.reduce((acc, r) => {
+            acc[r.key] = { updated_at: r.updated_at, bytes: r.len };
+            return acc;
+          }, {}),
+          views: ['regional_velocity'],
+          indexes: ['idx_price_history_property_id', 'idx_price_history_date']
+        };
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(health));
+      } catch (e) {
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'error', error: e.message }));
+      }
     }
     else {
       res.writeHead(404, { 'Content-Type': 'application/json' });

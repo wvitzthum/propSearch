@@ -12,3 +12,9 @@
 /data/archive/inbox/*
 /data/archive/imports/*
 /data/archive/triaged/*
+/data/backups/
+/data/import/
+/data/triaged/
+financial_context.json
+.aider*
+*.claude

@@ -1,21 +1,30 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  ArrowUp, 
-  ArrowDown, 
+import {
+  ArrowUp,
+  ArrowDown,
   ChevronRight,
   ArrowUpDown,
   Bookmark,
   Archive,
   RotateCcw,
   Zap,
-  ShieldCheck
+  ShieldCheck,
+  CheckSquare,
+  Square,
+  Layers
 } from 'lucide-react';
 import type { PropertyWithCoords } from '../types/property';
 import type { PropertyStatus } from '../hooks/usePipeline';
 import AlphaBadge from './AlphaBadge';
 import Tooltip from './Tooltip';
 import { useComparison } from '../hooks/useComparison';
+import { useThesisTags } from '../hooks/useThesisTags';
+import ThesisTagBadge from './ThesisTagBadge';
+import ThesisTagSelector from './ThesisTagSelector';
+import BatchTagPanel from './BatchTagPanel';
+import LTVMatchBadge from './LTVMatchBadge';
+import { useAffordability } from '../hooks/useAffordability';
 
 interface PropertyTableProps {
   properties: PropertyWithCoords[];
@@ -24,6 +33,7 @@ interface PropertyTableProps {
   onPreview?: (property: PropertyWithCoords) => void;
   onStatusChange?: (id: string, status: PropertyStatus) => void;
   getStatus?: (id: string) => PropertyStatus;
+  showThesisTags?: boolean;
 }
 
 const SortIcon = ({ 
@@ -77,19 +87,47 @@ const TableHeader = ({
   </th>
 );
 
-const PropertyTable: React.FC<PropertyTableProps> = ({ 
-  properties, 
-  onSortChange, 
+const PropertyTable: React.FC<PropertyTableProps> = ({
+  properties,
+  onSortChange,
   currentSort,
   onPreview,
   onStatusChange,
-  getStatus
+  getStatus,
+  showThesisTags = true
 }) => {
   const { toggleComparison, isInComparison } = useComparison();
-  const [localSort, setLocalSort] = useState<{ key: string, direction: 'asc' | 'desc' }>({ 
-    key: currentSort || 'alpha_score', 
-    direction: 'desc' 
+  const { getTags } = useThesisTags();
+  const { getLTVMatchScore } = useAffordability();
+  const [batchSelected, setBatchSelected] = useState<Set<string>>(new Set());
+  const [localSort, setLocalSort] = useState<{ key: string, direction: 'asc' | 'desc' }>({
+    key: currentSort || 'alpha_score',
+    direction: 'desc'
   });
+
+  const toggleBatchSelect = (id: string) => {
+    setBatchSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (batchSelected.size === properties.length) {
+      setBatchSelected(new Set());
+    } else {
+      setBatchSelected(new Set(properties.map(p => p.id)));
+    }
+  };
+
+  const clearBatch = () => {
+    setBatchSelected(new Set());
+  };
 
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -130,24 +168,63 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
 
   return (
     <div className="bg-linear-bg border border-linear-border rounded-xl overflow-hidden shadow-2xl">
+      {/* Batch Selection Header */}
+      {batchSelected.size > 0 && (
+        <div className="px-4 py-3 bg-blue-500/10 border-b border-blue-500/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
+              <Layers size={16} className="text-blue-400" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-white uppercase tracking-widest">
+                {batchSelected.size} Selected
+              </div>
+              <div className="text-[10px] text-blue-400">
+                Batch tagging mode active
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={clearBatch}
+            className="px-3 py-1.5 text-[10px] font-bold text-white bg-blue-500/20 border border-blue-500/30 rounded-lg hover:bg-blue-500/30 transition-all"
+          >
+            Cancel Selection
+          </button>
+        </div>
+      )}
+
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-linear-card/50 border-b border-linear-border">
-              <TableHeader 
-                label="Asset / Area" 
-                columnKey="address" 
-                tooltip="Full address and acquisition area zone." 
-                className="sticky left-0 bg-linear-bg/80 backdrop-blur-md z-10"
+              {/* Batch Select Checkbox */}
+              <th className="px-3 py-3 w-10 border-r border-linear-border/30">
+                <button
+                  onClick={selectAll}
+                  className="flex items-center justify-center text-linear-text-muted hover:text-white transition-colors"
+                  title={batchSelected.size === properties.length ? 'Deselect all' : 'Select all'}
+                >
+                  {batchSelected.size === properties.length && properties.length > 0 ? (
+                    <CheckSquare size={16} className="text-blue-400" />
+                  ) : (
+                    <Square size={16} />
+                  )}
+                </button>
+              </th>
+              <TableHeader
+                label="Asset / Area"
+                columnKey="address"
+                tooltip="Full address and acquisition area zone."
+                className="sticky left-10 bg-linear-bg/80 backdrop-blur-md z-10"
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
                 rowSpan={2}
               />
-              <TableHeader 
-                label="Alpha" 
-                columnKey="alpha_score" 
-                tooltip="A proprietary 0-10 composite rating representing the overall acquisition quality of an asset." 
+              <TableHeader
+                label="Alpha"
+                columnKey="alpha_score"
+                tooltip="A proprietary 0-10 composite rating representing the overall acquisition quality of an asset."
                 methodology="Weighted: Tenure (40%), Spatial Alpha (30%), Price Efficiency (30%)."
                 className="px-2"
                 onSort={handleSort}
@@ -158,30 +235,30 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
               <th colSpan={2} className="px-2 py-2 bg-linear-accent/5 border-x border-linear-border/30 text-center text-[8px] font-bold text-linear-text-muted uppercase tracking-widest border-b border-linear-border/30">
                 Acquisition Model
               </th>
-              <TableHeader 
-                label="Eff." 
-                columnKey="price_per_sqm" 
-                tooltip="Pricing efficiency in GBP per square meter relative to micro-location benchmarks." 
+              <TableHeader
+                label="Eff."
+                columnKey="price_per_sqm"
+                tooltip="Pricing efficiency in GBP per square meter relative to micro-location benchmarks."
                 className="px-2"
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
                 rowSpan={2}
               />
-              <TableHeader 
-                label="App." 
-                columnKey="appreciation_potential" 
-                tooltip="Institutional forecast for 5-year capital appreciation." 
+              <TableHeader
+                label="App."
+                columnKey="appreciation_potential"
+                tooltip="Institutional forecast for 5-year capital appreciation."
                 className="px-2"
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
                 rowSpan={2}
               />
-              <TableHeader 
-                label="Com." 
-                columnKey="commute_utility" 
-                tooltip="Aggregated commute utility score to City/Wharf hubs (lower is better)." 
+              <TableHeader
+                label="Com."
+                columnKey="commute_utility"
+                tooltip="Aggregated commute utility score to City/Wharf hubs (lower is better)."
                 className="px-2"
                 onSort={handleSort}
                 currentSort={localSort.key}
@@ -206,36 +283,54 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 direction={localSort.direction}
                 rowSpan={2}
               />
-              <TableHeader 
-                label="DoM" 
-                columnKey="dom" 
-                className="px-2" 
+              <TableHeader
+                label="DoM"
+                columnKey="dom"
+                className="px-2"
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
                 rowSpan={2}
               />
+              <th rowSpan={2} className="px-2 py-3 text-center text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap min-w-[80px]">
+                LTV
+              </th>
+              {showThesisTags && (
+                <th rowSpan={2} className="px-2 py-3 text-center text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap min-w-[100px]">
+                  Thesis
+                </th>
+              )}
               <th rowSpan={2} className="px-2 py-3 text-right text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap">Action</th>
             </tr>
             <tr className="bg-linear-card/30 border-b border-linear-border">
-              <TableHeader 
-                label="Target" 
-                columnKey="realistic_price" 
-                tooltip="Calculated bid target based on market conditions, DoM, and area liquidity." 
+              {/* Empty cell for batch checkbox */}
+              <th className="border-r border-linear-border/30"></th>
+              <TableHeader
+                label="Target"
+                columnKey="realistic_price"
+                tooltip="Calculated bid target based on market conditions, DoM, and area liquidity."
                 className="border-l border-linear-border/30"
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
               />
-              <TableHeader 
-                label="Gap" 
-                columnKey="value_gap" 
-                tooltip="Delta between list price and realistic acquisition target." 
+              <TableHeader
+                label="Gap"
+                columnKey="value_gap"
+                tooltip="Delta between list price and realistic acquisition target."
                 className="border-r border-linear-border/30"
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
               />
+              {/* Empty cells for remaining columns */}
+              <th className="border-r border-linear-border/30"></th>
+              <th className="border-r border-linear-border/30"></th>
+              <th className="border-r border-linear-border/30"></th>
+              <th className="border-r border-linear-border/30"></th>
+              <th className="border-r border-linear-border/30"></th>
+              <th className="border-r border-linear-border/30"></th>
+              {showThesisTags && <th className="border-r border-linear-border/30"></th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-linear-border/50">
@@ -243,17 +338,36 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
               const status = getStatus ? getStatus(property.id) : 'discovered';
               const isSelected = isInComparison(property.id);
               const isShallow = !property.sqft || !property.epc || property.service_charge === undefined;
-              
+              const propTags = getTags(property.id);
+              const isBatchSelected = batchSelected.has(property.id);
+
               return (
-                <tr 
-                  key={property.id} 
-                  className={`hover:bg-linear-card/40 transition-colors group cursor-pointer ${
-                    status === 'shortlisted' ? 'bg-linear-accent-blue/5' : 
+                <tr
+                  key={property.id}
+                  className={`hover:bg-linear-card/40 transition-colors group ${
+                    status === 'shortlisted' ? 'bg-linear-accent-blue/5' :
                     status === 'vetted' ? 'bg-linear-accent-emerald/10' : ''
-                  } ${isSelected ? 'bg-linear-accent-blue/10' : ''}`}
-                  onClick={() => onPreview && onPreview(property)}
+                  } ${isSelected ? 'bg-linear-accent-blue/10' : ''} ${isBatchSelected ? 'bg-blue-500/5' : ''}`}
                 >
-                  <td className="px-4 py-4 sticky left-0 bg-linear-bg/80 backdrop-blur-md group-hover:bg-linear-card/40 z-10 min-w-[280px] border-r border-linear-border/30">
+                  {/* Batch Select Checkbox */}
+                  <td
+                    className="px-3 py-4 w-10 border-r border-linear-border/30"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      onClick={() => toggleBatchSelect(property.id)}
+                      className={`flex items-center justify-center transition-colors ${
+                        isBatchSelected ? 'text-blue-400' : 'text-linear-text-muted hover:text-white'
+                      }`}
+                    >
+                      {isBatchSelected ? <CheckSquare size={16} /> : <Square size={16} />}
+                    </button>
+                  </td>
+                  {/* Address Column */}
+                  <td
+                    className="px-4 py-4 sticky left-10 bg-linear-bg/80 group-hover:bg-linear-card/40 z-10 min-w-[280px] border-r border-linear-border/30 cursor-pointer"
+                    onClick={() => onPreview && onPreview(property)}
+                  >
                     <div className="flex flex-col">
                       <div className="text-[11px] font-bold text-linear-text-primary group-hover:text-linear-accent-blue truncate tracking-tight transition-colors">
                         {property.address}
@@ -330,6 +444,34 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                   <td className="px-2 py-4 text-[11px] text-zinc-500 font-bold italic">
                     {property.dom || 0}d
                   </td>
+                  <td className="px-2 py-4" onClick={(e) => e.stopPropagation()}>
+                    <LTVMatchBadge score={getLTVMatchScore(property.realistic_price)} />
+                  </td>
+                  {showThesisTags && (
+                    <td className="px-2 py-4" onClick={(e) => e.stopPropagation()}>
+                      {propTags.length > 0 ? (
+                        <div className="flex flex-wrap gap-1 max-w-[120px]">
+                          {propTags.slice(0, 2).map(tag => (
+                            <ThesisTagBadge key={tag} tag={tag} size="sm" />
+                          ))}
+                          {propTags.length > 2 && (
+                            <span className="text-[8px] text-linear-text-muted">+{propTags.length - 2}</span>
+                          )}
+                          <ThesisTagSelector
+                            propertyId={property.id}
+                            currentTags={propTags}
+                            size="sm"
+                          />
+                        </div>
+                      ) : (
+                        <ThesisTagSelector
+                          propertyId={property.id}
+                          currentTags={[]}
+                          size="sm"
+                        />
+                      )}
+                    </td>
+                  )}
                   <td className="px-2 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-2">
                       <button 
@@ -384,6 +526,15 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
           </tbody>
         </table>
       </div>
+
+      {/* Batch Tag Panel */}
+      {batchSelected.size > 0 && (
+        <BatchTagPanel
+          selectedIds={Array.from(batchSelected)}
+          onClose={clearBatch}
+          onComplete={() => {}}
+        />
+      )}
     </div>
   );
 };

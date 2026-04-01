@@ -1,9 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Search, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Search,
+  Settings,
   Command,
   Plus,
   Compass,
@@ -11,24 +11,25 @@ import {
   ChevronDown,
   Percent,
   Inbox,
-  History
+  History,
+  Calculator
 } from 'lucide-react';
 import { usePropertyContext } from '../hooks/PropertyContext';
-import SearchModal from './SearchModal';
+import CommandPalette from './CommandPalette';
 import SubmissionHistory from './SubmissionHistory';
 import ComparisonBar from './ComparisonBar';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const { properties } = usePropertyContext();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        setIsSearchOpen(true);
+        setIsCommandPaletteOpen(true);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -40,7 +41,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { icon: <LayoutDashboard size={16} />, label: 'Dashboard', path: '/dashboard' },
     { icon: <Inbox size={16} />, label: 'Lead Inbox', path: '/inbox' },
     { icon: <Zap size={16} />, label: 'Comparative Intel', path: '/compare' },
-    { icon: <Percent size={16} />, label: 'Mortgage Tracker', path: '/mortgage' },
+    { icon: <Calculator size={16} />, label: 'Affordability', path: '/affordability' },
+    { icon: <Percent size={16} />, label: 'Mortgage Intel', path: '/mortgage' },
   ];
 
   const dynamicAreas = useMemo(() => {
@@ -61,7 +63,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       if (path === 'dashboard') label = 'Terminal';
       if (path === 'inbox') label = 'Lead Inbox';
       if (path === 'compare') label = 'Comparative Intel';
-      if (path === 'mortgage') label = 'Mortgage Intelligence';
+      if (path === 'mortgage') label = 'Mortgage Intel';
+      if (path === 'affordability') label = 'Affordability';
       if (path === 'property' && paths[index + 1]) {
         return { label: 'Asset Scan', path: '/dashboard', active: false };
       }
@@ -79,7 +82,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-linear-bg text-white font-sans antialiased flex selection:bg-blue-500/30">
-      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
       <SubmissionHistory isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} />
 
       {/* Sidebar */}
@@ -99,7 +102,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
         <div className="px-3 py-2">
           <button 
-            onClick={() => setIsSearchOpen(true)}
+            onClick={() => setIsCommandPaletteOpen(true)}
             className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-linear-card border border-linear-border text-linear-text-muted hover:text-white transition-all shadow-sm group"
           >
             <div className="flex items-center gap-2">
@@ -211,7 +214,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <span className="text-[10px] font-black uppercase tracking-widest">Trace</span>
              </button>
              <div 
-               onClick={() => setIsSearchOpen(true)}
+               onClick={() => setIsCommandPaletteOpen(true)}
                className="flex items-center gap-1 bg-linear-card px-2 py-1 rounded border border-linear-border text-[10px] font-mono text-linear-text-muted select-none group hover:border-linear-accent transition-colors cursor-pointer"
              >
                 <Command size={10} className="group-hover:text-white transition-colors" />

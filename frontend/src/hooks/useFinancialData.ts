@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { MacroTrend } from '../types/macro';
 import type { FinancialContext } from '../types/financial';
 import type { Property } from '../types/property';
+import { extractValue } from '../types/macro';
 
 const IS_DEMO = import.meta.env.VITE_DEMO_MODE === 'true';
 const API_BASE = IS_DEMO ? '/data' : '/api';
@@ -25,32 +26,41 @@ export const useFinancialData = () => {
         const macro = await macroRes.json();
         const financial = await financialRes.json();
 
-        // Normalization Layer for Macro
-        const normalizeMacro = (raw: any): MacroTrend => ({
-          ...raw,
-          economic_indicators: {
-            boe_base_rate: raw.boe_base_rate || 3.75,
-            gbp_usd: raw.gbp_usd || 1.28,
-            uk_inflation_cpi: raw.uk_inflation_cpi || 2.1,
-            mortgage_rates: {
-              "90_ltv_2yr_fixed": raw.mortgage_rates?.two_year_fixed_90_ltv || raw.mortgage_rates?.["90_ltv_2yr_fixed"] || 4.45,
-              "90_ltv_5yr_fixed": raw.mortgage_rates?.five_year_fixed_90_ltv || raw.mortgage_rates?.["90_ltv_5yr_fixed"] || 4.55,
-              "85_ltv_5yr_fixed": raw.mortgage_rates?.five_year_fixed_85_ltv || raw.mortgage_rates?.["85_ltv_5yr_fixed"] || 4.25,
-              "75_ltv_5yr_fixed": raw.mortgage_rates?.five_year_fixed_75_ltv || raw.mortgage_rates?.["75_ltv_5yr_fixed"] || 4.05,
-              "60_ltv_5yr_fixed": raw.mortgage_rates?.five_year_fixed_60_ltv || raw.mortgage_rates?.["60_ltv_5yr_fixed"] || 3.85,
-              avg_fees: raw.mortgage_rates?.avg_fees || 995
+        // Normalization Layer for Macro — extract provenance-wrapped values
+        const normalizeMacro = (raw: any): MacroTrend => {
+          const rawEcon = raw.economic_indicators || raw;
+          const rawRates = rawEcon.mortgage_rates || raw.mortgage_rates || {};
+          return {
+            economic_indicators: {
+              boe_base_rate: extractValue(rawEcon.boe_base_rate) ?? 3.75,
+              gbp_usd: extractValue(rawEcon.gbp_usd) ?? 1.28,
+              uk_inflation_cpi: extractValue(rawEcon.uk_inflation_cpi) ?? 2.1,
+              mortgage_rates: {
+                "90_ltv_2yr_fixed": extractValue(rawRates.two_year_fixed_90_ltv ?? rawRates["90_ltv_2yr_fixed"]) ?? 4.45,
+                "90_ltv_5yr_fixed": extractValue(rawRates.five_year_fixed_90_ltv ?? rawRates["90_ltv_5yr_fixed"]) ?? 4.55,
+                "85_ltv_5yr_fixed": extractValue(rawRates.five_year_fixed_85_ltv ?? rawRates["85_ltv_5yr_fixed"]) ?? 4.25,
+                "75_ltv_5yr_fixed": extractValue(rawRates.five_year_fixed_75_ltv ?? rawRates["75_ltv_5yr_fixed"]) ?? 4.05,
+                "60_ltv_5yr_fixed": extractValue(rawRates.five_year_fixed_60_ltv ?? rawRates["60_ltv_5yr_fixed"]) ?? 3.85,
+                avg_fees: extractValue(rawRates.avg_fees) ?? 995
+              },
+              mpc_next_meeting: extractValue(rawEcon.mpc_next_meeting) ?? extractValue(raw.mpc_next_meeting) ?? undefined,
+              market_consensus: extractValue(rawEcon.market_consensus) ?? extractValue(raw.market_consensus) ?? undefined
             },
-            mpc_next_meeting: raw.mpc_next_meeting,
-            market_consensus: raw.market_consensus
-          },
-          mortgage_history: raw.mortgage_history ? raw.mortgage_history.map((h: any) => ({
-            month: h.date || h.month,
-            boe_rate: h.boe_rate || (raw.boe_base_rate || 3.75),
-            mortgage_2yr: h.rate_90 || h.mortgage_2yr || 4.45,
-            mortgage_5yr: h.rate_90 || h.mortgage_5yr || 4.55,
-            cpi: h.cpi || 2.1
-          })) : []
-        });
+            mortgage_history: (() => {
+              const rawHist = raw.mortgage_history;
+              const arr = Array.isArray(rawHist) ? rawHist
+                : (rawHist && typeof rawHist === 'object' && Array.isArray((rawHist as any).data)) ? (rawHist as any).data
+                : [];
+              return arr.map((h: any) => ({
+                month: h.date || h.month,
+                boe_rate: extractValue(h.boe_rate) ?? extractValue(rawEcon.boe_base_rate) ?? 3.75,
+                mortgage_2yr: extractValue(h.rate_90 ?? h.mortgage_2yr) ?? 4.45,
+                mortgage_5yr: extractValue(h.rate_75 ?? h.mortgage_5yr) ?? 4.55,
+                cpi: extractValue(h.cpi) ?? 2.1
+              }));
+            })()
+          };
+        };
 
         setMacroData(normalizeMacro(macro));
         setFinancialContext(financial);
@@ -71,7 +81,7 @@ export const useFinancialData = () => {
     // 1. Mortgage Calculation (90% LTV, 5yr Fixed)
     const principal = property.realistic_price * 0.9;
     const rates = macroData.economic_indicators?.mortgage_rates;
-    const annualRate = (rates?.["90_ltv_5yr_fixed"] || 4.5) / 100;
+    const annualRate = (extractValue(rates?.["90_ltv_5yr_fixed"]) ?? 4.5) / 100;
     const monthlyRate = annualRate / 12;
     const numberOfPayments = 25 * 12; // Standard 25 year term
 

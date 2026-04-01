@@ -21,7 +21,11 @@ Core data architecture, storage solutions (SQLite), and automated ingestion pipe
 - **Spatial Assets:** Source and maintain `data/london_metro.geojson`.
 - **Coordinate Precision:** Ensure correct geocoding for markers.
 
-## Data Integrity & Approval Protocol
+## Data Integrity, Approval & Guardrails
+
+**READ THIS FIRST:** Before modifying `data/propSearch.db`, running `sync_data.js`, or deleting any file in `data/`, consult `agents/DATA_GUARDRAILS.md`. It defines mandatory pre-operation backups, schema validation requirements, and the delete approval format. Pipeline writes MUST implement schema validation per Rule 4 of DATA_GUARDRAILS.md.
+
+### Approval Protocol
 - **MANDATORY:** You must explicitly ask for user approval before deleting any property records, modifying the SQLite schema, or performing bulk updates (e.g., re-syncing `dom` or `price_reduction` for all items).
 - **Zero-Byte Deletions:** Any file deletion (JSON, JSONL, DB) requires prior confirmation with the user.
 

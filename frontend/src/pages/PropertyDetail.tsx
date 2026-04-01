@@ -1,25 +1,29 @@
 import React, { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  MapPin, 
-  CheckCircle2, 
-  ShieldAlert, 
-  Calendar, 
-  Maximize2, 
-  LayoutGrid, 
-  Home, 
-  Zap, 
-  Gem, 
-  TrendingDown, 
-  Clock, 
-  Scale, 
-  FileText, 
-  Save, 
-  ArrowRight, 
+import {
+  ArrowLeft,
+  MapPin,
+  CheckCircle2,
+  ShieldAlert,
+  Calendar,
+  Maximize2,
+  LayoutGrid,
+  Home,
+  Zap,
+  Gem,
+  TrendingDown,
+  Clock,
+  Scale,
+  FileText,
+  Save,
+  ArrowRight,
   BarChart3,
   TrendingUp,
-  Layers
+  Layers,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Tag
 } from 'lucide-react';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import { useFinancialData } from '../hooks/useFinancialData';
@@ -33,6 +37,8 @@ import type { PropertyWithCoords } from '../types/property';
 import { usePipeline } from '../hooks/usePipeline';
 
 import FloorplanViewer from '../components/FloorplanViewer';
+import ThesisTagSelector from '../components/ThesisTagSelector';
+import AffordabilityNode from '../components/AffordabilityNode';
 
 const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -40,6 +46,8 @@ const PropertyDetail: React.FC = () => {
   const { calculateMonthlyOutlay } = useFinancialData();
   const { getStatus, setStatus } = usePipeline();
   const [activeTab, setActiveTab] = useState<'gallery' | 'floorplan'>('gallery');
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [showLightbox, setShowLightbox] = useState(false);
   const [notes, setLocalNotes] = useState(() => {
     if (!id) return '';
     return localStorage.getItem(`notes_${id}`) || '';
@@ -49,6 +57,12 @@ const PropertyDetail: React.FC = () => {
   const property = useMemo(() => {
     return properties.find(p => p.id === id) as PropertyWithCoords | undefined;
   }, [properties, id]);
+
+  const allImages = useMemo(() => {
+    if (!property) return [];
+    const images = [property.image_url, ...(property.gallery || [])].filter(Boolean);
+    return Array.from(new Set(images)) as string[];
+  }, [property]);
 
   const outlay = property ? calculateMonthlyOutlay(property) : null;
   const status = property ? getStatus(property.id) : 'discovered';
@@ -82,6 +96,51 @@ const PropertyDetail: React.FC = () => {
 
   return (
     <div className="bg-linear-bg text-white">
+      {/* Lightbox Modal */}
+      {showLightbox && (
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center animate-in fade-in duration-300">
+          <button 
+            onClick={() => setShowLightbox(false)}
+            className="absolute top-8 right-8 p-3 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-all z-[110]"
+          >
+            <X size={32} />
+          </button>
+          
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveImageIndex(prev => (prev === 0 ? allImages.length - 1 : prev - 1));
+            }}
+            className="absolute left-8 p-4 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-all z-[110]"
+          >
+            <ChevronLeft size={48} />
+          </button>
+          
+          <div className="relative max-w-[85vw] max-h-[85vh] select-none">
+            <img 
+              src={allImages[activeImageIndex]} 
+              alt="Gallery Zoom"
+              className="max-w-full max-h-[85vh] object-contain shadow-2xl rounded-lg"
+            />
+            <div className="absolute -bottom-12 left-0 right-0 text-center">
+              <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                Institutional Perspective {activeImageIndex + 1} of {allImages.length}
+              </span>
+            </div>
+          </div>
+          
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveImageIndex(prev => (prev === allImages.length - 1 ? 0 : prev + 1));
+            }}
+            className="absolute right-8 p-4 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-all z-[110]"
+          >
+            <ChevronRight size={48} />
+          </button>
+        </div>
+      )}
+
       <div className="px-6 py-8 max-w-5xl mx-auto">
         <Link to="/dashboard" className="inline-flex items-center gap-2 text-[10px] font-bold text-linear-text-muted hover:text-white uppercase tracking-wider transition-colors mb-8 group">
           <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
@@ -111,9 +170,24 @@ const PropertyDetail: React.FC = () => {
 
             {/* Asset Pipeline */}
             <div className="mb-12 p-8 bg-linear-card border border-linear-border rounded-3xl shadow-xl">
-              <PipelineTracker 
-                status={status} 
-                onStatusChange={(newStatus) => setStatus(property.id, newStatus)} 
+              <PipelineTracker
+                status={status}
+                onStatusChange={(newStatus) => setStatus(property.id, newStatus)}
+              />
+            </div>
+
+            {/* Investment Thesis Tags */}
+            <div className="mb-12 p-6 bg-linear-card border border-linear-border rounded-3xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest flex items-center gap-2">
+                  <Tag size={14} className="text-blue-400" />
+                  Investment Thesis
+                </h3>
+              </div>
+              <ThesisTagSelector
+                propertyId={property.id}
+                currentTags={[]}
+                size="lg"
               />
             </div>
 
@@ -138,34 +212,41 @@ const PropertyDetail: React.FC = () => {
 
               {activeTab === 'gallery' ? (
                 <div className="space-y-4 animate-in fade-in duration-500">
-                  <div className="relative aspect-[16/9] w-full bg-linear-card rounded-2xl overflow-hidden group border border-linear-border/50">
+                  <div 
+                    onClick={() => setShowLightbox(true)}
+                    className="relative aspect-[16/9] w-full bg-linear-card rounded-2xl overflow-hidden group border border-linear-border/50 cursor-zoom-in"
+                  >
                     <PropertyImage 
-                      src={property.image_url || property.gallery[0]}
+                      src={allImages[activeImageIndex]}
                       alt={property.address}
                       className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-linear-bg/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="absolute bottom-6 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all">
-                      <span className="px-3 py-1.5 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold rounded-lg border border-white/10 uppercase tracking-widest">
-                        Primary Perspective
+                      <span className="px-3 py-1.5 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold rounded-lg border border-white/10 uppercase tracking-widest flex items-center gap-2">
+                        <Maximize2 size={12} />
+                        Launch High-Res Scanner
                       </span>
                     </div>
                   </div>
                   
-                  {property.gallery && property.gallery.length > 0 && (
-                    <div className="grid grid-cols-4 gap-4">
-                      {property.gallery.slice(0, 4).map((url, i) => (
-                        <div key={i} className="aspect-[4/3] rounded-xl overflow-hidden border border-linear-border group cursor-pointer relative">
+                  {allImages.length > 1 && (
+                    <div className="grid grid-cols-5 gap-4">
+                      {allImages.map((url, i) => (
+                        <div 
+                          key={i} 
+                          onClick={() => setActiveImageIndex(i)}
+                          className={`aspect-[4/3] rounded-xl overflow-hidden border transition-all cursor-pointer relative group ${
+                            i === activeImageIndex ? 'border-linear-accent ring-2 ring-linear-accent/20 scale-95' : 'border-linear-border hover:border-white/40'
+                          }`}
+                        >
                           <PropertyImage 
                             src={url} 
-                            className="h-full w-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500" 
+                            className={`h-full w-full object-cover transition-all duration-500 ${
+                              i === activeImageIndex ? 'opacity-100' : 'opacity-40 group-hover:opacity-70'
+                            }`} 
                             alt={`Gallery ${i}`} 
                           />
-                          {i === 3 && property.gallery.length > 4 && (
-                            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center text-white font-bold group-hover:bg-black/40 transition-colors">
-                              +{property.gallery.length - 4} More
-                            </div>
-                          )}
                         </div>
                       ))}
                     </div>
@@ -296,6 +377,15 @@ const PropertyDetail: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Affordability Node */}
+            <div className="mb-12">
+              <AffordabilityNode
+                propertyPrice={property.realistic_price}
+                serviceCharge={property.service_charge}
+                groundRent={property.ground_rent}
+              />
+            </div>
 
             <div className="space-y-12">
               <div>

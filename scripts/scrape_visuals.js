@@ -48,7 +48,9 @@ async function scrapeVisuals(url) {
       source: url.includes('rightmove.co.uk') ? 'Rightmove' : url.includes('zoopla.co.uk') ? 'Zoopla' : 'Unknown',
       image_url: null,
       floorplan_url: null,
-      gallery: []
+      gallery: [],
+      floor_level: null,
+      streetview_url: null
     };
 
     if (result.source === 'Rightmove') {
@@ -59,90 +61,135 @@ async function scrapeVisuals(url) {
       if (jsonModel) {
         const pd = jsonModel.propertyData || jsonModel.property;
         if (pd) {
-          console.log('Rightmove PropertyData keys:', Object.keys(pd));
+          console.log('Rightmove PropertyData found');
           if (pd.images && pd.images.length > 0) {
             result.image_url = pd.images[0].url;
             result.gallery = pd.images.slice(0, 5).map(img => img.url);
           }
           if (pd.floorplans && pd.floorplans.length > 0) {
             result.floorplan_url = pd.floorplans[0].url;
-          } else {
-            console.log('No floorplans found in pd.floorplans. Keys:', Object.keys(pd));
           }
-        } else {
-            console.log('No PropertyData/Property found in jsonModel. Keys:', Object.keys(jsonModel));
+          if (pd.entranceFloor) {
+            result.floor_level = pd.entranceFloor;
+          }
+          if (pd.location && pd.location.latitude && pd.location.longitude) {
+            result.streetview_url = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${pd.location.latitude},${pd.location.longitude}`;
+          }
         }
-      } else {
-          console.log('No window.jsonModel or window.__PRELOADED_STATE__ or window.PAGE_MODEL found');
       }
     } else if (result.source === 'Zoopla') {
-      const pageTitle = await page.title();
-      console.log('Zoopla Page Title:', pageTitle);
-
-      // Wait for a core content element to ensure hydration/navigation
-      try {
-        await page.waitForSelector('h1, [data-testid="listing-title"]', { timeout: 10000 });
-      } catch (e) {
-        console.log('Main content selector not found, attempting extraction anyway');
-      }
-
       const nextData = await page.evaluate(() => {
         const script = document.getElementById('__NEXT_DATA__');
-        return script ? JSON.parse(script.textContent) : null;
+        if (script) return JSON.parse(script.textContent);
+        if (window.__NEXT_DATA__) return window.__NEXT_DATA__;
+        return null;
       });
 
       if (nextData) {
-        const listingDetails = nextData.props?.pageProps?.listingDetails;
+        const listingDetails = nextData.props?.pageProps?.listingDetails || nextData.props?.pageProps?.initialProps?.listingDetails;
         if (listingDetails) {
-          console.log('Zoopla ListingDetails found in nextData');
+          console.log('Zoopla ListingDetails found');
           if (listingDetails.images?.length > 0) {
             result.image_url = listingDetails.images[0].src;
             result.gallery = listingDetails.images.slice(0, 5).map(img => img.src);
           }
           if (listingDetails.floorplans && listingDetails.floorplans.length > 0) {
-            result.floorplan_url = listingDetails.floorplans[0].src;
+            result.floorplan_url = listingDetails.floorplans[0].src || listingDetails.floorplans[0].url;
+          }
+          if (listingDetails.floorLevel) {
+            result.floor_level = listingDetails.floorLevel;
+          }
+          if (listingDetails.location && listingDetails.location.coordinates) {
+            const { lat, lon } = listingDetails.location.coordinates;
+            result.streetview_url = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lon}`;
           }
         }
       }
-
-      // If still missing, try broad DOM search
-      if (!result.image_url) {
-          console.log('Falling back to broad DOM search for Zoopla');
-          const domAssets = await page.evaluate(() => {
-            // Find all images and filter by likely candidates
-            const allImages = Array.from(document.querySelectorAll('img')).map(img => ({
-              src: img.src,
-              alt: img.alt,
-              width: img.naturalWidth,
-              height: img.naturalHeight
-            }));
-            
-            // Heuristic for property images: high-res, specific alt text or data-testids
-            const galleryImages = allImages.filter(img => 
-                img.src.includes('images.zoopla.co.uk') || 
-                img.alt.toLowerCase().includes('property') ||
-                img.src.includes('property-photo')
-            ).map(img => img.src);
-
-            const floorplanImg = allImages.find(img => 
-                img.src.toLowerCase().includes('floorplan') || 
-                img.alt.toLowerCase().includes('floorplan')
-            );
-
-            return {
-              images: [...new Set(galleryImages)],
-              floorplan: floorplanImg ? floorplanImg.src : null
-            };
-          });
-
-          if (domAssets.images.length > 0) {
-            result.image_url = domAssets.images[0];
-            result.gallery = domAssets.images.slice(0, 5);
-          }
-          result.floorplan_url = domAssets.floorplan;
-      }
     }
 
+    // Fallback/Generic Heuristic for Unknown OR if portal extraction failed
+    if (!result.image_url) {
+      console.log(`Using Heuristic scraper fallback for: ${result.source}`);
+      
+      // Auto-scroll
+      await page.evaluate(async () => {
+        for (let i = 0; i < document.body.scrollHeight; i += 500) {
+          window.scrollTo(0, i);
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      });
+      await page.waitForTimeout(1000);
+
+      const heuristicAssets = await page.evaluate(() => {
+        const getBestSrc = (img) => {
+           if (img.parentElement && img.parentElement.tagName === 'PICTURE') {
+               const sources = Array.from(img.parentElement.querySelectorAll('source'));
+               const bestSource = sources.find(s => s.srcset.includes('1024') || s.srcset.includes('768')) || sources[sources.length - 1];
+               if (bestSource && bestSource.srcset) {
+                   return bestSource.srcset.split(',').map(s => s.trim().split(' ')[0]).pop();
+               }
+           }
+           if (img.srcset) {
+             return img.srcset.split(',').map(s => s.trim().split(' ')[0]).pop();
+           }
+           return img.getAttribute('data-src') || img.getAttribute('data-lazy-src') || img.src;
+        };
+
+        const allImages = Array.from(document.querySelectorAll('img')).map(img => ({
+          src: getBestSrc(img),
+          alt: img.alt || '',
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+          testid: img.getAttribute('data-testid') || ''
+        }));
+
+        const galleryImages = allImages.filter(img => {
+          const src = img.src.toLowerCase();
+          const alt = img.alt.toLowerCase();
+          const isIcon = /logo|icon|avatar|user|star|social|button|arrow|chevron|loader/i.test(src + alt);
+          const isSmall = (img.width > 0 && img.width < 200) || (img.height > 0 && img.height < 150);
+          const isPortalSpecific = src.includes('images.zoopla.co.uk') || src.includes('media.rightmove.co.uk');
+          return (!isIcon && !isSmall && src.startsWith('http')) || isPortalSpecific;
+        }).map(img => img.src);
+
+        let floorplanImg = allImages.find(img => 
+            (img.src.toLowerCase().includes('floorplan') || 
+             img.alt.toLowerCase().includes('floorplan') ||
+             img.testid?.toLowerCase().includes('floorplan')) &&
+            !img.src.includes('static')
+        );
+
+        // Text-based floorplan link detection
+        let floorplanUrl = floorplanImg ? floorplanImg.src : null;
+        if (!floorplanUrl) {
+            const fpLink = Array.from(document.querySelectorAll('a, button')).find(el => 
+                el.innerText.toLowerCase().includes('floor plan')
+            );
+            if (fpLink && fpLink.href) floorplanUrl = fpLink.href;
+        }
+
+        let floorLevel = null;
+        const text = document.body.innerText;
+        const floorMatch = text.match(/\b(ground|first|second|third|fourth|fifth|sixth|top|penthouse)\s+floor\b/i) ||
+                           text.match(/\b(1st|2nd|3rd|4th|5th|6th)\s+floor\b/i);
+        if (floorMatch) floorLevel = floorMatch[0];
+
+        return {
+          images: [...new Set(galleryImages)],
+          floorplan: floorplanUrl,
+          floorLevel: floorLevel
+        };
+      });
+
+      if (heuristicAssets.images.length > 0) {
+        result.image_url = result.image_url || heuristicAssets.images[0];
+        if (result.gallery.length === 0) result.gallery = heuristicAssets.images.slice(0, 5);
+      }
+      result.floorplan_url = result.floorplan_url || heuristicAssets.floorplan;
+      result.floor_level = result.floor_level || heuristicAssets.floorLevel;
+    }
+
+    // Suffix normalization
     if (result.floorplan_url && !result.floorplan_url.startsWith('http')) {
         if (result.source === 'Zoopla') result.floorplan_url = `https://www.zoopla.co.uk${result.floorplan_url}`;
         if (result.source === 'Rightmove' && !result.floorplan_url.startsWith('//')) {

@@ -23,12 +23,14 @@ A multi-agent system that automates the discovery, normalization, and visualizat
 
 ## Unified Agent Protocol
 1. **RTK Mandatory:** ALL high-volume shell operations (`npm install`, `npm run build`, `lint`, `node scripts/sync_data.js`, large `grep`, `ls -R`, batch file reads) **MUST** be proxied through **rtk** (Rust Token Killer). Use `rtk gain` to review token savings.
-2. **Data Authenticity:** Agents are FORBIDDEN from creating synthetic or "hallucinated" property listings or market metrics. Use empirical data only.
+2. **Data Authenticity:** Agents are FORBIDDEN from creating synthetic or "hallucinated" property listings or market metrics. Use empirical data only. **SEE: `agents/DATA_GUARDRAILS.md` — mandatory reading before any data write.**
 3. **Aesthetic Direction:** Adhere strictly to the "Bloomberg Terminal meets Linear" standards in all UI changes.
 4. **Workflow Lifecycle:** `Select (identify highest priority task from Tasks.md) -> Claim (Status: In Progress) -> Execute (follow logic in agent README + MANDATORY external enrichment for Analyst) -> Verify (build/lint/QA) -> Resolve (Status: Done)`.
 5. **Cross-Agent Task Creation:** Any agent is authorized to create new tasks in `Tasks.md` if a completed task requires a follow-up.
+6. **Data Guardrails:** Before writing, modifying, or deleting any data in `data/` or SQLite, agents **MUST** follow the protocols in `agents/DATA_GUARDRAILS.md`. Violations trigger immediate rollback and user notification.
 
 ## Surgical Workflow & Efficiency
+
 To maximize performance and minimize token usage, follow these surgical patterns:
 
 ### A. "Grep-First" Discovery

@@ -23,4 +23,20 @@ Rigorous UI/UX testing, functional verification, and aesthetic audit.
 - **MANDATORY:** You must explicitly ask for user approval before deleting any historical audit reports or significantly modifying established UI metrics definitions.
 - **Task Management:** Any bulk status change in `Tasks.md` (e.g., closing multiple tasks) requires confirmation.
 
+## Automated Test Framework
+- **Location:** `frontend/tests/`
+- **Framework:** Playwright (`@playwright/test`)
+- **Purpose:** Catch regressions, verify functionality, validate UI behavior
+- **Commands:**
+  - `npm test` — Run all tests
+  - `npm run test:smoke` — Quick smoke tests
+  - `npm run test:ui` — Interactive UI mode
+- **Workflow:** When bugs are found via testing, log them as tasks in `Tasks.md` with prefix `FE-` and assign to **Frontend Engineer**. Do NOT modify frontend code directly.
+
+## Agent Boundaries
+- **NO FRONTEND CODE MODIFICATIONS:** Do not edit, fix, or refactor any files in `frontend/src/`. This includes `.tsx`, `.ts`, `.css` files.
+- **DO:** Log bugs found, create reproduction steps, add tasks to `Tasks.md`
+- **DO:** Investigate UI issues, document root causes, suggest fixes for Frontend Engineer
+- **Scope:** Data integrity audits, metric validation, test framework maintenance, task creation
+
 ---

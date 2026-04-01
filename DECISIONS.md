@@ -102,6 +102,7 @@ While DuckDB provided superior analytical performance, the implementation encoun
 2.  **Client:** Standardize on `better-sqlite3` for high-performance, synchronous database operations within the Node.js API.
 3.  **Schema Persistence:** Replicate the multi-table analytical schema (Properties, Global Context, Manual Queue) in SQLite.
 4.  **Decommissioning:** Remove `duckdb` dependencies and archive `.duckdb` assets.
+5.  **Single-Source Truth:** All SQLite operations MUST use the database located in the `data/` folder. Any root-level `.db` files are unauthorized and must be purged.
 
 ## Status
 Accepted

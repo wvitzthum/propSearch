@@ -23,6 +23,7 @@ import PipelineTracker from './PipelineTracker';
 import SourceHub from './SourceHub';
 
 import FloorplanViewer from './FloorplanViewer';
+import ImageCarousel from './ImageCarousel';
 
 interface PreviewDrawerProps {
   property: PropertyWithCoords | null;
@@ -156,11 +157,19 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
           {/* Hero Image & Gallery Switcher */}
           <div className="relative h-64 w-full bg-linear-card overflow-hidden group">
             <div className={`h-full w-full transition-all duration-500 ${activeView === 'image' ? 'opacity-100' : 'opacity-0 invisible absolute inset-0'}`}>
-              <PropertyImage 
-                src={property.image_url || property.gallery?.[0]}
-                alt={property.address}
-                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
+              {property.gallery && property.gallery.length > 0 ? (
+                <ImageCarousel
+                  images={property.gallery}
+                  address={property.address}
+                  className="h-full"
+                />
+              ) : (
+                <PropertyImage
+                  src={property.image_url || ''}
+                  alt={property.address}
+                  className="h-full w-full"
+                />
+              )}
             </div>
             
             <div className={`h-full w-full bg-linear-bg flex items-center justify-center p-4 transition-all duration-500 ${activeView === 'floorplan' ? 'opacity-100 scale-100' : 'opacity-0 scale-95 invisible absolute inset-0'}`}>
@@ -187,22 +196,6 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
                 >
                   Floorplan
                 </button>
-              </div>
-            )}
-            
-            {/* Gallery Mini-Preview */}
-            {property.gallery && property.gallery.length > 0 && activeView === 'image' && (
-              <div className="absolute top-4 right-4 flex gap-1.5 z-20">
-                {property.gallery.slice(0, 3).map((url, i) => (
-                  <div key={i} className="h-10 w-10 rounded border border-white/20 overflow-hidden shadow-lg backdrop-blur-sm">
-                    <PropertyImage src={url} className="h-full w-full object-cover opacity-80 hover:opacity-100 transition-opacity" alt={`Gallery ${i}`} />
-                  </div>
-                ))}
-                {property.gallery.length > 3 && (
-                  <div className="h-10 px-2 rounded border border-white/20 bg-black/40 backdrop-blur-md flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
-                    +{property.gallery.length - 3}
-                  </div>
-                )}
               </div>
             )}
 

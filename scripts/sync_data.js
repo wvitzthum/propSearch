@@ -149,9 +149,24 @@ async function sync() {
     WHERE id = ?
   `);
 
+  const historyStmt = db.prepare(`
+    INSERT INTO price_history (property_id, price, date) VALUES (?, ?, ?)
+  `);
+
+  // Ensure price_history table exists for independent script execution
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS price_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      property_id TEXT,
+      price REAL,
+      date TEXT,
+      FOREIGN KEY(property_id) REFERENCES properties(id)
+    )
+  `).run();
+
   for (const newItem of dailySnapshot) {
     try {
-      const existing = db.prepare("SELECT id, metadata FROM properties WHERE address = ? AND area = ?").get(newItem.address, newItem.area);
+      const existing = db.prepare("SELECT id, metadata, list_price FROM properties WHERE address = ? AND area = ?").get(newItem.address, newItem.area);
       
       if (existing) {
         const metadata = typeof existing.metadata === 'string' ? JSON.parse(existing.metadata) : (existing.metadata || {});
@@ -166,6 +181,12 @@ async function sync() {
           newItem.waitrose_distance || null, newItem.whole_foods_distance || null, newItem.wellness_hub_distance || null,
           existing.id
         );
+
+        // DAT-140: Track price changes
+        if (newItem.list_price && newItem.list_price !== existing.list_price) {
+          console.log(`Price change detected for ${newItem.address}: £${existing.list_price} -> £${newItem.list_price}`);
+          historyStmt.run(existing.id, newItem.list_price, new Date().toISOString().split('T')[0]);
+        }
       } else {
         const id = newItem.id || crypto.randomUUID();
         const metadata = {
@@ -188,6 +209,11 @@ async function sync() {
           newItem.epc_improvement_potential || null, newItem.est_capex_requirement || null,
           newItem.waitrose_distance || null, newItem.whole_foods_distance || null, newItem.wellness_hub_distance || null
         );
+
+        // DAT-140: Record initial price
+        if (newItem.list_price) {
+          historyStmt.run(id, newItem.list_price, new Date().toISOString().split('T')[0]);
+        }
       }
     } catch (e) {
       console.error(`Failed to update SQLite for ${newItem.address}: ${e.message}`);
@@ -205,7 +231,7 @@ async function sync() {
   const GLOBAL_FILES = [
     { key: 'macro_trend', path: 'macro_trend.json' },
     { key: 'financial_context', path: 'financial_context.json' },
-    { key: 'london_metro', path: 'london_metro.geojson', isText: true }
+    { key: 'london_metro', path: 'london_metro.geojson' }
   ];
 
   for (const file of GLOBAL_FILES) {
@@ -213,8 +239,8 @@ async function sync() {
     if (fs.existsSync(filePath)) {
       console.log(`Syncing ${file.path} to global_context...`);
       const content = fs.readFileSync(filePath, 'utf8');
-      const data = file.isText ? JSON.stringify({ content }) : content;
-      db.prepare('INSERT OR REPLACE INTO global_context (key, data) VALUES (?, ?)').run(file.key, data);
+      // All global context files stored as raw JSON — no wrapping envelope
+      db.prepare("INSERT OR REPLACE INTO global_context (key, data, updated_at) VALUES (?, ?, datetime('now'))").run(file.key, content);
     }
   }
 

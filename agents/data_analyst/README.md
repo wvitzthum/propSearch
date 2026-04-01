@@ -53,8 +53,29 @@ To fulfill the "Empirical Standard" (Requirement 1), the Data Analyst MUST utili
 - **Metric Definitions:** See `agents/ui_ux_qa/METRIC_DEFINITIONS.md` for formal Alpha Score and market metric methodology.
 - **Lead Enrichment Script:** Run `agents/data_analyst/enrich_leads.js` to automatically enrich inbox leads with visuals (images, floorplans, streetview) via the scraper.
 
-## Data Integrity & Approval Protocol
+## Data Integrity, Approval & Guardrails
+
+**READ THIS FIRST:** Before any read or write to `data/` or SQLite, consult `agents/DATA_GUARDRAILS.md`. It defines the mandatory pre-write checklist, hallucination detection protocol, delete approval format, and bulk operation checkpoint. No exceptions.
+
+### Approval Protocol
 - **MANDATORY:** You must explicitly ask for user approval before modifying core property metrics (`list_price`, `sqft`, `floor_level`) or deleting any macro-economic indicators from `data/macro_trend.json`.
 - **Alpha Score Recalculation:** If a change in logic affects >10% of existing records, you must request permission before performing the update.
+
+## Backup Protocol (MANDATORY)
+The SQLite database (`data/propSearch.db`) and all JSON data files (`data/master.jsonl`, `data/macro_trend.json`, `data/manual_queue.json`) contain the full empirical record for this acquisition campaign. **Loss of this data is irrecoverable.**
+
+The Data Analyst MUST observe the following backup discipline:
+
+1. **Frequency:** Take a snapshot of the `data/` directory at minimum **once per week** and before any major data operation (bulk import, schema migration, mass enrichment run).
+2. **Backup Location:** Store snapshots in `data/backups/` with a dated filename:
+   - Format: `YYYY-MM-DD_backup.tar.gz`
+   - Example: `data/backups/2026-03-30_backup.tar.gz`
+3. **Retention:** Retain the **last 4 weekly snapshots** minimum. Older snapshots may be pruned after 30 days unless specifically requested by the user.
+4. **Verification:** After creating a backup, verify the archive is intact by running `tar -tzf data/backups/YYYY-MM-DD_backup.tar.gz | head -20` to confirm the file list is readable.
+5. **Pre-Migration Checkpoint:** Before any schema migration, pipeline refactor, or data restoration operation, create a backup. This is non-negotiable.
+6. **Backup Log:** Maintain `data/backups/LOG.md` listing each backup taken with: date, trigger (scheduled / pre-operation), number of records, and any notes.
+7. **User Notification:** After any backup triggered by a major operation, notify the user: "Backup created: YYYY-MM-DD (N records in master.jsonl, M properties in SQLite)."
+
+*Note: The Data Engineer may implement automated backup tooling, but the Analyst retains responsibility for ad-hoc pre-operation snapshots.*
 
 ---

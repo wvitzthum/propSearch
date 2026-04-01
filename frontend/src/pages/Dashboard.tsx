@@ -31,6 +31,8 @@ import LoadingNode from '../components/LoadingNode';
 import PreviewDrawer from '../components/PreviewDrawer';
 import MarketPulse from '../components/MarketPulse';
 import PropertyImage from '../components/PropertyImage';
+import ThesisTagFilter from '../components/ThesisTagFilter';
+import { useThesisTags, type ThesisTag } from '../hooks/useThesisTags';
 import { Bookmark, Archive, RotateCcw } from 'lucide-react';
 
 // Fix Leaflet marker icons with a custom "Linear" style
@@ -343,14 +345,16 @@ const PropertyCard: React.FC<{
 const Dashboard: React.FC = () => {
   const { properties, loading, error, filters, updateFilters } = usePropertyContext();
   const { pipeline, setStatus, getStatus } = usePipeline();
+  const { getTags } = useThesisTags();
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   const [filterNewOnly, setFilterNewOnly] = useState(false);
   const [filterShortlisted, setFilterShortlisted] = useState(false);
   const [filterVetted, setFilterVetted] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'table' | 'map'>('table');
-  
+  const [thesisTagFilter, setThesisTagFilter] = useState<ThesisTag[]>([]);
+
   const [selectedProperty, setSelectedProperty] = useState<PropertyWithCoords | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
@@ -379,7 +383,8 @@ const Dashboard: React.FC = () => {
   };
 
   const filteredProperties = useMemo(() => {
-    let result = [...properties];
+    const safeProperties = properties ?? [];
+    let result = [...safeProperties];
     
     // Status Filter (Archived logic)
     if (showArchived) {
@@ -405,6 +410,14 @@ const Dashboard: React.FC = () => {
     result = result.filter(p => p.realistic_price <= maxPrice);
     result = result.filter(p => p.sqft >= minSqft);
 
+    // Thesis Tag Filter
+    if (thesisTagFilter.length > 0) {
+      result = result.filter(p => {
+        const propTags = getTags(p.id);
+        return thesisTagFilter.some(tag => propTags.includes(tag));
+      });
+    }
+
     // Sorting: Some sorting is server-side, but if we have client-side only sorts, we keep them here
     result.sort((a, b) => {
       const sortBy = filters.sortBy;
@@ -419,20 +432,22 @@ const Dashboard: React.FC = () => {
     });
 
     return result;
-  }, [properties, filterNewOnly, filterShortlisted, filterVetted, areaFilter, filters.sortBy, showArchived, getStatus, maxPrice, minSqft]);
+  }, [properties, filterNewOnly, filterShortlisted, filterVetted, areaFilter, filters.sortBy, showArchived, getStatus, maxPrice, minSqft, thesisTagFilter, getTags]);
 
   const stats = useMemo(() => {
-    if (properties.length === 0) return { total: 0, avgAlpha: '0.0', shortlisted: 0, vetted: 0 };
+    const safeProperties = properties ?? [];
+    if (safeProperties.length === 0) return { total: 0, avgAlpha: '0.0', shortlisted: 0, vetted: 0 };
     return {
-      total: properties.length,
-      shortlisted: Object.values(pipeline).filter(s => s === 'shortlisted' || s === 'vetted').length,
-      vetted: Object.values(pipeline).filter(s => s === 'vetted').length,
-      avgAlpha: (properties.reduce((acc, p) => acc + p.alpha_score, 0) / (properties.length || 1)).toFixed(1)
+      total: safeProperties.length,
+      shortlisted: Object.values(pipeline ?? {}).filter(s => s === 'shortlisted' || s === 'vetted').length,
+      vetted: Object.values(pipeline ?? {}).filter(s => s === 'vetted').length,
+      avgAlpha: (safeProperties.reduce((acc, p) => acc + p.alpha_score, 0) / (safeProperties.length || 1)).toFixed(1)
     };
   }, [properties, pipeline]);
 
   const areas = useMemo(() => {
-    const uniqueAreas = new Set(properties.map(p => p.area.split(' (')[0]));
+    const safeProperties = properties ?? [];
+    const uniqueAreas = new Set(safeProperties.map(p => (p.area || 'Unknown').split(' (')[0]));
     return ['All Areas', ...Array.from(uniqueAreas).sort()];
   }, [properties]);
 
@@ -575,8 +590,8 @@ const Dashboard: React.FC = () => {
               <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-linear-accent group-hover:text-linear-accent-blue transition-colors">
                 <MapIcon size={12} />
               </div>
-              <select 
-                value={areaFilter} 
+              <select
+                value={areaFilter}
                 onChange={(e) => handleAreaChange(e.target.value)}
                 className="bg-linear-bg border border-linear-border rounded-xl pl-8 pr-10 py-2 text-[10px] font-bold text-linear-text-primary focus:outline-none focus:ring-1 focus:ring-linear-accent-blue/50 appearance-none hover:border-linear-accent-blue transition-all cursor-pointer uppercase tracking-[0.1em]"
               >
@@ -585,12 +600,17 @@ const Dashboard: React.FC = () => {
               <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-linear-accent pointer-events-none" />
             </div>
 
+            <ThesisTagFilter
+              selectedTags={thesisTagFilter}
+              onTagsChange={setThesisTagFilter}
+            />
+
             <div className="relative group">
               <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-linear-accent group-hover:text-linear-accent-blue transition-colors">
                 <ArrowUpDown size={12} />
               </div>
-              <select 
-                value={filters.sortBy} 
+              <select
+                value={filters.sortBy}
                 onChange={(e) => updateFilters({ sortBy: e.target.value as any })}
                 className="bg-linear-bg border border-linear-border rounded-xl pl-8 pr-10 py-2 text-[10px] font-bold text-linear-text-primary focus:outline-none focus:ring-1 focus:ring-linear-accent-blue/50 appearance-none hover:border-linear-accent-blue transition-all cursor-pointer uppercase tracking-[0.1em]"
               >

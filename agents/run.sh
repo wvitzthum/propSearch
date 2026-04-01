@@ -157,4 +157,4 @@ You have access to the full project. Review your responsibilities in the agent R
 
 ANTHROPIC_API_KEY=$($API_KEY_HELPER) \
 ANTHROPIC_BASE_URL="https://api.minimax.io/anthropic" \
-exec claude --bare --system-prompt "$SYSTEM_PROMPT"
+exec claude --bare --dangerously-skip-permissions --system-prompt "$SYSTEM_PROMPT"

@@ -1,12 +1,13 @@
 import React from 'react';
-import { 
-  TrendingUp, 
-  Activity, 
-  Clock, 
-  Target, 
+import {
+  TrendingUp,
+  Activity,
+  Clock,
+  Target,
   ChevronRight
 } from 'lucide-react';
 import { useMacroData } from '../hooks/useMacroData';
+import { extractValue } from '../types/macro';
 
 const MarketVolumeChart: React.FC<{ data: { month: string, listed: number, sold?: number }[] }> = ({ data }) => {
   if (!data || data.length === 0) return null;
@@ -126,10 +127,22 @@ const MarketSituationRoom: React.FC = () => {
 
   if (loading || error || !data) return null;
 
-  // Fallbacks for missing data
-  const inventoryVelocity = data.inventory_velocity || { months_of_supply: 0, new_instructions_q_change: 0 };
-  const timingSignals = data.timing_signals || { seasonal_buy_score: 0, optimal_window_description: 'N/A' };
-  const hpi = data.london_hpi || { mom_pct: 0, yoy_pct: 0, avg_price_pcl: 0 };
+  // Extract values with provenance handling
+  const inventoryVelocity = data.inventory_velocity;
+  const timingSignals = data.timing_signals;
+  const hpi = data.london_hpi;
+
+  const monthsSupplyVal = extractValue(inventoryVelocity?.months_of_supply) ?? 0;
+  const newInstQChangeVal = extractValue(inventoryVelocity?.new_instructions_q_change) ?? 0;
+  const hpiYoyVal = extractValue(hpi?.yoy_pct ?? hpi?.annual_change) ?? 0;
+  const avgDiscountVal = extractValue(data.negotiation_delta?.avg_discount_pct) ?? 0;
+  const areaHeatScoreVal = data.area_heat_index?.[0]?.score;
+
+  const marketVolumeData = (data.business_history || data.market_business || []).map((d) => ({
+    month: d.month,
+    listed: extractValue(d.listed) ?? 0,
+    sold: extractValue(d.sold) ?? 0,
+  }));
 
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
@@ -152,14 +165,14 @@ const MarketSituationRoom: React.FC = () => {
            <div className="p-4 bg-linear-card border border-linear-border rounded-xl">
               <div className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest mb-2">Market Heat</div>
               <div className="text-xl font-black text-white tracking-tighter flex items-center gap-2">
-                 {data.area_heat_index && data.area_heat_index.length > 0 ? (data.area_heat_index[0].score / 10).toFixed(1) : '5.0'}
+                 {areaHeatScoreVal != null ? (extractValue(areaHeatScoreVal)! / 10).toFixed(1) : '5.0'}
                  <TrendingUp size={16} className="text-retro-green" />
               </div>
            </div>
            <div className="p-4 bg-linear-card border border-linear-border rounded-xl">
               <div className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest mb-2">Supply Cap</div>
               <div className="text-xl font-black text-white tracking-tighter flex items-center gap-2">
-                 {inventoryVelocity.months_of_supply.toFixed(1)}
+                 {monthsSupplyVal.toFixed(1)}
                  <Clock size={16} className="text-blue-400" />
               </div>
            </div>
@@ -180,30 +193,30 @@ const MarketSituationRoom: React.FC = () => {
                  </div>
               </div>
               <div className="p-6">
-                 <MarketVolumeChart data={data.business_history || data.market_business || []} />
+                 <MarketVolumeChart data={marketVolumeData} />
                  <div className="mt-8 grid grid-cols-3 gap-6">
                     <div className="flex flex-col gap-1">
                        <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">Inventory Delta</span>
-                       <span className="text-lg font-bold text-white tracking-tight">{inventoryVelocity.new_instructions_q_change > 0 ? '+' : ''}{inventoryVelocity.new_instructions_q_change}%</span>
+                       <span className="text-lg font-bold text-white tracking-tight">{newInstQChangeVal > 0 ? '+' : ''}{newInstQChangeVal}%</span>
                     </div>
                     <div className="flex flex-col gap-1 border-x border-linear-border px-6">
                        <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">Sold Rate</span>
-                       <span className="text-lg font-bold text-emerald-400 tracking-tight">{hpi.yoy_pct > 0 ? '+' : ''}{hpi.yoy_pct}%</span>
+                       <span className="text-lg font-bold text-emerald-400 tracking-tight">{hpiYoyVal > 0 ? '+' : ''}{hpiYoyVal}%</span>
                     </div>
                     <div className="flex flex-col gap-1 pl-6">
                        <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">Pricing Gap</span>
-                       <span className="text-lg font-bold text-blue-400 tracking-tight">{data.negotiation_delta?.avg_discount_pct || 0}%</span>
+                       <span className="text-lg font-bold text-blue-400 tracking-tight">{avgDiscountVal}%</span>
                     </div>
                  </div>
               </div>
            </div>
         </div>
         <div className="lg:col-span-4 flex flex-col gap-6">
-           <TimingIndicatorGauge monthsOfSupply={inventoryVelocity.months_of_supply} />
+           <TimingIndicatorGauge monthsOfSupply={monthsSupplyVal} />
            <div className="p-6 bg-linear-accent/10 border border-linear-accent/20 rounded-2xl flex flex-col gap-4 group hover:bg-linear-accent/20 transition-all cursor-pointer">
               <div className="text-[10px] font-black text-linear-accent uppercase tracking-widest">Current Protocol Recommendation</div>
               <p className="text-xs font-bold text-white leading-relaxed tracking-tight group-hover:translate-x-1 transition-transform">
-                {timingSignals.optimal_window_description || 'Market conditions favoring buyer entry. Inventory build-up in PCL providing leverage.'}
+                {timingSignals?.optimal_window_description || 'Market conditions favoring buyer entry. Inventory build-up in PCL providing leverage.'}
               </p>
               <div className="flex items-center gap-2 text-[10px] font-black text-white uppercase tracking-widest mt-2 group-hover:gap-4 transition-all">
                  Launch Command Center <ChevronRight size={12} />

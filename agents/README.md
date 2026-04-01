@@ -60,6 +60,17 @@ All agents must follow `AGENTS.md` which defines:
 - RTK mandatory for high-volume operations
 - Grep-first discovery pattern
 - Data authenticity mandate (no hallucinations)
+- Data Guardrails compliance (`agents/DATA_GUARDRAILS.md`)
+
+## Permissions
+
+**All agents run with `permissions.defaultMode: bypassPermissions`** — no permission prompts are issued for any terminal operation. This applies:
+- To every agent invoked via `run.sh` or `make agent-*`
+- To every terminal session in this project
+
+This is intentional: the propSearch system is a private, single-user tool. There is no untrusted code or multi-user environment. Agents may execute any shell command, read/write any file, and run any script without prompting.
+
+**If you need to restrict permissions for a specific operation, use `rtk --raw` to bypass RTK and run a specific command directly.**
 
 ## RTK Token Tracking
 
