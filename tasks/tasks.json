@@ -105,14 +105,15 @@
       "effort": "Medium",
       "section": "new_approved",
       "title": "UI: Implement 5-Year Capital Appreciation Model \u2014 Bloomberg-style fan chart (Bear/Base/Bull scenarios) with IRR vs. risk-free rate signal in PropertyDetail.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "DAT-151",
         "DAT-120"
       ],
       "date": "2026-03-30",
-      "notes": []
+      "notes": [],
+      "completed_date": "2026-04-01"
     },
     {
       "id": "FE-154",
@@ -120,7 +121,7 @@
       "effort": "High",
       "section": "new_approved",
       "title": "UI: Implement Monte Carlo Property Price Simulator \u2014 run 1,000+ iteration price simulation per property with configurable time horizon (1-5 years), display probability distribution (P10/P50/P90), and overlay on the 5-Year Appreciation fan chart.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "DAT-151",
@@ -135,13 +136,14 @@
       "effort": "Medium",
       "section": "new_approved",
       "title": "UI: Implement Data Provenance UI \u2014 \u24d8 source attribution tooltips on every metric, \"Data Provenance\" collapsible section in PropertyDetail, and freshness indicators (green/amber/red) with links to live source URLs.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "DAT-153"
       ],
       "date": "2026-03-30",
-      "notes": []
+      "notes": [],
+      "completed_date": "2026-04-01"
     },
     {
       "id": "DAT-154",
@@ -766,6 +768,155 @@
         "MAP_USABILITY_GUIDE.md section B specifies: weight: 4.5, opacity: 0.75, lineJoin: round."
       ],
       "completed_date": "2026-04-01"
+    },
+    {
+      "id": "QA-171",
+      "priority": "High",
+      "effort": "Low",
+      "section": "bug_fixes",
+      "title": "Runtime React error in Inbox.tsx \u2014 duplicate key warning: `leasehold_verification_required.json` appears twice in the listings array causing React to crash on render. Root cause: the inbox data source has a duplicate entry for `leasehold_verification_required.json`. Fix: deduplicate the inbox listings array before rendering by filename, OR fix the data source to not include duplicates.",
+      "status": "Done",
+      "responsible": "Data Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "Confirmed via browser console: 'Encountered two children with the same key, leasehold_verification_required.json' at Inbox.tsx:320.",
+        "The `listings` array passed to `listings.map()` contains duplicate filename values.",
+        "Fix option A (Data Engineer): deduplicate listings array before render: `[...new Map(listings.map(l => [l.filename, l])).values()]`.",
+        "Fix option B (Data Engineer): fix the inbox data source to not include duplicate filenames.",
+        "QA-171 is the correct owner \u2014 Data Engineer owns data pipeline issues."
+      ]
+    },
+    {
+      "id": "QA-172",
+      "priority": "Critical",
+      "effort": "Medium",
+      "section": "bug_fixes",
+      "title": "Runtime React error in MarketConditionsBar.tsx:141 \u2014 'Objects are not valid as a React child (found: object with keys {value, source, source_url, methodology, last_refreshed})'. Root cause: `data.sdlt_countdown` is a provenance-wrapped object but is being rendered directly as a React child. The `sdlt_countdown` field in `macro_trend.json` has the provenance schema `{value, source, source_url, methodology, last_refreshed}` but `MarketConditionsBar` renders it as a plain string. Fix: use `extractValue(data.sdlt_countdown)` or `data.sdlt_countdown?.value` before rendering.",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "Confirmed via browser console: 'Objects are not valid as a React child' at MarketConditionsBar.tsx:141.",
+        "The provenance schema wraps values in objects \u2014 e.g. `sdlt_countdown: {value: '12 weeks', source: '...'}`.",
+        "MarketConditionsBar renders `{data.sdlt_countdown}` directly as text, which fails when it's an object.",
+        "Fix: use `extractValue(data.sdlt_countdown)` or `data.sdlt_countdown?.value ?? data.sdlt_countdown` before rendering.",
+        "All provenance-wrapped fields in the macro schema should be checked for this issue."
+      ]
+    },
+    {
+      "id": "DAT-166",
+      "title": "Data: 6 off-market properties missing bedroom counts. Properties: Belsize Avenue (NW3, 938sqft), Coleridge Court (N1, 780sqft), Hillmarton Road (N7, 864sqft), Blackthorn Avenue (N7, 948sqft), Weech Road (NW6, 786sqft), Hatherley Grove (W2, 538sqft). All listings have been withdrawn from Rightmove, Zoopla, and agent websites \u2014 automated scraping returns NOT FOUND. Manual research required: search Land Registry Price Paid Data, estate agent archives, or street-view/knowledge to determine bedroom counts. For any property that cannot be verified, set archived=1 with archive_reason per DE-161 policy.",
+      "status": "Done",
+      "priority": "Medium",
+      "effort": "Medium",
+      "section": "data_research",
+      "responsible": "Data Analyst",
+      "created": "2026-04-01",
+      "tags": [
+        "manual-research",
+        "bedrooms",
+        "off-market"
+      ],
+      "resolved_date": "2026-04-01"
+    },
+    {
+      "id": "DAT-167",
+      "title": "Data: Verify 12 leasehold leads via Land Registry. All 12 are leasehold (not Share of Freehold) and lack lease_years_remaining data. Per acquisition criteria: Leasehold strictly >90 years remaining = Priority 2 candidate; otherwise Hard No. Manual action required: lookup each via https://www.landregistry.gov.uk/ or https://www.gov.uk/search-property-information-land-registry. Properties span Islington (N1), Belsize Park (NW3), West Hampstead (NW6), Bayswater (W2). Full list in data/inbox/leasehold_verification_required.json. Update each lead with lease_years_remaining; advance qualifying records (>90yr) to import queue.",
+      "status": "Done",
+      "priority": "High",
+      "effort": "High",
+      "section": "data_research",
+      "responsible": "Data Analyst",
+      "created": "2026-04-01",
+      "tags": [
+        "manual-research",
+        "leasehold",
+        "land-registry",
+        "import-queue"
+      ],
+      "resolved_date": "2026-04-01"
+    },
+    {
+      "id": "DAT-168",
+      "title": "Data: Source floor_level for 6 active properties from agent-direct websites. Rightmove/Zoopla scraping works for portal listings but these properties have agent-direct URLs only (Hotblack Desiato, Winkworth, Chancellors, KFH, Ellis & Co) and the scraper heuristic fallback does not extract floor_level. Properties: Belsize Avenue (Knight Frank), Coleridge Court (Hotblack Desiato), Hillmarton Road (Winkworth), Peters Court (Zoopla), Gloucester Terrace (Zoopla), Danbury Street (Rightmove). For any property where floor_level cannot be determined, leave NULL \u2014 do not estimate.",
+      "status": "In Progress",
+      "priority": "Medium",
+      "effort": "Low",
+      "section": "data_research",
+      "responsible": "Data Analyst",
+      "created": "2026-04-01",
+      "tags": [
+        "manual-research",
+        "floor-level",
+        "agent-direct"
+      ]
+    },
+    {
+      "id": "DAT-169",
+      "title": "Data: Audit all properties for missing EPC ratings. Earlier session noted 24 properties missing EPC \u2014 current active DB shows 15/15 with EPC. Verify whether any active properties genuinely lack EPC, and whether any of the 25 archived_properties (pre-enrichment duplicates) have verifiable EPC. Manual lookup via UK EPC Register (https://www.epcregister.com/ or https://www.mezh.org/) for any unverifiable records. Per DE-161 policy: set archived=1 with archive_reason=Cannot Verify \u2014 Discard: EPC unverifiable for any property where EPC cannot be sourced.",
+      "status": "Todo",
+      "priority": "Medium",
+      "effort": "Medium",
+      "section": "data_research",
+      "responsible": "Data Analyst",
+      "created": "2026-04-01",
+      "tags": [
+        "manual-research",
+        "epc",
+        "audit"
+      ]
+    },
+    {
+      "id": "FE-169",
+      "priority": "High",
+      "effort": "High",
+      "section": "new_approved",
+      "title": "UI: Deposit Configuration + Additional Purchase Costs on AffordabilitySettings \u2014 add user-configurable deposit (auto vs fixed), implement calculateTotalPurchaseCost hook (deposit + SDLT + solicitor fees + survey fees + mortgage arrangement fee), build AdditionalCostsCard component, add DepositPanel to AffordabilitySettings with % shortcut buttons, wire all to localStorage persistence, update BudgetSlider to reflect selected deposit percentage.",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [
+        "FE-167"
+      ],
+      "date": "2026-04-01",
+      "notes": [
+        "SDLT calculated from HMRC tiers in macro_trend.json (already populated via DAT-150)",
+        "Solicitor/survey/mortgage fees sourced from macro_trend.json purchase_cost_benchmarks (DAT-165)",
+        "calculateTotalPurchaseCost returns: deposit, mortgage, sdlt, solicitorFees, surveyFees, mortgageFees, totalCapital, totalCashNeeded"
+      ]
+    },
+    {
+      "id": "DAT-165",
+      "priority": "High",
+      "effort": "Low",
+      "section": "new_approved",
+      "title": "Data: Add purchase_cost_benchmarks to macro_trend.json \u2014 solicitor fees (low/high/typical), RICS survey tiers (HomeBuyer Report / Building Survey / valuation), mortgage arrangement fees, moving costs. Add provenance metadata. Update _source_citations.",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "FE-169 reads from this section to populate AdditionalCostsCard defaults",
+        "Use internal estimates \u2014 no external scrape required"
+      ]
+    },
+    {
+      "id": "QA-166",
+      "priority": "High",
+      "effort": "Low",
+      "section": "new_approved",
+      "title": "QA: Verify deposit + additional costs flow on AffordabilitySettings \u2014 deposit panel renders in auto/fixed modes, SDLT calculates correctly at \u00a3400K FTB / \u00a3700K standard / \u00a31.2M additional property price points, totalCashNeeded equals sum of all components, loan term change (FE-167) does not break costs display, LTV band updates reactively on deposit change.",
+      "status": "Todo",
+      "responsible": "UI/UX QA",
+      "dependencies": [
+        "FE-169",
+        "FE-167"
+      ],
+      "date": "2026-04-01",
+      "notes": [
+        "Depends on FE-169 (deposit + costs) and FE-167 (loan term)"
+      ]
     }
   ]
 }
