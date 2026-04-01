@@ -18,3 +18,4 @@
 financial_context.json
 .aider*
 *.claude
+tasks/scripts/__pycache__/

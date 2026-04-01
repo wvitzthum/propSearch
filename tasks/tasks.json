@@ -71,11 +71,13 @@
       "effort": "Medium",
       "section": "new_approved",
       "title": "UI: Implement Investment Thesis Tags \u2014 persistent tagging system for strategic property narratives with batch support and Dashboard filter integration.",
-      "status": "Todo",
+      "status": "In Progress",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-03-30",
-      "notes": []
+      "notes": [
+        "Fixed currentTags=[] bug in PropertyDetail - now properly reads from useThesisTags. All components: hook, ThesisTagBadge, ThesisTagFilter, ThesisTagSelector, BatchTagPanel, and Dashboard filter integration verified."
+      ]
     },
     {
       "id": "FE-152",
@@ -119,18 +121,6 @@
         "DAT-153"
       ],
       "date": "2026-03-30",
-      "notes": []
-    },
-    {
-      "id": "QA-156",
-      "priority": "High",
-      "effort": "Low",
-      "section": "bug_fixes",
-      "title": "Data: 4 Legacy Migration properties have malformed UUIDs (`c1a2b3c4...`, `d2e3f4g5...`, `e3f4g5h6...`, `1773181669681`). These IDs contain non-hex characters or numeric-only format, violating UUID spec. Regenerate proper UUIDs for all 4 records in `propSearch.db`. All are `source='Legacy Migration'`.",
-      "status": "Todo",
-      "responsible": "Data Engineer",
-      "dependencies": [],
-      "date": "2026-04-01",
       "notes": []
     },
     {
@@ -241,18 +231,6 @@
         "DAT-120",
         "DE-120"
       ],
-      "date": "2026-03-30",
-      "notes": []
-    },
-    {
-      "id": "QA-155",
-      "priority": "High",
-      "effort": "Low",
-      "section": "data_research",
-      "title": "Audit: Quarterly data integrity audit \u2014 scan all records in `propSearch.db` and `master.jsonl` for hallucinated IDs (`a1b2c3d4-` pattern), missing mandatory fields, and records with `is_estimated=false` but no source citation. Report findings to user.",
-      "status": "Todo",
-      "responsible": "UI/UX QA",
-      "dependencies": [],
       "date": "2026-03-30",
       "notes": []
     },
@@ -383,6 +361,24 @@
       "dependencies": [],
       "date": "2026-04-01",
       "notes": []
+    },
+    {
+      "id": "QA-157",
+      "priority": "High",
+      "effort": "Low",
+      "section": "bug_fixes",
+      "title": "Accessibility: MortgageTracker.tsx has two unlabelled `<input>` elements (Monthly Budget and Loan Term fields) with no id, aria-label, or aria-labelledby. Confirmed via Playwright accessibility test failure. Add `aria-label` attributes to both inputs per WCAG 1.3.1 & 4.1.2.",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "Inputs found at MortgageTracker.tsx lines 161 (Monthly Budget) and 174 (Loan Term).",
+        "Both have: type='number', value, onChange \u2014 but no id, aria-label, or aria-labelledby.",
+        "Root cause confirmed: test failure was NOT a test bug \u2014 it correctly caught real missing labels.",
+        "Test code in accessibility.spec.ts was partially fixed: null guard added to prevent timeout on null id.",
+        "Remaining: actual inputs in MortgageTracker.tsx need aria-label attributes."
+      ]
     }
   ]
 }

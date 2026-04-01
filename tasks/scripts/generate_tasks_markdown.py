@@ -39,7 +39,7 @@ SECTION_META = {
 COL9_HDR  = "| ID | Priority | Effort | Task | Status | Responsible | Reported By | Dependencies | Date |"
 COL9_SEP  = "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"
 COL8_HDR  = "| ID | Priority | Effort | Task | Status | Responsible | Dependencies | Date |"
-COL8_SEP  = "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"
+COL8_SEP  = "| --- | --- | --- | --- | --- | --- | --- | --- |"
 COL4_HDR_S = "| ID | Reason | Replaced By | Date |"
 COL4_SEP_S = "| --- | --- | --- | --- |"
 COL4_HDR_C = "| ID | Task | Resolved | Date |"
@@ -94,13 +94,11 @@ def section_header(sid, cols):
 
 
 def render_live(tasks_data):
-    """Render the live (non-Done, non-superseded) sections."""
+    """Render live sections (excluding only 'superseded' which has its own 4-col table)."""
     all_tasks = tasks_data["tasks"]
     output = []
     for sid in ["new_approved", "bug_fixes", "data_research", "blocked"]:
-        section_tasks = [t for t in all_tasks
-                         if t.get("section") == sid
-                         and t.get("status") != "Done"]
+        section_tasks = [t for t in all_tasks if t.get("section") == sid]
         if not section_tasks:
             continue
         output.append(section_header(sid, 8))
