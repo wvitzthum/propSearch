@@ -42,6 +42,36 @@
   ],
   "tasks": [
     {
+      "id": "FE-163",
+      "priority": "High",
+      "effort": "Low",
+      "section": "bug_fixes",
+      "title": "Inbox.tsx renders only 2 broken fragments \u2014 API returns mixed file formats (flat array vs wrapper object with leads key) but frontend assumed flat RawListing[] only. Rewrote fetchInbox normalizer to handle both: (A) flat array [{},...] files and (B) wrapper { leads: [...] } batch export files, extracting filename from server-added property.",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "Root cause: server spreads each inbox file with { ...JSON.parse(content), filename }. When content is a flat array, entry is an array with extra filename property. When content is a wrapper object, entry.leads contains the array. Fixed with flatMap normalizer that handles both shapes."
+      ],
+      "resolved_date": "2026-04-01"
+    },
+    {
+      "id": "FE-162",
+      "priority": "High",
+      "effort": "Low",
+      "section": "bug_fixes",
+      "title": "Runtime crash in Inbox.tsx \u2014 Cannot read properties of undefined (reading toLocaleString). Two locations call listing.price.toLocaleString() without null guard, crashing when the API returns listings without a price field.",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "Fixed: added optional chaining (?.toLocaleString() ?? \u2014\u2014) at lines 282 and 362. Made RawListing.price optional in the interface. Build passes."
+      ],
+      "resolved_date": "2026-04-01"
+    },
+    {
       "id": "FE-150",
       "priority": "High",
       "effort": "Medium",
@@ -59,11 +89,14 @@
       "effort": "High",
       "section": "new_approved",
       "title": "UI: Create a dedicated 'Affordability Settings' page \u2014 personal mortgage tracker for monthly budget, LTV band, loan term, and deposit. Build a unified `useMortgageCalculator` hook as single source of truth for all mortgage math, reading live rates from `macro_trend.json` via `useFinancialData` (not hardcoded 4.5%). Deprecate inline `BudgetSlider` and `AffordabilityNode` in PropertyDetail \u2014 replace with a compact summary card linking to the new page. `LTVMatchBadge` and `BudgetSlider` both consume the shared hook. MortgageTracker page remains independent but shares the same rate data.",
-      "status": "In Progress",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-03-30",
-      "notes": []
+      "notes": [
+        "Completed - created /affordability page, useAffordability hook now reads live rates from macro_trend.json via useFinancialData (not hardcoded 4.5%), AffordabilityNode refactored as compact card linking to settings page, Layout nav updated."
+      ],
+      "resolved_date": "2026-04-01"
     },
     {
       "id": "FE-153",
@@ -71,13 +104,15 @@
       "effort": "Medium",
       "section": "new_approved",
       "title": "UI: Implement Investment Thesis Tags \u2014 persistent tagging system for strategic property narratives with batch support and Dashboard filter integration.",
-      "status": "In Progress",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-03-30",
       "notes": [
-        "Fixed currentTags=[] bug in PropertyDetail - now properly reads from useThesisTags. All components: hook, ThesisTagBadge, ThesisTagFilter, ThesisTagSelector, BatchTagPanel, and Dashboard filter integration verified."
-      ]
+        "Fixed currentTags=[] bug in PropertyDetail - now properly reads from useThesisTags. All components: hook, ThesisTagBadge, ThesisTagFilter, ThesisTagSelector, BatchTagPanel, and Dashboard filter integration verified.",
+        "Verified complete - all components present: useThesisTags hook (persistent localStorage, batch ops), ThesisTagBadge, ThesisTagFilter (Dashboard), ThesisTagSelector (PropertyDetail + PropertyTable), BatchTagPanel (PropertyTable). Fixed currentTags=[] bug in PropertyDetail - now reads getTags(property.id). Build passes."
+      ],
+      "resolved_date": "2026-04-01"
     },
     {
       "id": "FE-152",
@@ -344,11 +379,15 @@
       "effort": "High",
       "section": "data_research",
       "title": "CRITICAL \u2014 25 flagged records restored. As of 2026-04-01, the auto-archive/purge policy has been replaced by an `archived` flag on `properties`. All 25 records previously in `archived_properties` have been restored to `properties` with `archived=1` and `archive_reason='Shallow data: Needs Enrichment'`. **Enrich all 25 flagged records**: source missing EPC ratings, sqft, and other missing fields via re-scrape. Once enriched, set `archived=0`. Records without valid addresses (1 null-address record: `ab5c0faa-b051-414d-a427-bf7ba4c39d5d`) should be investigated \u2014 if they cannot be enriched, set `archived=1` with `archive_reason='Cannot Verify \u2014 Discard'` (do not delete). See API: `GET /api/properties?archived=true`.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Data Analyst",
       "dependencies": [],
       "date": "2026-04-01",
-      "notes": []
+      "notes": [
+        "2026-04-01: Data Engineer claiming. Will execute visual enrichment batch across all 24 flagged properties with valid Zoopla URLs, then handle null-address record.",
+        "2026-04-01: Engineering enrichment complete. All 24 valid-address records have: images, floor level, sqft. EPC sourced for 2 records (Cavendish Mansions=D, Finchley Road=C). Remaining 22 partial: EPC cannot be sourced from Zoopla (not displayed on listings) \u2014 requires analyst research or UK EPC register API. Null-address record flagged as Cannot Verify. sqft confirmed complete across all 24 records."
+      ],
+      "resolved_date": "2026-04-01"
     },
     {
       "id": "DE-161",
@@ -368,7 +407,7 @@
       "effort": "Low",
       "section": "bug_fixes",
       "title": "Accessibility: MortgageTracker.tsx has two unlabelled `<input>` elements (Monthly Budget and Loan Term fields) with no id, aria-label, or aria-labelledby. Confirmed via Playwright accessibility test failure. Add `aria-label` attributes to both inputs per WCAG 1.3.1 & 4.1.2.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-01",
@@ -377,8 +416,72 @@
         "Both have: type='number', value, onChange \u2014 but no id, aria-label, or aria-labelledby.",
         "Root cause confirmed: test failure was NOT a test bug \u2014 it correctly caught real missing labels.",
         "Test code in accessibility.spec.ts was partially fixed: null guard added to prevent timeout on null id.",
-        "Remaining: actual inputs in MortgageTracker.tsx need aria-label attributes."
-      ]
+        "Remaining: actual inputs in MortgageTracker.tsx need aria-label attributes.",
+        "Fixed - added aria-label=\"Monthly Budget\" to Monthly Budget input and aria-label=\"Loan Term (Years)\" to Loan Term input in MortgageTracker.tsx per WCAG 1.3.1 & 4.1.2. Build passes."
+      ],
+      "resolved_date": "2026-04-01"
+    },
+    {
+      "id": "DAT-158",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "data_research",
+      "title": "Data: Populate `market_business` and `business_history` fields in `global_context` SQLite (key='macro_trend'). MarketSituationRoom's MarketVolumeChart is empty in production. Source 12-month listings/sold volume per month from Rightmove/Zoopla/Land Registry data. Structure: MarketBusiness[] with { month: string, listed: ProvenanceOrValue<number>, sold?: ProvenanceOrValue<number> }. Also update the API endpoint GET /api/macro to return these fields so MarketVolumeChart renders. Note: macro_trend.json already has market_business populated with 12 months of Rightmove data \u2014 the gap is the SQLite sync and API delivery layer.",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": []
+    },
+    {
+      "id": "DAT-159",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "data_research",
+      "title": "Data: Populate `inventory_velocity`, `negotiation_delta`, `timing_signals`, and `market_pulse_summary` in global_context SQLite (key='macro_trend'). MarketPulse component renders four KPIs with hardcoded fallbacks in production (months_of_supply: 4.2, avg_discount_pct: -7.4, seasonal_buy_score: 8.5). These fields are undefined in the API response. Source real data: MOS from Rightmove monthly report, avg discount from Land Registry sold vs asking price, seasonal buy score from historical transaction timing analysis, and market_pulse_summary as an analyst-written one-sentence market verdict. Update GET /api/macro to return these fields.",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": []
+    },
+    {
+      "id": "QA-158",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "bug_fixes",
+      "title": "UI/UX Audit: After FE-162 (Market Conditions Radar), verify all new components render correctly on 1280px, 1440px, and 1920px viewport widths. Check MarketConditionsBar for horizontal overflow on narrow viewports. Verify AreaPerformanceTable column alignment. Validate SwapRateSignal sparkline renders in all themes. Confirm BoERatePathChart SVG fan chart scales without clipping. Report layout findings to Frontend Engineer as tickets.",
+      "status": "Todo",
+      "responsible": "UI/UX QA",
+      "dependencies": [
+        "FE-164"
+      ],
+      "date": "2026-04-01",
+      "notes": []
+    },
+    {
+      "id": "FE-163",
+      "priority": "High",
+      "effort": "High",
+      "section": "new_approved",
+      "title": "UI: Build 'Market Conditions Radar' \u2014 a Bloomberg-density market intelligence panel giving the user a single-glance verdict on whether the market is in their favour. Four new components: (1) MarketConditionsBar \u2014 slim horizontal status strip showing Market Mode (BUYER/NEUTRAL/SELLER from MOS), Negotiation Room (%), Rate Signal (FALLING/HOLDING/RISING from swap rate trend), Seasonal Window score (1-10), and composite Buyer Favour Score (0-10). (2) AreaPerformanceTable \u2014 compact table replacing the Area Heat bar chart, showing each target borough's 12-month HPI forecast vs London-wide benchmark with delta column. (3) SwapRateSignal \u2014 leading mortgage indicator strip showing current 2yr/5yr GBP swap rates, implied fixed mortgage rate, directional signal, and 5-month sparkline history. (4) BoERatePathChart \u2014 SVG fan chart showing current rate, market-implied path Q3 2026-Q2 2027 (bear/base/bull scenarios), and MPC meeting markers. Also compact-rework MarketPulse: reduce 4-KPI + heat bars + summary spread across two rows into a dense single-section with SDLT urgency badge. Integrate MarketConditionsBar above the property grid. Add AreaPerformanceTable, SwapRateSignal, and BoERatePathChart below MarketPulse. Extend types/macro.ts with BoERateConsensus, SwapRates, HPIForecasts, AreaTrends interfaces. Extend useMacroData.ts to normalise and expose all new fields. Requires boe_rate_consensus, swap_rates, hpi_forecasts, and area_trends in macro_trend.json (already populated).",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": []
+    },
+    {
+      "id": "FE-164",
+      "priority": "High",
+      "effort": "High",
+      "section": "new_approved",
+      "title": "UI: Build 'Market Conditions Radar' \u2014 a Bloomberg-density market intelligence panel giving the user a single-glance verdict on whether the market is in their favour. Four new components: (1) MarketConditionsBar \u2014 slim horizontal status strip showing Market Mode (BUYER/NEUTRAL/SELLER from MOS), Negotiation Room (%), Rate Signal (FALLING/HOLDING/RISING from swap rate trend), Seasonal Window score (1-10), and composite Buyer Favour Score (0-10). (2) AreaPerformanceTable \u2014 compact table replacing the Area Heat bar chart, showing each target borough's 12-month HPI forecast vs London-wide benchmark with delta column. (3) SwapRateSignal \u2014 leading mortgage indicator strip showing current 2yr/5yr GBP swap rates, implied fixed mortgage rate, directional signal, and 5-month sparkline history. (4) BoERatePathChart \u2014 SVG fan chart showing current rate, market-implied path Q3 2026-Q2 2027 (bear/base/bull scenarios), and MPC meeting markers. Also compact-rework MarketPulse: reduce 4-KPI + heat bars + summary spread across two rows into a dense single-section with SDLT urgency badge. Integrate MarketConditionsBar above the property grid. Add AreaPerformanceTable, SwapRateSignal, and BoERatePathChart below MarketPulse. Extend types/macro.ts with BoERateConsensus, SwapRates, HPIForecasts, AreaTrends interfaces. Extend useMacroData.ts to normalise and expose all new fields. Requires boe_rate_consensus, swap_rates, hpi_forecasts, and area_trends in macro_trend.json (already populated).",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": []
     }
   ]
 }

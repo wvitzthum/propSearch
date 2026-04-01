@@ -36,14 +36,9 @@ SECTION_META = {
     "completed":    {"title": "✅ Completed",                            "cols": 4},
 }
 
-COL9_HDR  = "| ID | Priority | Effort | Task | Status | Responsible | Reported By | Dependencies | Date |"
-COL9_SEP  = "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"
 COL8_HDR  = "| ID | Priority | Effort | Task | Status | Responsible | Dependencies | Date |"
-COL8_SEP  = "| --- | --- | --- | --- | --- | --- | --- | --- |"
 COL4_HDR_S = "| ID | Reason | Replaced By | Date |"
-COL4_SEP_S = "| --- | --- | --- | --- |"
 COL4_HDR_C = "| ID | Task | Resolved | Date |"
-COL4_SEP_C = "| --- | --- | --- | --- |"
 
 
 def load_json(path):
@@ -57,11 +52,32 @@ def dep_str(deps):
     return ", ".join(deps)
 
 
+def _markdown_escape_cell(text):
+    """
+    Escape a markdown table cell so literal | and ` chars do not break table rendering.
+
+    Strategy:
+    - Escape ALL | chars with &#124;  (the universal fix — prevents any column-break risk
+      from URLs, code snippets, or raw text containing pipe characters).
+    - Replace `...` inline code spans with <code>...</code> HTML (GitHub/CommonMark both
+      honour HTML in table cells, and <code> renders as monospace without the GFM pipe-in-
+      backtick parsing issue that breaks tables in some viewers).
+    """
+    if not text:
+        return ""
+    # Escape all pipe chars first — safest universal approach
+    text = text.replace("|", "&#124;")
+    # Replace backtick-wrapped code spans with HTML <code> (pipe risk eliminated above)
+    import re
+    text = re.sub(r'`([^`]+)`', r'<code>\1</code>', text)
+    return text
+
+
 def row_8(task):
     deps = dep_str(task.get("dependencies") or [])
     status = task.get("status", "Todo")
     resp   = task.get("responsible") or ""
-    title  = task.get("title", "")
+    title  = _markdown_escape_cell(task.get("title", ""))
     return (
         f"| {task['id']} | "
         f"{task.get('priority','-')} | "
@@ -75,12 +91,18 @@ def row_8(task):
 
 
 def row_4_superseded(task):
+    title = _markdown_escape_cell(task.get("title", ""))
     return (
         f"| {task['id']} | "
-        f"{task.get('title','')} | "
+        f"{title} | "
         f"{task.get('replaced_by','')} | "
         f"{task.get('superseded_date','')} |"
     )
+
+
+def _sep_row(cols):
+    """Generate a properly-piped markdown table separator row."""
+    return "| " + " | ".join(["---"] * cols) + " |"
 
 
 def section_header(sid, cols):
@@ -88,9 +110,9 @@ def section_header(sid, cols):
     title = meta.get("title", sid)
     sep = "---"
     if cols == 8:
-        return f"\n{sep}\n\n## {title}\n\n{COL8_HDR}\n{COL8_SEP}\n"
+        return f"\n{sep}\n\n## {title}\n\n{COL8_HDR}\n{_sep_row(8)}\n"
     else:
-        return f"\n{sep}\n\n## {title}\n\n{COL4_HDR_S}\n{COL4_SEP_S}\n"
+        return f"\n{sep}\n\n## {title}\n\n{COL4_HDR_S}\n{_sep_row(4)}\n"
 
 
 def render_live(tasks_data):
@@ -123,18 +145,17 @@ def render_completed(resolved):
         return ""
     sep = "---"
     output = [
-        f"\n{sep}\n\n## ✅ Completed\n\n{COL4_HDR_C}\n{COL4_SEP_C}\n"
+        f"\n{sep}\n\n## ✅ Completed\n\n{COL4_HDR_C}\n{_sep_row(4)}\n"
     ]
     for t in resolved:
+        title = _markdown_escape_cell(t.get("title", ""))
         output.append(
-            f"| {t['id']} | {t.get('title','')} | Done | {t.get('date','')} |"
+            f"| {t['id']} | {title} | Done | {t.get('date','')} |"
         )
     return "\n".join(output)
 
 
 def build_markdown(tasks_data, resolved_data):
-    live_tasks    = [t for t in tasks_data["tasks"] if t.get("status") not in ("Done",)]
-    superseded    = [t for t in tasks_data["tasks"] if t.get("section") == "superseded"]
     resolved_list = resolved_data.get("resolved", [])
 
     lines = [
@@ -148,12 +169,11 @@ def build_markdown(tasks_data, resolved_data):
         "#   jq '.tasks[] | select(.status==\"Todo\")' tasks/tasks.json  # list all Todo",
         "#   python3 tasks/scripts/generate_tasks_markdown.py --write  # regenerate this file",
         "#",
-        "# Section format rules (8-col rows vs 4-col rows) are handled by the generator.",
+        "# Pipe escaping: all | chars in task titles are escaped as &#124; to prevent",
+        "# markdown table breakage. Backtick code spans are replaced with <code> HTML.",
+        "#",
         "# See tasks/tasks_resolved.json for archived completed tasks.",
         "-->",
-        "",
-        COL9_HDR,
-        COL9_SEP,
         "",
         render_live(tasks_data),
         render_superseded(tasks_data),
