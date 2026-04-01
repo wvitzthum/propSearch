@@ -3,22 +3,28 @@
 tasks/scripts/generate_tasks_markdown.py
 ========================================
 Reads tasks/tasks.json and tasks/tasks_resolved.json and renders a human-readable
-Tasks.md Markdown view.
+Tasks.md Markdown view using HTML <table> elements.
+
+Why HTML tables?
+  GFM pipe tables (| Col1 | Col2 |) break whenever a task title contains a | char —
+  no amount of HTML-escaping fixes it, because the displayed | is re-parsed as a column
+  delimiter by the markdown processor. HTML <table> elements are rendered directly as
+  HTML by all major viewers (GitHub, GitLab, VS Code, GitHub Mobile) and are immune to
+  pipe-character issues in content.
 
 Usage:
   python3 tasks/scripts/generate_tasks_markdown.py            # stdout
   python3 tasks/scripts/generate_tasks_markdown.py --write   # overwrite Tasks.md
 
-Token-efficiency note:
-  Agents use 'jq' (via RTK) for surgical task reads from tasks.json directly.
-  This script is for human consumption only — not read by agents.
-  RTK-optimised query examples:
-    jq '.tasks[] | select(.id=="DAT-155")'  tasks/tasks.json
-    jq '.tasks[] | select(.status=="Todo")' tasks/tasks.json
-    jq '.tasks[] | select(.section=="data_research" and .status=="Todo")' tasks/tasks.json
+Agent workflow:
+  jq '.tasks[] | select(.id=="DAT-155")'  tasks/tasks.json   # read a task
+  jq '.tasks[] | select(.status=="Todo")' tasks/tasks.json     # all Todo
+  python3 tasks/scripts/generate_tasks_markdown.py --write      # regenerate this file
 """
 
+import html
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -28,22 +34,49 @@ RESOLVED_JSON = ROOT / "tasks" / "tasks_resolved.json"
 OUTPUT = ROOT / "Tasks.md"
 
 SECTION_META = {
-    "new_approved": {"title": "🆕 New Approved Features (2026-03-30)", "cols": 8},
-    "bug_fixes":    {"title": "🐛 Bug Fixes",                           "cols": 8},
-    "data_research": {"title": "📊 Data & Research (Unblocked First)",  "cols": 8},
-    "blocked":      {"title": "🔗 Blocked by Outstanding Data (Clear Dependencies)", "cols": 8},
-    "superseded":   {"title": "⚠️ Superseded",                          "cols": 4},
-    "completed":    {"title": "✅ Completed",                            "cols": 4},
+    "new_approved":  {"title": "🆕 New Approved Features (2026-03-30)"},
+    "bug_fixes":     {"title": "🐛 Bug Fixes"},
+    "data_research": {"title": "📊 Data & Research (Unblocked First)"},
+    "blocked":       {"title": "🔗 Blocked by Outstanding Data (Clear Dependencies)"},
+    "superseded":    {"title": "⚠️ Superseded"},
+    "completed":     {"title": "✅ Completed"},
 }
 
-COL8_HDR  = "| ID | Priority | Effort | Task | Status | Responsible | Dependencies | Date |"
-COL4_HDR_S = "| ID | Reason | Replaced By | Date |"
-COL4_HDR_C = "| ID | Task | Resolved | Date |"
 
+# ── helpers ────────────────────────────────────────────────────────────────────
 
 def load_json(path):
     with open(path) as f:
         return json.load(f)
+
+
+def escape(text):
+    """HTML-escape text for safe use inside table cells."""
+    if text is None:
+        return ""
+    return html.escape(str(text))
+
+
+def bold(text):
+    """Wrap text in <strong>."""
+    return f"<strong>{escape(text)}</strong>"
+
+
+def code(text):
+    """Render text as <code>."""
+    if not text:
+        return ""
+    return f"<code>{escape(text)}</code>"
+
+
+def render_inline_code(text):
+    """Replace backtick-wrapped spans with <code> elements; HTML-escape everything else."""
+    if not text:
+        return ""
+    text = escape(text)
+    # Replace `code` with <code>code</code>
+    text = re.sub(r'`([^`]+)`', lambda m: f"<code>{m.group(1)}</code>", text)
+    return text
 
 
 def dep_str(deps):
@@ -52,149 +85,175 @@ def dep_str(deps):
     return ", ".join(deps)
 
 
-def _markdown_escape_cell(text):
-    """
-    Escape a markdown table cell so literal | and ` chars do not break table rendering.
+# ── HTML table builders ───────────────────────────────────────────────────────
 
-    Strategy:
-    - Escape ALL | chars with &#124;  (the universal fix — prevents any column-break risk
-      from URLs, code snippets, or raw text containing pipe characters).
-    - Replace `...` inline code spans with <code>...</code> HTML (GitHub/CommonMark both
-      honour HTML in table cells, and <code> renders as monospace without the GFM pipe-in-
-      backtick parsing issue that breaks tables in some viewers).
-    """
-    if not text:
-        return ""
-    # Escape all pipe chars first — safest universal approach
-    text = text.replace("|", "&#124;")
-    # Replace backtick-wrapped code spans with HTML <code> (pipe risk eliminated above)
-    import re
-    text = re.sub(r'`([^`]+)`', r'<code>\1</code>', text)
-    return text
-
-
-def row_8(task):
-    deps = dep_str(task.get("dependencies") or [])
-    status = task.get("status", "Todo")
-    resp   = task.get("responsible") or ""
-    title  = _markdown_escape_cell(task.get("title", ""))
+def html_row_8col(task):
+    """8-column HTML row for new_approved / bug_fixes / data_research / blocked."""
     return (
-        f"| {task['id']} | "
-        f"{task.get('priority','-')} | "
-        f"{task.get('effort','-')} | "
-        f"{title} | "
-        f"{status} | "
-        f"{resp} | "
-        f"{deps} | "
-        f"{task.get('date','')} |"
+        f"<tr>"
+        f"<td>{bold(escape(task['id']))}</td>"
+        f"<td>{escape(task.get('priority', '-'))}</td>"
+        f"<td>{escape(task.get('effort', '-'))}</td>"
+        f"<td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='{escape(task.get('title',''))}'>{render_inline_code(task.get('title',''))}</td>"
+        f"<td>{escape(task.get('status', 'Todo'))}</td>"
+        f"<td>{escape(task.get('responsible') or '')}</td>"
+        f"<td>{escape(dep_str(task.get('dependencies', [])))}</td>"
+        f"<td>{escape(task.get('date', ''))}</td>"
+        f"</tr>"
     )
 
 
-def row_4_superseded(task):
-    title = _markdown_escape_cell(task.get("title", ""))
+def html_row_4col_superseded(task):
     return (
-        f"| {task['id']} | "
-        f"{title} | "
-        f"{task.get('replaced_by','')} | "
-        f"{task.get('superseded_date','')} |"
+        f"<tr>"
+        f"<td>{bold(escape(task['id']))}</td>"
+        f"<td>{render_inline_code(task.get('title',''))}</td>"
+        f"<td>{code(task.get('replaced_by',''))}</td>"
+        f"<td>{escape(task.get('superseded_date',''))}</td>"
+        f"</tr>"
     )
 
 
-def _sep_row(cols):
-    """Generate a properly-piped markdown table separator row."""
-    return "| " + " | ".join(["---"] * cols) + " |"
+def html_row_4col_resolved(task):
+    return (
+        f"<tr>"
+        f"<td>{bold(escape(task['id']))}</td>"
+        f"<td>{render_inline_code(task.get('title',''))}</td>"
+        f"<td>{escape(task.get('status', 'Done'))}</td>"
+        f"<td>{escape(task.get('date',''))}</td>"
+        f"</tr>"
+    )
 
 
-def section_header(sid, cols):
-    meta = SECTION_META.get(sid, {})
-    title = meta.get("title", sid)
-    sep = "---"
-    if cols == 8:
-        return f"\n{sep}\n\n## {title}\n\n{COL8_HDR}\n{_sep_row(8)}\n"
-    else:
-        return f"\n{sep}\n\n## {title}\n\n{COL4_HDR_S}\n{_sep_row(4)}\n"
+def html_table_8col(section_title, tasks):
+    """8-column table: ID | Priority | Effort | Task | Status | Responsible | Dependencies | Date"""
+    rows = "\n".join(html_row_8col(t) for t in tasks)
+    return f"""
+## {section_title}
 
+<table>
+<thead>
+<tr>
+  <th align="left">ID</th>
+  <th align="left">Priority</th>
+  <th align="left">Effort</th>
+  <th align="left" style="width:480px">Task</th>
+  <th align="left">Status</th>
+  <th align="left">Responsible</th>
+  <th align="left">Dependencies</th>
+  <th align="left">Date</th>
+</tr>
+</thead>
+<tbody>
+{rows}
+</tbody>
+</table>"""
+
+
+def html_table_4col_superseded(section_title, tasks):
+    rows = "\n".join(html_row_4col_superseded(t) for t in tasks)
+    return f"""
+## {section_title}
+
+<table>
+<thead>
+<tr>
+  <th align="left">ID</th>
+  <th align="left">Reason</th>
+  <th align="left">Replaced By</th>
+  <th align="left">Date</th>
+</tr>
+</thead>
+<tbody>
+{rows}
+</tbody>
+</table>"""
+
+
+def html_table_4col_completed(section_title, tasks):
+    rows = "\n".join(html_row_4col_resolved(t) for t in tasks)
+    return f"""
+## {section_title}
+
+<table>
+<thead>
+<tr>
+  <th align="left">ID</th>
+  <th align="left">Task</th>
+  <th align="left">Resolved</th>
+  <th align="left">Date</th>
+</tr>
+</thead>
+<tbody>
+{rows}
+</tbody>
+</table>"""
+
+
+# ── section renderers ─────────────────────────────────────────────────────────
 
 def render_live(tasks_data):
-    """Render live sections (excluding only 'superseded' which has its own 4-col table)."""
     all_tasks = tasks_data["tasks"]
-    output = []
+    parts = []
     for sid in ["new_approved", "bug_fixes", "data_research", "blocked"]:
         section_tasks = [t for t in all_tasks if t.get("section") == sid]
         if not section_tasks:
             continue
-        output.append(section_header(sid, 8))
-        for t in section_tasks:
-            output.append(row_8(t))
-    return "\n".join(output)
+        meta = SECTION_META[sid]
+        parts.append(html_table_8col(meta["title"], section_tasks))
+    return "\n".join(parts)
 
 
 def render_superseded(tasks_data):
     section_tasks = [t for t in tasks_data["tasks"] if t.get("section") == "superseded"]
     if not section_tasks:
         return ""
-    output = [section_header("superseded", 4)]
-    for t in section_tasks:
-        output.append(row_4_superseded(t))
-    return "\n".join(output)
+    return html_table_4col_superseded(SECTION_META["superseded"]["title"], section_tasks)
 
 
-def render_completed(resolved):
-    """Render completed tasks from tasks_resolved.json."""
+def render_completed(resolved_data):
+    resolved = resolved_data.get("resolved", [])
     if not resolved:
         return ""
-    sep = "---"
-    output = [
-        f"\n{sep}\n\n## ✅ Completed\n\n{COL4_HDR_C}\n{_sep_row(4)}\n"
-    ]
-    for t in resolved:
-        title = _markdown_escape_cell(t.get("title", ""))
-        output.append(
-            f"| {t['id']} | {title} | Done | {t.get('date','')} |"
-        )
-    return "\n".join(output)
+    return html_table_4col_completed(SECTION_META["completed"]["title"], resolved)
 
+
+# ── entry point ────────────────────────────────────────────────────────────────
 
 def build_markdown(tasks_data, resolved_data):
-    resolved_list = resolved_data.get("resolved", [])
-
-    lines = [
-        "# propSearch: Active Backlog",
-        "<!--",
-        "# This file is GENERATED from tasks/tasks.json",
-        "# DO NOT EDIT BY HAND — your changes will be overwritten.",
-        "#",
-        "# Agent workflow:",
-        "#   jq '.tasks[] | select(.id==\"DAT-155\")'  tasks/tasks.json  # read a task",
-        "#   jq '.tasks[] | select(.status==\"Todo\")' tasks/tasks.json  # list all Todo",
-        "#   python3 tasks/scripts/generate_tasks_markdown.py --write  # regenerate this file",
-        "#",
-        "# Pipe escaping: all | chars in task titles are escaped as &#124; to prevent",
-        "# markdown table breakage. Backtick code spans are replaced with <code> HTML.",
-        "#",
-        "# See tasks/tasks_resolved.json for archived completed tasks.",
-        "-->",
-        "",
-        render_live(tasks_data),
-        render_superseded(tasks_data),
-        render_completed(resolved_list),
-        "",
-        "> **Source:** `tasks/tasks.json`  |  **Archive:** `tasks/tasks_resolved.json`  |  **Generator:** `tasks/scripts/generate_tasks_markdown.py`",
-    ]
-    return "\n".join(lines)
+    return (
+        "# propSearch: Active Backlog\n"
+        + "<!--\n"
+        + "# This file is GENERATED from tasks/tasks.json\n"
+        + "# DO NOT EDIT BY HAND — your changes will be overwritten.\n"
+        + "#\n"
+        + "# Agent workflow (jq — always read/write tasks.json directly):\n"
+        + "#   jq '.tasks[] | select(.id==\"DAT-155\")'  tasks/tasks.json\n"
+        + "#   jq '.tasks[] | select(.status==\"Todo\")' tasks/tasks.json\n"
+        + "#   python3 tasks/scripts/generate_tasks_markdown.py --write   # regenerate this file\n"
+        + "#\n"
+        + "# Tables use HTML <table> markup — immune to pipe chars in task titles.\n"
+        + "# See tasks/tasks_resolved.json for archived completed tasks.\n"
+        + "-->\n"
+        + "\n"
+        + render_live(tasks_data) + "\n"
+        + render_superseded(tasks_data) + "\n"
+        + render_completed(resolved_data) + "\n"
+        + "\n"
+        + "> **Source:** `tasks/tasks.json`  |  **Archive:** `tasks/tasks_resolved.json`  |  "
+        + "**Generator:** `tasks/scripts/generate_tasks_markdown.py`"
+    )
 
 
 def main():
     write = "--write" in sys.argv
-
-    tasks_data   = load_json(TASKS_JSON)
+    tasks_data    = load_json(TASKS_JSON)
     resolved_data = load_json(RESOLVED_JSON)
-
     md = build_markdown(tasks_data, resolved_data)
-
     if write:
         OUTPUT.write_text(md)
-        print(f"✓ Tasks.md written ({len(md):,} bytes) — {len(tasks_data['tasks'])} tasks processed.")
+        n = len(tasks_data["tasks"])
+        print(f"✓ Tasks.md written ({len(md):,} bytes) — {n} tasks processed.")
     else:
         print(md)
 
