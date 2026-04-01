@@ -163,9 +163,7 @@
       "title": "Historical mortgage rates lack 2yr/5yr term split. The `mortgage_history` table in SQLite only contains rates by LTV band (`rate_90`, `rate_85`, `rate_75`, `rate_60`) but no term length differentiation (2yr vs 5yr). Currently `mortgage_2yr` uses `rate_90` as a proxy which conflates LTV band with term length. Source 2yr and 5yr historical rates by LTV band from BoE Effective Interest Rates database: https://www.bankofengland.co.uk/boeapps/database/. Populate `mortgage_history` with `{ date, boe_rate, mortgage_2yr_90ltv, mortgage_5yr_75ltv, ... }`. See DAT-131.",
       "status": "Todo",
       "responsible": "Data Analyst",
-      "dependencies": [
-        "DAT-131"
-      ],
+      "dependencies": [],
       "date": "2026-03-30",
       "notes": []
     },
@@ -486,9 +484,9 @@
       "id": "DAT-164",
       "priority": "High",
       "effort": "High",
-      "section": "data_research",
+      "section": "completed",
       "title": "Data: Populate `price_history` table with meaningful historical snapshots and establish an ongoing price-tracking pipeline. Current state: 31 rows across 15 properties, all from 2026-03-07 to 2026-03-30 (one-time backfill). (1) Source historical price points for all active properties from Land Registry Price Paid Data (https://landregistry.data.gov.uk/pricepaid/) for the past 12-24 months. (2) Implement a scheduled weekly price-scan pipeline that queries Rightmove/Zoopla for DOM changes and price reductions on all active listings, appending new snapshot rows to `price_history` on each run. (3) Populate `price_reduction_amount` and `price_reduction_percent` for listings that have been reduced. (4) Populate `negotiation_delta.avg_discount_pct` and `negotiation_delta.pct_below_asking` from sold-price vs asking-price analysis. (5) Ensure the sync_data.js pipeline records a price_history snapshot on every sync cycle.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Data Analyst",
       "dependencies": [],
       "date": "2026-04-01",
@@ -512,6 +510,109 @@
       "effort": "Low",
       "section": "new_approved",
       "title": "UI: Make loan term configurable on the Affordability Settings page. Currently `termYears` is hardcoded to 25 years in `useAffordability.ts` (useState(25)) and the Loan Term panel in `AffordabilitySettings.tsx` shows a static non-interactive placeholder ('Standard 25-Year Term'). (1) In `useAffordability.ts`: change `[termYears]` from `useState(25)` to `[termYears, setTermYears]` settable state. Persist `termYears` to localStorage under a `propSearch_loan_term` key. Expose `setTermYears` via an `updateTermYears` callback in the hook return. (2) In `AffordabilitySettings.tsx`: replace the static '25 Years' display in the Loan Term section (line 259) with an interactive segmented control or dropdown allowing the user to select from [15, 20, 25, 30] year terms. Wire `updateTermYears` to the control. The selected term should persist across sessions. (3) All downstream calculations (getAffordablePrice, getBudgetProfile, calculateMortgageFromPayment) already accept `years` as a parameter and are correctly reactive \u2014 no logic changes needed. (4) Add term-year selector to `BudgetSlider` if it is present on the same page. Verify all payment scenarios recalculate in real-time when term changes.",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": []
+    },
+    {
+      "id": "DE-162",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "data_research",
+      "title": "Tag genuine sold records in archived_properties. The 25 records in archived_properties are all pre-enrichment duplicates (archive_reason=Shallow data: Needs Enrichment) \u2014 they are NOT genuinely sold. The regional_velocity view now correctly excludes them (sold_count=0 everywhere). To get meaningful sold/signal data: (1) manually review archived_properties and set archive_reason to a sold status (Sold STC / Completed) for genuinely sold records; (2) optionally move enrichment-complete records back to properties with archived=0; (3) once genuine sold records exist, regional_velocity supply_ratio and market_signal will become meaningful. Current state: sold_count=0 across all areas.",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "2026-04-01: Data Engineer identified this gap during regional_velocity fix. All 25 archived_properties are enrichment candidates, not sold transactions."
+      ]
+    },
+    {
+      "id": "QA-159",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "bug_fixes",
+      "title": "UI Tests failing \u2014 Dashboard: Alpha Score badge selector wrong. Dashboard.spec.ts line 39 uses `[class*='alpha']` which finds 0 elements because Tailwind compiles class names to color values (e.g. text-amber-400). Fix: update selector to target the badge container by text content (e.g. `th:has-text('Alpha'), [class*='AS']`) or add data-testid to AlphaBadge component.",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "Real Alpha Score badge (AS: 9.4) IS visible in dashboard table. Test selector is wrong."
+      ]
+    },
+    {
+      "id": "QA-160",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "bug_fixes",
+      "title": "UI Tests failing \u2014 MarketPulse.tsx silently renders nothing when macro data is null/error (line 24: `if (error || !data) return null`). This causes 'Market Pulse' heading to be absent from the DOM entirely, breaking Dashboard test and the actual user-facing component. Fix: always render the header/loading skeleton even when data is unavailable; add graceful fallback UI instead of returning null.",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "MarketPulse.tsx line 24: `return null` hides the entire component.",
+        "Root cause: macro_trend.json missing inventory_velocity, negotiation_delta, market_pulse_summary (DAT-155/DAT-156).",
+        "Dashboard.spec.ts test `text=Market Pulse` fails because heading is not rendered.",
+        "Also: update test selector to be more robust."
+      ]
+    },
+    {
+      "id": "QA-161",
+      "priority": "Medium",
+      "effort": "Low",
+      "section": "bug_fixes",
+      "title": "UI Tests failing \u2014 ComparisonPage empty-state selectors don't match actual UI. ComparisonPage.spec.ts line 23 expects regex `no.*properties|select.*properties|add.*compare` but the empty state shows 'Get Started \u2192 Browse the Dashboard' CTA with no matching text. Also line 40 `alpha.*score|price.*efficiency|appreciation` fails because no properties = no matrix rows. Fix: update test selectors to match actual empty-state text, or restructure tests to first select properties before checking matrix.",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "Actual empty state: 'Get Started \u2192 Browse the Dashboard' button.",
+        "Matrix rows test: needs properties selected first to render rows."
+      ]
+    },
+    {
+      "id": "QA-162",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "testing",
+      "title": "UI Tests failing \u2014 AlphaBadge.spec.ts uses `@testing-library/react` (render, screen, userEvent) in a Playwright test environment which does not support React Testing Library. All 6 tests fail with 'render is not defined'. Fix: rewrite as Playwright E2E tests that interact with the real AlphaBadge component rendered in the browser, or migrate to a separate Vitest/Jest unit test suite.",
+      "status": "In Progress",
+      "responsible": "UI/UX QA",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "AlphaBadge.spec.ts imports render, screen, userEvent from @testing-library/react \u2014 not available in Playwright.",
+        "Fix option A: use Playwright to navigate to /dashboard and assert AlphaBadge visibility by data-testid.",
+        "Fix option B: add Vitest config, move to proper unit test file with correct React Testing Library setup.",
+        "2026-04-01: QA starting fix \u2014 rewriting as Playwright E2E tests."
+      ]
+    },
+    {
+      "id": "QA-163",
+      "priority": "Low",
+      "effort": "Low",
+      "section": "bug_fixes",
+      "title": "UI Tests failing \u2014 Dashboard 'property count' test (Dashboard.spec.ts line 62) looks for `\\d+\\s*(properties|assets)` text which does not exist in the dashboard UI. Verify if a property count display is implemented anywhere (header badge, tooltip, caption). If implemented, update the test selector. If not implemented, mark test as skipped and log as a feature gap.",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "Dashboard.spec.ts line 62: `text=/\\d+\\s*(properties|assets)/i` finds 0 elements."
+      ]
+    },
+    {
+      "id": "FE-168",
+      "priority": "High",
+      "effort": "Low",
+      "section": "new_approved",
+      "title": "UI Refactor: Make MortgageTracker (/mortgage) a read-only intelligence page. Per user directive, Mortgage Intelligence is purely for reading market data. All personal input controls (monthlyBudget, mortgageTerm, LTV band) belong exclusively on AffordabilitySettings (/affordability). Remove from MortgageTracker.tsx: (1) `const [monthlyBudget, setMonthlyBudget] = useState(4500)` and `const [mortgageTerm, setMortgageTerm] = useState(25)` state declarations (lines 34-35). (2) The Monthly Budget number input in the Global Control Bar (lines 155-169). (3) The Loan Term number input in the Global Control Bar (lines 170-184). (4) The non-functional 'Execute Simulation' button (lines 576-578) \u2014 no onClick handler exists, dead UI. (5) Any `ppiHistory` calculations or `calculateMaxLoan` calls that depend on monthlyBudget/mortgageTerm \u2014 these personal affordability metrics belong on AffordabilitySettings. Keep: (a) LTV band selector (activeLTV) \u2014 this is a chart display filter for which market rate to show, not a personal setting. (b) Series visibility toggles (visibleSeries). Keep the Rate Corridor chart, PPI chart, and LTV Arbitrage Matrix \u2014 these display market data only. The charts should display the current live rate without any affordability personalisation. Update the page subtitle from 'Purchasing Power Simulation' to 'Market Rate Intelligence' or similar. Update the PPI chart label that references monthlyBudget ('Estimated Loan Ceiling @ \u00a3X/mo') to show the current live 5yr fixed rate benchmark without personal budget inputs.",
       "status": "Todo",
       "responsible": "Frontend Engineer",
       "dependencies": [],
