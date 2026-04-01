@@ -55,5 +55,9 @@ Core data architecture, storage solutions (SQLite), and automated ingestion pipe
 2. Record cannot ever be verified (null address, no source) → `archived = 1`, `archive_reason = 'Cannot Verify — Discard'` (never delete)
 3. Record enriched and verified → set `archived = 0`, clear `archive_reason`
 
+**Idempotent restore (server/init):** `server/index.js` runs `INSERT ... FROM archived_properties WHERE NOT EXISTS` on every startup. This safely restores any missing archived records without overwriting analyst-set flags. New records get `archived = 1`; existing records are skipped. Never resets `archived` to 0.
+
+**sync_data.js preservation:** The sync pipeline INSERTs new records with `archived = 0` by default. The UPDATE branch does NOT touch `archived` or `archive_reason` — analyst flags are always preserved. Never allow the sync pipeline to reset `archived = 0` on a flagged record.
+
 
 ---

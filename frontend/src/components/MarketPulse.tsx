@@ -21,7 +21,23 @@ const MarketPulse: React.FC = () => {
     </div>
   );
 
-  if (error || !data) return null;
+  if (error || !data) return (
+    <div className="bg-linear-card/50 border border-linear-border rounded-2xl overflow-hidden shadow-2xl animate-in fade-in duration-700">
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-linear-border flex items-center justify-between bg-linear-card/80 backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <div className="h-2 w-2 rounded-full bg-linear-accent-amber animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.5)]"></div>
+          <h2 className="text-[10px] font-black text-linear-text-muted uppercase tracking-[0.2em]">Market Pulse</h2>
+        </div>
+        <span className="text-[8px] font-mono text-linear-accent-rose">LIVE DATA UNAVAILABLE</span>
+      </div>
+      {/* Error state body */}
+      <div className="px-6 py-8 flex flex-col items-center justify-center gap-3">
+        <div className="text-[10px] text-linear-text-muted font-mono">{error || 'No data available'}</div>
+        <div className="text-[9px] text-linear-text-muted/60">Market indicators will appear when data is restored</div>
+      </div>
+    </div>
+  );
 
   // Extract values with provenance handling
   const londonHPI = data?.london_hpi;

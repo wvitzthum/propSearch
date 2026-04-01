@@ -136,7 +136,9 @@ function initializeDB() {
     )
   `).run();
 
-  // 7. archived_properties table (Fidelity & History)
+  // 7. archived_properties table (Historical — pre-2026-04-01)
+  // NOTE: No longer written to. Retained for historical record. The server init's
+  // idempotent restore ensures records are NOT re-inserted on restart (NOT EXISTS guard).
   db.prepare(`
     CREATE TABLE IF NOT EXISTS archived_properties (
       id TEXT PRIMARY KEY,
@@ -186,6 +188,10 @@ function initializeDB() {
 
   // 8. DE-120: regional_velocity analytical view
   // Calculates Listings vs. Sales intensity per area to determine Buyer's/Seller's Market
+  // Note: JOIN excludes archive_reason='Needs Enrichment' — those are pre-enrichment
+  // duplicates, not genuinely sold transactions. Only properly archived (sold) records count.
+  // IMPORTANT: Must DROP before CREATE to ensure schema changes propagate on restart.
+  db.exec('DROP VIEW IF EXISTS regional_velocity');
   db.prepare(`
     CREATE VIEW IF NOT EXISTS regional_velocity AS
     SELECT
@@ -219,6 +225,7 @@ function initializeDB() {
       ROUND(AVG(CAST(p.alpha_score AS REAL)), 2) AS avg_alpha_score
     FROM properties p
     LEFT JOIN archived_properties a ON a.area = p.area
+      AND a.archive_reason NOT LIKE '%Needs Enrichment%'
     GROUP BY p.area
     UNION ALL
     SELECT
@@ -248,6 +255,7 @@ function initializeDB() {
       ROUND(AVG(CAST(p.alpha_score AS REAL)), 2) AS avg_alpha_score
     FROM properties p
     LEFT JOIN archived_properties a ON a.area IS NOT NULL
+      AND a.archive_reason NOT LIKE '%Needs Enrichment%'
   `).run();
 
   // 9. DE-120: Performance index on price_history.property_id for fast lookups
@@ -258,6 +266,47 @@ function initializeDB() {
   // Shallow/incomplete records are flagged with archived=1 + archive_reason
   // for Data Analyst enrichment. No auto-purge — analyst reviews flagged records.
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_properties_archived ON properties(archived)`).run();
+
+  // Restore archived_properties → properties idempotently (once-only on first run, no-op on restart).
+  // Only restores records NOT already in properties to avoid resetting analyst-set flags.
+  // IMPORTANT: Must include archived=1 flag to preserve enrichment-pending status.
+  try {
+    const restore = db.prepare(`
+      INSERT INTO properties (
+        id, address, area, image_url, gallery, streetview_url, floorplan_url,
+        list_price, realistic_price, sqft, price_per_sqm,
+        nearest_tube_distance, park_proximity, commute_paternoster,
+        commute_canada_square, is_value_buy, epc, tenure,
+        dom, neg_strategy, alpha_score, appreciation_potential,
+        links, metadata, floor_level, source, source_name,
+        service_charge, ground_rent, lease_years_remaining,
+        vetted, analyst_notes,
+        price_reduction_amount, price_reduction_percent, days_since_reduction,
+        epc_improvement_potential, est_capex_requirement,
+        waitrose_distance, whole_foods_distance, wellness_hub_distance,
+        archived, archive_reason
+      )
+      SELECT
+        a.id, a.address, a.area, a.image_url, a.gallery, a.streetview_url, a.floorplan_url,
+        a.list_price, a.realistic_price, a.sqft, a.price_per_sqm,
+        a.nearest_tube_distance, a.park_proximity, a.commute_paternoster,
+        a.commute_canada_square, a.is_value_buy, a.epc, a.tenure,
+        a.dom, a.neg_strategy, a.alpha_score, a.appreciation_potential,
+        a.links, a.metadata, a.floor_level, a.source, a.source_name,
+        a.service_charge, a.ground_rent, a.lease_years_remaining,
+        a.vetted, a.analyst_notes,
+        a.price_reduction_amount, a.price_reduction_percent, a.days_since_reduction,
+        a.epc_improvement_potential, a.est_capex_requirement,
+        a.waitrose_distance, a.whole_foods_distance, a.wellness_hub_distance,
+        1, a.archive_reason
+      FROM archived_properties a
+      WHERE NOT EXISTS (SELECT 1 FROM properties p WHERE p.id = a.id)
+    `);
+    const info = restore.run();
+    if (info.changes > 0) console.log(`Restored ${info.changes} archived records (idempotent — new only)`);
+  } catch (e) {
+    console.error('Restore from archived_properties failed:', e.message);
+  }
 
   console.log('Database initialization complete.');
 }
@@ -366,15 +415,53 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify(result));
       }
     }
-    // 2. Macro
+    // 2. Macro — DE-162: enriched with freshness metadata
     else if (url.pathname === '/api/macro' && req.method === 'GET') {
-      const row = db.prepare("SELECT data FROM global_context WHERE key = 'macro_trend'").get();
+      const row = db.prepare("SELECT data, updated_at FROM global_context WHERE key = 'macro_trend'").get();
       if (!row) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Macro data not found' }));
       } else {
+        // Parse stored JSON and inject freshness envelope
+        let payload;
+        try {
+          payload = JSON.parse(row.data);
+        } catch (e) {
+          payload = { _raw: row.data };
+        }
+
+        // Days since last refresh
+        const lastRefresh = row.updated_at ? new Date(row.updated_at) : null;
+        const now = new Date();
+        const daysSince = lastRefresh ? Math.floor((now - lastRefresh) / (1000 * 60 * 60 * 24)) : null;
+
+        // Freshness signal: green ≤3 days, amber 4-7 days, red >7 days
+        let freshness = 'unknown';
+        if (daysSince !== null) {
+          if (daysSince <= 3) freshness = 'green';
+          else if (daysSince <= 7) freshness = 'amber';
+          else freshness = 'red';
+        }
+
+        // Next expected refresh: next Monday 09:00 UTC
+        const nextMonday = new Date(now);
+        nextMonday.setUTCDate(nextMonday.getUTCDate() + ((1 + 7 - nextMonday.getUTCDay()) % 7 || 7));
+        nextMonday.setUTCHours(9, 0, 0, 0);
+        if (nextMonday <= now) nextMonday.setDate(nextMonday.getDate() + 7);
+
+        const enriched = {
+          ...payload,
+          _meta: {
+            last_full_refresh: row.updated_at || null,
+            days_since_refresh: daysSince,
+            data_freshness: freshness,
+            next_expected_refresh: nextMonday.toISOString().replace('.000Z', 'Z'),
+            refreshed_by: 'server/index.js / GET /api/macro'
+          }
+        };
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(row.data);
+        res.end(JSON.stringify(enriched));
       }
     }
     // 3. Financials
@@ -525,9 +612,12 @@ const server = http.createServer((req, res) => {
       try {
         const counts = {
           properties: db.prepare('SELECT COUNT(*) as n FROM properties').get().n,
-          archived: db.prepare('SELECT COUNT(*) as n FROM archived_properties').get().n,
+          // DE-162 fix: count flagged records from properties.archived=1, not old archived_properties table
+          archived: db.prepare('SELECT COUNT(*) as n FROM properties WHERE archived = 1').get().n,
           price_history: db.prepare('SELECT COUNT(*) as n FROM price_history').get().n,
           manual_queue: db.prepare('SELECT COUNT(*) as n FROM manual_queue WHERE status = ?').get('Pending').n,
+          // Historical reference: pre-migration archived_properties table (legacy, no longer written to)
+          archived_properties_legacy: db.prepare('SELECT COUNT(*) as n FROM archived_properties').get().n,
         };
         const contextKeys = db.prepare("SELECT key, updated_at, LENGTH(data) as len FROM global_context").all();
         const dbSize = require('fs').statSync(DB_PATH).size;

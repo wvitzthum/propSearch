@@ -136,7 +136,8 @@ export const useThesisTags = () => {
 
   const clearTags = useCallback((propertyId: string) => {
     setTags(prev => {
-      const { [propertyId]: _, ...rest } = prev;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [propertyId]: _removed, ...rest } = prev;
       return rest;
     });
   }, []);
@@ -179,7 +180,7 @@ export const useThesisTags = () => {
   // Get properties by tag
   const getPropertiesByTag = useCallback((tag: ThesisTag): string[] => {
     return Object.entries(tags)
-      .filter(([_, propertyTags]) => propertyTags.includes(tag))
+      .filter(([/* id */, propertyTags]) => propertyTags.includes(tag))
       .map(([id]) => id);
   }, [tags]);
 

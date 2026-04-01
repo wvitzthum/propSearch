@@ -36,7 +36,7 @@ const AREA_COORDS: Record<string, [number, number]> = {
 };
 
 const IS_DEMO = import.meta.env.VITE_DEMO_MODE === 'true';
-const API_BASE = IS_DEMO ? '/data' : 'http://localhost:3001/api';
+const API_BASE = IS_DEMO ? '/data' : '/api';
 
 export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [properties, setProperties] = useState<PropertyWithCoords[]>([]);
@@ -51,8 +51,6 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const fetchProperties = useCallback(async (currentFilters: PropertyFilters) => {
     try {
-      setLoading(true);
-      
       let url = `${API_BASE}/properties`;
       const params = new URLSearchParams();
       
@@ -104,9 +102,9 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       setProperties(propertiesWithCoords);
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Property loading error:', err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -136,6 +134,7 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const usePropertyContext = () => {
   const context = useContext(PropertyContext);
   if (context === undefined) {

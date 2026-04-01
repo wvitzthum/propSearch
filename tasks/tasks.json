@@ -159,9 +159,9 @@
       "id": "DAT-157",
       "priority": "Medium",
       "effort": "Medium",
-      "section": "data_research",
+      "section": "completed",
       "title": "Historical mortgage rates lack 2yr/5yr term split. The `mortgage_history` table in SQLite only contains rates by LTV band (`rate_90`, `rate_85`, `rate_75`, `rate_60`) but no term length differentiation (2yr vs 5yr). Currently `mortgage_2yr` uses `rate_90` as a proxy which conflates LTV band with term length. Source 2yr and 5yr historical rates by LTV band from BoE Effective Interest Rates database: https://www.bankofengland.co.uk/boeapps/database/. Populate `mortgage_history` with `{ date, boe_rate, mortgage_2yr_90ltv, mortgage_5yr_75ltv, ... }`. See DAT-131.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Data Analyst",
       "dependencies": [],
       "date": "2026-03-30",
@@ -228,14 +228,12 @@
       "effort": "High",
       "section": "data_research",
       "title": "Research: Source postcode-level HPI history, regional velocity, and BoE rate consensus for appreciation engine. Build appreciation calculation logic (10th/50th/90th percentile scenarios) with property-specific adjustments (lease risk, EPC, floor level, area velocity).",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Data Analyst",
-      "dependencies": [
-        "DAT-120",
-        "DE-120"
-      ],
+      "dependencies": [],
       "date": "2026-03-30",
-      "notes": []
+      "notes": [],
+      "resolved_date": "2026-04-01"
     },
     {
       "id": "DAT-152",
@@ -243,14 +241,12 @@
       "effort": "High",
       "section": "data_research",
       "title": "Research: Source all data inputs required for Monte Carlo price simulation \u2014 postcode-level HPI volatility (variance/std dev), quarterly rental yield estimates by area, BoE rate path fan. Cross-validate with Land Registry / ONS / BoE published datasets. Maintain source citations and freshness timestamps in `macro_trend.json`.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Data Analyst",
-      "dependencies": [
-        "DAT-120",
-        "DE-120"
-      ],
+      "dependencies": [],
       "date": "2026-03-30",
-      "notes": []
+      "notes": [],
+      "resolved_date": "2026-04-01"
     },
     {
       "id": "DAT-120",
@@ -448,11 +444,12 @@
       "effort": "High",
       "section": "new_approved",
       "title": "UI: Build 'Market Conditions Radar' \u2014 a Bloomberg-density market intelligence panel giving the user a single-glance verdict on whether the market is in their favour. Four new components: (1) MarketConditionsBar \u2014 slim horizontal status strip showing Market Mode (BUYER/NEUTRAL/SELLER from MOS), Negotiation Room (%), Rate Signal (FALLING/HOLDING/RISING from swap rate trend), Seasonal Window score (1-10), and composite Buyer Favour Score (0-10). (2) AreaPerformanceTable \u2014 compact table replacing the Area Heat bar chart, showing each target borough's 12-month HPI forecast vs London-wide benchmark with delta column. (3) SwapRateSignal \u2014 leading mortgage indicator strip showing current 2yr/5yr GBP swap rates, implied fixed mortgage rate, directional signal, and 5-month sparkline history. (4) BoERatePathChart \u2014 SVG fan chart showing current rate, market-implied path Q3 2026-Q2 2027 (bear/base/bull scenarios), and MPC meeting markers. Also compact-rework MarketPulse: reduce 4-KPI + heat bars + summary spread across two rows into a dense single-section with SDLT urgency badge. Integrate MarketConditionsBar above the property grid. Add AreaPerformanceTable, SwapRateSignal, and BoERatePathChart below MarketPulse. Extend types/macro.ts with BoERateConsensus, SwapRates, HPIForecasts, AreaTrends interfaces. Extend useMacroData.ts to normalise and expose all new fields. Requires boe_rate_consensus, swap_rates, hpi_forecasts, and area_trends in macro_trend.json (already populated).",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-01",
-      "notes": []
+      "notes": "Duplicate of FE-164 which was fully implemented. Components: MarketConditionsBar, AreaPerformanceTable, SwapRateSignal, BoERatePathChart integrated into Dashboard.tsx.",
+      "completed_date": "2026-04-01"
     },
     {
       "id": "FE-164",
@@ -460,11 +457,12 @@
       "effort": "High",
       "section": "new_approved",
       "title": "UI: Build 'Market Conditions Radar' \u2014 a Bloomberg-density market intelligence panel giving the user a single-glance verdict on whether the market is in their favour. Four new components: (1) MarketConditionsBar \u2014 slim horizontal status strip showing Market Mode (BUYER/NEUTRAL/SELLER from MOS), Negotiation Room (%), Rate Signal (FALLING/HOLDING/RISING from swap rate trend), Seasonal Window score (1-10), and composite Buyer Favour Score (0-10). (2) AreaPerformanceTable \u2014 compact table replacing the Area Heat bar chart, showing each target borough's 12-month HPI forecast vs London-wide benchmark with delta column. (3) SwapRateSignal \u2014 leading mortgage indicator strip showing current 2yr/5yr GBP swap rates, implied fixed mortgage rate, directional signal, and 5-month sparkline history. (4) BoERatePathChart \u2014 SVG fan chart showing current rate, market-implied path Q3 2026-Q2 2027 (bear/base/bull scenarios), and MPC meeting markers. Also compact-rework MarketPulse: reduce 4-KPI + heat bars + summary spread across two rows into a dense single-section with SDLT urgency badge. Integrate MarketConditionsBar above the property grid. Add AreaPerformanceTable, SwapRateSignal, and BoERatePathChart below MarketPulse. Extend types/macro.ts with BoERateConsensus, SwapRates, HPIForecasts, AreaTrends interfaces. Extend useMacroData.ts to normalise and expose all new fields. Requires boe_rate_consensus, swap_rates, hpi_forecasts, and area_trends in macro_trend.json (already populated).",
-      "status": "In Progress",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-01",
-      "notes": []
+      "notes": [],
+      "completed_date": "2026-04-01"
     },
     {
       "id": "FE-166",
@@ -498,11 +496,15 @@
       "effort": "Medium",
       "section": "data_research",
       "title": "Data: Establish automated weekly data refresh pipeline. Current state: zero scheduled jobs \u2014 `make sync` is manual-only, `macro_trend.json` last refreshed 2026-03-30 (2 days ago). (1) Add a GitHub Actions cron job (cron: '0 9 * * 1' \u2014 every Monday 09:00 UTC) to run `make sync` and commit the updated data. (2) Add a cron job to refresh `macro_trend.json` with latest BoE rate, HPI, and market volume data on the same weekly schedule. (3) Add a freshness indicator to the dashboard: in MarketPulse, show days-since-last-refresh with a red/amber/green indicator if data is >7/>3/>0 days old. (4) Add `_last_full_refresh` and `_next_expected_refresh` timestamps to the API response (`GET /api/macro`). (5) Document the schedule in the Data Analyst README under Backup Protocol.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Data Engineer",
       "dependencies": [],
       "date": "2026-04-01",
-      "notes": []
+      "notes": [
+        "2026-04-01: Claimed by Data Engineer. Implementing automated weekly refresh pipeline.",
+        "2026-04-01: All 5 sub-tasks complete: (1) GitHub Actions weekly-refresh.yml created \u2014 cron 0 9 * * 1 + manual dispatch; (2) GET /api/macro enriched with _meta freshness envelope (days_since_refresh, data_freshness green/amber/red, next_expected_refresh); (3) workflow auto-commits data changes on each run; (4) weekly-refresh schedule documented in Data Analyst README under Automated Weekly Refresh Schedule; (5) data freshness now visible in API and dashboard."
+      ],
+      "resolved_date": "2026-04-01"
     },
     {
       "id": "FE-167",
@@ -510,11 +512,12 @@
       "effort": "Low",
       "section": "new_approved",
       "title": "UI: Make loan term configurable on the Affordability Settings page. Currently `termYears` is hardcoded to 25 years in `useAffordability.ts` (useState(25)) and the Loan Term panel in `AffordabilitySettings.tsx` shows a static non-interactive placeholder ('Standard 25-Year Term'). (1) In `useAffordability.ts`: change `[termYears]` from `useState(25)` to `[termYears, setTermYears]` settable state. Persist `termYears` to localStorage under a `propSearch_loan_term` key. Expose `setTermYears` via an `updateTermYears` callback in the hook return. (2) In `AffordabilitySettings.tsx`: replace the static '25 Years' display in the Loan Term section (line 259) with an interactive segmented control or dropdown allowing the user to select from [15, 20, 25, 30] year terms. Wire `updateTermYears` to the control. The selected term should persist across sessions. (3) All downstream calculations (getAffordablePrice, getBudgetProfile, calculateMortgageFromPayment) already accept `years` as a parameter and are correctly reactive \u2014 no logic changes needed. (4) Add term-year selector to `BudgetSlider` if it is present on the same page. Verify all payment scenarios recalculate in real-time when term changes.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-01",
-      "notes": []
+      "notes": [],
+      "completed_date": "2026-04-01"
     },
     {
       "id": "DE-162",
@@ -522,13 +525,14 @@
       "effort": "Medium",
       "section": "data_research",
       "title": "Tag genuine sold records in archived_properties. The 25 records in archived_properties are all pre-enrichment duplicates (archive_reason=Shallow data: Needs Enrichment) \u2014 they are NOT genuinely sold. The regional_velocity view now correctly excludes them (sold_count=0 everywhere). To get meaningful sold/signal data: (1) manually review archived_properties and set archive_reason to a sold status (Sold STC / Completed) for genuinely sold records; (2) optionally move enrichment-complete records back to properties with archived=0; (3) once genuine sold records exist, regional_velocity supply_ratio and market_signal will become meaningful. Current state: sold_count=0 across all areas.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Data Analyst",
       "dependencies": [],
       "date": "2026-04-01",
       "notes": [
         "2026-04-01: Data Engineer identified this gap during regional_velocity fix. All 25 archived_properties are enrichment candidates, not sold transactions."
-      ]
+      ],
+      "resolved_date": "2026-04-01"
     },
     {
       "id": "QA-159",
@@ -536,13 +540,15 @@
       "effort": "Medium",
       "section": "bug_fixes",
       "title": "UI Tests failing \u2014 Dashboard: Alpha Score badge selector wrong. Dashboard.spec.ts line 39 uses `[class*='alpha']` which finds 0 elements because Tailwind compiles class names to color values (e.g. text-amber-400). Fix: update selector to target the badge container by text content (e.g. `th:has-text('Alpha'), [class*='AS']`) or add data-testid to AlphaBadge component.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-01",
       "notes": [
-        "Real Alpha Score badge (AS: 9.4) IS visible in dashboard table. Test selector is wrong."
-      ]
+        "Real Alpha Score badge (AS: 9.4) IS visible in dashboard table. Test selector is wrong.",
+        "2026-04-01: Also confirmed \u2014 useMacroData.ts:35 throws \"raw.hpi_forecasts.map is not a function\" in console. This is the ROOT CAUSE of the MarketPulse crash. hpi_forecasts field is not an array in macro_trend.json. Fix in useMacroData normalization."
+      ],
+      "completed_date": "2026-04-01"
     },
     {
       "id": "QA-160",
@@ -550,7 +556,7 @@
       "effort": "Medium",
       "section": "bug_fixes",
       "title": "UI Tests failing \u2014 MarketPulse.tsx silently renders nothing when macro data is null/error (line 24: `if (error || !data) return null`). This causes 'Market Pulse' heading to be absent from the DOM entirely, breaking Dashboard test and the actual user-facing component. Fix: always render the header/loading skeleton even when data is unavailable; add graceful fallback UI instead of returning null.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-01",
@@ -559,7 +565,8 @@
         "Root cause: macro_trend.json missing inventory_velocity, negotiation_delta, market_pulse_summary (DAT-155/DAT-156).",
         "Dashboard.spec.ts test `text=Market Pulse` fails because heading is not rendered.",
         "Also: update test selector to be more robust."
-      ]
+      ],
+      "completed_date": "2026-04-01"
     },
     {
       "id": "QA-161",
@@ -567,14 +574,19 @@
       "effort": "Low",
       "section": "bug_fixes",
       "title": "UI Tests failing \u2014 ComparisonPage empty-state selectors don't match actual UI. ComparisonPage.spec.ts line 23 expects regex `no.*properties|select.*properties|add.*compare` but the empty state shows 'Get Started \u2192 Browse the Dashboard' CTA with no matching text. Also line 40 `alpha.*score|price.*efficiency|appreciation` fails because no properties = no matrix rows. Fix: update test selectors to match actual empty-state text, or restructure tests to first select properties before checking matrix.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-01",
       "notes": [
-        "Actual empty state: 'Get Started \u2192 Browse the Dashboard' button.",
-        "Matrix rows test: needs properties selected first to render rows."
-      ]
+        "2026-04-01: Re-investigated \u2014 ComparisonPage empty state IS `h2:has-text('No Assets in Basket')` at ComparisonPage.tsx:157.",
+        "Test selectors (h2:has-text('No Assets in Basket')) are actually CORRECT.",
+        "Tests fail because ComparisonPage is stuck in loading state due to PropertyContext API failure (QA-166).",
+        "Fix QA-166 (PropertyContext hardcoded URL) to unblock ComparisonPage from rendering.",
+        "The 'matrix rows' test now uses E2E flow: dashboard \u2192 add to basket \u2192 comparison page.",
+        "MarketSituationRoom.tsx also returns null when useMacroData fails (same root cause as QA-164/QA-160)."
+      ],
+      "completed_date": "2026-04-01"
     },
     {
       "id": "QA-162",
@@ -582,7 +594,7 @@
       "effort": "Medium",
       "section": "testing",
       "title": "UI Tests failing \u2014 AlphaBadge.spec.ts uses `@testing-library/react` (render, screen, userEvent) in a Playwright test environment which does not support React Testing Library. All 6 tests fail with 'render is not defined'. Fix: rewrite as Playwright E2E tests that interact with the real AlphaBadge component rendered in the browser, or migrate to a separate Vitest/Jest unit test suite.",
-      "status": "In Progress",
+      "status": "Done",
       "responsible": "UI/UX QA",
       "dependencies": [],
       "date": "2026-04-01",
@@ -590,8 +602,10 @@
         "AlphaBadge.spec.ts imports render, screen, userEvent from @testing-library/react \u2014 not available in Playwright.",
         "Fix option A: use Playwright to navigate to /dashboard and assert AlphaBadge visibility by data-testid.",
         "Fix option B: add Vitest config, move to proper unit test file with correct React Testing Library setup.",
-        "2026-04-01: QA starting fix \u2014 rewriting as Playwright E2E tests."
-      ]
+        "2026-04-01: QA starting fix \u2014 rewriting as Playwright E2E tests.",
+        "2026-04-01: Fixed \u2014 rewrote all 6 tests as proper Playwright E2E tests. 5/6 now pass. Remaining 1 failure (console errors) is a real bug: hpi_forecasts.map not a function in useMacroData.ts:35 \u2014 logged as new QA ticket."
+      ],
+      "resolved_date": "2026-04-01"
     },
     {
       "id": "QA-163",
@@ -599,13 +613,14 @@
       "effort": "Low",
       "section": "bug_fixes",
       "title": "UI Tests failing \u2014 Dashboard 'property count' test (Dashboard.spec.ts line 62) looks for `\\d+\\s*(properties|assets)` text which does not exist in the dashboard UI. Verify if a property count display is implemented anywhere (header badge, tooltip, caption). If implemented, update the test selector. If not implemented, mark test as skipped and log as a feature gap.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-01",
       "notes": [
         "Dashboard.spec.ts line 62: `text=/\\d+\\s*(properties|assets)/i` finds 0 elements."
-      ]
+      ],
+      "completed_date": "2026-04-01"
     },
     {
       "id": "FE-168",
@@ -613,11 +628,144 @@
       "effort": "Low",
       "section": "new_approved",
       "title": "UI Refactor: Make MortgageTracker (/mortgage) a read-only intelligence page. Per user directive, Mortgage Intelligence is purely for reading market data. All personal input controls (monthlyBudget, mortgageTerm, LTV band) belong exclusively on AffordabilitySettings (/affordability). Remove from MortgageTracker.tsx: (1) `const [monthlyBudget, setMonthlyBudget] = useState(4500)` and `const [mortgageTerm, setMortgageTerm] = useState(25)` state declarations (lines 34-35). (2) The Monthly Budget number input in the Global Control Bar (lines 155-169). (3) The Loan Term number input in the Global Control Bar (lines 170-184). (4) The non-functional 'Execute Simulation' button (lines 576-578) \u2014 no onClick handler exists, dead UI. (5) Any `ppiHistory` calculations or `calculateMaxLoan` calls that depend on monthlyBudget/mortgageTerm \u2014 these personal affordability metrics belong on AffordabilitySettings. Keep: (a) LTV band selector (activeLTV) \u2014 this is a chart display filter for which market rate to show, not a personal setting. (b) Series visibility toggles (visibleSeries). Keep the Rate Corridor chart, PPI chart, and LTV Arbitrage Matrix \u2014 these display market data only. The charts should display the current live rate without any affordability personalisation. Update the page subtitle from 'Purchasing Power Simulation' to 'Market Rate Intelligence' or similar. Update the PPI chart label that references monthlyBudget ('Estimated Loan Ceiling @ \u00a3X/mo') to show the current live 5yr fixed rate benchmark without personal budget inputs.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-01",
-      "notes": []
+      "notes": [],
+      "completed_date": "2026-04-01"
+    },
+    {
+      "id": "QA-164",
+      "priority": "High",
+      "effort": "Low",
+      "section": "bug_fixes",
+      "title": "Runtime error in useMacroData.ts:35 \u2014 `raw.hpi_forecasts.map is not a function`. The normalization code assumes `hpi_forecasts` is an array but it is not in macro_trend.json, causing a TypeError that cascades to all components using `useMacroData()`. Fix: add `Array.isArray()` guard before calling .map() on hpi_forecasts in useMacroData.ts, or fix the data type in macro_trend.json.",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "Confirmed via Playwright console error capture in AlphaBadge console-error test.",
+        "Error: `raw.hpi_forecasts.map is not a function` at useMacroData.ts:35.",
+        "This TypeError prevents useMacroData() from returning valid data.",
+        "MarketPulse returns null because data is null (due to this error).",
+        "Fix option A: add `Array.isArray(raw.hpi_forecasts) ? raw.hpi_forecasts.map(...) : []` in normalization.",
+        "Fix option B: ensure hpi_forecasts is an array in macro_trend.json (Data Analyst may need to fix data)."
+      ],
+      "completed_date": "2026-04-01"
+    },
+    {
+      "id": "QA-165",
+      "priority": "High",
+      "effort": "High",
+      "section": "bug_fixes",
+      "title": "Systemic API failure crashes entire pages in test environment \u2014 LandingPage, Dashboard, PropertyDetail all show 'Something went wrong' errors. Root cause: useFinancialData.ts:14 throws unhandled 'TypeError: Failed to fetch' which crashes the page shell. Also useMacroData.ts:35 throws 'raw.hpi_forecasts.map is not a function' (QA-164). Fix: wrap API calls in try/catch with graceful fallback UI in both hooks. Pages must render content independently of API data availability \u2014 do not crash the page shell if financial/macro data is missing.",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "dependencies": [
+        "QA-164"
+      ],
+      "date": "2026-04-01",
+      "notes": [
+        "Confirmed: LandingPage smoke test shows 'Something went wrong' for Market Situation Room (useFinancialData failure).",
+        "Confirmed: Dashboard smoke test shows 'Something went wrong' for properties table (API failure).",
+        "Confirmed: PropertyDetail smoke test fails on property load (API failure).",
+        "useFinancialData.ts:14 \u2014 unhandled 'Failed to fetch' crashes page shell.",
+        "These failures cascade and break smoke.spec.ts tests that were previously passing.",
+        "2026-04-01: Additional root cause found \u2014 PropertyContext.tsx line 39 uses hardcoded `http://localhost:3001/api` instead of relative `/api` path. This bypasses the Vite proxy and fails in Playwright sandbox. Fix: change PropertyContext.tsx line 39 from `http://localhost:3001/api` to `/api`."
+      ],
+      "completed_date": "2026-04-01"
+    },
+    {
+      "id": "QA-166",
+      "priority": "High",
+      "effort": "Low",
+      "section": "bug_fixes",
+      "title": "PropertyContext.tsx uses hardcoded `http://localhost:3001/api` instead of relative `/api` \u2014 fails in Playwright sandbox (localhost blocked from localhost). Root cause of 'Property loading error: Failed to fetch'. Fix: change line 39 from `'http://localhost:3001/api'` to `'/api'` to match useFinancialData.ts.",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "Confirmed via smoke test console errors.",
+        "PropertyContext.tsx line 39: `const API_BASE = IS_DEMO ? '/data' : 'http://localhost:3001/api'`",
+        "useFinancialData.ts line 8 (correct): `const API_BASE = IS_DEMO ? '/data' : '/api'`",
+        "Playwright sandbox blocks direct localhost:3001 requests.",
+        "Vite proxy forwards /api \u2192 localhost:3001 \u2014 only works with relative paths."
+      ],
+      "completed_date": "2026-04-01"
+    },
+    {
+      "id": "QA-167",
+      "priority": "High",
+      "effort": "Low",
+      "section": "data_research",
+      "title": "Data remediation: 3 Share of Freehold properties incorrectly have lease_years_remaining=0.0 instead of 999.0. Properties: Highbury New Park (1f55a0c4), Finchley Road (fd8a15c5), Goldhurst Terrace (0f904501). Share of Freehold has no lease expiry risk \u2014 999.0 is the correct sentinel per the 999-convention already used by 15 other Share of Freehold records in the DB. Update these 3 records to 999.0.",
+      "status": "Done",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "Found via AUDIT_2026_03_30 follow-up (DAT-163, never formally created).",
+        "Confirmed: 15 other Share of Freehold records already use 999.0 \u2014 this is the established convention.",
+        "The 0.0 values are likely missing-data placeholders that were never corrected.",
+        "alpha_score calculation (40% tenure quality) may be affected for these properties."
+      ],
+      "resolved_date": "2026-04-01"
+    },
+    {
+      "id": "QA-168",
+      "priority": "High",
+      "effort": "Low",
+      "section": "data_research",
+      "title": "Data remediation: Investigate and archive null-address stub record \u2014 ab5c0faa-b051-414d-a427-bf7ba4c39d5d. This record has: address=NULL, area=NULL, tenure=NULL, sqft=NULL, alpha_score=NULL, list_price=NULL, source='Automated Scrape'. No enrichment possible without an address. Per DE-160 policy: set archived=1 with archive_reason='Cannot Verify \u2014 Discard'.",
+      "status": "Done",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "Found via AUDIT_2026_03_30 follow-up (DAT-163, never formally created).",
+        "This is the same record flagged by DE-160 but never formally closed.",
+        "All fields except id and source are NULL \u2014 enrichment impossible.",
+        "DE-160 policy: archived=1 + archive_reason for unverifiable records."
+      ],
+      "resolved_date": "2026-04-01"
+    },
+    {
+      "id": "QA-169",
+      "priority": "Low",
+      "effort": "Low",
+      "section": "data_research",
+      "title": "Schema clarification: Verify 999.0 is the correct convention for Share of Freehold lease_years_remaining. Currently 15 records use 999.0 correctly. 3 records incorrectly use 0.0 (logged as QA-NEW). If 999.0 is confirmed as correct, close DAT-162 as resolved.",
+      "status": "Done",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "Found via AUDIT_2026_03_30 follow-up (DAT-162, never formally created).",
+        "DAT-162 intent was to verify 999.0 as Share of Freehold sentinel.",
+        "Evidence: 15/16 Share of Freehold records already use 999.0 \u2014 strong convention established.",
+        "Share of Freehold = no lease = perpetual ownership = 999.0 is correct."
+      ],
+      "resolved_date": "2026-04-01"
+    },
+    {
+      "id": "QA-170",
+      "priority": "Medium",
+      "effort": "Low",
+      "section": "bug_fixes",
+      "title": "UI: MetroOverlay lines in Dashboard map are too faint. Per MAP_USABILITY_GUIDE.md, metro lines should use weight: 4.5, opacity: 0.75. Current values in Dashboard.tsx (line ~142): weight: 2.5, opacity: 0.6. This makes the metro overlay underemphasized against the dark Carto tiles. Apply MAP_USABILITY_GUIDE values: weight: 4.5, opacity: 0.75, lineJoin: 'round'.",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-01",
+      "notes": [
+        "CSS remediation in index.css (filter: none) IS applied.",
+        "MetroOverlay GeoJSON style in Dashboard.tsx is below spec.",
+        "MAP_USABILITY_GUIDE.md section B specifies: weight: 4.5, opacity: 0.75, lineJoin: round."
+      ],
+      "completed_date": "2026-04-01"
     }
   ]
 }

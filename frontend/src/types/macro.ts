@@ -96,4 +96,60 @@ export interface MacroTrend {
   mortgage_history?: MortgageHistoryEntry[];
   sdlt_countdown?: string;
   epc_deadline_risk?: string;
+  // FE-164: Market Conditions Radar
+  boe_rate_consensus?: BoERateConsensus;
+  swap_rates?: SwapRates;
+  hpi_forecasts?: HPIForecast[];
+  area_trends?: AreaTrend[];
+}
+
+// FE-164: BoE Rate Consensus (Q3 2026 - Q2 2027)
+export interface BoERateConsensus {
+  current_rate: ProvenanceOrValue<number>;
+  scenarios: {
+    bear: RateScenario; // rate rises (bad for buyers)
+    base: RateScenario; // central expectation
+    bull: RateScenario; // rate falls (good for buyers)
+  };
+  mpc_dates?: string[]; // MPC meeting dates in period
+}
+
+export interface RateScenario {
+  label: string;
+  end_q2_2027_rate: ProvenanceOrValue<number>;
+  path: ProvenanceOrValue<number>[]; // quarterly rate values
+}
+
+// FE-164: GBP Swap Rates (leading mortgage indicators)
+export interface SwapRates {
+ gbp_2yr: ProvenanceOrValue<number>;
+  gbp_5yr: ProvenanceOrValue<number>;
+  trend_2yr: 'rising' | 'falling' | 'holding';
+  trend_5yr: 'rising' | 'falling' | 'holding';
+  history_2yr?: SwapRatePoint[];
+  history_5yr?: SwapRatePoint[];
+}
+
+export interface SwapRatePoint {
+  month: string;
+  rate: ProvenanceOrValue<number>;
+}
+
+// FE-164: HPI Forecasts (12-month regional forecasts)
+export interface HPIForecast {
+  area: string;
+  forecast_12m: ProvenanceOrValue<number>; // % change expected
+  london_benchmark: ProvenanceOrValue<number>; // % change for London-wide
+  delta: number; // computed: forecast_12m - london_benchmark
+}
+
+// FE-164: Area Trends (detailed borough performance)
+export interface AreaTrend {
+  area: string;
+  heat_index: ProvenanceOrValue<number>;
+  annual_growth: ProvenanceOrValue<number>;
+  hpi_forecast_12m?: ProvenanceOrValue<number>;
+  london_benchmark?: ProvenanceOrValue<number>;
+  delta?: number; // computed
+  months_of_supply?: ProvenanceOrValue<number>;
 }

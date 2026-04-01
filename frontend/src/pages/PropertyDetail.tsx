@@ -39,12 +39,14 @@ import { usePipeline } from '../hooks/usePipeline';
 import FloorplanViewer from '../components/FloorplanViewer';
 import ThesisTagSelector from '../components/ThesisTagSelector';
 import AffordabilityNode from '../components/AffordabilityNode';
+import { useThesisTags } from '../hooks/useThesisTags';
 
 const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { properties, loading } = usePropertyContext();
   const { calculateMonthlyOutlay } = useFinancialData();
   const { getStatus, setStatus } = usePipeline();
+  const { getTags } = useThesisTags();
   const [activeTab, setActiveTab] = useState<'gallery' | 'floorplan'>('gallery');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showLightbox, setShowLightbox] = useState(false);
@@ -186,7 +188,7 @@ const PropertyDetail: React.FC = () => {
               </div>
               <ThesisTagSelector
                 propertyId={property.id}
-                currentTags={[]}
+                currentTags={getTags(property.id)}
                 size="lg"
               />
             </div>

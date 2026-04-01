@@ -41,11 +41,6 @@ const NotesSection: React.FC<NotesSectionProps> = ({ propertyId }) => {
   const [notes, setLocalNotes] = useState(() => localStorage.getItem(`notes_${propertyId}`) || '');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Update notes when propertyId changes
-  useEffect(() => {
-    setLocalNotes(localStorage.getItem(`notes_${propertyId}`) || '');
-  }, [propertyId]);
-
   const handleSaveNotes = () => {
     setIsSaving(true);
     localStorage.setItem(`notes_${propertyId}`, notes);
@@ -98,10 +93,6 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
   const outlay = property ? calculateMonthlyOutlay(property) : null;
 
   useEffect(() => {
-    setActiveView('image');
-  }, [property?.id]);
-
-  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
@@ -152,8 +143,8 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-grow overflow-y-auto custom-scrollbar">
+        {/* Content — key forces remount (resets activeView) when property changes */}
+        <div className="flex-grow overflow-y-auto custom-scrollbar" key={property.id}>
           {/* Hero Image & Gallery Switcher */}
           <div className="relative h-64 w-full bg-linear-card overflow-hidden group">
             <div className={`h-full w-full transition-all duration-500 ${activeView === 'image' ? 'opacity-100' : 'opacity-0 invisible absolute inset-0'}`}>

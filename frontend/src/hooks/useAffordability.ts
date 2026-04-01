@@ -26,6 +26,8 @@ export interface LTVMatchScore {
 }
 
 const LTV_STORAGE_KEY = 'propSearch_ltv_budget';
+const TERM_STORAGE_KEY = 'propSearch_loan_term';
+const VALID_TERMS = [15, 20, 25, 30] as const;
 
 export const useAffordability = () => {
   const { macroData } = useFinancialData();
@@ -35,7 +37,22 @@ export const useAffordability = () => {
     return stored ? JSON.parse(stored) : 6000; // Default £6,000/month
   });
 
-  const [termYears] = useState(25);
+  const [termYears, _setTermYears] = useState<number>(() => {
+    const stored = localStorage.getItem(TERM_STORAGE_KEY);
+    const parsed = stored ? JSON.parse(stored) : 25;
+    return VALID_TERMS.includes(parsed as any) ? parsed : 25;
+  });
+
+  // Persist term to localStorage
+  useEffect(() => {
+    localStorage.setItem(TERM_STORAGE_KEY, JSON.stringify(termYears));
+  }, [termYears]);
+
+  const updateTermYears = useCallback((years: number) => {
+    if (VALID_TERMS.includes(years as (typeof VALID_TERMS)[number])) {
+      _setTermYears(years);
+    }
+  }, []);
 
   // Live mortgage rates from macro_trend.json via useFinancialData
   // Falls back to market defaults if data unavailable
@@ -236,6 +253,7 @@ export const useAffordability = () => {
     calculateLTVBand,
     mortgageRate,
     mortgageRates,
-    termYears
+    termYears,
+    updateTermYears
   };
 };

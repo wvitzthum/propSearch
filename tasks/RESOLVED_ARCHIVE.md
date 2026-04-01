@@ -138,3 +138,20 @@
 - `london_hpi` updated with frontend-compatible field names: `mom_pct`, `yoy_pct`, `avg_price_pcl`
 - `economic_indicators` block added with `boe_base_rate`, `uk_inflation_cpi`, `gbp_usd`, `mortgage_rates` (90/85/75/60 LTV)
 - `rightmove` source citation updated in `_source_citations` to include "New Listings Volume" and "Transaction Volumes"
+
+### Inbox Lead Enrichment — 2026-04-01 ✓ Complete
+**Batch:** `new_leads_20260330_212102.json` (25 leads from Zoopla KFH/Chestertons/Parkheath et al.)
+**Triage Results:**
+- 25 total leads received
+- 13 passed acquisition criteria (Share of Freehold, £500K-£775K, 2 bed)
+- 12 filtered as leasehold-only — flagged in `data/inbox/leasehold_verification_required.json` for manual lease term verification
+**Enrichment Pipeline:**
+- Fixed path resolution bug in `agents/data_analyst/enrich_leads.js` (execSync relative path → `path.resolve(__dirname, ...)`)
+- All 13 qualifying leads scraped via Playwright/Zoopla: image_url, gallery (5 imgs each), floor_level extracted
+- Alpha Scores computed and verified against DB: range 4.94–7.98 (top: Finchley Road, West Hampstead @ 7.98)
+- All 13 leads confirmed as already active in DB (previously imported)
+- 3 leads missing images in DB updated: Arkwright Road, Glenmore Road, Mill Lane
+- 13 enriched inbox files archived to `data/inbox/processed/`
+- Enrichment batch saved: `data/import/enriched_2026_04_01/batch_001_alpha_enriched.jsonl`
+**DB Final State:** 40 properties, 37 with image URLs (3 remaining without images are pre-existing records)
+**Action Required:** 12 leasehold leads in `data/inbox/leasehold_verification_required.json` — need lease term remaining checked via Land Registry title register before advancing to import queue

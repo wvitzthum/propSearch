@@ -1,4 +1,4 @@
-.PHONY: install start build lint clean agent agent-po agent-analyst agent-data agent-fe agent-qa agent-de tasks help guard-install agent-windows agent-tmux-all agent-po-tmux agent-analyst-tmux agent-de-tmux agent-fe-tmux agent-qa-tmux
+.PHONY: install start build lint clean agent agent-po agent-analyst agent-data agent-fe agent-qa agent-de tasks help guard-install agent-windows agent-tmux-all agent-po-tmux agent-analyst-tmux agent-de-tmux agent-fe-tmux agent-qa-tmux sync price-monitor enrich
 
 # Default target
 all: install start
@@ -31,6 +31,16 @@ dev: start
 sync:
 	@echo "Running Data Sync Cycle..."
 	@rtk node scripts/sync_data.js
+
+# Run weekly price monitor — detects price reductions, records snapshots
+price-monitor:
+	@echo "Running Weekly Price Monitor..."
+	@node scripts/price_monitor.js
+
+# Run enrichment pipeline on inbox leads
+enrich:
+	@echo "Running Enrichment Pipeline..."
+	@node agents/data_analyst/enrich_leads.js
 
 # Build the frontend for production
 build:

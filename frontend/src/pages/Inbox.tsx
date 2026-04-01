@@ -19,7 +19,7 @@ const API_BASE = '/api';
 
 interface RawListing {
   address: string;
-  price: number;
+  price?: number;
   area: string;
   url: string;
   source: string;
@@ -43,8 +43,65 @@ const Inbox: React.FC = () => {
       setLoading(true);
       const res = await fetch(`${API_BASE}/inbox`);
       if (!res.ok) throw new Error('Failed to fetch inbox manifest');
-      const data: RawListing[] = await res.json();
-      setListings(data);
+      const rawData = await res.json();
+
+      // Normalize mixed file formats from the inbox:
+      // - File format A: flat array [{}, {}, ...]       (new_leads_*.json)
+      // - File format B: wrapper object { batch_id, leads: [{}, ...] }  (batch exports)
+      // Each file entry has a `filename` key added by the server.
+      const normalized: RawListing[] = rawData.flatMap((entry: any) => {
+        // Skip non-object entries (e.g. error strings)
+        if (!entry || typeof entry !== 'object') return [];
+
+        // Extract filename from whatever shape the entry has
+        const filename = entry.filename as string || 'unknown';
+
+        // Format B: wrapper object with nested leads array
+        if (Array.isArray(entry.leads)) {
+          return entry.leads.map((lead: any) => ({
+            filename,
+            address: lead.address || 'Unknown Address',
+            price: lead.price,
+            area: lead.area || '',
+            url: lead.url || '',
+            source: lead.source || '',
+            image_url: lead.image_url,
+            floorplan_url: lead.floorplan_url,
+          }));
+        }
+
+        // Format A: entry is an array of listings (the server spread an array + added filename)
+        if (Array.isArray(entry)) {
+          return entry.map((item: any) => ({
+            filename,
+            address: item.address || 'Unknown Address',
+            price: item.price,
+            area: item.area || '',
+            url: item.url || '',
+            source: item.source || '',
+            image_url: item.image_url,
+            floorplan_url: item.floorplan_url,
+          }));
+        }
+
+        // Single record (fallback): has address/price fields directly on the object
+        if (entry.address !== undefined || entry.price !== undefined) {
+          return [{
+            filename,
+            address: entry.address || 'Unknown Address',
+            price: entry.price,
+            area: entry.area || '',
+            url: entry.url || '',
+            source: entry.source || '',
+            image_url: entry.image_url,
+            floorplan_url: entry.floorplan_url,
+          }];
+        }
+
+        return [];
+      });
+
+      setListings(normalized);
     } catch (err: any) {
       console.error('Inbox error:', err);
       setError('Local API Server (port 3001) is required for Inbox management.');
@@ -279,7 +336,7 @@ const Inbox: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-tighter">{listing.source}</span>
-                      <span className="text-[9px] font-bold text-blue-400/80">£{listing.price.toLocaleString()}</span>
+                      <span className="text-[9px] font-bold text-blue-400/80">£{listing.price?.toLocaleString() ?? '—'}</span>
                     </div>
                   </div>
                   {i === currentIndex && <ArrowRight size={14} className="text-blue-500 shrink-0" />}
@@ -359,7 +416,7 @@ const Inbox: React.FC = () => {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="p-4 bg-linear-bg border border-linear-border rounded-xl">
                           <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest block mb-1">List Price</span>
-                          <span className="text-lg font-bold text-white">£{currentListing.price.toLocaleString()}</span>
+                          <span className="text-lg font-bold text-white">£{currentListing.price?.toLocaleString() ?? '—'}</span>
                         </div>
                         <div className="p-4 bg-linear-bg border border-linear-border rounded-xl">
                           <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest block mb-1">Discovery</span>

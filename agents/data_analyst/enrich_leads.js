@@ -32,7 +32,7 @@ for (const file of files) {
       console.log(`Scraping visuals from: ${targetUrl}`);
       try {
         // Call scrape_visuals.js
-        const output = execSync(`node ../../scripts/scrape_visuals.js "${targetUrl}"`, { encoding: 'utf8' });
+        const output = execSync(`node "${path.resolve(__dirname, '../../scripts/scrape_visuals.js')}" "${targetUrl}"`, { encoding: 'utf8' });
         
         // Parse the output to find the JSON result
         // The script prints logs, so we need to find the JSON part

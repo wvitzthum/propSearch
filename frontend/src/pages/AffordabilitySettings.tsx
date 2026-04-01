@@ -26,7 +26,9 @@ const AffordabilitySettings: React.FC = () => {
     mortgageRates,
     getAffordablePrice,
     getBudgetProfile,
-    getLTVMatchScore
+    getLTVMatchScore,
+    termYears,
+    updateTermYears
   } = useAffordability();
 
   const [expandedSection, setExpandedSection] = useState<string | null>('budget');
@@ -256,7 +258,7 @@ const AffordabilitySettings: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <span className="text-lg font-bold text-white">25 Years</span>
+                <span className="text-lg font-bold text-white">{termYears} Years</span>
                 <ChevronDown size={20} className={`text-linear-text-muted transition-transform ${expandedSection === 'term' ? 'rotate-180' : ''}`} />
               </div>
             </button>
@@ -264,16 +266,46 @@ const AffordabilitySettings: React.FC = () => {
             {expandedSection === 'term' && (
               <div className="px-6 pb-6 border-t border-linear-border">
                 <div className="pt-6">
-                  <div className="p-6 bg-linear-bg rounded-xl border border-linear-border">
-                    <div className="flex items-center justify-between mb-4">
+                  {/* Term segmented control */}
+                  <div className="flex bg-linear-bg rounded-xl border border-linear-border p-1.5 gap-1">
+                    {([15, 20, 25, 30] as const).map((term) => (
+                      <button
+                        key={term}
+                        onClick={() => updateTermYears(term)}
+                        className={`flex-1 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+                          termYears === term
+                            ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
+                            : 'text-linear-text-muted hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        {term}yr
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 p-4 bg-purple-500/5 border border-purple-500/20 rounded-xl">
+                    <div className="flex items-center justify-between mb-3">
                       <div>
-                        <div className="text-sm font-bold text-white">Standard 25-Year Term</div>
+                        <div className="text-sm font-bold text-white">{termYears}-Year Term</div>
                         <p className="text-[10px] text-linear-text-muted mt-1">UK residential mortgages typically range from 15-30 years</p>
                       </div>
-                      <div className="text-3xl font-bold text-white">25 <span className="text-sm text-linear-text-muted font-normal">years</span></div>
+                      <div className="text-3xl font-bold text-white">{termYears} <span className="text-sm text-linear-text-muted font-normal">years</span></div>
                     </div>
-                    <div className="mt-4 text-[10px] text-linear-text-muted">
-                      Note: Loan term can be adjusted in advanced scenarios. Current configuration uses the standard 25-year UK residential mortgage term.
+                    <div className="grid grid-cols-3 gap-3 mt-3">
+                      {([15, 20, 25, 30] as const).map((term) => {
+                        const diff = term - termYears;
+                        return (
+                          <div key={term} className="text-center">
+                            <div className={`text-[10px] font-bold ${term === termYears ? 'text-purple-400' : 'text-linear-text-muted'}`}>{term}yr</div>
+                            <div className={`text-[9px] font-mono ${diff === 0 ? 'text-purple-400' : diff > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                              {diff === 0 ? '← selected' : `${diff > 0 ? '+' : ''}${diff}yr`}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-3 text-[10px] text-linear-text-muted">
+                      Shorter terms = higher payments, less total interest. Longer terms = lower payments, more total interest.
                     </div>
                   </div>
                 </div>

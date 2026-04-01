@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Property Detail Page', () => {
   // We'll use a test property ID that should exist or handle gracefully
-  const testPropertyId = 'test-prop-001';
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _testPropertyId = 'test-prop-001';
 
   test('loads without errors for valid property', async ({ page }) => {
     const errors: string[] = [];

@@ -128,20 +128,22 @@ async function sync() {
   const insertStmt = db.prepare(`
     INSERT INTO properties (
       id, address, area, image_url, gallery, streetview_url, floorplan_url,
-      list_price, realistic_price, sqft, price_per_sqm, 
-      nearest_tube_distance, park_proximity, commute_paternoster, 
-      commute_canada_square, is_value_buy, epc, tenure, 
+      list_price, realistic_price, sqft, price_per_sqm,
+      nearest_tube_distance, park_proximity, commute_paternoster,
+      commute_canada_square, is_value_buy, epc, tenure,
       service_charge, ground_rent, lease_years_remaining,
-      dom, neg_strategy, alpha_score, appreciation_potential, links, 
+      dom, neg_strategy, alpha_score, appreciation_potential, links,
       metadata, floor_level, source, source_name, vetted, analyst_notes,
       price_reduction_amount, price_reduction_percent, days_since_reduction,
       epc_improvement_potential, est_capex_requirement,
-      waitrose_distance, whole_foods_distance, wellness_hub_distance
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      waitrose_distance, whole_foods_distance, wellness_hub_distance,
+      archived, archive_reason
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
+  // UPDATE preserves archived/archive_reason — analyst-set flags must not be overwritten by sync
   const updateStmt = db.prepare(`
-    UPDATE properties SET 
+    UPDATE properties SET
       list_price = ?, realistic_price = ?, dom = ?, metadata = ?,
       price_reduction_amount = ?, price_reduction_percent = ?, days_since_reduction = ?,
       epc_improvement_potential = ?, est_capex_requirement = ?,
@@ -203,11 +205,14 @@ async function sync() {
           newItem.commute_canada_square || null, newItem.is_value_buy ? 1 : 0, newItem.epc || null, newItem.tenure || null,
           newItem.service_charge || 0, newItem.ground_rent || 0, newItem.lease_years_remaining || 0,
           newItem.dom || null, newItem.neg_strategy || null, newItem.alpha_score || null, newItem.appreciation_potential || null, JSON.stringify(newItem.links || []),
-          JSON.stringify(metadata), newItem.floor_level || null, newItem.source || 'Automated Scrape', 
+          JSON.stringify(metadata), newItem.floor_level || null, newItem.source || 'Automated Scrape',
           newItem.source_name || null, newItem.vetted ? 1 : 0, newItem.analyst_notes || null,
           newItem.price_reduction_amount || null, newItem.price_reduction_percent || null, newItem.days_since_reduction || null,
           newItem.epc_improvement_potential || null, newItem.est_capex_requirement || null,
-          newItem.waitrose_distance || null, newItem.whole_foods_distance || null, newItem.wellness_hub_distance || null
+          newItem.waitrose_distance || null, newItem.whole_foods_distance || null, newItem.wellness_hub_distance || null,
+          // DE-162 fix: preserve archived/archive_reason on new pipeline inserts (default active)
+          newItem.archived !== undefined ? newItem.archived : 0,
+          newItem.archive_reason || null
         );
 
         // DAT-140: Record initial price

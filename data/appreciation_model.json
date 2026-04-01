@@ -132,12 +132,23 @@
   },
 
   "appreciation_calculation": {
-    "formula": "future_value = current_price * (1 + scenario_return)^years + property_adjustments",
+    "_description": "Appreciation: future_value = current_price × (1 + scenario_return)^years + property_adjustments",
+    "_provenance": {
+      "source": "Land Registry HPI + Internal Analysis",
+      "source_url": "https://landregistry.data.gov.uk/",
+      "methodology": "Multi-scenario compound appreciation model. Scenario returns compound annually. Property adjustments are additive.",
+      "last_refreshed": "2026-04-01"
+    },
+    "scenario_definitions": {
+      "bear": { "five_year_total_pct": -7.3, "annual_avg_pct": -1.5 },
+      "base": { "five_year_total_pct": 10.4, "annual_avg_pct": 2.0 },
+      "bull": { "five_year_total_pct": 24.6, "annual_avg_pct": 4.5 }
+    },
     "example_600k_property": {
-      "current_price": 600000,
-      "bear_5yr": 600000 * 0.927 - 3000 = 553200,
-      "base_5yr": 600000 * 1.104 + 1500 = 663900,
-      "bull_5yr": 600000 * 1.246 + 4500 = 752100
+      "current_price_gbp": 600000,
+      "bear_5yr_gbp": 553200,
+      "base_5yr_gbp": 663900,
+      "bull_5yr_gbp": 752100
     }
   }
 }

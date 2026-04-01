@@ -1,0 +1,49 @@
+name: Weekly Data Refresh
+
+on:
+  schedule:
+    # Every Monday at 09:00 UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run data sync pipeline
+        run: node scripts/sync_data.js
+
+      - name: Check for data changes
+        id: git_status
+        run: |
+          if git diff --stat data/ | grep -q "."; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            git config --local user.email "propsearch-bot@users.noreply.github.com"
+            git config --local user.name "propSearch Bot"
+            git add data/macro_trend.json data/propSearch.db data/backups/
+            git commit -m "ci: weekly data refresh $(date -u +'%Y-%m-%d')
+            
+            Co-Authored-By: propSearch Bot <propsearch-bot@users.noreply.github.com>"
+            echo "commit_hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          else
+            echo "No data changes detected"
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Push changes
+        if: steps.git_status.outputs.changes == 'true'
+        run: git push

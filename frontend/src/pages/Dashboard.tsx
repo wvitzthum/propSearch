@@ -30,6 +30,10 @@ import KPICard from '../components/KPICard';
 import LoadingNode from '../components/LoadingNode';
 import PreviewDrawer from '../components/PreviewDrawer';
 import MarketPulse from '../components/MarketPulse';
+import MarketConditionsBar from '../components/MarketConditionsBar';
+import AreaPerformanceTable from '../components/AreaPerformanceTable';
+import SwapRateSignal from '../components/SwapRateSignal';
+import BoERatePathChart from '../components/BoERatePathChart';
 import PropertyImage from '../components/PropertyImage';
 import ThesisTagFilter from '../components/ThesisTagFilter';
 import { useThesisTags, type ThesisTag } from '../hooks/useThesisTags';
@@ -67,12 +71,12 @@ const createPropertyIcon = (score: number, status: PropertyStatus = 'discovered'
 };
 
 const createNodeIcon = (type: 'hub' | 'park' | 'station', label: string) => {
-  const iconColor = type === 'hub' ? '#3b82f6' : type === 'park' ? '#10b981' : '#a1a1aa';
+  const iconColor = type === 'hub' ? '#60a5fa' : type === 'park' ? '#34d399' : '#94a3b8';
   return L.divIcon({
     className: 'node-marker',
-    html: `<div class="flex items-center gap-2 bg-black/80 backdrop-blur-xl px-2.5 py-1.5 rounded-lg border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
-             <div class="w-2 h-2 rounded-full" style="background-color: ${iconColor}; box-shadow: 0 0 10px ${iconColor}"></div>
-             <span class="text-[10px] font-bold text-white uppercase tracking-[0.1em] whitespace-nowrap">${label}</span>
+    html: `<div class="flex items-center gap-2 bg-black/80 backdrop-blur-xl px-2.5 py-1.5 rounded-lg border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+             <div class="w-2.5 h-2.5 rounded-full" style="background-color: ${iconColor}; box-shadow: 0 0 12px ${iconColor}"></div>
+             <span class="text-[10px] font-black text-white uppercase tracking-[0.1em] whitespace-nowrap">${label}</span>
            </div>`,
     iconSize: [120, 30],
     iconAnchor: [15, 15]
@@ -135,8 +139,8 @@ const MetroOverlay: React.FC = () => {
         const color = feature?.properties?.color || METRO_COLORS[primaryLine.replace(' Line', '')] || '#475569';
         return {
           color,
-          weight: 2.5,
-          opacity: 0.6,
+          weight: 4.5,
+          opacity: 0.75,
           lineJoin: 'round'
         };
       }}
@@ -522,6 +526,20 @@ const Dashboard: React.FC = () => {
 
       {/* Market Pulse Widget */}
       <MarketPulse />
+
+      {/* Market Conditions Bar — single-glance market favour verdict */}
+      <MarketConditionsBar />
+
+      {/* Market Intelligence Deep-Dive */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-1">
+          <AreaPerformanceTable />
+        </div>
+        <div className="xl:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SwapRateSignal />
+          <BoERatePathChart />
+        </div>
+      </div>
 
       {/* Control Panel */}
       <div className="flex flex-col gap-6 bg-linear-card/40 p-6 rounded-3xl border border-linear-border backdrop-blur-md shadow-2xl">

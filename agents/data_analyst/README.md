@@ -72,6 +72,27 @@ To fulfill the "Empirical Standard" (Requirement 1), the Data Analyst MUST utili
 - **MANDATORY:** You must explicitly ask for user approval before modifying core property metrics (`list_price`, `sqft`, `floor_level`) or deleting any macro-economic indicators from `data/macro_trend.json`.
 - **Alpha Score Recalculation:** If a change in logic affects >10% of existing records, you must request permission before performing the update.
 
+## Archived Records & No-Deletion Policy (DE-161 — Effective 2026-04-01)
+
+**User Directive:** No production data is ever deleted from `properties` or `archived_properties`.
+
+### How to Handle Problem Records
+- **Incomplete/Shallow records:** Set `archived = 1` with a descriptive `archive_reason` text. Do NOT delete.
+- **Unverifiable records:** Set `archived = 1` with `archive_reason = 'Cannot Verify — Discard: <reason>'`. Do NOT delete.
+- **Duplicates:** Merge or flag the weaker record with `archived = 1`. Do NOT delete either.
+- **Querying archived records:** Access via `SELECT * FROM properties WHERE archived = 1;`
+- **Re-activating records:** After enrichment, set `archived = 0` and clear `archive_reason`.
+- **Hard Deletion (properties table):** Requires explicit user approval per DATA_GUARDRAILS Rule 2. Never delete without user sign-off.
+- **Hard Deletion (archived_properties table):** Same — requires user approval per DATA_GUARDRAILS Rule 2.
+
+### EPC Data Enrichment
+EPC ratings cannot be reliably scraped from portal listings. For properties missing `epc`:
+1. Attempt manual lookup via UK EPC Register: https://www.mezh.org/ or https://www.epcregister.com/
+2. If unverifiable, set `archive_reason = 'Cannot Verify — Discard: EPC unverifiable'` and `archived = 1`.
+3. Never fabricate or estimate an EPC rating.
+
+---
+
 ## Backup Protocol (MANDATORY)
 The SQLite database (`data/propSearch.db`) and all JSON data files (`data/master.jsonl`, `data/macro_trend.json`, `data/manual_queue.json`) contain the full empirical record for this acquisition campaign. **Loss of this data is irrecoverable.**
 
@@ -88,5 +109,29 @@ The Data Analyst MUST observe the following backup discipline:
 7. **User Notification:** After any backup triggered by a major operation, notify the user: "Backup created: YYYY-MM-DD (N records in master.jsonl, M properties in SQLite)."
 
 *Note: The Data Engineer may implement automated backup tooling, but the Analyst retains responsibility for ad-hoc pre-operation snapshots.*
+
+---
+
+## Automated Weekly Refresh Schedule (DE-162 — Effective 2026-04-01)
+
+**Automated schedule:** Every **Monday at 09:00 UTC** via GitHub Actions (`ci: weekly data refresh` workflow).
+
+| Component | What runs | Files updated |
+|-----------|-----------|--------------|
+| Data sync | `node scripts/sync_data.js` | `propSearch.db`, `macro_trend.json` |
+| Global context | Same pipeline | `macro_trend.json`, `financial_context.json` |
+| Git commit | Auto-commits if changes detected | `data/` committed to repo |
+
+**Data freshness monitoring:**
+- `GET /api/macro` returns `_meta.days_since_refresh` and `_meta.data_freshness` (green/amber/red)
+- Dashboard freshness signal: **green** ≤3 days, **amber** 4–7 days, **red** >7 days since last macro_trend.json update
+- `GET /api/health` reports `context_freshness` with bytes and last updated timestamp
+
+**Analyst responsibilities:**
+- Monitor the weekly workflow run in GitHub Actions — alert on failures
+- Review `macro_trend.json` changes on Mondays; update if BoE rates, HPI, or market volume data is stale
+- Run `make tasks-regen` after any task status changes
+- The automated job does NOT enrich new leads or source fresh EPC/BoE data — analyst still runs enrichment manually as needed
+
 
 ---
