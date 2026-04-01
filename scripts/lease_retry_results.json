@@ -1,0 +1,72 @@
+[
+  {
+    "addr": "Eton Place, London NW3",
+    "postcode": "NW3",
+    "price": 625000,
+    "zooplaId": "68090936",
+    "lease_years": null
+  },
+  {
+    "addr": "Dennington Park Road, London NW6",
+    "postcode": "NW6",
+    "price": 675000,
+    "zooplaId": "72563501",
+    "lease_years": null
+  },
+  {
+    "addr": "Lofting Road, London N1",
+    "postcode": "N1",
+    "price": 650000,
+    "zooplaId": "72566261",
+    "lease_years": null
+  },
+  {
+    "addr": "Pentonville Road, London N1",
+    "postcode": "N1",
+    "price": 775000,
+    "zooplaId": "72556280",
+    "lease_years": null
+  },
+  {
+    "addr": "Gainsborough Studios, 1 Poole Street, London N1",
+    "postcode": "N1",
+    "price": 575000,
+    "zooplaId": "72265957",
+    "lease_years": 166
+  },
+  {
+    "addr": "Hoxton Square, London N1",
+    "postcode": "N1",
+    "price": 599950,
+    "zooplaId": "72543070",
+    "lease_years": null
+  },
+  {
+    "addr": "Wellesley Terrace, London N1",
+    "postcode": "N1",
+    "price": 525000,
+    "zooplaId": "71733465",
+    "lease_years": null
+  },
+  {
+    "addr": "Queens Court, Queensway, London W2",
+    "postcode": "W2",
+    "price": 700000,
+    "zooplaId": "72565797",
+    "lease_years": null
+  },
+  {
+    "addr": "Kendal Steps, London W2",
+    "postcode": "W2",
+    "price": 750000,
+    "zooplaId": "72537410",
+    "lease_years": null
+  },
+  {
+    "addr": "Leinster Gardens, London W2",
+    "postcode": "W2",
+    "price": 640000,
+    "zooplaId": "72516087",
+    "lease_years": null
+  }
+]

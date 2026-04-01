@@ -1,0 +1,32 @@
+[
+  {
+    "uid": "f6911aa8",
+    "addr": "Belsize Avenue, London NW3",
+    "bedrooms": null
+  },
+  {
+    "uid": "91d727d9",
+    "addr": "Coleridge Court, Dibden Street, Islington N1",
+    "bedrooms": null
+  },
+  {
+    "uid": "cbbddd70",
+    "addr": "Hillmarton Road, London N7",
+    "bedrooms": null
+  },
+  {
+    "uid": "b2c3d4e5",
+    "addr": "Blackthorn Avenue, Arundel Square, London N1",
+    "bedrooms": null
+  },
+  {
+    "uid": "e5f6a7b8",
+    "addr": "Weech Road, London NW6",
+    "bedrooms": null
+  },
+  {
+    "uid": "c250e495",
+    "addr": "Hatherley Grove, Bayswater, London W2",
+    "bedrooms": null
+  }
+]

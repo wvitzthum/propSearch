@@ -88,7 +88,7 @@ To fulfill the "Empirical Standard" (Requirement 1), the Data Analyst MUST utili
 ### EPC Data Enrichment
 EPC ratings cannot be reliably scraped from portal listings. For properties missing `epc`:
 1. Attempt manual lookup via UK EPC Register: https://www.mezh.org/ or https://www.epcregister.com/
-2. If unverifiable, set `archive_reason = 'Cannot Verify — Discard: EPC unverifiable'` and `archived = 1`.
+2. If unverifiable, set `archive_reason = 'Cannot Verify — Discard: EPC unverifiable'`.
 3. Never fabricate or estimate an EPC rating.
 
 ---

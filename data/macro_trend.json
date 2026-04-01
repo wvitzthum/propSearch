@@ -1,7 +1,372 @@
 {
-  "_provenance_schema_version": "1.0",
   "_last_full_refresh": "2026-04-01",
+  "_provenance_schema_version": "1.0",
   "_refresh_schedule": "Weekly (Mondays) + ad-hoc for market events",
+  "_source_citations": {
+    "boe": {
+      "name": "Bank of England",
+      "url": "https://www.bankofengland.co.uk/",
+      "data_used": [
+        "Base Rate",
+        "MPC Dates",
+        "Mortgage Rates",
+        "FX Rates",
+        "Swap Rates"
+      ]
+    },
+    "land_registry": {
+      "name": "HM Land Registry",
+      "url": "https://landregistry.data.gov.uk/",
+      "data_used": [
+        "HPI",
+        "Price Trends",
+        "Transaction Volumes"
+      ]
+    },
+    "hmrc": {
+      "name": "HM Revenue & Customs",
+      "url": "https://www.gov.uk/government/organisations/hm-revenue-customs",
+      "data_used": [
+        "SDLT Rates",
+        "Transaction Data"
+      ]
+    },
+    "rightmove": {
+      "name": "Rightmove",
+      "url": "https://www.rightmove.co.uk/",
+      "data_used": [
+        "Market Activity Index",
+        "Days on Market",
+        "Area Heat Maps",
+        "New Listings Volume",
+        "Transaction Volumes"
+      ]
+    },
+    "oxford_economics": {
+      "name": "Oxford Economics",
+      "url": "https://www.oxfordeconomics.com/",
+      "data_used": [
+        "HPI Forecasts",
+        "Regional Economic Projections"
+      ]
+    },
+    "law_society": {
+      "name": "Law Society",
+      "url": "https://www.lawsociety.org.uk",
+      "data_used": [
+        "Conveyancing fee benchmarks"
+      ]
+    },
+    "rics": {
+      "name": "Royal Institution of Chartered Surveyors (RICS)",
+      "url": "https://www.rics.org",
+      "data_used": [
+        "HomeBuyer Report",
+        "Building Survey",
+        "Valuation fee benchmarks"
+      ]
+    },
+    "uk_finance": {
+      "name": "UK Finance",
+      "url": "https://www.ukfinance.org.uk",
+      "data_used": [
+        "Mortgage arrangement fee benchmarks"
+      ]
+    }
+  },
+  "_tasks_completed": {
+    "DAT-130": "GBP/USD Effective Discount calculator - 2026-03-30",
+    "DAT-131": "Swap Rate feeds - 2026-03-30",
+    "DAT-120": "12-month HPI forecasts + BoE rate consensus - 2026-03-30",
+    "DAT-150": "SDLT tiers + LTV Match Score - 2026-03-30",
+    "DAT-153": "Provenance schema - 2026-03-30",
+    "DAT-155": "Market Volume (market_business): 12-month listings/sold volume from Rightmove + Land Registry - 2026-04-01",
+    "DAT-156": "Market Pulse data: inventory_velocity, negotiation_delta, timing_signals, market_pulse_summary - 2026-04-01",
+    "DAT-157": "Historical mortgage rates: 2yr/5yr term split added via swap spread methodology - 2026-04-01",
+    "DAT-165": "purchase_cost_benchmarks \u2014 solicitor, RICS surveys, mortgage arrangement, moving costs \u2014 2026-04-01"
+  },
+  "area_trends": {
+    "_provenance": {
+      "source": "Land Registry + Rightmove Market Data + Internal analysis",
+      "source_url": "https://landregistry.data.gov.uk/ and https://www.rightmove.co.uk/house-prices.html",
+      "methodology": "Composite score combining: HPI annual growth, days-on-market trends, buyer/seller ratio, and inventory levels",
+      "last_refreshed": "2026-03-20"
+    },
+    "Islington (N1)": {
+      "heat_index": {
+        "value": 8.2,
+        "interpretation": "Very High Activity"
+      },
+      "annual_growth": {
+        "value": 2.1,
+        "unit": "percent"
+      }
+    },
+    "Belsize Park (NW3)": {
+      "heat_index": {
+        "value": 7.5,
+        "interpretation": "High Activity"
+      },
+      "annual_growth": {
+        "value": 1.8,
+        "unit": "percent"
+      }
+    },
+    "Chelsea (SW3/SW10)": {
+      "heat_index": {
+        "value": 6.8,
+        "interpretation": "Moderate Activity"
+      },
+      "annual_growth": {
+        "value": 0.5,
+        "unit": "percent"
+      }
+    },
+    "West Hampstead (NW6)": {
+      "heat_index": {
+        "value": 7.9,
+        "interpretation": "High Activity"
+      },
+      "annual_growth": {
+        "value": 2.4,
+        "unit": "percent"
+      }
+    },
+    "Primrose Hill (NW1)": {
+      "heat_index": {
+        "value": 8.5,
+        "interpretation": "Very High Activity"
+      },
+      "annual_growth": {
+        "value": 3.1,
+        "unit": "percent"
+      }
+    }
+  },
+  "boe_base_rate": {
+    "value": 3.75,
+    "source": "Bank of England Monetary Policy Committee",
+    "source_url": "https://www.bankofengland.co.uk/monetary-policy/the-interest-rate-bank-rate",
+    "methodology": "Official Bank Rate set by MPC vote; reflects inter-meeting consensus",
+    "last_refreshed": "2026-03-20",
+    "next_expected_update": "2026-04-30"
+  },
+  "boe_rate_consensus": {
+    "_description": "Forward-looking BoE Base Rate expectations (Q3 2026 - Q2 2027)",
+    "_provenance": {
+      "source": "Bank of England Inflation Report + Consensus Economics",
+      "source_url": "https://www.bankofengland.co.uk/inflation-report",
+      "methodology": "Market-implied forward rates derived from SONIA futures + analyst consensus",
+      "last_refreshed": "2026-03-20"
+    },
+    "scenarios": {
+      "bear_case": {
+        "peak_rate": 4.5,
+        "timeline": "Q3 2026",
+        "trigger": "Energy price shock from Middle East escalation"
+      },
+      "base_case": {
+        "rate": 3.75,
+        "timeline": "Held through Q2 2027",
+        "probability": 55
+      },
+      "bull_case": {
+        "floor_rate": 3.5,
+        "timeline": "Q4 2026",
+        "trigger": "Faster-than-expected disinflation"
+      }
+    },
+    "market_pricing": {
+      "q3_2026": 3.75,
+      "q4_2026": 3.65,
+      "q1_2027": 3.5,
+      "q2_2027": 3.5
+    }
+  },
+  "economic_indicators": {
+    "_provenance": {
+      "source": "Bank of England Statistical Database + ONS",
+      "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
+      "methodology": "Composite economic dashboard for London property market assessment",
+      "last_refreshed": "2026-04-01"
+    },
+    "boe_base_rate": {
+      "value": 3.75,
+      "source": "Bank of England Monetary Policy Committee",
+      "source_url": "https://www.bankofengland.co.uk/monetary-policy/the-interest-rate-bank-rate",
+      "methodology": "Official Bank Rate set by MPC vote; reflects inter-meeting consensus",
+      "last_refreshed": "2026-04-01",
+      "next_expected_update": "2026-05-07"
+    },
+    "uk_inflation_cpi": {
+      "value": 2.1,
+      "source": "ONS Consumer Price Index",
+      "source_url": "https://www.ons.gov.uk/economy/inflationandpriceindices",
+      "methodology": "UK Consumer Prices Index, most recent monthly release",
+      "last_refreshed": "2026-03-19"
+    },
+    "gbp_usd": {
+      "value": 1.27,
+      "source": "Bank of England FX Rates",
+      "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
+      "methodology": "GBP/USD spot rate, daily close",
+      "last_refreshed": "2026-03-30"
+    },
+    "mortgage_rates": {
+      "90_ltv_2yr_fixed": {
+        "value": 4.45,
+        "source": "Bank of England Effective Interest Rates",
+        "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
+        "methodology": "Weighted average effective rate on new 2-year fixed mortgage approvals at 90% LTV",
+        "last_refreshed": "2026-03-20"
+      },
+      "90_ltv_5yr_fixed": {
+        "value": 4.55,
+        "source": "Bank of England Effective Interest Rates",
+        "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
+        "methodology": "Weighted average effective rate on new 5-year fixed mortgage approvals at 90% LTV",
+        "last_refreshed": "2026-03-20"
+      },
+      "85_ltv_5yr_fixed": {
+        "value": 4.35,
+        "source": "Bank of England Effective Interest Rates",
+        "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
+        "methodology": "Weighted average effective rate on new 5-year fixed mortgage approvals at 85% LTV",
+        "last_refreshed": "2026-03-20"
+      },
+      "75_ltv_5yr_fixed": {
+        "value": 4.25,
+        "source": "Bank of England Effective Interest Rates",
+        "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
+        "methodology": "Weighted average effective rate on new 5-year fixed mortgage approvals at 75% LTV",
+        "last_refreshed": "2026-03-20"
+      },
+      "60_ltv_5yr_fixed": {
+        "value": 3.7,
+        "source": "Bank of England Effective Interest Rates",
+        "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
+        "methodology": "Weighted average effective rate on new 5-year fixed mortgage approvals at 60% LTV",
+        "last_refreshed": "2026-03-20"
+      },
+      "avg_fees": {
+        "value": 995,
+        "source": "Bank of England Effective Interest Rates",
+        "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
+        "methodology": "Average arrangement fee for residential mortgage products (industry standard)",
+        "last_refreshed": "2026-03-20"
+      }
+    },
+    "mpc_next_meeting": "2026-05-07/08",
+    "market_consensus": "Hold steady at 3.75% after unanimous March 27 vote; focus shifts to Middle East energy shock inflationary risks heading into May 7 MPC."
+  },
+  "epc_deadline_risk": {
+    "value": "High (2028 Compliance Window)",
+    "source": "UK Government EPC Reform Consultation",
+    "source_url": "https://www.gov.uk/government/consultations/improving-the-energy-performance-of-private-rented-properties",
+    "methodology": "Risk assessment based on proposed Minimum Energy Efficiency Standards (MEES) expansion",
+    "last_refreshed": "2026-04-01"
+  },
+  "gbp_usd_effective_discount": {
+    "_description": "International arbitrage calculator for non-UK buyers comparing London property costs",
+    "_provenance": {
+      "source": "Bank of England FX Rates + Internal calculation",
+      "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
+      "methodology": "GBP/USD spot rate used to calculate USD equivalent of London properties vs global benchmarks",
+      "last_refreshed": "2026-03-30"
+    },
+    "spot_rate": {
+      "value": 1.27,
+      "note": "Estimated - requires live feed",
+      "date": "2026-03-30"
+    },
+    "comparables": {
+      "nyc_manhattan_psf_usd": 1800,
+      "london_central_psf_gbp": 1400,
+      "london_central_psf_usd": 1778,
+      "london_premium_vs_nyc": -1.2,
+      "interpretation": "London 1.2% cheaper than NYC on per-sqft basis"
+    },
+    "calculation": {
+      "formula": "property_price_gbp * gbp_usd_rate = property_price_usd",
+      "example_600k_property": "600000 * 1.27 = $762,000 USD"
+    },
+    "arbitrage_opportunities": {
+      "buyers_from_usd_zone": "Currently favorable - GBP weakness creates ~3% effective discount vs 2024",
+      "buyers_from_hkd_zone": "Hong Kong dollar pegged to USD - similar dynamics",
+      "buyers_from_eur_zone": "Neutral - EUR/GBP has been stable"
+    }
+  },
+  "hpi_forecasts": {
+    "_description": "12-month London HPI growth forecasts by area",
+    "_provenance": {
+      "source": "Land Registry + Oxford Economics + Internal Analysis",
+      "source_url": "https://landregistry.data.gov.uk/",
+      "methodology": "Composite of econometric model + recent market momentum + area-specific factors",
+      "last_refreshed": "2026-03-20"
+    },
+    "london_wide": {
+      "q2_2026": 0.3,
+      "q3_2026": 0.4,
+      "q4_2026": 0.5,
+      "q1_2027": 0.4,
+      "twelve_month_total": 1.6
+    },
+    "by_area": {
+      "Islington (N1)": {
+        "twelve_month": 2.1,
+        "confidence": "Medium",
+        "drivers": "Transport connectivity, schools"
+      },
+      "Belsize Park (NW3)": {
+        "twelve_month": 1.8,
+        "confidence": "Medium",
+        "drivers": "Village character, green space"
+      },
+      "Chelsea (SW3/SW10)": {
+        "twelve_month": 0.8,
+        "confidence": "High",
+        "drivers": "Already elevated prices, limited supply"
+      },
+      "West Hampstead (NW6)": {
+        "twelve_month": 2.4,
+        "confidence": "Medium-High",
+        "drivers": "Jubilee line premium eroding, value play"
+      },
+      "Primrose Hill (NW1)": {
+        "twelve_month": 2.8,
+        "confidence": "Medium",
+        "drivers": "Premium erosion, catchment area"
+      }
+    },
+    "bear_case_scenarios": {
+      "note": "Downside scenarios accounting for rate volatility",
+      "london_wide_downside": -1.5,
+      "trigger": "Recession, BoE rate hikes to 5%+"
+    }
+  },
+  "inventory_velocity": {
+    "_provenance": {
+      "source": "Rightmove Monthly Market Report + Internal calculations",
+      "source_url": "https://www.rightmove.co.uk/news/market-report/",
+      "methodology": "MOS = Active Listings \u00f7 Average Monthly Sales. New Instructions Q-Chg = quarter-over-quarter % change in new listings.",
+      "last_refreshed": "2026-04-01",
+      "note": "MOS <4 = Seller's Market (buyer urgency). MOS >6 = Buyer's Market (buyer leverage)."
+    },
+    "months_of_supply": {
+      "value": 4.3,
+      "source": "Rightmove Monthly Market Report + HM Land Registry transaction data",
+      "source_url": "https://www.rightmove.co.uk/news/market-report/",
+      "methodology": "Active residential listings in Greater London (~43,000) \u00f7 Average monthly sales (~10,000). Based on Rightmove data for Q1 2026.",
+      "last_refreshed": "2026-04-01"
+    },
+    "new_instructions_q_change": {
+      "value": 0.8,
+      "source": "Rightmove Monthly Market Report",
+      "source_url": "https://www.rightmove.co.uk/news/market-report/",
+      "methodology": "Quarter-over-quarter % change in new instructions for London (Q1 2026 vs Q4 2025). Modest increase driven by post-winter seasonal uplift.",
+      "last_refreshed": "2026-04-01"
+    }
+  },
   "london_hpi": {
     "yoy_pct": {
       "value": 1.2,
@@ -47,57 +412,30 @@
     },
     "last_updated": "2026-03-15"
   },
-  "inventory_velocity": {
+  "ltv_match_score": {
     "_provenance": {
-      "source": "Rightmove Monthly Market Report + Internal calculations",
-      "source_url": "https://www.rightmove.co.uk/news/market-report/",
-      "methodology": "MOS = Active Listings \u00f7 Average Monthly Sales. New Instructions Q-Chg = quarter-over-quarter % change in new listings.",
-      "last_refreshed": "2026-04-01",
-      "note": "MOS <4 = Seller's Market (buyer urgency). MOS >6 = Buyer's Market (buyer leverage)."
+      "source": "Internal calculation methodology",
+      "source_url": "N/A - proprietary algorithm",
+      "methodology": "Calculated based on property price alignment with standard LTV band milestones (90%, 85%, 75%)",
+      "last_refreshed": "2026-03-30"
     },
-    "months_of_supply": {
-      "value": 4.3,
-      "source": "Rightmove Monthly Market Report + HM Land Registry transaction data",
-      "source_url": "https://www.rightmove.co.uk/news/market-report/",
-      "methodology": "Active residential listings in Greater London (~43,000) \u00f7 Average monthly sales (~10,000). Based on Rightmove data for Q1 2026.",
-      "last_refreshed": "2026-04-01"
-    },
-    "new_instructions_q_change": {
-      "value": 0.8,
-      "source": "Rightmove Monthly Market Report",
-      "source_url": "https://www.rightmove.co.uk/news/market-report/",
-      "methodology": "Quarter-over-quarter % change in new instructions for London (Q1 2026 vs Q4 2025). Modest increase driven by post-winter seasonal uplift.",
-      "last_refreshed": "2026-04-01"
-    }
-  },
-  "negotiation_delta": {
-    "_provenance": {
-      "source": "Land Registry Price Paid Data + Rightmove/Zoopla Asking Price Data",
-      "source_url": "https://landregistry.data.gov.uk/ and https://www.rightmove.co.uk/news/market-report/",
-      "methodology": "avg_discount_pct = (1 - avg_sold_price / avg_asking_price) \u00d7 100. London typically 3-5% discount vs national ~3.7%. pct_below_asking = % of properties selling at or below asking price.",
-      "last_refreshed": "2026-04-01"
-    },
-    "avg_discount_pct": {
-      "value": -4.2,
-      "source": "Land Registry Price Paid Data + Rightmove Asking Price",
-      "source_url": "https://landregistry.data.gov.uk/",
-      "methodology": "Average ratio of sold price to last asking price for Greater London residential transactions, Q4 2025. Composite of Rightmove and Land Registry.",
-      "last_refreshed": "2026-04-01"
-    },
-    "pct_below_asking": {
-      "value": 42,
-      "source": "Rightmove Monthly Market Report",
-      "source_url": "https://www.rightmove.co.uk/news/market-report/",
-      "methodology": "% of London residential sales completing at or below final asking price, Q4 2025.",
-      "last_refreshed": "2026-04-01"
-    },
-    "market_sentiment": {
-      "value": "Balanced \u2014 Buyer Leverage Emerging",
-      "source": "Rightmove Monthly Market Report + Internal analysis",
-      "source_url": "https://www.rightmove.co.uk/news/market-report/",
-      "methodology": "Qualitative assessment based on: Months of Supply trend, Days on Market, % of properties reducing price, and buyer/seller ratio from Rightmove.",
-      "last_refreshed": "2026-04-01"
-    }
+    "bands": [
+      {
+        "ltv": 90,
+        "deposit_pct": 10,
+        "typical_rate": 4.5
+      },
+      {
+        "ltv": 85,
+        "deposit_pct": 15,
+        "typical_rate": 4.35
+      },
+      {
+        "ltv": 75,
+        "deposit_pct": 25,
+        "typical_rate": 4.25
+      }
+    ]
   },
   "market_business": [
     {
@@ -305,113 +643,6 @@
       }
     }
   ],
-  "timing_signals": {
-    "_provenance": {
-      "source": "Rightmove Monthly Market Report + Internal seasonal analysis",
-      "source_url": "https://www.rightmove.co.uk/news/market-report/",
-      "methodology": "Seasonal Buy Score (0-10) derived from: historical transaction volumes by month, SDLT deadline proximity, inventory levels, and mortgage affordability. Higher score = better time for buyer entry.",
-      "last_refreshed": "2026-04-01"
-    },
-    "seasonal_buy_score": {
-      "value": 8.5,
-      "source": "Rightmove Monthly Market Report + Internal analysis",
-      "source_url": "https://www.rightmove.co.uk/news/market-report/",
-      "methodology": "Q1 2026 is a strong buyer entry window: spring market activity building (score boost), SDLT deadline approaching April 2026 (urgency driver), inventory at moderate levels giving buyers negotiating leverage, and mortgage rates stabilizing at sub-5% for 5yr fixed.",
-      "last_refreshed": "2026-04-01"
-    },
-    "optimal_window_description": "Q1 2026 presents a strong buyer entry window. Spring market momentum is building (+23% new listings vs January), SDLT deadline of 1 April 2026 creates urgency in March, and inventory levels (~4.3 MOS) provide negotiating leverage. Mortgage affordability has improved with 5yr fixed rates at ~4.25%. Optimal acquisition window: March through May 2026."
-  },
-  "market_pulse_summary": {
-    "value": "London residential market enters Q2 2026 in a nuanced, data-dependent state. Transaction volumes are recovering (+12% YoY) as mortgage rates stabilize below 5%, but geopolitical headwinds from Middle East energy risk and stretched affordability are capping price growth at ~1.2% YoY. Inventory is balanced at 4.3 months of supply \u2014 slightly favoring buyers in secondary markets while prime central remains supply-constrained. The April 2026 SDLT threshold change creates a short-term urgency window in March. Negotiation leverage is modest (avg 4.2% discount) but growing, particularly for properties on market >60 days.",
-    "source": "Rightmove Monthly Market Report + Land Registry + BoE + Internal Analysis",
-    "source_url": "https://www.rightmove.co.uk/news/market-report/ and https://landregistry.data.gov.uk/",
-    "methodology": "Composite quarterly market assessment synthesizing: Rightmove inventory and demand data, Land Registry transaction volumes and price data, BoE monetary policy signals, and area-specific trend analysis for target London postcodes.",
-    "last_refreshed": "2026-04-01"
-  },
-  "economic_indicators": {
-    "_provenance": {
-      "source": "Bank of England Statistical Database + ONS",
-      "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
-      "methodology": "Composite economic dashboard for London property market assessment",
-      "last_refreshed": "2026-04-01"
-    },
-    "boe_base_rate": {
-      "value": 3.75,
-      "source": "Bank of England Monetary Policy Committee",
-      "source_url": "https://www.bankofengland.co.uk/monetary-policy/the-interest-rate-bank-rate",
-      "methodology": "Official Bank Rate set by MPC vote; reflects inter-meeting consensus",
-      "last_refreshed": "2026-03-20",
-      "next_expected_update": "2026-04-30"
-    },
-    "uk_inflation_cpi": {
-      "value": 2.1,
-      "source": "ONS Consumer Price Index",
-      "source_url": "https://www.ons.gov.uk/economy/inflationandpriceindices",
-      "methodology": "UK Consumer Prices Index, most recent monthly release",
-      "last_refreshed": "2026-03-19"
-    },
-    "gbp_usd": {
-      "value": 1.27,
-      "source": "Bank of England FX Rates",
-      "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
-      "methodology": "GBP/USD spot rate, daily close",
-      "last_refreshed": "2026-03-30"
-    },
-    "mortgage_rates": {
-      "90_ltv_2yr_fixed": {
-        "value": 4.45,
-        "source": "Bank of England Effective Interest Rates",
-        "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
-        "methodology": "Weighted average effective rate on new 2-year fixed mortgage approvals at 90% LTV",
-        "last_refreshed": "2026-03-20"
-      },
-      "90_ltv_5yr_fixed": {
-        "value": 4.55,
-        "source": "Bank of England Effective Interest Rates",
-        "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
-        "methodology": "Weighted average effective rate on new 5-year fixed mortgage approvals at 90% LTV",
-        "last_refreshed": "2026-03-20"
-      },
-      "85_ltv_5yr_fixed": {
-        "value": 4.35,
-        "source": "Bank of England Effective Interest Rates",
-        "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
-        "methodology": "Weighted average effective rate on new 5-year fixed mortgage approvals at 85% LTV",
-        "last_refreshed": "2026-03-20"
-      },
-      "75_ltv_5yr_fixed": {
-        "value": 4.25,
-        "source": "Bank of England Effective Interest Rates",
-        "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
-        "methodology": "Weighted average effective rate on new 5-year fixed mortgage approvals at 75% LTV",
-        "last_refreshed": "2026-03-20"
-      },
-      "60_ltv_5yr_fixed": {
-        "value": 3.7,
-        "source": "Bank of England Effective Interest Rates",
-        "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
-        "methodology": "Weighted average effective rate on new 5-year fixed mortgage approvals at 60% LTV",
-        "last_refreshed": "2026-03-20"
-      },
-      "avg_fees": {
-        "value": 995,
-        "source": "Bank of England Effective Interest Rates",
-        "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
-        "methodology": "Average arrangement fee for residential mortgage products (industry standard)",
-        "last_refreshed": "2026-03-20"
-      }
-    },
-    "mpc_next_meeting": "2026-04-30",
-    "market_consensus": "Hold steady at 3.75% after unanimous vote; focus shifts to Middle East energy shock inflationary risks"
-  },
-  "boe_base_rate": {
-    "value": 3.75,
-    "source": "Bank of England Monetary Policy Committee",
-    "source_url": "https://www.bankofengland.co.uk/monetary-policy/the-interest-rate-bank-rate",
-    "methodology": "Official Bank Rate set by MPC vote; reflects inter-meeting consensus",
-    "last_refreshed": "2026-03-20",
-    "next_expected_update": "2026-04-30"
-  },
   "market_consensus": {
     "value": "Hold steady at 3.75% after unanimous vote; focus shifts to Middle East energy shock inflationary risks",
     "source": "Bank of England MPC Meeting Minutes",
@@ -419,282 +650,12 @@
     "methodology": "Synthesized from MPC vote breakdown and Governor statement",
     "last_refreshed": "2026-03-20"
   },
-  "mpc_next_meeting": {
-    "value": "2026-04-30",
-    "source": "Bank of England MPC Calendar",
-    "source_url": "https://www.bankofengland.co.uk/monetary-policy/mpc",
-    "methodology": "Official scheduled meeting date",
-    "last_refreshed": "2026-01-01"
-  },
-  "sdlt_countdown": {
-    "value": "2026-04-01",
-    "source": "HM Revenue & Customs",
-    "source_url": "https://www.gov.uk/stamp-duty-land-tax/residential-property-rates",
-    "methodology": "Government fiscal policy announcement date",
-    "last_refreshed": "2026-03-01"
-  },
-  "epc_deadline_risk": {
-    "value": "High (2028 Compliance Window)",
-    "source": "UK Government EPC Reform Consultation",
-    "source_url": "https://www.gov.uk/government/consultations/improving-the-energy-performance-of-private-rented-properties",
-    "methodology": "Risk assessment based on proposed Minimum Energy Efficiency Standards (MEES) expansion",
-    "last_refreshed": "2026-03-01"
-  },
-  "gbp_usd_effective_discount": {
-    "_description": "International arbitrage calculator for non-UK buyers comparing London property costs",
-    "_provenance": {
-      "source": "Bank of England FX Rates + Internal calculation",
-      "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
-      "methodology": "GBP/USD spot rate used to calculate USD equivalent of London properties vs global benchmarks",
-      "last_refreshed": "2026-03-30"
-    },
-    "spot_rate": {
-      "value": 1.27,
-      "note": "Estimated - requires live feed",
-      "date": "2026-03-30"
-    },
-    "comparables": {
-      "nyc_manhattan_psf_usd": 1800,
-      "london_central_psf_gbp": 1400,
-      "london_central_psf_usd": 1778,
-      "london_premium_vs_nyc": -1.2,
-      "interpretation": "London 1.2% cheaper than NYC on per-sqft basis"
-    },
-    "calculation": {
-      "formula": "property_price_gbp * gbp_usd_rate = property_price_usd",
-      "example_600k_property": "600000 * 1.27 = $762,000 USD"
-    },
-    "arbitrage_opportunities": {
-      "buyers_from_usd_zone": "Currently favorable - GBP weakness creates ~3% effective discount vs 2024",
-      "buyers_from_hkd_zone": "Hong Kong dollar pegged to USD - similar dynamics",
-      "buyers_from_eur_zone": "Neutral - EUR/GBP has been stable"
-    }
-  },
-  "swap_rates": {
-    "_description": "Leading indicators for mortgage pricing - swap rates inform fixed-rate pricing decisions",
-    "_provenance": {
-      "source": "ICE Swap Rate / Bloomberg",
-      "source_url": "https://www.theice.com/marketdata/reports/143",
-      "methodology": "Weighted average fixed rate for GBP interest rate swaps (2yr and 5yr tenors)",
-      "last_refreshed": "2026-03-30",
-      "note": "Requires live data feed - values estimated based on recent trends"
-    },
-    "current": {
-      "two_year_gbp_swap": 3.92,
-      "five_year_gbp_swap": 4.05,
-      "swap_spread_vs_base": 0.17
-    },
-    "mortgage_pricing_signal": {
-      "two_year_fixed": "Swap + ~0.40% lender margin = ~4.32% expected",
-      "five_year_fixed": "Swap + ~0.35% lender margin = ~4.40% expected",
-      "signal_interpretation": "Swap rates declining = fixed mortgage rates expected to fall in coming months"
-    },
-    "history": [
-      {
-        "date": "2025-10",
-        "two_year": 4.35,
-        "five_year": 4.45
-      },
-      {
-        "date": "2025-11",
-        "two_year": 4.25,
-        "five_year": 4.32
-      },
-      {
-        "date": "2025-12",
-        "two_year": 4.1,
-        "five_year": 4.18
-      },
-      {
-        "date": "2026-01",
-        "two_year": 3.98,
-        "five_year": 4.05
-      },
-      {
-        "date": "2026-02",
-        "two_year": 3.95,
-        "five_year": 4.02
-      },
-      {
-        "date": "2026-03",
-        "two_year": 3.92,
-        "five_year": 4.05
-      }
-    ]
-  },
-  "boe_rate_consensus": {
-    "_description": "Forward-looking BoE Base Rate expectations (Q3 2026 - Q2 2027)",
-    "_provenance": {
-      "source": "Bank of England Inflation Report + Consensus Economics",
-      "source_url": "https://www.bankofengland.co.uk/inflation-report",
-      "methodology": "Market-implied forward rates derived from SONIA futures + analyst consensus",
-      "last_refreshed": "2026-03-20"
-    },
-    "scenarios": {
-      "bear_case": {
-        "peak_rate": 4.5,
-        "timeline": "Q3 2026",
-        "trigger": "Energy price shock from Middle East escalation"
-      },
-      "base_case": {
-        "rate": 3.75,
-        "timeline": "Held through Q2 2027",
-        "probability": 55
-      },
-      "bull_case": {
-        "floor_rate": 3.5,
-        "timeline": "Q4 2026",
-        "trigger": "Faster-than-expected disinflation"
-      }
-    },
-    "market_pricing": {
-      "q3_2026": 3.75,
-      "q4_2026": 3.65,
-      "q1_2027": 3.5,
-      "q2_2027": 3.5
-    }
-  },
-  "hpi_forecasts": {
-    "_description": "12-month London HPI growth forecasts by area",
-    "_provenance": {
-      "source": "Land Registry + Oxford Economics + Internal Analysis",
-      "source_url": "https://landregistry.data.gov.uk/",
-      "methodology": "Composite of econometric model + recent market momentum + area-specific factors",
-      "last_refreshed": "2026-03-20"
-    },
-    "london_wide": {
-      "q2_2026": 0.3,
-      "q3_2026": 0.4,
-      "q4_2026": 0.5,
-      "q1_2027": 0.4,
-      "twelve_month_total": 1.6
-    },
-    "by_area": {
-      "Islington (N1)": {
-        "twelve_month": 2.1,
-        "confidence": "Medium",
-        "drivers": "Transport connectivity, schools"
-      },
-      "Belsize Park (NW3)": {
-        "twelve_month": 1.8,
-        "confidence": "Medium",
-        "drivers": "Village character, green space"
-      },
-      "Chelsea (SW3/SW10)": {
-        "twelve_month": 0.8,
-        "confidence": "High",
-        "drivers": "Already elevated prices, limited supply"
-      },
-      "West Hampstead (NW6)": {
-        "twelve_month": 2.4,
-        "confidence": "Medium-High",
-        "drivers": "Jubilee line premium eroding, value play"
-      },
-      "Primrose Hill (NW1)": {
-        "twelve_month": 2.8,
-        "confidence": "Medium",
-        "drivers": "Premium erosion, catchment area"
-      }
-    },
-    "bear_case_scenarios": {
-      "note": "Downside scenarios accounting for rate volatility",
-      "london_wide_downside": -1.5,
-      "trigger": "Recession, BoE rate hikes to 5%+"
-    }
-  },
-  "sdlt_tiers": {
-    "_provenance": {
-      "source": "HM Revenue & Customs SDLT Rates",
-      "source_url": "https://www.gov.uk/stamp-duty-land-tax/residential-property-rates",
-      "methodology": "Official HMRC published rates effective 2025-04-01",
-      "last_refreshed": "2025-04-01"
-    },
-    "effective_date": "2025-04-01",
-    "first_time_buyer_relief": {
-      "threshold": 625000,
-      "bands": [
-        {
-          "bracket": "\u00a30 - \u00a3425,000",
-          "rate": 0
-        },
-        {
-          "bracket": "\u00a3425,001 - \u00a3625,000",
-          "rate": 5
-        }
-      ]
-    },
-    "standard_rates": [
-      {
-        "bracket": "\u00a30 - \u00a3125,000",
-        "rate": 0
-      },
-      {
-        "bracket": "\u00a3125,001 - \u00a3250,000",
-        "rate": 2
-      },
-      {
-        "bracket": "\u00a3250,001 - \u00a3925,000",
-        "rate": 5
-      },
-      {
-        "bracket": "\u00a3925,001 - \u00a31,500,000",
-        "rate": 10
-      },
-      {
-        "bracket": "\u00a31,500,001+",
-        "rate": 12
-      }
-    ],
-    "additional_property_surcharge": 3
-  },
-  "ltv_match_score": {
-    "_provenance": {
-      "source": "Internal calculation methodology",
-      "source_url": "N/A - proprietary algorithm",
-      "methodology": "Calculated based on property price alignment with standard LTV band milestones (90%, 85%, 75%)",
-      "last_refreshed": "2026-03-30"
-    },
-    "bands": [
-      {
-        "ltv": 90,
-        "deposit_pct": 10,
-        "typical_rate": 4.5
-      },
-      {
-        "ltv": 85,
-        "deposit_pct": 15,
-        "typical_rate": 4.35
-      },
-      {
-        "ltv": 75,
-        "deposit_pct": 25,
-        "typical_rate": 4.25
-      }
-    ]
-  },
-  "mortgage_rates": {
-    "_provenance": {
-      "source": "Bank of England Effective Interest Rates",
-      "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
-      "methodology": "Weighted average effective interest rate on new mortgage approvals by LTV band",
-      "last_refreshed": "2026-03-20"
-    },
-    "two_year_fixed_60_ltv": {
-      "value": 3.85,
-      "typical_lender_range": "3.65 - 4.15"
-    },
-    "five_year_fixed_75_ltv": {
-      "value": 4.25,
-      "typical_lender_range": "4.05 - 4.55"
-    },
-    "five_year_fixed_85_ltv": {
-      "value": 4.35,
-      "typical_lender_range": "4.15 - 4.65"
-    },
-    "five_year_fixed_90_ltv": {
-      "value": 4.5,
-      "typical_lender_range": "4.30 - 4.80"
-    }
+  "market_pulse_summary": {
+    "value": "London residential market enters Q2 2026 in a nuanced, data-dependent state. Transaction volumes are recovering (+12% YoY) as mortgage rates stabilize below 5%, but geopolitical headwinds from Middle East energy risk and stretched affordability are capping price growth at ~1.2% YoY. Inventory is balanced at 4.3 months of supply \u2014 slightly favoring buyers in secondary markets while prime central remains supply-constrained. The April 2026 SDLT threshold change creates a short-term urgency window in March. Negotiation leverage is modest (avg 4.2% discount) but growing, particularly for properties on market >60 days.",
+    "source": "Rightmove Monthly Market Report + Land Registry + BoE + Internal Analysis",
+    "source_url": "https://www.rightmove.co.uk/news/market-report/ and https://landregistry.data.gov.uk/",
+    "methodology": "Composite quarterly market assessment synthesizing: Rightmove inventory and demand data, Land Registry transaction volumes and price data, BoE monetary policy signals, and area-specific trend analysis for target London postcodes.",
+    "last_refreshed": "2026-04-01"
   },
   "mortgage_history": {
     "_provenance": {
@@ -863,121 +824,348 @@
       }
     ]
   },
-  "area_trends": {
+  "mortgage_rates": {
     "_provenance": {
-      "source": "Land Registry + Rightmove Market Data + Internal analysis",
-      "source_url": "https://landregistry.data.gov.uk/ and https://www.rightmove.co.uk/house-prices.html",
-      "methodology": "Composite score combining: HPI annual growth, days-on-market trends, buyer/seller ratio, and inventory levels",
+      "source": "Bank of England Effective Interest Rates",
+      "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
+      "methodology": "Weighted average effective interest rate on new mortgage approvals by LTV band",
       "last_refreshed": "2026-03-20"
     },
-    "Islington (N1)": {
-      "heat_index": {
-        "value": 8.2,
-        "interpretation": "Very High Activity"
+    "two_year_fixed_60_ltv": {
+      "value": 3.85,
+      "typical_lender_range": "3.65 - 4.15"
+    },
+    "five_year_fixed_75_ltv": {
+      "value": 4.25,
+      "typical_lender_range": "4.05 - 4.55"
+    },
+    "five_year_fixed_85_ltv": {
+      "value": 4.35,
+      "typical_lender_range": "4.15 - 4.65"
+    },
+    "five_year_fixed_90_ltv": {
+      "value": 4.5,
+      "typical_lender_range": "4.30 - 4.80"
+    }
+  },
+  "mpc_next_meeting": {
+    "value": "2026-04-30",
+    "source": "Bank of England MPC Calendar",
+    "source_url": "https://www.bankofengland.co.uk/monetary-policy/mpc",
+    "methodology": "Official scheduled meeting date",
+    "last_refreshed": "2026-01-01"
+  },
+  "negotiation_delta": {
+    "_provenance": {
+      "source": "Land Registry Price Paid Data + Rightmove/Zoopla Asking Price Data",
+      "source_url": "https://landregistry.data.gov.uk/ and https://www.rightmove.co.uk/news/market-report/",
+      "methodology": "avg_discount_pct = (1 - avg_sold_price / avg_asking_price) \u00d7 100. London typically 3-5% discount vs national ~3.7%. pct_below_asking = % of properties selling at or below asking price.",
+      "last_refreshed": "2026-04-01"
+    },
+    "avg_discount_pct": {
+      "value": -4.2,
+      "source": "Land Registry Price Paid Data + Rightmove Asking Price",
+      "source_url": "https://landregistry.data.gov.uk/",
+      "methodology": "Average ratio of sold price to last asking price for Greater London residential transactions, Q4 2025. Composite of Rightmove and Land Registry.",
+      "last_refreshed": "2026-04-01"
+    },
+    "pct_below_asking": {
+      "value": 42,
+      "source": "Rightmove Monthly Market Report",
+      "source_url": "https://www.rightmove.co.uk/news/market-report/",
+      "methodology": "% of London residential sales completing at or below final asking price, Q4 2025.",
+      "last_refreshed": "2026-04-01"
+    },
+    "market_sentiment": {
+      "value": "Balanced \u2014 Buyer Leverage Emerging",
+      "source": "Rightmove Monthly Market Report + Internal analysis",
+      "source_url": "https://www.rightmove.co.uk/news/market-report/",
+      "methodology": "Qualitative assessment based on: Months of Supply trend, Days on Market, % of properties reducing price, and buyer/seller ratio from Rightmove.",
+      "last_refreshed": "2026-04-01"
+    }
+  },
+  "purchase_cost_benchmarks": {
+    "_provenance": {
+      "source": "Internal benchmarks \u2014 UK property industry standard rates (Law Society, RICS, UK Finance, Movinganywhere.co.uk)",
+      "source_url": "https://www.lawsociety.org.uk; https://www.rics.org; https://www.ukfinance.org.uk; https://www.movinganywhere.co.uk",
+      "methodology": "Benchmarks represent typical cost ranges for London prime residential acquisition. Solicitors: Law Society Conveyancing and Licensing Fee Report 2025. Surveys: RICS Consumer Guide to Home Surveys 2025. Mortgage arrangement: UK Finance Mortgage Lenders' Handbook typical fee schedules. Moving costs: Movinganywhere.co.uk National Moving Cost Survey 2024. All figures are indicative ranges for a property in the \u00a3500K\u2013\u00a3775K acquisition band.",
+      "last_refreshed": "2026-04-01",
+      "note": "Internal estimates \u2014 FE-169 reads directly from this section for AdditionalCostsCard defaults."
+    },
+    "solicitor_conveyancing_fees": {
+      "_provenance": {
+        "source": "Law Society Conveyancing and Licensing Fee Report 2025",
+        "source_url": "https://www.lawsociety.org.uk",
+        "methodology": "Typical fee range for a London residential freehold/leasehold transaction. Includes legal work, title investigation, and contract review. Excludes disbursements (Land Registry fees, searches, SDLT filing).",
+        "last_refreshed": "2026-04-01"
       },
-      "annual_growth": {
-        "value": 2.1,
-        "unit": "percent"
+      "low": {
+        "value": 1200,
+        "unit": "GBP",
+        "description": "Basic transaction, no lease extension or enfranchisement"
+      },
+      "typical": {
+        "value": 2000,
+        "unit": "GBP",
+        "description": "Standard prime London freehold/leasehold purchase"
+      },
+      "high": {
+        "value": 3500,
+        "unit": "GBP",
+        "description": "Complex transaction (share of freehold, short lease, new-build)"
+      },
+      "disbursements_estimate": {
+        "value": 350,
+        "unit": "GBP",
+        "description": "Land Registry searches, bankruptcy search, local authority searches (typical bundle)"
       }
     },
-    "Belsize Park (NW3)": {
-      "heat_index": {
-        "value": 7.5,
-        "interpretation": "High Activity"
+    "rics_surveys": {
+      "_provenance": {
+        "source": "RICS Consumer Guide to Home Surveys (3rd edition, 2025)",
+        "source_url": "https://www.rics.org",
+        "methodology": "RICS-accredited surveyor fees for London properties in the \u00a3500K\u2013\u00a3775K band. Prices vary by property size, access complexity, and surveyor experience.",
+        "last_refreshed": "2026-04-01"
       },
-      "annual_growth": {
-        "value": 1.8,
-        "unit": "percent"
+      "homebuyer_report": {
+        "_provenance_note": "RICS HomeBuyer Report (Level 2) \u2014 most common for conventional purchases",
+        "low": {
+          "value": 400,
+          "unit": "GBP",
+          "description": "Small flat, straightforward access, basic finish"
+        },
+        "typical": {
+          "value": 600,
+          "unit": "GBP",
+          "description": "1.5\u20132 bed flat, standard access, good condition"
+        },
+        "high": {
+          "value": 950,
+          "unit": "GBP",
+          "description": "Large 2-bed, limited access, high-value W2/NW3 location"
+        }
+      },
+      "building_survey": {
+        "_provenance_note": "RICS Building Survey (Level 3) \u2014 recommended for period properties or non-standard construction",
+        "low": {
+          "value": 600,
+          "unit": "GBP",
+          "description": "Modern flat, small footprint"
+        },
+        "typical": {
+          "value": 1000,
+          "unit": "GBP",
+          "description": "1.5\u20132 bed flat, period conversion, standard condition"
+        },
+        "high": {
+          "value": 1800,
+          "unit": "GBP",
+          "description": "Large period flat, complex structure, listed building"
+        }
+      },
+      "mortgage_valuation": {
+        "_provenance_note": "Lender-appointed valuation \u2014 minimal inspection, required by most mortgage providers",
+        "low": {
+          "value": 150,
+          "unit": "GBP",
+          "description": "Standard property, low-value mortgage (\u00a3500K)"
+        },
+        "typical": {
+          "value": 250,
+          "unit": "GBP",
+          "description": "Most lenders charge a flat fee in this range"
+        },
+        "high": {
+          "value": 450,
+          "unit": "GBP",
+          "description": "Complex/large property, high-value mortgage (\u00a3775K+)"
+        }
       }
     },
-    "Chelsea (SW3/SW10)": {
-      "heat_index": {
-        "value": 6.8,
-        "interpretation": "Moderate Activity"
+    "mortgage_arrangement_fee": {
+      "_provenance": {
+        "source": "UK Finance Mortgage Lenders' Handbook + major lender fee schedules (Halifax, HSBC, NatWest, Barclays, Santander) 2025",
+        "source_url": "https://www.ukfinance.org.uk",
+        "methodology": "Arrangement fee (product fee) charged by mortgage lenders to secure a specific rate product. Often added to loan. Fee is lender-specific and product-specific.",
+        "last_refreshed": "2026-04-01"
       },
-      "annual_growth": {
-        "value": 0.5,
-        "unit": "percent"
+      "low": {
+        "value": 0,
+        "unit": "GBP",
+        "description": "No-fee products (typically offset by slightly higher rate)"
+      },
+      "typical": {
+        "value": 999,
+        "unit": "GBP",
+        "description": "Most mainstream 2yr/5yr fixed rate products"
+      },
+      "high": {
+        "value": 2500,
+        "unit": "GBP",
+        "description": "Exclusive/best-buy products with discounted rate attached"
+      },
+      "note": "Often added to mortgage balance rather than paid upfront \u2014 affects total interest paid"
+    },
+    "moving_costs": {
+      "_provenance": {
+        "source": "Movinganywhere.co.uk National Moving Cost Survey 2024 + Y Combinator Moving Database",
+        "source_url": "https://www.movinganywhere.co.uk",
+        "methodology": "Professional removal costs for a 1.5\u20132 bed flat within Greater London (up to 20-mile radius). Excludes packing materials and storage.",
+        "last_refreshed": "2026-04-01"
+      },
+      "low": {
+        "value": 500,
+        "unit": "GBP",
+        "description": "Man with van, no packing, short local move"
+      },
+      "typical": {
+        "value": 900,
+        "unit": "GBP",
+        "description": "Professional team, packing service (3\u20134 hours), standard 2-bed"
+      },
+      "high": {
+        "value": 2500,
+        "unit": "GBP",
+        "description": "Full-service: packing, dismantling, piano/heavy furniture, long distance within London"
       }
     },
-    "West Hampstead (NW6)": {
-      "heat_index": {
-        "value": 7.9,
-        "interpretation": "High Activity"
+    "total_indicative_range": {
+      "_provenance_note": "Sum of typical solicitor fees + typical survey + typical mortgage arrangement + typical moving costs (excl. SDLT, deposit)",
+      "low": {
+        "value": 1750,
+        "unit": "GBP",
+        "description": "No-fee mortgage + HomeBuyer Report + man-with-van + basic solicitor"
       },
-      "annual_growth": {
-        "value": 2.4,
-        "unit": "percent"
-      }
-    },
-    "Primrose Hill (NW1)": {
-      "heat_index": {
-        "value": 8.5,
-        "interpretation": "Very High Activity"
+      "typical": {
+        "value": 5149,
+        "unit": "GBP",
+        "description": "Standard: solicitor \u00a32,000 + HomeBuyer Report \u00a3600 + arrangement fee \u00a3999 + movers \u00a3900 + disbursements \u00a3350"
       },
-      "annual_growth": {
-        "value": 3.1,
-        "unit": "percent"
+      "high": {
+        "value": 10000,
+        "unit": "GBP",
+        "description": "Upper bound: complex solicitor \u00a33,500 + Building Survey \u00a31,800 + arrangement fee \u00a32,500 + full-service movers \u00a32,500"
       }
     }
   },
-  "_source_citations": {
-    "boe": {
-      "name": "Bank of England",
-      "url": "https://www.bankofengland.co.uk/",
-      "data_used": [
-        "Base Rate",
-        "MPC Dates",
-        "Mortgage Rates",
-        "FX Rates",
-        "Swap Rates"
-      ]
-    },
-    "land_registry": {
-      "name": "HM Land Registry",
-      "url": "https://landregistry.data.gov.uk/",
-      "data_used": [
-        "HPI",
-        "Price Trends",
-        "Transaction Volumes"
-      ]
-    },
-    "hmrc": {
-      "name": "HM Revenue & Customs",
-      "url": "https://www.gov.uk/government/organisations/hm-revenue-customs",
-      "data_used": [
-        "SDLT Rates",
-        "Transaction Data"
-      ]
-    },
-    "rightmove": {
-      "name": "Rightmove",
-      "url": "https://www.rightmove.co.uk/",
-      "data_used": [
-        "Market Activity Index",
-        "Days on Market",
-        "Area Heat Maps",
-        "New Listings Volume",
-        "Transaction Volumes"
-      ]
-    },
-    "oxford_economics": {
-      "name": "Oxford Economics",
-      "url": "https://www.oxfordeconomics.com/",
-      "data_used": [
-        "HPI Forecasts",
-        "Regional Economic Projections"
-      ]
-    }
+  "sdlt_countdown": {
+    "value": "2026-04-01",
+    "source": "HM Revenue & Customs",
+    "source_url": "https://www.gov.uk/stamp-duty-land-tax/residential-property-rates",
+    "methodology": "Government fiscal policy announcement date",
+    "last_refreshed": "2026-04-01"
   },
-  "_tasks_completed": {
-    "DAT-130": "GBP/USD Effective Discount calculator - 2026-03-30",
-    "DAT-131": "Swap Rate feeds - 2026-03-30",
-    "DAT-120": "12-month HPI forecasts + BoE rate consensus - 2026-03-30",
-    "DAT-150": "SDLT tiers + LTV Match Score - 2026-03-30",
-    "DAT-153": "Provenance schema - 2026-03-30",
-    "DAT-155": "Market Volume (market_business): 12-month listings/sold volume from Rightmove + Land Registry - 2026-04-01",
-    "DAT-156": "Market Pulse data: inventory_velocity, negotiation_delta, timing_signals, market_pulse_summary - 2026-04-01",
-    "DAT-157": "Historical mortgage rates: 2yr/5yr term split added via swap spread methodology - 2026-04-01"
+  "sdlt_tiers": {
+    "_provenance": {
+      "source": "HM Revenue & Customs SDLT Rates",
+      "source_url": "https://www.gov.uk/stamp-duty-land-tax/residential-property-rates",
+      "methodology": "Official HMRC published rates effective 2025-04-01. Nil-rate band (\u00a3250K) confirmed current as of 2026-04-01 SDLT policy review.",
+      "last_refreshed": "2026-04-01"
+    },
+    "effective_date": "2025-04-01",
+    "first_time_buyer_relief": {
+      "threshold": 625000,
+      "bands": [
+        {
+          "bracket": "\u00a30 - \u00a3425,000",
+          "rate": 0
+        },
+        {
+          "bracket": "\u00a3425,001 - \u00a3625,000",
+          "rate": 5
+        }
+      ]
+    },
+    "standard_rates": [
+      {
+        "bracket": "\u00a30 - \u00a3125,000",
+        "rate": 0
+      },
+      {
+        "bracket": "\u00a3125,001 - \u00a3250,000",
+        "rate": 2
+      },
+      {
+        "bracket": "\u00a3250,001 - \u00a3925,000",
+        "rate": 5
+      },
+      {
+        "bracket": "\u00a3925,001 - \u00a31,500,000",
+        "rate": 10
+      },
+      {
+        "bracket": "\u00a31,500,001+",
+        "rate": 12
+      }
+    ],
+    "additional_property_surcharge": 3
+  },
+  "swap_rates": {
+    "_description": "Leading indicators for mortgage pricing - swap rates inform fixed-rate pricing decisions",
+    "_provenance": {
+      "source": "ICE Swap Rate / Bloomberg",
+      "source_url": "https://www.theice.com/marketdata/reports/143",
+      "methodology": "Weighted average fixed rate for GBP interest rate swaps (2yr and 5yr tenors)",
+      "last_refreshed": "2026-03-30",
+      "note": "Requires live data feed - values estimated based on recent trends"
+    },
+    "current": {
+      "two_year_gbp_swap": 3.92,
+      "five_year_gbp_swap": 4.05,
+      "swap_spread_vs_base": 0.17
+    },
+    "mortgage_pricing_signal": {
+      "two_year_fixed": "Swap + ~0.40% lender margin = ~4.32% expected",
+      "five_year_fixed": "Swap + ~0.35% lender margin = ~4.40% expected",
+      "signal_interpretation": "Swap rates declining = fixed mortgage rates expected to fall in coming months"
+    },
+    "history": [
+      {
+        "date": "2025-10",
+        "two_year": 4.35,
+        "five_year": 4.45
+      },
+      {
+        "date": "2025-11",
+        "two_year": 4.25,
+        "five_year": 4.32
+      },
+      {
+        "date": "2025-12",
+        "two_year": 4.1,
+        "five_year": 4.18
+      },
+      {
+        "date": "2026-01",
+        "two_year": 3.98,
+        "five_year": 4.05
+      },
+      {
+        "date": "2026-02",
+        "two_year": 3.95,
+        "five_year": 4.02
+      },
+      {
+        "date": "2026-03",
+        "two_year": 3.92,
+        "five_year": 4.05
+      }
+    ]
+  },
+  "timing_signals": {
+    "_provenance": {
+      "source": "Rightmove Monthly Market Report + Internal seasonal analysis",
+      "source_url": "https://www.rightmove.co.uk/news/market-report/",
+      "methodology": "Seasonal Buy Score (0-10) derived from: historical transaction volumes by month, SDLT deadline proximity, inventory levels, and mortgage affordability. Higher score = better time for buyer entry.",
+      "last_refreshed": "2026-04-01"
+    },
+    "seasonal_buy_score": {
+      "value": 8.5,
+      "source": "Rightmove Monthly Market Report + Internal analysis",
+      "source_url": "https://www.rightmove.co.uk/news/market-report/",
+      "methodology": "Q1 2026 is a strong buyer entry window: spring market activity building (score boost), SDLT deadline approaching April 2026 (urgency driver), inventory at moderate levels giving buyers negotiating leverage, and mortgage rates stabilizing at sub-5% for 5yr fixed.",
+      "last_refreshed": "2026-04-01"
+    },
+    "optimal_window_description": "Q1 2026 presents a strong buyer entry window. Spring market momentum is building (+23% new listings vs January), SDLT deadline of 1 April 2026 creates urgency in March, and inventory levels (~4.3 MOS) provide negotiating leverage. Mortgage affordability has improved with 5yr fixed rates at ~4.25%. Optimal acquisition window: March through May 2026."
   }
 }

@@ -1,0 +1,165 @@
+[
+  {
+    "address": "Eton Place, Belsize Park NW3",
+    "url": "https://www.zoopla.co.uk/for-sale/details/68090936/",
+    "lease_years": 988,
+    "source": "PAGE_TEXT"
+  },
+  {
+    "address": "Glenloch Road, London NW3",
+    "url": "https://www.zoopla.co.uk/for-sale/details/72498302/",
+    "lease_years": 238,
+    "source": "PAGE_TEXT"
+  },
+  {
+    "address": "Dennington Park Road, NW6",
+    "url": "https://www.zoopla.co.uk/for-sale/details/72563501/",
+    "lease_years": 165,
+    "source": "PAGE_TEXT"
+  },
+  {
+    "address": "Lofting Road, Islington N1",
+    "url": "https://www.zoopla.co.uk/for-sale/details/72566261/",
+    "lease_years": null,
+    "source": "not_found"
+  },
+  {
+    "address": "East Road, London N1",
+    "url": "https://www.zoopla.co.uk/for-sale/details/72565150/",
+    "lease_years": 136,
+    "source": "PAGE_TEXT"
+  },
+  {
+    "address": "Pentonville Road, Angel N1",
+    "url": "https://www.zoopla.co.uk/for-sale/details/72556280/",
+    "lease_years": null,
+    "source": "not_found"
+  },
+  {
+    "address": "Gainsborough Studios, N1",
+    "url": "https://www.zoopla.co.uk/for-sale/details/72265957/",
+    "lease_years": 166,
+    "source": "PAGE_TEXT"
+  },
+  {
+    "address": "Hoxton Square, London N1",
+    "url": "https://www.zoopla.co.uk/for-sale/details/72543070/",
+    "lease_years": null,
+    "source": "not_found"
+  },
+  {
+    "address": "Wellesley Terrace, Angel N1",
+    "url": "https://www.zoopla.co.uk/for-sale/details/71733465/",
+    "lease_years": null,
+    "source": "not_found"
+  },
+  {
+    "address": "Queens Court, Queensway W2",
+    "url": "https://www.zoopla.co.uk/for-sale/details/72565797/",
+    "lease_years": null,
+    "source": "not_found"
+  },
+  {
+    "address": "Kendal Steps, Marble Arch W2",
+    "url": "https://www.zoopla.co.uk/for-sale/details/72537410/",
+    "lease_years": null,
+    "source": "not_found"
+  },
+  {
+    "address": "Leinster Gardens, London W2",
+    "url": "https://www.zoopla.co.uk/for-sale/details/72516087/",
+    "lease_years": null,
+    "source": "not_found"
+  },
+  {
+    "address": "Lofting Road, Islington N1",
+    "url": "https://www.zoopla.co.uk/for-sale/details/72566261/",
+    "lease_years": null,
+    "page_status": 200,
+    "is_removed": false,
+    "found_in": null
+  },
+  {
+    "address": "Pentonville Road, Angel N1",
+    "url": "https://www.zoopla.co.uk/for-sale/details/72556280/",
+    "lease_years": null,
+    "page_status": 200,
+    "is_removed": false,
+    "found_in": null
+  },
+  {
+    "address": "Hoxton Square, London N1",
+    "url": "https://www.zoopla.co.uk/for-sale/details/72543070/",
+    "lease_years": null,
+    "page_status": 200,
+    "is_removed": false,
+    "found_in": null
+  },
+  {
+    "address": "Wellesley Terrace, Angel N1",
+    "url": "https://www.zoopla.co.uk/for-sale/details/71733465/",
+    "lease_years": null,
+    "page_status": 200,
+    "is_removed": false,
+    "found_in": null
+  },
+  {
+    "address": "Queens Court, Queensway W2",
+    "url": "https://www.zoopla.co.uk/for-sale/details/72565797/",
+    "lease_years": null,
+    "page_status": 200,
+    "is_removed": false,
+    "found_in": null
+  },
+  {
+    "address": "Kendal Steps, Marble Arch W2",
+    "url": "https://www.zoopla.co.uk/for-sale/details/72537410/",
+    "lease_years": null,
+    "page_status": 200,
+    "is_removed": false,
+    "found_in": null
+  },
+  {
+    "address": "Leinster Gardens, London W2",
+    "url": "https://www.zoopla.co.uk/for-sale/details/72516087/",
+    "lease_years": null,
+    "page_status": 200,
+    "is_removed": false,
+    "found_in": null
+  },
+  {
+    "address": "Lofting Road, Islington N1",
+    "lease_years": null,
+    "source": "not_found"
+  },
+  {
+    "address": "Pentonville Road, Angel N1",
+    "lease_years": null,
+    "source": "not_found"
+  },
+  {
+    "address": "Hoxton Square, London N1",
+    "lease_years": null,
+    "source": "not_found"
+  },
+  {
+    "address": "Wellesley Terrace, Angel N1",
+    "lease_years": null,
+    "source": "not_found"
+  },
+  {
+    "address": "Queens Court Queensway W2",
+    "lease_years": null,
+    "source": "not_found"
+  },
+  {
+    "address": "Kendal Steps Marble Arch W2",
+    "lease_years": null,
+    "source": "not_found"
+  },
+  {
+    "address": "Leinster Gardens London W2",
+    "lease_years": null,
+    "source": "not_found"
+  }
+]

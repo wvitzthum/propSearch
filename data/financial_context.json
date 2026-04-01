@@ -2,18 +2,73 @@
   "monthly_budget": 4500,
   "mortgage_term": 25,
   "council_tax": [
-    { "area": "Islington (N1)", "band": "D", "annual_cost": 1812 },
-    { "area": "Islington (N7)", "band": "D", "annual_cost": 1812 },
-    { "area": "Belsize Park (NW3)", "band": "D", "annual_cost": 1792 },
-    { "area": "West Hampstead (NW6)", "band": "D", "annual_cost": 1792 },
-    { "area": "Chelsea (SW3/SW10)", "band": "D", "annual_cost": 1650 },
-    { "area": "Primrose Hill (NW1)", "band": "D", "annual_cost": 1792 }
+    {
+      "area": "Bayswater (W2)",
+      "band": "D",
+      "annual_cost": 821
+    },
+    {
+      "area": "Belsize Park (NW3)",
+      "band": "D",
+      "annual_cost": 1792
+    },
+    {
+      "area": "Chelsea (SW3/SW10)",
+      "band": "D",
+      "annual_cost": 1650
+    },
+    {
+      "area": "Hampstead (NW3)",
+      "band": "D",
+      "annual_cost": 1792
+    },
+    {
+      "area": "Islington (N1)",
+      "band": "D",
+      "annual_cost": 1812
+    },
+    {
+      "area": "Islington (N7)",
+      "band": "D",
+      "annual_cost": 1812
+    },
+    {
+      "area": "Primrose Hill (NW1)",
+      "band": "D",
+      "annual_cost": 1792
+    },
+    {
+      "area": "South Hampstead (NW6)",
+      "band": "D",
+      "annual_cost": 1792
+    },
+    {
+      "area": "West Hampstead (NW6)",
+      "band": "D",
+      "annual_cost": 1792
+    }
   ],
   "stamp_duty_thresholds": [
-    { "min": 0, "max": 250000, "rate": 0 },
-    { "min": 250001, "max": 925000, "rate": 5 },
-    { "min": 925001, "max": 1500000, "rate": 10 },
-    { "min": 1500001, "max": null, "rate": 12 }
+    {
+      "min": 0,
+      "max": 250000,
+      "rate": 0
+    },
+    {
+      "min": 250001,
+      "max": 925000,
+      "rate": 5
+    },
+    {
+      "min": 925001,
+      "max": 1500000,
+      "rate": 10
+    },
+    {
+      "min": 1500001,
+      "max": null,
+      "rate": 12
+    }
   ],
   "additional_property_surcharge": 3
 }

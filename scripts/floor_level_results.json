@@ -1,0 +1,26 @@
+[
+  {
+    "uid": "5e98a19c",
+    "addr": "Northways, College Crescent",
+    "floor_level": "g F",
+    "source": "PAGE_TEXT"
+  },
+  {
+    "uid": "f6a7b8c9",
+    "addr": "Danbury Street, Angel",
+    "floor_level": "lower ground floor",
+    "source": "PAGE_TEXT"
+  },
+  {
+    "uid": "a9b0c1d2",
+    "addr": "Spenlow Apartments, Wenlock Road",
+    "floor_level": "g f",
+    "source": "PAGE_TEXT"
+  },
+  {
+    "uid": "c3d4e5f6",
+    "addr": "Peters Court, Porchester Road",
+    "floor_level": "m f",
+    "source": "PAGE_TEXT"
+  }
+]

@@ -18,25 +18,41 @@ test.describe('Smoke Tests - All Pages', () => {
       });
 
       page.on('console', msg => {
-        if (msg.type() === 'error' && !msg.text().includes('404')) {
-          errors.push(msg.text());
+        if (msg.type() === 'error') {
+          const text = msg.text();
+          errors.push(text);
         }
       });
 
       await page.goto(path);
       await page.waitForTimeout(2000);
 
-      // Filter known bugs already tracked in tickets:
-      // QA-164: hpi_forecasts.map is not a function (useMacroData type error)
-      // QA-166: Failed to fetch (PropertyContext hardcoded localhost URL in test env)
-      const knownBugPatterns = [
-        'hpi_forecasts.map',
-        'Failed to fetch',
+      // Filter environment noise (not application bugs):
+      // - 404: missing images/assets
+      // - 403: external CDN (noise.svg) unavailable in test env
+      // - DevTools: React development helper, not an error
+      // - grainy-gradients.vercel.app: external resource
+      const envNoise = [
+        '404',
+        '403',
+        'Failed to load resource',
+        'react-devtools',
+        'grainy-gradients.vercel.app',
       ];
+
+      // Filter known bugs with open tickets (FE must not re-introduce these):
+      const knownBugs = [
+        'hpi_forecasts.map',               // QA-164: useMacroData type error
+        'Failed to fetch',                  // QA-166: PropertyContext hardcoded URL
+        'Objects are not valid as a React child', // QA-172: MarketConditionsBar provenance object rendered as child
+        'same key',                        // QA-171: Inbox.tsx duplicate filename in listings array
+      ];
+
       const unexpectedErrors = errors.filter(e =>
-        !knownBugPatterns.some(p => e.includes(p)) &&
-        (e.includes('Uncaught') || e.includes('TypeError'))
+        !envNoise.some(n => e.includes(n)) &&
+        !knownBugs.some(b => e.includes(b))
       );
+
       expect(unexpectedErrors).toHaveLength(0);
     });
   }

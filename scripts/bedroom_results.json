@@ -1,0 +1,42 @@
+[
+  {
+    "uid": "91d727d9",
+    "addr": "Coleridge Court",
+    "bedrooms": null
+  },
+  {
+    "uid": "5e98a19c",
+    "addr": "Northways",
+    "bedrooms": 3
+  },
+  {
+    "uid": "cbbddd70",
+    "addr": "Hillmarton Road",
+    "bedrooms": null
+  },
+  {
+    "uid": "c3d4e5f6",
+    "addr": "Peters Court",
+    "bedrooms": 2
+  },
+  {
+    "uid": "d4e5f6a7",
+    "addr": "Gloucester Terrace",
+    "bedrooms": 2
+  },
+  {
+    "uid": "f6a7b8c9",
+    "addr": "Danbury Street",
+    "bedrooms": 2
+  },
+  {
+    "uid": "a9b0c1d2",
+    "addr": "Spenlow Apartments",
+    "bedrooms": 3
+  },
+  {
+    "uid": "1f55a0c4",
+    "addr": "Highbury New Park",
+    "bedrooms": 2
+  }
+]
