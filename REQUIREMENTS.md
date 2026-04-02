@@ -70,7 +70,9 @@ To build a private, high-precision research tool that enables a single buyer to 
 ### 4. User Decision Workflow (Shortlisting)
 - **Requirement:** The user must be able to move properties through a pipeline: `Discovered` -> `Shortlisted` -> `Vetted` -> `Archived`.
 - **Goal:** Reduce cognitive load by hiding irrelevant or rejected assets.
-- **Instruction to Frontend Agent:** Implement local-state or persistence for property statuses.
+- **Persistence (FE-186 — Effective 2026-04-02):** Pipeline status is persisted server-side in the `properties.pipeline_status` column (SQLite). Status survives browser data clearing and is hydrated from `GET /api/properties` on app load. The frontend `usePipeline` hook calls `PATCH /api/properties/:id/status` to write status changes and maintains localStorage as a local fallback.
+- **Analyst role:** The analyst does NOT set `pipeline_status` — that is the user's exclusive domain. The analyst uses `analyst_flag` (analyst annotations) to surface quality signals to the user, who then acts on them via the pipeline.
+- **Instruction to Frontend Agent:** Implement `usePipeline` hook calling `PATCH /api/properties/:id/status` on every status change, with localStorage as fallback. Hydrate initial state from the backend API on mount.
 
 ### 5. Map-Centric Context & Spatial Intelligence
 - **Requirement:** A high-precision map view that prioritizes readability and spatial relationships.
@@ -263,6 +265,56 @@ To build a private, high-precision research tool that enables a single buyer to 
   - Implement a `VITE_DEMO_MODE` environment toggle.
   - Refactor all data hooks to fetch from `/data/*.json` when this mode is active.
   - Ensure the "Inbox" and "Manual Submission" features show a "Demo: Submission Disabled" toast rather than failing.
+
+---
+
+### 21. Page Architecture & Navigation (5-Page Restructure)
+- **Requirement:** Restructure the application from an undifferentiated 3-tab/dashboard view into five purpose-built pages with clear navigational separation.
+- **Goal:** Eliminate navigation friction and make every view's purpose immediately legible. Enable deep-linking to any view.
+- **Page Structure:**
+  1. **/dashboard** — Market Situation Room: entry point. HPI trend, BoE rate tracker, comparison basket preview (top 3-5 shortlisted properties), recent inbox activity, quick-add URL submission, data freshness indicator.
+  2. **/properties** — Primary property tracking surface: table/grid toggle (T/G shortcut), institutional sorting (Alpha Score default), column show/hide, filter panel (area, status, price, sqft, Alpha threshold), batch status changes, inline status badge editing.
+  3. **/map** — Full-viewport spatial intelligence: Carto Dark Matter tiles, Alpha Score colour-coded markers (green/amber/red), shortlisted glow effect, London metro geojson overlay, slide-in property card on marker click, filter controls overlay, full-screen toggle.
+  4. **/inbox** — Keyboard-centric lead triage: split-pane (scrollable lead list left, deep-review card right), keyboard navigation (Up/Down, A=Approve, R=Reject, L=portal link, Esc=close), batch multi-select, status badges, submission history panel.
+  5. **/comparison** — Decision-engine matrix: persistent comparison basket, KPI row winner highlighting, delta vs. group average view, image sync on cell hover, analyst notes per property.
+- **Cross-cutting:** Persistent comparison bar (fixed bottom, visible across all pages); global Cmd+K command palette routing to all five pages.
+- **Instruction to Frontend Agent:** Implement routing via React Router. Preserve all existing functionality — no feature regressions during migration.
+- **Instruction to UI/UX QA Agent:** Produce a UX research brief (`agents/ui_ux_qa/UX_RESEARCH_2026.md`) before FE-175 begins. Gate FE-175 on brief approval.
+
+### 22. Archived Property Visibility
+- **Requirement:** Properties archived by the Data Analyst (set `archived = 1` in SQLite) must remain accessible in the UI via a dedicated filter, without deleting any empirical record.
+- **Goal:** Ensure no property history is ever lost; enable the user to review and unarchive previously archived assets.
+- **Backend:** SQLite `archived` column and `/api/properties?archived=true` already implemented (DE-161).
+- **Frontend:**
+  - `PropertyContext.tsx` must pass `?archived=true` to `GET /api/properties` when the archived filter is active.
+  - Status filter panel (Properties page) must include an "Archived" option alongside Discovered/Shortlisted/Vetted.
+  - Archived rows must render with distinct visual treatment (muted opacity, rose archive badge, PipelineTracker showing Archived as current step).
+  - Unarchive action must remain functional from the table row.
+  - URL persistence: `?status=archived` so the archived view is linkable and survives page refresh.
+- **Data Analyst Note:** Per DE-161, archived records must never be hard-deleted. Incomplete or unverifiable records are flagged `archived = 1` with a descriptive `archive_reason` — they remain available for review and re-activation.
+- **See also:** Requirement 23 (Market Status Classification) for structured status taxonomy that supplements the `archived` flag.
+
+### 23. Market Status Classification & Listing Freshness
+- **Requirement:** Replace the unstructured `archive_reason` free-text field with a structured `market_status` taxonomy. Additionally track when each property was last verified against the live market (`last_checked`).
+- **Goal:** Enable the user to immediately distinguish genuinely off-market archived properties from properties that may be worth reactivating. Surface listing freshness so the user can prioritize re-checks.
+- **market_status taxonomy:**
+  - `active` — Property is currently listed on a portal. Requires periodic re-verification.
+  - `under_offer` — Offer accepted, not yet sold STC.
+  - `sold_stc` — Sold subject to contract.
+  - `sold_completed` — Completed sale.
+  - `withdrawn` — Removed from market permanently (sold elsewhere, withdrawn by vendor, or reclassified as not relevant). Not coming back.
+  - `unknown` — Market status has not been verified. Default for pre-enrichment duplicates and data discrepancy records.
+- **last_checked:** ISO date string (`YYYY-MM-DD`) recording when the property was last verified against a live portal scrape. Displayed as a freshness indicator: green (≤7 days), amber (8–30 days), red (>30 days or never).
+- **Separation of concerns:** `market_status` reflects market reality (managed by Analyst and sync pipeline). `archived` (pipeline status) reflects the user's research decision. A property can be `archived=0 / market_status=active` (active listing not yet reviewed) or `archived=1 / market_status=active` (listing still live, needs recheck before reactivation).
+- **UI surfaces:**
+  - Archive Review view (filtered by `archived=1`): group by `market_status`. Highlight `market_status=active` group prominently — these are reactivation candidates.
+  - Active property cards: show `market_status=active` badge + `last_checked` freshness indicator.
+  - PropertyDetail: show market_status badge and last_checked date.
+  - PropertyTable: for archived rows, show market_status badge alongside archive icon.
+  - Recheck action: manual button to mark a property as re-verified, updating `last_checked` to today and re-fetching listing status via `POST /api/properties/:id/check`.
+  - Reactivate action: set `archived=0`, `market_status=active`, navigate to property detail.
+- **Instruction to Data Analyst:** Classify all existing archived records by `market_status`. Populate `market_status='active'` for all active (non-archived) records.
+- **Instruction to Data Engineer:** Add `market_status` and `last_checked` columns to the SQLite schema. Update sync pipeline to set `last_checked` on every property interaction and set `market_status='active'` on new inserts.
 
 ---
 

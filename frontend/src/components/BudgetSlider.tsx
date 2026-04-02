@@ -8,14 +8,27 @@ interface BudgetSliderProps {
 }
 
 const BudgetSlider: React.FC<BudgetSliderProps> = ({ onBudgetChange, compact = false }) => {
-  const { monthlyBudget, updateBudget, getAffordablePrice, mortgageRate } = useAffordability();
+  const {
+    monthlyBudget,
+    updateBudget,
+    mortgageRate,
+    depositPct,
+    depositMode,
+    calculateMortgageFromPayment,
+  } = useAffordability();
   const [localBudget, setLocalBudget] = useState(monthlyBudget);
 
   useEffect(() => {
     setLocalBudget(monthlyBudget);
   }, [monthlyBudget]);
 
-  const affordablePrice = getAffordablePrice(localBudget);
+  // FE-169: Compute affordable price range using configured deposit percentage
+  // When depositMode='fixed', use the selected depositPct; otherwise default to 15%
+  const effectiveDepositPct = depositMode === 'fixed' ? depositPct : 15;
+  const ltvFraction = 1 - effectiveDepositPct / 100; // e.g. 0.85 for 15% deposit
+  const maxMortgage = calculateMortgageFromPayment(localBudget);
+  const maxAffordable = Math.round(maxMortgage / ltvFraction);
+  const minAffordable = Math.round(maxAffordable * 0.85); // 15% floor when budget is tight
 
   const handleChange = (value: number) => {
     setLocalBudget(value);
@@ -148,7 +161,7 @@ const BudgetSlider: React.FC<BudgetSliderProps> = ({ onBudgetChange, compact = f
               Affordable Range
             </div>
             <div className="text-sm font-bold text-white tracking-tight">
-              £{(affordablePrice * 0.85).toLocaleString()} - £{affordablePrice.toLocaleString()}
+              £{(minAffordable / 1000).toFixed(0)}K - £{(maxAffordable / 1000).toFixed(0)}K
             </div>
           </div>
           <div className="text-right">
@@ -161,6 +174,11 @@ const BudgetSlider: React.FC<BudgetSliderProps> = ({ onBudgetChange, compact = f
             </div>
           </div>
         </div>
+        {depositMode === 'fixed' && effectiveDepositPct !== 15 && (
+          <div className="mt-2 text-[9px] text-amber-400">
+            Based on {effectiveDepositPct}% deposit ({100 - effectiveDepositPct}% LTV)
+          </div>
+        )}
       </div>
     </div>
   );

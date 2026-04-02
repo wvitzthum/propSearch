@@ -38,6 +38,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background-color: #09090b;
+  overflow-x: hidden; /* FE-174: Prevent horizontal scroll on narrow viewports */
 }
 
 #root {

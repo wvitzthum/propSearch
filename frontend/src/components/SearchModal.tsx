@@ -65,10 +65,10 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
     }
 
     const lowerQuery = query.toLowerCase();
-    const filtered = properties.filter(p => 
-      p.address.toLowerCase().includes(lowerQuery) || 
-      p.area.toLowerCase().includes(lowerQuery) ||
-      p.id.toLowerCase().includes(lowerQuery)
+    const filtered = properties.filter(p =>
+      (p.address ?? '').toLowerCase().includes(lowerQuery) ||
+      (p.area ?? '').toLowerCase().includes(lowerQuery) ||
+      (p.id ?? '').toLowerCase().includes(lowerQuery)
     ).slice(0, 8);
     
     setResults(filtered);

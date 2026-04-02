@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom';
 import {
   Search, MapPin, ArrowRight, Command, Check, Zap, LayoutDashboard,
-  Inbox, Percent, Compass, Clock, Star, Sparkles,
-  TrendingUp, DollarSign, Building2, X
+  Inbox, Clock, Star, Sparkles,
+  TrendingUp, DollarSign, Building2, X, Map, Scale, Calculator
 } from 'lucide-react';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import type { PropertyWithCoords } from '../types/property';
@@ -77,52 +77,61 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
     }
   }, []);
 
-  // Navigation commands
+  // Navigation commands — FE-175: 5-page structure per QA-175
   const navigationCommands: CommandItem[] = useMemo(() => [
-    {
-      id: 'nav-discover',
-      label: 'Go to Discover',
-      description: 'Return to landing page',
-      category: 'navigation',
-      icon: <Compass size={16} />,
-      action: () => { navigate('/'); addRecentAction({ id: 'nav-discover', type: 'navigation', label: 'Discover' }); onClose(); },
-      keywords: ['home', 'landing', 'start'],
-    },
     {
       id: 'nav-dashboard',
       label: 'Go to Dashboard',
-      description: 'Main property terminal',
+      description: 'Market command center',
       category: 'navigation',
       icon: <LayoutDashboard size={16} />,
       action: () => { navigate('/dashboard'); addRecentAction({ id: 'nav-dashboard', type: 'navigation', label: 'Dashboard' }); onClose(); },
-      keywords: ['terminal', 'main', 'properties'],
+      keywords: ['terminal', 'market', 'overview'],
+    },
+    {
+      id: 'nav-properties',
+      label: 'Go to Properties',
+      description: 'Asset database — table/grid view',
+      category: 'navigation',
+      icon: <Building2 size={16} />,
+      action: () => { navigate('/properties'); addRecentAction({ id: 'nav-properties', type: 'navigation', label: 'Properties' }); onClose(); },
+      keywords: ['properties', 'database', 'table', 'grid', 'assets'],
+    },
+    {
+      id: 'nav-map',
+      label: 'Go to Map',
+      description: 'Full-viewport spatial intelligence',
+      category: 'navigation',
+      icon: <Map size={16} />,
+      action: () => { navigate('/map'); addRecentAction({ id: 'nav-map', type: 'navigation', label: 'Map' }); onClose(); },
+      keywords: ['map', 'geo', 'spatial', 'location'],
     },
     {
       id: 'nav-inbox',
-      label: 'Go to Lead Inbox',
-      description: 'Unprocessed property leads',
+      label: 'Go to Inbox',
+      description: 'Lead pipeline — approve/reject',
       category: 'navigation',
       icon: <Inbox size={16} />,
-      action: () => { navigate('/inbox'); addRecentAction({ id: 'nav-inbox', type: 'navigation', label: 'Lead Inbox' }); onClose(); },
-      keywords: ['leads', 'new', 'unprocessed'],
+      action: () => { navigate('/inbox'); addRecentAction({ id: 'nav-inbox', type: 'navigation', label: 'Inbox' }); onClose(); },
+      keywords: ['leads', 'pipeline', 'new'],
     },
     {
-      id: 'nav-compare',
-      label: 'Go to Comparative Intel',
-      description: 'Side-by-side property analysis',
+      id: 'nav-comparison',
+      label: 'Go to Comparison',
+      description: 'Side-by-side decision matrix',
       category: 'navigation',
-      icon: <Percent size={16} />,
-      action: () => { navigate('/compare'); addRecentAction({ id: 'nav-compare', type: 'navigation', label: 'Comparative Intel' }); onClose(); },
-      keywords: ['comparison', 'analysis', 'side by side'],
+      icon: <Scale size={16} />,
+      action: () => { navigate('/comparison'); addRecentAction({ id: 'nav-comparison', type: 'navigation', label: 'Comparison' }); onClose(); },
+      keywords: ['comparison', 'analysis', 'matrix', 'side by side'],
     },
     {
-      id: 'nav-mortgage',
-      label: 'Go to Mortgage Tracker',
-      description: 'Monitor financing options',
+      id: 'nav-affordability',
+      label: 'Go to Affordability',
+      description: 'Budget & mortgage calculator',
       category: 'navigation',
-      icon: <DollarSign size={16} />,
-      action: () => { navigate('/mortgage'); addRecentAction({ id: 'nav-mortgage', type: 'navigation', label: 'Mortgage Tracker' }); onClose(); },
-      keywords: ['finance', 'loan', 'lending'],
+      icon: <Calculator size={16} />,
+      action: () => { navigate('/affordability'); addRecentAction({ id: 'nav-affordability', type: 'navigation', label: 'Affordability' }); onClose(); },
+      keywords: ['affordability', 'budget', 'mortgage', 'calculator'],
     },
   ], [navigate, onClose, addRecentAction]);
 
@@ -136,7 +145,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
       icon: <Star size={16} />,
       action: () => {
         updateFilters({ is_value_buy: true });
-        navigate('/dashboard');
+        navigate('/properties');
         addRecentAction({ id: 'filter-valuebuy', type: 'filter', label: 'Value Buys' });
         onClose();
       },
@@ -150,7 +159,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
       icon: <Check size={16} />,
       action: () => {
         updateFilters({ vetted: true });
-        navigate('/dashboard');
+        navigate('/properties');
         addRecentAction({ id: 'filter-vetted', type: 'filter', label: 'Vetted' });
         onClose();
       },
@@ -164,7 +173,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
       icon: <Sparkles size={16} />,
       action: () => {
         updateFilters({});
-        navigate('/dashboard');
+        navigate('/properties');
         addRecentAction({ id: 'filter-new', type: 'filter', label: 'Fresh Discoveries' });
         onClose();
       },
@@ -178,7 +187,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
       icon: <X size={16} />,
       action: () => {
         updateFilters({});
-        navigate('/dashboard');
+        navigate('/properties');
         addRecentAction({ id: 'filter-clear', type: 'filter', label: 'All Properties' });
         onClose();
       },
@@ -192,7 +201,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
       icon: <TrendingUp size={16} />,
       action: () => {
         updateFilters({ sortBy: 'alpha_score', sortOrder: 'DESC' });
-        navigate('/dashboard');
+        navigate('/properties');
         addRecentAction({ id: 'filter-alpha', type: 'filter', label: 'Alpha Sort' });
         onClose();
       },
@@ -206,7 +215,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
       icon: <DollarSign size={16} />,
       action: () => {
         updateFilters({ sortBy: 'realistic_price', sortOrder: 'ASC' });
-        navigate('/dashboard');
+        navigate('/properties');
         addRecentAction({ id: 'filter-price', type: 'filter', label: 'Price Sort' });
         onClose();
       },
@@ -216,7 +225,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
 
   // Area filter commands
   const areaCommands: CommandItem[] = useMemo(() => {
-    const areas = [...new Set(properties.map(p => p.area.split(' (')[0]))];
+    const areas = [...new Set(properties.map(p => (p.area ?? '').split(' (')[0]))];
     return areas.map(area => ({
       id: `filter-area-${area}`,
       label: `Filter: ${area}`,
@@ -225,7 +234,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
       icon: <Building2 size={16} />,
       action: () => {
         updateFilters({ area });
-        navigate('/dashboard');
+        navigate('/properties');
         addRecentAction({ id: `filter-area-${area}`, type: 'filter', label: area });
         onClose();
       },
@@ -515,13 +524,14 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
                     // Navigate based on action type
                     if (action.type === 'navigation') {
                       const navMap: Record<string, string> = {
-                        'Discover': '/',
                         'Dashboard': '/dashboard',
-                        'Lead Inbox': '/inbox',
-                        'Comparative Intel': '/compare',
-                        'Mortgage Tracker': '/mortgage',
+                        'Properties': '/properties',
+                        'Map': '/map',
+                        'Inbox': '/inbox',
+                        'Comparison': '/comparison',
+                        'Affordability': '/affordability',
                       };
-                      navigate(navMap[action.label] || '/');
+                      navigate(navMap[action.label] || '/dashboard');
                     } else if (action.type === 'property') {
                       navigate(`/property/${action.id}`);
                     }

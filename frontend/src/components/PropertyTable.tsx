@@ -346,7 +346,8 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                   key={property.id}
                   className={`hover:bg-linear-card/40 transition-colors group ${
                     status === 'shortlisted' ? 'bg-linear-accent-blue/5' :
-                    status === 'vetted' ? 'bg-linear-accent-emerald/10' : ''
+                    status === 'vetted' ? 'bg-linear-accent-emerald/10' :
+                    status === 'archived' ? 'opacity-50 bg-linear-accent-rose/5' : ''
                   } ${isSelected ? 'bg-linear-accent-blue/10' : ''} ${isBatchSelected ? 'bg-blue-500/5' : ''}`}
                 >
                   {/* Batch Select Checkbox */}
@@ -382,6 +383,22 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                         {property.metadata.is_new && (
                           <span className="flex items-center gap-0.5 text-[8px] font-black text-linear-accent-blue bg-linear-accent-blue/10 px-1 rounded border border-linear-accent-blue/20">
                             NEW
+                          </span>
+                        )}
+                        {/* FE-181: Archived badge */}
+                        {status === 'archived' && (
+                          <span className="flex items-center gap-0.5 text-[8px] font-black text-linear-accent-rose bg-linear-accent-rose/10 px-1 rounded border border-linear-accent-rose/20">
+                            <Archive size={8} /> ARCHIVED
+                          </span>
+                        )}
+                        {/* FE-185 Part 4: market_status badge for archived rows */}
+                        {status === 'archived' && (property as any).market_status && (
+                          <span className={`flex items-center gap-0.5 text-[8px] font-black px-1 rounded border uppercase tracking-tighter ${
+                            (property as any).market_status === 'active' ? 'text-retro-amber bg-retro-amber/10 border-retro-amber/20' :
+                            (property as any).market_status === 'under_offer' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' :
+                            'text-linear-text-muted bg-linear-bg border-linear-border'
+                          }`}>
+                            {(property as any).market_status === 'active' ? '⚠ ' : ''}{(property as any).market_status}
                           </span>
                         )}
                         {property.is_value_buy && (

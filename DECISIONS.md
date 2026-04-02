@@ -116,3 +116,41 @@ Floorplans are a critical data point for judging spatial volume and flow before 
 3.  **Visualization:** Integrate a dedicated "Floorplan Preview" in the Lead Inbox and Property Detail page to enable rapid spatial assessment.
 ## Status
 Accepted
+
+# ADR-013: 5-Page Navigation Architecture
+## Context
+The existing propSearch UI lacked clear page separation — the Dashboard, Properties, Map, Inbox, and Comparison views were blended into a single, hard-to-navigate interface. The user reported poor UX and requested a structural reorganisation into five purpose-built pages.
+## Decision
+Restructure the application into five distinct, routable pages with a persistent sidebar navigation:
+1. **/dashboard** — Market Situation Room: HPI, BoE rate tracker, comparison basket preview, recent inbox activity, data freshness.
+2. **/properties** — Primary property tracking surface: table/grid toggle, institutional sorting, column management, filter panel, batch actions.
+3. **/map** — Full-viewport spatial intelligence map: Carto Dark tiles, Alpha Score-coded markers, shortlisted glow, metro overlays, slide-in property cards.
+4. **/inbox** — Keyboard-centric lead triage: split-pane (list + deep-review), A/R/L shortcuts, batch mode, submission history.
+5. **/comparison** — Decision-engine matrix: KPI row winners, delta vs. group average, image sync, analyst notes editor.
+Cross-cutting: persistent Comparison Bar (fixed bottom), global Cmd+K command palette routing to all pages.
+## Status
+Accepted
+
+# ADR-014: Market Status Taxonomy & Listing Freshness Tracking
+## Context
+The binary `archived = 1` flag conflates multiple distinct market states: genuinely sold properties, withdrawn listings, pre-enrichment duplicates, and properties still actively listed but flagged for incomplete data. The free-text `archive_reason` field is not filterable in the UI. Additionally, there is no timestamp tracking when a property was last verified against a live market scan. Five records currently show "Still Active" in `archive_reason` but are archived — they are reactivation candidates with no structured path to surface that in the UI.
+## Decision
+1.  **Structured `market_status` field:** Introduce `market_status` as a first-class column on the `properties` table with an enum of values: `active | under_offer | sold_stc | sold_completed | withdrawn | unknown`. This supplements — not replaces — the `archived` flag.
+2.  **Separation of concerns:** `market_status` reflects market reality (managed by Analyst + sync pipeline). `archived` reflects the user's research workflow decision. These are independent axes.
+3.  **`last_checked` timestamp:** Track the last date each property was verified against a live portal. Displayed as a freshness signal (green/amber/red) throughout the UI.
+4.  **API support:** `GET /api/properties` returns `market_status` and `last_checked`. `POST /api/properties/:id/check` updates `last_checked` and re-verifies listing status.
+5.  **UI surfaces:** Archive Review view grouped by `market_status` with prominent "Active — Recheck Needed" section; active property cards show freshness badge; recheck and reactivate actions exposed on archived records.
+## Status
+Accepted
+
+# ADR-014: Market Status Taxonomy & Listing Freshness Tracking
+## Context
+The binary `archived = 1` flag conflates multiple distinct market states: genuinely sold properties, withdrawn listings, pre-enrichment duplicates, and properties still actively listed but flagged for incomplete data. The free-text `archive_reason` field is not filterable in the UI. Additionally, there is no timestamp tracking when a property was last verified against a live market scan. Five records currently show "Still Active" in `archive_reason` but are archived — they are reactivation candidates with no structured path to surface that in the UI.
+## Decision
+1. **Structured `market_status` field:** Introduce `market_status` as a first-class column on the `properties` table with an enum of values: `active | under_offer | sold_stc | sold_completed | withdrawn | unknown`. This supplements — not replaces — the `archived` flag.
+2. **Separation of concerns:** `market_status` reflects market reality (managed by Analyst + sync pipeline). `archived` reflects the user's research workflow decision. These are independent axes.
+3. **`last_checked` timestamp:** Track the last date each property was verified against a live portal. Displayed as a freshness signal (green/amber/red) throughout the UI.
+4. **API support:** `GET /api/properties` returns `market_status` and `last_checked`. `POST /api/properties/:id/check` updates `last_checked` and re-verifies listing status.
+5. **UI surfaces:** Archive Review view grouped by `market_status` with prominent "Active — Recheck Needed" section; active property cards show freshness badge; recheck and reactivate actions exposed on archived records.
+## Status
+Accepted

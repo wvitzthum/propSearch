@@ -6,17 +6,17 @@ import { extractValue } from '../types/macro';
 const SwapRateSignal: React.FC = () => {
   const { data } = useMacroData();
 
-  // Provide fallback defaults for swap_rates so TypeScript knows it's never undefined
+  // FE-182: swap_rates are now normalized to plain numbers in useMacroData
   const swap = data?.swap_rates ?? { gbp_2yr: 4.10, gbp_5yr: 3.95, trend_2yr: 'holding' as const, trend_5yr: 'holding' as const, history_2yr: [], history_5yr: [] };
   const mortgageHistory = data?.mortgage_history || [];
 
   // 2yr rate from mortgage history
-  const recent2yr = mortgageHistory.length >= 1 ? extractValue(mortgageHistory[mortgageHistory.length - 1].mortgage_2yr) ?? 4.45 : 4.45;
-  const prev2yr = mortgageHistory.length >= 2 ? extractValue(mortgageHistory[mortgageHistory.length - 2].mortgage_2yr) ?? recent2yr : recent2yr;
+  const recent2yr = extractValue(mortgageHistory[mortgageHistory.length - 1]?.mortgage_2yr) ?? 4.45;
+  const prev2yr = extractValue(mortgageHistory[mortgageHistory.length - 2]?.mortgage_2yr) ?? recent2yr;
 
   // 5yr rate from mortgage history
-  const recent5yr = mortgageHistory.length >= 1 ? extractValue(mortgageHistory[mortgageHistory.length - 1].mortgage_5yr) ?? 4.10 : 4.10;
-  const prev5yr = mortgageHistory.length >= 2 ? extractValue(mortgageHistory[mortgageHistory.length - 2].mortgage_5yr) ?? recent5yr : recent5yr;
+  const recent5yr = extractValue(mortgageHistory[mortgageHistory.length - 1]?.mortgage_5yr) ?? 4.10;
+  const prev5yr = extractValue(mortgageHistory[mortgageHistory.length - 2]?.mortgage_5yr) ?? recent5yr;
 
   // Current mortgage rates for implied fixed rate
   const mortgage5yr90 = extractValue(data?.economic_indicators?.mortgage_rates?.["90_ltv_5yr_fixed"]) ?? 4.55;
@@ -25,32 +25,40 @@ const SwapRateSignal: React.FC = () => {
   const trend2yr = swap.trend_2yr ?? (recent2yr > prev2yr ? 'rising' : recent2yr < prev2yr ? 'falling' : 'holding');
   const trend5yr = swap.trend_5yr ?? (recent5yr > prev5yr ? 'rising' : recent5yr < prev5yr ? 'falling' : 'holding');
 
-  // Sparkline data from mortgage_history
+  // Sparkline data from swap_rates history if available, else mortgage_history fallback
   const sparkline2yr = useMemo(() => {
+    if (swap.history_2yr && swap.history_2yr.length >= 2) {
+      return swap.history_2yr.slice(-6).map((h) => h.rate);
+    }
     return mortgageHistory.slice(-6).map((h) => extractValue(h.mortgage_2yr) ?? 4.45);
-  }, [mortgageHistory]);
+  }, [swap.history_2yr, mortgageHistory]);
 
   const sparkline5yr = useMemo(() => {
+    if (swap.history_5yr && swap.history_5yr.length >= 2) {
+      return swap.history_5yr.slice(-6).map((h) => h.rate);
+    }
     return mortgageHistory.slice(-6).map((h) => extractValue(h.mortgage_5yr) ?? 4.10);
-  }, [mortgageHistory]);
+  }, [swap.history_5yr, mortgageHistory]);
 
   const trendColor = (t: string) => t === 'rising' ? '#ef4444' : t === 'falling' ? '#22c55e' : '#a1a1aa';
   const TrendIcon = (t: string) => t === 'rising' ? TrendingUp : t === 'falling' ? TrendingDown : Minus;
 
-  // Implied fixed rate = swap + spread
+  // FE-182: Implied fixed rate — values are now plain numbers, no NaN possible
   const implied5yrFixed = useMemo(() => {
-    const swap5yr = extractValue(swap.gbp_5yr) ?? recent5yr;
+    const swap5yr = isNaN(swap.gbp_5yr) ? recent5yr : swap.gbp_5yr;
     return swap5yr + 0.5; // approx spread
-  }, [swap, recent5yr]);
+  }, [swap.gbp_5yr, recent5yr]);
 
   const renderSparkline = (points: number[], color: string) => {
-    if (points.length < 2) return null;
-    const min = Math.min(...points);
-    const max = Math.max(...points);
+    // QA-185 Bug 2: filter NaN before computing range to prevent invalid SVG coords
+    const valid = points.filter((p) => !isNaN(p) && isFinite(p));
+    if (valid.length < 2) return null;
+    const min = Math.min(...valid);
+    const max = Math.max(...valid);
     const range = max - min || 0.1;
     const w = 60, h = 20;
-    const coords = points.map((p, i) => {
-      const x = (i / (points.length - 1)) * w;
+    const coords = valid.map((p, i) => {
+      const x = (i / (valid.length - 1)) * w;
       const y = h - ((p - min) / range) * h;
       return `${x},${y}`;
     }).join(' ');
@@ -94,7 +102,7 @@ const SwapRateSignal: React.FC = () => {
             <div className="flex items-end justify-between">
               <div>
                 <span className="text-2xl font-bold text-white tracking-tighter">
-                  {extractValue(swap?.gbp_2yr) != null ? extractValue(swap.gbp_2yr)?.toFixed(2) : recent2yr.toFixed(2)}%
+                  {!isNaN(swap.gbp_2yr) ? swap.gbp_2yr.toFixed(2) : recent2yr.toFixed(2)}%
                 </span>
               </div>
               {renderSparkline(sparkline2yr, trendColor(trend2yr))}
@@ -113,7 +121,7 @@ const SwapRateSignal: React.FC = () => {
             <div className="flex items-end justify-between">
               <div>
                 <span className="text-2xl font-bold text-white tracking-tighter">
-                  {extractValue(swap?.gbp_5yr) != null ? extractValue(swap.gbp_5yr)?.toFixed(2) : recent5yr.toFixed(2)}%
+                  {!isNaN(swap.gbp_5yr) ? swap.gbp_5yr.toFixed(2) : recent5yr.toFixed(2)}%
                 </span>
               </div>
               {renderSparkline(sparkline5yr, trendColor(trend5yr))}

@@ -67,10 +67,15 @@ export const useMacroData = () => {
             }))
           : [];
 
-        // --- FE-164: swap_rates normalization ---
+        // --- FE-182: swap_rates normalization — handle both flat and nested API formats ---
         const rawSwap = raw.swap_rates;
-        const swapHistory2yr: any[] = Array.isArray(rawSwap?.history_2yr) ? rawSwap.history_2yr : [];
-        const swapHistory5yr: Array<{month: string; rate: any}> = Array.isArray(rawSwap?.history_5yr) ? rawSwap.history_5yr : [];
+        // Support nested API format: { current: { two_year_gbp_swap, five_year_gbp_swap }, history_2yr, history_5yr }
+        // Support flat format: { gbp_2yr, gbp_5yr, history_2yr, history_5yr }
+        const swapCurrent = rawSwap?.current ?? rawSwap ?? null;
+        const swapHistory2yr: any[] = Array.isArray(rawSwap?.history_2yr) ? rawSwap.history_2yr
+          : Array.isArray(rawSwap?.current?.history_2yr) ? rawSwap.current.history_2yr : [];
+        const swapHistory5yr: Array<{month: string; rate: any}> = Array.isArray(rawSwap?.history_5yr) ? rawSwap.history_5yr
+          : Array.isArray(rawSwap?.current?.history_5yr) ? rawSwap.current.history_5yr : [];
 
         const calcTrend = (history: any[], current: number): 'rising' | 'falling' | 'holding' => {
           if (history.length < 2) return 'holding';
@@ -79,18 +84,26 @@ export const useMacroData = () => {
           return diff > 0.05 ? 'rising' : diff < -0.05 ? 'falling' : 'holding';
         };
 
-        const swapRatesNormalized = rawSwap ? {
-          gbp_2yr: rawSwap.gbp_2yr ?? 4.10,
-          gbp_5yr: rawSwap.gbp_5yr ?? 3.95,
-          trend_2yr: rawSwap.trend_2yr ?? calcTrend(swapHistory2yr, extractValue(rawSwap.gbp_2yr) ?? 4.10),
-          trend_5yr: rawSwap.trend_5yr ?? calcTrend(swapHistory5yr, extractValue(rawSwap.gbp_5yr) ?? 3.95),
+        const raw2yr = swapCurrent
+          ? (extractValue(swapCurrent.gbp_2yr) ?? extractValue(swapCurrent.two_year_gbp_swap) ?? 4.10)
+          : 4.10;
+        const raw5yr = swapCurrent
+          ? (extractValue(swapCurrent.gbp_5yr) ?? extractValue(swapCurrent.five_year_gbp_swap) ?? 3.95)
+          : 3.95;
+
+        // FE-182: Normalize to plain numbers (not ProvenanceOrValue) to prevent NaN in SVG math
+        const swapRatesNormalized = swapCurrent ? {
+          gbp_2yr: raw2yr,
+          gbp_5yr: raw5yr,
+          trend_2yr: (rawSwap as any)?.trend_2yr ?? calcTrend(swapHistory2yr, raw2yr),
+          trend_5yr: (rawSwap as any)?.trend_5yr ?? calcTrend(swapHistory5yr, raw5yr),
           history_2yr: swapHistory2yr.map((h: any) => ({
             month: h.month || h.date,
-            rate: h.rate
+            rate: extractValue(h.rate) ?? h.rate ?? 0
           })),
           history_5yr: swapHistory5yr.map((h: any) => ({
             month: h.month || h.date,
-            rate: h.rate
+            rate: extractValue(h.rate) ?? h.rate ?? 0
           }))
         } : undefined;
 
@@ -152,10 +165,24 @@ export const useMacroData = () => {
               : [];
             return arr.map((h: any) => ({
               month: h.date || h.month,
+              date: h.date,
               boe_rate: extractValue(h.boe_rate) ?? extractValue(rawEcon.boe_base_rate) ?? 3.75,
-              mortgage_2yr: extractValue(h.rate_90 ?? h.mortgage_2yr) ?? 4.45,
-              mortgage_5yr: extractValue(h.rate_75 ?? h.mortgage_5yr) ?? 4.55,
-              cpi: extractValue(h.cpi) ?? 2.1
+              mortgage_2yr: extractValue(h.rate_90 ?? h.mortgage_2yr_90ltv ?? h.mortgage_2yr) ?? 4.45,
+              mortgage_5yr: extractValue(h.rate_75 ?? h.mortgage_5yr_75ltv ?? h.mortgage_5yr) ?? 4.55,
+              cpi: extractValue(h.cpi) ?? 2.1,
+              // Preserve all LTV tier rates for MarketPulse (FE-164)
+              rate_90: extractValue(h.rate_90 ?? h.mortgage_2yr_90ltv) ?? 4.45,
+              rate_85: extractValue(h.mortgage_2yr_85ltv) ?? 4.25,
+              rate_75: extractValue(h.rate_75 ?? h.mortgage_5yr_75ltv) ?? 4.05,
+              rate_60: extractValue(h.mortgage_5yr_60ltv) ?? 3.85,
+              mortgage_2yr_90ltv: extractValue(h.mortgage_2yr_90ltv) ?? 4.45,
+              mortgage_2yr_85ltv: extractValue(h.mortgage_2yr_85ltv) ?? 4.25,
+              mortgage_2yr_75ltv: extractValue(h.mortgage_2yr_75ltv) ?? 4.05,
+              mortgage_2yr_60ltv: extractValue(h.mortgage_2yr_60ltv) ?? 3.85,
+              mortgage_5yr_90ltv: extractValue(h.mortgage_5yr_90ltv) ?? 4.55,
+              mortgage_5yr_85ltv: extractValue(h.mortgage_5yr_85ltv) ?? 4.25,
+              mortgage_5yr_75ltv: extractValue(h.mortgage_5yr_75ltv) ?? 4.05,
+              mortgage_5yr_60ltv: extractValue(h.mortgage_5yr_60ltv) ?? 3.85,
             }));
           })(),
           market_business: raw.market_business || raw.business_history || [],

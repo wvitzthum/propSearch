@@ -50,7 +50,7 @@ export const useProperties = (initialFilters: PropertyFilters = {}) => {
       console.log('Properties loaded from DB:', data.length);
       
       const propertiesWithCoords = data.map(p => {
-        const areaName = p.area.includes('Islington') ? 'Islington (N1)' : p.area;
+        const areaName = p.area?.includes('Islington') ? 'Islington (N1)' : (p.area ?? '');
         const coords = AREA_COORDS[areaName] || AREA_COORDS['Islington (N1)'];
         const [lat, lng] = coords;
         return {

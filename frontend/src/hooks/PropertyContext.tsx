@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import type { ReactNode } from 'react';
 import type { PropertyWithCoords, Property } from '../types/property';
+import type { PropertyStatus } from './usePipeline';
 
 export interface PropertyFilters {
   area?: string;
@@ -10,6 +11,7 @@ export interface PropertyFilters {
   sortOrder?: 'ASC' | 'DESC';
   is_value_buy?: boolean;
   vetted?: boolean;
+  archived?: boolean;
 }
 
 interface PropertyContextType {
@@ -19,6 +21,8 @@ interface PropertyContextType {
   filters: PropertyFilters;
   updateFilters: (newFilters: Partial<PropertyFilters>) => void;
   refreshProperties: () => Promise<void>;
+  // FE-181: Bridge to usePipeline so archived filter works via client-side pipeline state
+  registerPipeline: (getStatus: (id: string) => PropertyStatus) => void;
 }
 
 const PropertyContext = createContext<PropertyContextType | undefined>(undefined);
@@ -42,6 +46,14 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [properties, setProperties] = useState<PropertyWithCoords[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // FE-181: Bridge to usePipeline — stored as a ref so PropertyContext can filter
+  // by pipeline status without creating a circular import dependency.
+  const pipelineGetStatusRef = useRef<((id: string) => PropertyStatus) | null>(null);
+
+  const registerPipeline = useCallback((getStatus: (id: string) => PropertyStatus) => {
+    pipelineGetStatusRef.current = getStatus;
+  }, []);
+
   const [filters, setFilters] = useState<PropertyFilters>({
     limit: 100,
     offset: 0,
@@ -64,6 +76,8 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
         if (currentFilters.sortOrder) params.set('sortOrder', currentFilters.sortOrder);
         if (currentFilters.is_value_buy) params.set('is_value_buy', 'true');
         if (currentFilters.vetted) params.set('vetted', 'true');
+        // Always fetch all records (active + archived) — frontend filters by pipeline status client-side
+        params.set('archived', 'true');
         if (params.toString()) url += `?${params.toString()}`;
       }
 
@@ -79,7 +93,7 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
       // Client-side filtering for demo mode
       if (IS_DEMO) {
         if (currentFilters.area && currentFilters.area !== 'All Areas') {
-          finalData = finalData.filter(p => p.area.includes(currentFilters.area!));
+          finalData = finalData.filter(p => p.area?.includes(currentFilters.area!) ?? false);
         }
         if (currentFilters.is_value_buy) {
           finalData = finalData.filter(p => p.is_value_buy);
@@ -89,8 +103,13 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
       }
 
+      // FE-181: archived filter — pipeline status is client-side only; bridge via registerPipeline
+      if (currentFilters.archived && pipelineGetStatusRef.current) {
+        finalData = finalData.filter(p => pipelineGetStatusRef.current!(p.id) === 'archived');
+      }
+
       const propertiesWithCoords = finalData.map(p => {
-        const areaName = p.area.includes('Islington') ? 'Islington (N1)' : p.area;
+        const areaName = p.area?.includes('Islington') ? 'Islington (N1)' : (p.area ?? '');
         const coords = AREA_COORDS[areaName] || AREA_COORDS['Islington (N1)'];
         const [lat, lng] = coords;
         return {
@@ -121,13 +140,14 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
   const refreshProperties = useCallback(() => fetchProperties(filters), [filters, fetchProperties]);
 
   return (
-    <PropertyContext.Provider value={{ 
-      properties, 
-      loading, 
-      error, 
-      filters, 
-      updateFilters, 
-      refreshProperties 
+    <PropertyContext.Provider value={{
+      properties,
+      loading,
+      error,
+      filters,
+      updateFilters,
+      refreshProperties,
+      registerPipeline
     }}>
       {children}
     </PropertyContext.Provider>

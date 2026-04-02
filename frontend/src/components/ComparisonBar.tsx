@@ -9,7 +9,7 @@ const ComparisonBar: React.FC = () => {
   const { selectedIds, toggleComparison, clearComparison, count } = useComparison();
   const { properties } = usePropertyContext();
 
-  if (count === 0 || location.pathname === '/compare') return null;
+  if (count === 0 || location.pathname === '/comparison') return null;
 
   const selectedProperties = properties.filter(p => selectedIds.includes(p.id));
 
@@ -20,7 +20,7 @@ const ComparisonBar: React.FC = () => {
           {selectedProperties.map(p => (
             <div key={p.id} className="relative group/item">
               <div className="h-12 w-12 rounded-xl overflow-hidden border border-white/10 shadow-lg">
-                <img src={p.image_url} alt="" className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src={p.image_url || undefined} alt="" className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
               </div>
               <button 
                 onClick={() => toggleComparison(p.id)}
@@ -54,8 +54,8 @@ const ComparisonBar: React.FC = () => {
             >
               Reset
             </button>
-            <Link 
-              to="/compare"
+            <Link
+              to="/comparison"
               className="px-6 py-2.5 bg-blue-500 hover:bg-blue-400 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 shadow-[0_0_20px_rgba(59,130,246,0.4)] transition-all active:scale-95"
             >
               Execute Analytics <ArrowRight size={14} />

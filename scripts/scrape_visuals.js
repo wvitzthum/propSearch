@@ -1,4 +1,134 @@
 const { chromium } = require('playwright');
+const http = require('http');
+
+// Load from .env.local (gitignored) — set FLARESOLVR_URL, FLARESOLVR_SESSION, FLARESOLVR_TIMEOUT
+const FLARESOLVR_URL = process.env.FLARESOLVR_URL || 'http://localhost:8191';
+const FLARESOLVR_SESSION = process.env.FLARESOLVR_SESSION || 'propSearch';
+const FLARESOLVR_TIMEOUT = parseInt(process.env.FLARESOLVR_TIMEOUT || '90');
+
+/**
+ * FlareSolverr proxy — bypasses Cloudflare challenges by running a real browser.
+ * Returns full SSR HTML with listing data (including floorArea, sqft, bedrooms, EPC).
+ */
+function scrapeWithFlaresolverr(url) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({
+      cmd: 'request.get',
+      url,
+      maxTimeout: FLARESOLVR_TIMEOUT * 1000,
+      session: FLARESOLVR_SESSION
+    });
+    const fsUrl = new URL(FLARESOLVR_URL);
+    const opts = {
+      hostname: fsUrl.hostname,
+      port: fsUrl.port || 8191,
+      path: '/v1',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+    };
+    const req = http.request(opts, res => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        try {
+          const j = JSON.parse(data);
+          if (j.status !== 'ok') return reject(new Error(j.message || 'FlareSolverr failed: ' + j.status));
+          resolve(j.solution.response);
+        } catch (e) {
+          reject(new Error('FlareSolverr parse error: ' + e.message));
+        }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+/**
+ * Extract full property data from FlareSolverr HTML response.
+ * Works for Zoopla detail pages.
+ */
+async function extractFlaresolverrData(html, source) {
+  const result = { url: '', source, image_url: null, floorplan_url: null, gallery: [], floor_level: null, streetview_url: null };
+
+  if (source === 'Zoopla') {
+    // Extract from Zoopla's embedded listing data (Next.js serialized format)
+    // Find the listingData section with counts, floorArea, tenure etc.
+    // Zoopla HTML from FlareSolverr contains escaped quotes (\") in JSON string
+    // Unescape all \" → " before pattern matching
+    const idx = html.indexOf('floorArea');
+    if (idx >= 0) {
+      // Unescape: replace all \" with " in a copy, then search
+      const unescHtml = html.split('\\\"').join('"');
+      const unescIdx = unescHtml.indexOf('"floorArea"');
+      const ctx = unescHtml.substring(Math.max(0, unescIdx - 300), unescIdx + 2000);
+      const unesc = ctx; // already unescaped
+      // floorArea: Zoopla uses object form {"floorArea":{"value":730,"label":"730 sq. ft"}} or plain 730
+      const floorArea = ctx.match(/"floorArea"\s*:\s*\{[^}]*?"value"\s*:\s*(\d+)/) || ctx.match(/"floorArea"\s*:\s*(\d+)/);
+      const sizeSqft = ctx.match(/"sizeSqft"\s*:\s*"?(\d[\d,]*)"?/);
+      const numBedrooms = ctx.match(/"numBedrooms"\s*:\s*(\d)/);
+      const numBathrooms = ctx.match(/"numBathrooms"\s*:\s*(\d)/);
+      const floorLevel = ctx.match(/"floorLevel"\s*:\s*"([^"]+)"/);
+      const tenureType = ctx.match(/"tenureType"\s*:\s*"([^"]+)"/) || ctx.match(/"tenure"\s*:\s*"([^"]+)"/);
+      const epc = ctx.match(/"efficiencyRating"\s*:\s*"([^"]+)"/);
+      const price = ctx.match(/"originalPrice"\s*:\s*"?(\d+)"?/) || ctx.match(/"internalValue"\s*:\s*"?(\d+)"?/) || ctx.match(/"listingPrice"\s*:\s*"?(\d+)"?/);
+      const lat = ctx.match(/"latitude"\s*:\s*([-\d.]+)/);
+      const lon = ctx.match(/"longitude"\s*:\s*([-\d.]+)/);
+      const postcode = ctx.match(/"postalCode"\s*:\s*"([^"]+)"/) || ctx.match(/"outcode"\s*:\s*"([^"]+)"/);
+      const address = ctx.match(/"displayAddress"\s*:\s*"([^"]+)"/);
+
+      Object.assign(result, {
+        sqft: floorArea ? parseInt(floorArea[1]) : (sizeSqft ? parseInt(sizeSqft[1].replace(/,/g, '')) : null),
+        numBedrooms: numBedrooms ? parseInt(numBedrooms[1]) : null,
+        numBathrooms: numBathrooms ? parseInt(numBathrooms[1]) : null,
+        floor_level: floorLevel ? floorLevel[1] : null,
+        tenure: tenureType ? tenureType[1] : null,
+        epc: epc ? epc[1] : null,
+        list_price: price ? parseInt(price[1]) : null,
+        latitude: lat ? parseFloat(lat[1]) : null,
+        longitude: lon ? parseFloat(lon[1]) : null,
+        postcode: postcode ? postcode[1] : null,
+        address: address ? address[1] : null
+      });
+    }
+
+    // Extract images from the Next.js data
+    const imgMatches = [...html.matchAll(/"(https:\/\/lid\.zoocdn\.com[^"]+)"/g)];
+    const seen = new Set();
+    imgMatches.forEach(m => {
+      const src = m[1].replace(/\\/, '');
+      if (!seen.has(src) && !src.includes('sprite') && !src.includes('icon') && !src.includes('logo')) {
+        seen.add(src);
+        result.gallery.push(src);
+      }
+    });
+    if (result.gallery.length > 0) result.image_url = result.gallery[0];
+
+    // Floorplan detection
+    const fpMatch = html.match(/"(https:\/\/lid\.zoocdn\.com[^"]*floorplan[^"]+)"/i);
+    if (fpMatch) result.floorplan_url = fpMatch[1];
+
+    // Streetview URL from coordinates
+    if (result.latitude && result.longitude) {
+      result.streetview_url = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${result.latitude},${result.longitude}`;
+    }
+
+    // Extract from description text for floor level if not found
+    if (!result.floor_level) {
+      const descMatch = html.match(/"description"\s*:\s*"([^"]{20,500})"/);
+      if (descMatch) {
+        const desc = descMatch[1].replace(/\\n/g, ' ');
+        const flMatch = desc.match(/\b(ground|first|second|third|fourth|fifth|sixth|seventh|top|penthouse|lower\s+ground|garden\s+level)\s+floor\b/i) ||
+                       desc.match(/\b(1st|2nd|3rd|4th|5th|6th|7th)\s+floor\b/i);
+        if (flMatch) result.floor_level = flMatch[0].toLowerCase();
+      }
+    }
+  }
+
+  return result;
+}
+
 
 /**
  * Scraper for Rightmove and Zoopla high-res assets.
@@ -78,30 +208,64 @@ async function scrapeVisuals(url) {
         }
       }
     } else if (result.source === 'Zoopla') {
-      const nextData = await page.evaluate(() => {
-        const script = document.getElementById('__NEXT_DATA__');
-        if (script) return JSON.parse(script.textContent);
-        if (window.__NEXT_DATA__) return window.__NEXT_DATA__;
-        return null;
-      });
+      // Primary: FlareSolverr — bypasses Cloudflare for full SSR HTML with sqft, bedrooms, EPC, tenure
+      try {
+        console.log('[Zoopla] Using FlareSolverr for full SSR extraction...');
+        const flaresolverrHtml = await scrapeWithFlaresolverr(url);
+        const fsData = await extractFlaresolverrData(flaresolverrHtml, 'Zoopla');
+        // Merge FlareSolverr data into result (don't overwrite image_url if already set by Rightmove above)
+        result = {
+          ...result,
+          sqft: fsData.sqft ?? result.sqft,
+          numBedrooms: fsData.numBedrooms ?? result.numBedrooms,
+          numBathrooms: fsData.numBathrooms ?? result.numBathrooms,
+          floor_level: fsData.floor_level ?? result.floor_level,
+          tenure: fsData.tenure ?? result.tenure,
+          epc: fsData.epc ?? result.epc,
+          list_price: fsData.list_price ?? result.list_price,
+          latitude: fsData.latitude ?? result.latitude,
+          longitude: fsData.longitude ?? result.longitude,
+          postcode: fsData.postcode ?? result.postcode,
+          gallery: fsData.gallery.length > 0 ? fsData.gallery : result.gallery,
+          image_url: result.image_url || fsData.image_url,
+          floorplan_url: result.floorplan_url || fsData.floorplan_url,
+          streetview_url: result.streetview_url || fsData.streetview_url
+        };
+        console.log('[Zoopla] FlareSolverr extraction complete:', {
+          sqft: result.sqft,
+          bedrooms: result.numBedrooms,
+          tenure: result.tenure,
+          epc: result.epc,
+          postcode: result.postcode
+        });
+      } catch (fsErr) {
+        console.log('[Zoopla] FlareSolverr failed, falling back to Playwright:', fsErr.message);
+        // Fallback: Playwright __NEXT_DATA__ extraction (may be Cloudflare-blocked)
+        const nextData = await page.evaluate(() => {
+          const script = document.getElementById('__NEXT_DATA__');
+          if (script) return JSON.parse(script.textContent);
+          if (window.__NEXT_DATA__) return window.__NEXT_DATA__;
+          return null;
+        });
 
-      if (nextData) {
-        const listingDetails = nextData.props?.pageProps?.listingDetails || nextData.props?.pageProps?.initialProps?.listingDetails;
-        if (listingDetails) {
-          console.log('Zoopla ListingDetails found');
-          if (listingDetails.images?.length > 0) {
-            result.image_url = listingDetails.images[0].src;
-            result.gallery = listingDetails.images.slice(0, 5).map(img => img.src);
-          }
-          if (listingDetails.floorplans && listingDetails.floorplans.length > 0) {
-            result.floorplan_url = listingDetails.floorplans[0].src || listingDetails.floorplans[0].url;
-          }
-          if (listingDetails.floorLevel) {
-            result.floor_level = listingDetails.floorLevel;
-          }
-          if (listingDetails.location && listingDetails.location.coordinates) {
-            const { lat, lon } = listingDetails.location.coordinates;
-            result.streetview_url = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lon}`;
+        if (nextData) {
+          const listingDetails = nextData.props?.pageProps?.listingDetails || nextData.props?.pageProps?.initialProps?.listingDetails;
+          if (listingDetails) {
+            console.log('Zoopla ListingDetails found (Playwright fallback)');
+            if (listingDetails.images?.length > 0) {
+              result.image_url = result.image_url || listingDetails.images[0].src;
+              if (result.gallery.length === 0) result.gallery = listingDetails.images.slice(0, 5).map(img => img.src);
+            }
+            if (listingDetails.floorplans && listingDetails.floorplans.length > 0) {
+              result.floorplan_url = result.floorplan_url || listingDetails.floorplans[0].src || listingDetails.floorplans[0].url;
+            }
+            if (listingDetails.floorLevel) {
+              result.floor_level = result.floor_level || listingDetails.floorLevel;
+            }
+            if (listingDetails.location && listingDetails.location.coordinates) {
+              const { lat, lon } = listingDetails.location.coordinates;
+              result.streetview_url = result.streetview_url || `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lon}`;
+            }
           }
         }
       }

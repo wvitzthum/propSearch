@@ -53,10 +53,23 @@ export const useFinancialData = () => {
                 : [];
               return arr.map((h: any) => ({
                 month: h.date || h.month,
+                date: h.date,
                 boe_rate: extractValue(h.boe_rate) ?? extractValue(rawEcon.boe_base_rate) ?? 3.75,
-                mortgage_2yr: extractValue(h.rate_90 ?? h.mortgage_2yr) ?? 4.45,
-                mortgage_5yr: extractValue(h.rate_75 ?? h.mortgage_5yr) ?? 4.55,
-                cpi: extractValue(h.cpi) ?? 2.1
+                mortgage_2yr: extractValue(h.rate_90 ?? h.mortgage_2yr_90ltv ?? h.mortgage_2yr) ?? 4.45,
+                mortgage_5yr: extractValue(h.rate_75 ?? h.mortgage_5yr_75ltv ?? h.mortgage_5yr) ?? 4.55,
+                cpi: extractValue(h.cpi) ?? 2.1,
+                rate_90: extractValue(h.rate_90 ?? h.mortgage_2yr_90ltv) ?? 4.45,
+                rate_85: extractValue(h.mortgage_2yr_85ltv) ?? 4.25,
+                rate_75: extractValue(h.rate_75 ?? h.mortgage_5yr_75ltv) ?? 4.05,
+                rate_60: extractValue(h.mortgage_5yr_60ltv) ?? 3.85,
+                mortgage_2yr_90ltv: extractValue(h.mortgage_2yr_90ltv) ?? 4.45,
+                mortgage_2yr_85ltv: extractValue(h.mortgage_2yr_85ltv) ?? 4.25,
+                mortgage_2yr_75ltv: extractValue(h.mortgage_2yr_75ltv) ?? 4.05,
+                mortgage_2yr_60ltv: extractValue(h.mortgage_2yr_60ltv) ?? 3.85,
+                mortgage_5yr_90ltv: extractValue(h.mortgage_5yr_90ltv) ?? 4.55,
+                mortgage_5yr_85ltv: extractValue(h.mortgage_5yr_85ltv) ?? 4.25,
+                mortgage_5yr_75ltv: extractValue(h.mortgage_5yr_75ltv) ?? 4.05,
+                mortgage_5yr_60ltv: extractValue(h.mortgage_5yr_60ltv) ?? 3.85,
               }));
             })()
           };

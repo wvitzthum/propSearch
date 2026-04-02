@@ -13,6 +13,27 @@ const IMPORT_DIR = path.join(DATA_DIR, 'import');
 const db = new Database(DB_PATH);
 
 /**
+ * Recursively find all import files (json + jsonl) in a directory tree,
+ * excluding the archive subdirectory.
+ */
+function findImportFiles(dir) {
+  const results = [];
+  if (!fs.existsSync(dir)) return results;
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name !== 'archive' && entry.name !== 'processed' && entry.name !== 'snapshots') {
+        results.push(...findImportFiles(fullPath));
+      }
+    } else if (entry.isFile() && (entry.name.endsWith('.json') || entry.name.endsWith('.jsonl'))) {
+      results.push(fullPath);
+    }
+  }
+  return results;
+}
+
+/**
  * Call the visual scraper to enrich property data.
  */
 function enrichVisuals(item) {
@@ -76,26 +97,105 @@ async function sync() {
     console.error('Error processing manual queue:', e.message);
   }
 
-  // 2. Process Import Directory
+  // 2a. Process JSONL Import Files (newline-delimited JSON — one record per line)
+  // Recursively scans all subdirectories under IMPORT_DIR (excludes archive/processed/snapshots)
   if (fs.existsSync(IMPORT_DIR)) {
-    const importFiles = fs.readdirSync(IMPORT_DIR).filter(f => f.endsWith('.json'));
-    for (const file of importFiles) {
-      console.log(`Importing ${file}...`);
+    const allFiles = findImportFiles(IMPORT_DIR);
+    const jsonlFiles = allFiles.filter(f => f.endsWith('.jsonl'));
+    const jsonFiles = allFiles.filter(f => f.endsWith('.json'));
+
+    for (const file of jsonlFiles) {
+      const relPath = path.relative(DATA_DIR, file);
+      // Guards: skip metadata/reporting files — never process these as property records
+      if (relPath.includes('REJECTIONS_REPORT') || relPath.includes('VERIFICATION_REPORT')) {
+        console.log(`Skipping metadata file: ${relPath}`);
+        continue;
+      }
+      console.log(`Processing JSONL: ${relPath}...`);
       try {
-        const items = JSON.parse(fs.readFileSync(path.join(IMPORT_DIR, file), 'utf8'));
-        const itemsArray = Array.isArray(items) ? items : [items];
-        for (const item of itemsArray) {
+        const lines = fs.readFileSync(file, 'utf8').trim().split('\n').filter(l => l.trim());
+        let skipped = 0, imported = 0;
+        for (const line of lines) {
+          const item = JSON.parse(line);
+          // Guard: skip CONDITIONAL records that need sqft verification — do NOT auto-promote
+          if (item.acquisition_status === 'CONDITIONAL — sqft required (≥600 sqft)' || item.needs_sqft_verification === true) {
+            skipped++;
+            continue;
+          }
+          // Guard: skip REJECTED records — these have been analysed and should not enter master DB
+          const status = (item.acquisition_status || '').toLowerCase();
+          if (status.includes('rejected') || status.includes('reject') || status === 'reject') {
+            skipped++;
+            continue;
+          }
+          // Guard: skip records without address (null/missing) — these are non-property artefacts
+          if (!item.address || item.address.trim() === '') {
+            skipped++;
+            console.error(`  WARNING: Skipping record with null/empty address from ${path.basename(file)}`);
+            continue;
+          }
           const enrichedItem = enrichVisuals(item);
           const processedItem = processItem(enrichedItem);
           dailySnapshot.push(processedItem);
+          imported++;
         }
-        
-        // Archive imports
+        console.log(`  -> Imported: ${imported}, Skipped: ${skipped}`);
+
+        // Archive JSONL (preserve subdirectory structure in archive path)
         const archiveDir = path.join(DATA_DIR, 'archive/imports');
         if (!fs.existsSync(archiveDir)) fs.mkdirSync(archiveDir, { recursive: true });
-        fs.renameSync(path.join(IMPORT_DIR, file), path.join(archiveDir, `${Date.now()}_${file}`));
+        const archiveName = `${Date.now()}_${path.basename(file)}`;
+        fs.renameSync(file, path.join(archiveDir, archiveName));
       } catch (e) {
-        console.error(`Failed to import ${file}: ${e.message}`);
+        console.error(`Failed to process JSONL ${relPath}: ${e.message}`);
+      }
+    }
+
+    for (const file of jsonFiles) {
+      const relPath = path.relative(DATA_DIR, file);
+      // Guards: skip metadata/reporting files
+      if (relPath.includes('REJECTIONS_REPORT') || relPath.includes('VERIFICATION_REPORT')) {
+        console.log(`Skipping metadata file: ${relPath}`);
+        continue;
+      }
+      console.log(`Importing JSON: ${relPath}...`);
+      try {
+        const raw = fs.readFileSync(file, 'utf8');
+        const items = JSON.parse(raw);
+        const itemsArray = Array.isArray(items) ? items : [items];
+        let skipped = 0, imported = 0;
+        for (const item of itemsArray) {
+          // Guard: skip CONDITIONAL records that need sqft verification
+          if (item.acquisition_status === 'CONDITIONAL — sqft required (≥600 sqft)' || item.needs_sqft_verification === true) {
+            skipped++;
+            continue;
+          }
+          // Guard: skip REJECTED records
+          const status = (item.acquisition_status || '').toLowerCase();
+          if (status.includes('rejected') || status.includes('reject') || status === 'reject') {
+            skipped++;
+            continue;
+          }
+          // Guard: skip records without address
+          if (!item.address || item.address.trim() === '') {
+            skipped++;
+            console.error(`  WARNING: Skipping record with null/empty address from ${path.basename(file)}`);
+            continue;
+          }
+          const enrichedItem = enrichVisuals(item);
+          const processedItem = processItem(enrichedItem);
+          dailySnapshot.push(processedItem);
+          imported++;
+        }
+        console.log(`  -> Imported: ${imported}, Skipped: ${skipped}`);
+
+        // Archive JSON (preserve subdirectory structure in archive path)
+        const archiveDir = path.join(DATA_DIR, 'archive/imports');
+        if (!fs.existsSync(archiveDir)) fs.mkdirSync(archiveDir, { recursive: true });
+        const archiveName = `${Date.now()}_${path.basename(file)}`;
+        fs.renameSync(file, path.join(archiveDir, archiveName));
+      } catch (e) {
+        console.error(`Failed to import JSON ${relPath}: ${e.message}`);
       }
     }
   }
@@ -125,6 +225,7 @@ async function sync() {
   }
 
   // 4. Update Properties in SQLite
+  // DE-165: INSERT includes market_status='active' and last_checked for new properties
   const insertStmt = db.prepare(`
     INSERT INTO properties (
       id, address, area, image_url, gallery, streetview_url, floorplan_url,
@@ -137,17 +238,22 @@ async function sync() {
       price_reduction_amount, price_reduction_percent, days_since_reduction,
       epc_improvement_potential, est_capex_requirement,
       waitrose_distance, whole_foods_distance, wellness_hub_distance,
-      archived, archive_reason
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      archived, archive_reason, market_status, last_checked, pipeline_status
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  // UPDATE preserves archived/archive_reason — analyst-set flags must not be overwritten by sync
+  // UPDATE preserves archived/archive_reason/pipeline_status — analyst-set and user pipeline flags must not be overwritten by sync
+  // DE-164: Updated to merge links/gallery and promote higher-res images on duplicate detection
+  // DE-165: Updated to update last_checked on every re-seen property
+  // FE-186: Updated to preserve pipeline_status — user's pipeline decisions are never overwritten by the sync pipeline
   const updateStmt = db.prepare(`
     UPDATE properties SET
       list_price = ?, realistic_price = ?, dom = ?, metadata = ?,
       price_reduction_amount = ?, price_reduction_percent = ?, days_since_reduction = ?,
       epc_improvement_potential = ?, est_capex_requirement = ?,
-      waitrose_distance = ?, whole_foods_distance = ?, wellness_hub_distance = ?
+      waitrose_distance = ?, whole_foods_distance = ?, wellness_hub_distance = ?,
+      links = ?, image_url = ?, gallery = ?, floorplan_url = COALESCE(?, floorplan_url),
+      streetview_url = COALESCE(?, streetview_url), last_checked = ?
     WHERE id = ?
   `);
 
@@ -168,21 +274,80 @@ async function sync() {
 
   for (const newItem of dailySnapshot) {
     try {
-      const existing = db.prepare("SELECT id, metadata, list_price FROM properties WHERE address = ? AND area = ?").get(newItem.address, newItem.area);
-      
+      const existing = db.prepare("SELECT id, metadata, list_price, links, image_url, gallery, floorplan_url, streetview_url FROM properties WHERE address = ? AND area = ?").get(newItem.address, newItem.area);
+
       if (existing) {
+        // DE-164: Fetch and merge visual/link fields from existing record
+        const existingLinks = (() => {
+          try { return typeof existing.links === 'string' ? JSON.parse(existing.links) : (existing.links || []); } catch { return []; }
+        })();
+        const existingGallery = (() => {
+          try { return typeof existing.gallery === 'string' ? JSON.parse(existing.gallery) : (existing.gallery || []); } catch { return []; }
+        })();
+        const existingImageUrl = existing.image_url || null;
+        const existingFloorplan = existing.floorplan_url || null;
+        const existingStreetview = existing.streetview_url || null;
+
+        // (a) Merge new links into existing — dedupe by URL string
+        const newLinks = Array.isArray(newItem.links) ? newItem.links : [];
+        const mergedLinks = [...existingLinks];
+        for (const link of newLinks) {
+          if (link && typeof link === 'object' && link.url && !mergedLinks.find(l => l && l.url === link.url)) {
+            mergedLinks.push(link);
+          }
+        }
+
+        // (b) Merge new gallery images into existing — dedupe by URL
+        const newGallery = Array.isArray(newItem.gallery) ? newItem.gallery : [];
+        const mergedGallery = [...existingGallery];
+        for (const img of newGallery) {
+          if (img && !mergedGallery.includes(img)) mergedGallery.push(img);
+        }
+
+        // (c) Promote image_url if new value is higher-res (≥1024px wide) and existing is lower/missing
+        let promotedImageUrl = existingImageUrl;
+        const isHighRes = (url) => url && (url.includes('/1024/') || url.includes('/1280/') || url.includes('/1440/') || url.includes('/1920/') || /\/[12]\d{3}[_\/]/.test(url));
+        if (newItem.image_url) {
+          const existingIsHighRes = isHighRes(existingImageUrl);
+          const newIsHighRes = isHighRes(newItem.image_url);
+          if (!existingImageUrl || (!existingIsHighRes && newIsHighRes)) {
+            promotedImageUrl = newItem.image_url;
+          }
+        }
+
+        // (d) Keep existing floorplan/streetview if set; fill in missing ones
+        const promotedFloorplan = existingFloorplan || newItem.floorplan_url || null;
+        const promotedStreetview = existingStreetview || newItem.streetview_url || null;
+
+        // Update metadata
         const metadata = typeof existing.metadata === 'string' ? JSON.parse(existing.metadata) : (existing.metadata || {});
         metadata.last_seen = new Date().toISOString().split('T')[0];
         metadata.discovery_count = (metadata.discovery_count || 1) + 1;
         metadata.is_new = false;
 
+        const mergedLinksChanged = mergedLinks.length !== existingLinks.length;
+        const mergedGalleryChanged = mergedGallery.length !== existingGallery.length;
+        const imagePromoted = promotedImageUrl !== existingImageUrl;
+
+        // DE-165: Update last_checked on every re-seen property
+        const today = new Date().toISOString().split('T')[0];
         updateStmt.run(
           newItem.list_price, newItem.realistic_price, newItem.dom || null, JSON.stringify(metadata),
           newItem.price_reduction_amount || null, newItem.price_reduction_percent || null, newItem.days_since_reduction || null,
           newItem.epc_improvement_potential || null, newItem.est_capex_requirement || null,
           newItem.waitrose_distance || null, newItem.whole_foods_distance || null, newItem.wellness_hub_distance || null,
+          JSON.stringify(mergedLinks),
+          promotedImageUrl,
+          JSON.stringify(mergedGallery),
+          promotedFloorplan,
+          promotedStreetview,
+          today,
           existing.id
         );
+
+        if (mergedLinksChanged) console.log(`  [DE-164] Links merged for ${newItem.address}: ${existingLinks.length} -> ${mergedLinks.length}`);
+        if (mergedGalleryChanged) console.log(`  [DE-164] Gallery merged for ${newItem.address}: ${existingGallery.length} -> ${mergedGallery.length}`);
+        if (imagePromoted) console.log(`  [DE-164] Image promoted for ${newItem.address}: ${existingImageUrl ? 'upgraded' : 'new'}`);
 
         // DAT-140: Track price changes
         if (newItem.list_price && newItem.list_price !== existing.list_price) {
@@ -212,7 +377,12 @@ async function sync() {
           newItem.waitrose_distance || null, newItem.whole_foods_distance || null, newItem.wellness_hub_distance || null,
           // DE-162 fix: preserve archived/archive_reason on new pipeline inserts (default active)
           newItem.archived !== undefined ? newItem.archived : 0,
-          newItem.archive_reason || null
+          newItem.archive_reason || null,
+          // DE-165: new property is 'active', last_checked set to today
+          'active',
+          new Date().toISOString().split('T')[0],
+          // FE-186: new property enters at 'discovered' — user pipeline default
+          'discovered'
         );
 
         // DAT-140: Record initial price

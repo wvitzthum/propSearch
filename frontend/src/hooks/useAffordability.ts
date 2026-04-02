@@ -27,7 +27,27 @@ export interface LTVMatchScore {
 
 const LTV_STORAGE_KEY = 'propSearch_ltv_budget';
 const TERM_STORAGE_KEY = 'propSearch_loan_term';
+const DEPOSIT_MODE_KEY = 'propSearch_deposit_mode';
+const DEPOSIT_PCT_KEY = 'propSearch_deposit_pct';
 const VALID_TERMS = [15, 20, 25, 30] as const;
+const DEPOSIT_PRESETS = [5, 10, 15, 20, 25] as const;
+const DEFAULT_DEPOSIT_PCT = 15; // 15% — standard minimum for best LTV rates
+
+export type DepositMode = 'auto' | 'fixed';
+
+export interface TotalPurchaseCost {
+  deposit: number;
+  depositPct: number;
+  mortgage: number;
+  sdlt: number;
+  solicitorFees: number;
+  surveyFees: number;
+  mortgageFees: number;
+  totalCapital: number; // deposit + SDLT
+  totalCashNeeded: number; // deposit + SDLT + solicitor + survey + mortgage fees
+  isFtB: boolean;
+  sdltBand: string;
+}
 
 export const useAffordability = () => {
   const { macroData } = useFinancialData();
@@ -53,6 +73,161 @@ export const useAffordability = () => {
       _setTermYears(years);
     }
   }, []);
+
+  // --- Deposit Mode & Percentage (FE-169) ---
+  const [depositMode, setDepositModeState] = useState<DepositMode>(() => {
+    const stored = localStorage.getItem(DEPOSIT_MODE_KEY);
+    return (stored ? JSON.parse(stored) : 'auto') as DepositMode;
+  });
+
+  const [depositPct, setDepositPctState] = useState<number>(() => {
+    const stored = localStorage.getItem(DEPOSIT_PCT_KEY);
+    const parsed = stored ? JSON.parse(stored) : DEFAULT_DEPOSIT_PCT;
+    return Math.max(5, Math.min(60, parsed));
+  });
+
+  // Persist deposit mode
+  useEffect(() => {
+    localStorage.setItem(DEPOSIT_MODE_KEY, JSON.stringify(depositMode));
+  }, [depositMode]);
+
+  // Persist deposit percentage
+  useEffect(() => {
+    localStorage.setItem(DEPOSIT_PCT_KEY, JSON.stringify(depositPct));
+  }, [depositPct]);
+
+  const setDepositMode = useCallback((mode: DepositMode) => {
+    setDepositModeState(mode);
+  }, []);
+
+  const setDepositPct = useCallback((pct: number) => {
+    setDepositPctState(Math.max(5, Math.min(60, pct)));
+  }, []);
+
+  // --- SDLT Calculation (FE-169) ---
+  const calculateSDLT = useCallback((
+    propertyPrice: number,
+    isFtB: boolean = false,
+    isAdditionalProperty: boolean = false
+  ): { sdlt: number; sdltBand: string } => {
+    const sdltTiers = macroData?.sdlt_tiers;
+    if (!sdltTiers) {
+      // Fallback: rough estimate using standard 5% on portion above £250K
+      const taxable = Math.max(0, propertyPrice - 250000);
+      return { sdlt: Math.round(taxable * 0.05), sdltBand: 'Standard (est.)' };
+    }
+
+    const standardRates = sdltTiers.standard_rates;
+    const additionalSurcharge = sdltTiers.additional_property_surcharge ?? 3;
+
+    // Determine which rate table to use
+    let rates: { bracket: string; rate: number }[] = standardRates;
+    let sdltBand = 'Standard';
+
+    if (isFtB && !isAdditionalProperty) {
+      const ftb = sdltTiers.first_time_buyer_relief;
+      if (ftb && propertyPrice <= ftb.threshold) {
+        rates = ftb.bands;
+        sdltBand = 'FTB Relief';
+      }
+    }
+
+    if (isAdditionalProperty) {
+      sdltBand = `Standard + ${additionalSurcharge}% APS`;
+    }
+
+    // HMRC SDLT is charged cumulatively on each band.
+    // Extract cumulative upper bounds and compute tax per band:
+    // taxable_in_band_i = min(price, upper_i) - min(price, upper_{i-1})
+    const upperBounds: number[] = [];
+    for (const band of rates) {
+      const match = band.bracket.match(/£([0-9,]+)\s*-\s*£([0-9,]+)/);
+      if (match) {
+        upperBounds.push(parseInt(match[2].replace(/,/g, ''), 10));
+      } else {
+        const openMatch = band.bracket.match(/£([0-9,]+)\+/);
+        if (openMatch) {
+          upperBounds.push(Infinity);
+        }
+      }
+    }
+
+    let totalSDLT = 0;
+    let prevBound = 0;
+    for (let i = 0; i < rates.length; i++) {
+      const upper = upperBounds[i] ?? Infinity;
+      const taxableInBand = Math.min(propertyPrice, upper) - prevBound;
+      if (taxableInBand > 0) {
+        totalSDLT += taxableInBand * (rates[i].rate / 100);
+      }
+      prevBound = upper;
+      if (prevBound >= propertyPrice) break;
+    }
+
+    // Add 3% additional property surcharge if applicable
+    if (isAdditionalProperty) {
+      totalSDLT += propertyPrice * (additionalSurcharge / 100);
+    }
+
+    return { sdlt: Math.round(totalSDLT), sdltBand };
+  }, [macroData]);
+
+  // --- Total Purchase Cost Calculation (FE-169) ---
+  const calculateTotalPurchaseCost = useCallback((
+    propertyPrice: number,
+    isFtB: boolean = false,
+    isAdditionalProperty: boolean = false,
+    surveyTier: 'homebuyer' | 'building' | 'mortgage_valuation' = 'homebuyer',
+    feeTier: 'low' | 'typical' | 'high' = 'typical'
+  ): TotalPurchaseCost => {
+    const benchmarks = macroData?.purchase_cost_benchmarks;
+
+    // Deposit: use configured pct or fall back to auto (15%)
+    const effectiveDepositPct = depositMode === 'fixed' ? depositPct : 15;
+    const deposit = Math.round(propertyPrice * (effectiveDepositPct / 100));
+    const mortgage = Math.max(0, propertyPrice - deposit);
+
+    // SDLT
+    const { sdlt, sdltBand } = calculateSDLT(propertyPrice, isFtB, isAdditionalProperty);
+
+    // Solicitor fees
+    const solicitorTypical = benchmarks?.solicitor_conveyancing_fees?.typical?.value ?? 2000;
+    const solicitorDisbursements = benchmarks?.solicitor_conveyancing_fees?.disbursements_estimate?.value ?? 350;
+    const solicitorFees = feeTier === 'high'
+      ? (benchmarks?.solicitor_conveyancing_fees?.high?.value ?? 3500) + solicitorDisbursements
+      : feeTier === 'low'
+      ? (benchmarks?.solicitor_conveyancing_fees?.low?.value ?? 1200) + solicitorDisbursements
+      : solicitorTypical + solicitorDisbursements;
+
+    // Survey fees
+    const surveyKey = surveyTier === 'building'
+      ? 'building_survey'
+      : surveyTier === 'mortgage_valuation'
+      ? 'mortgage_valuation'
+      : 'homebuyer_report';
+    const surveyFees = benchmarks?.rics_surveys?.[surveyKey]?.[feeTier]?.value
+      ?? (surveyTier === 'building' ? 1000 : surveyTier === 'mortgage_valuation' ? 250 : 600);
+
+    // Mortgage arrangement fee (typical)
+    const mortgageFees = benchmarks?.mortgage_arrangement_fee?.[feeTier]?.value ?? 999;
+
+    const totalCapital = deposit + sdlt;
+    const totalCashNeeded = deposit + sdlt + solicitorFees + surveyFees + mortgageFees;
+
+    return {
+      deposit,
+      depositPct: effectiveDepositPct,
+      mortgage,
+      sdlt,
+      solicitorFees,
+      surveyFees,
+      mortgageFees,
+      totalCapital,
+      totalCashNeeded,
+      isFtB,
+      sdltBand,
+    };
+  }, [macroData, depositMode, depositPct, calculateSDLT]);
 
   // Live mortgage rates from macro_trend.json via useFinancialData
   // Falls back to market defaults if data unavailable
@@ -254,6 +429,14 @@ export const useAffordability = () => {
     mortgageRate,
     mortgageRates,
     termYears,
-    updateTermYears
+    updateTermYears,
+    // FE-169: Deposit configuration
+    depositMode,
+    depositPct,
+    setDepositMode,
+    setDepositPct,
+    DEPOSIT_PRESETS,
+    calculateSDLT,
+    calculateTotalPurchaseCost,
   };
 };

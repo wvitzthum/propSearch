@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { TrendingUp, TrendingDown, Minus, Info, BarChart2, Layers, Sliders } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Info, BarChart2, Sliders } from 'lucide-react';
 import { useAppreciationModel } from '../hooks/useAppreciationModel';
 import { useMonteCarlo } from '../hooks/useMonteCarlo';
 
@@ -77,30 +77,42 @@ const CapitalAppreciationChart: React.FC<CapitalAppreciationChartProps> = ({
   const W = compact ? 80 : 200;
   const H = compact ? 40 : 80;
 
+  // QA-185 Bug 3: filter NaN/Infinity from allValues before Math.min/max
   const allValues = [
     ...yearlyData.flatMap(d => [d.bear, d.base, d.bull]),
     ...(mc ? [
-      ...mc.yearlyBandP10,
-      ...mc.yearlyBandP50,
-      ...mc.yearlyBandP90,
+      ...(mc.yearlyBandP10 || []),
+      ...(mc.yearlyBandP50 || []),
+      ...(mc.yearlyBandP90 || []),
     ] : []),
-  ];
+  ].filter((v) => isFinite(v) && !isNaN(v));
+
+  if (allValues.length === 0) return null;
+
   const minV = Math.min(...allValues) * 0.97;
   const maxV = Math.max(...allValues) * 1.03;
   const range = maxV - minV;
   const pad = 4;
 
   const getX = (i: number) => pad + (i / (yearlyData.length - 1)) * (W - 2 * pad);
-  const getY = (v: number) => H - pad - ((v - minV) / range) * (H - 2 * pad);
-  const getYMc = (v: number) => {
-    const horizon = mcHorizon;
-    const xLen = horizon + 1;
-    return (H - pad) - ((v - minV) / range) * (H - 2 * pad);
+  const safeGetY = (v: number | undefined | null) => {
+    if (v == null || !isFinite(v) || isNaN(v)) return H - pad;
+    return H - pad - ((v - minV) / range) * (H - 2 * pad);
   };
+  const getY = (v: number) => safeGetY(v) as number;
 
   const toPolyline = (key: keyof typeof yearlyData[0]) =>
     yearlyData.map((d, i) => `${getX(i)},${getY(d[key] as number)}`).join(' ');
 
+  if (loading) return (
+    <div className="bg-linear-card/30 border border-linear-border rounded-xl p-4 flex items-center justify-center animate-pulse h-48">
+      <span className="text-[10px] text-linear-text-muted uppercase tracking-widest">Loading appreciation model...</span>
+    </div>
+  );
+
+  if (!profile) return null;
+
+  // Fan chart SVG path (depends on yearlyData — now safe to compute after profile guard)
   const fanPath = [
     `M ${getX(0)},${getY(yearlyData[0].bear)}`,
     ...yearlyData.map((d, i) => `L ${getX(i)},${getY(d.bull)}`),
@@ -112,14 +124,6 @@ const CapitalAppreciationChart: React.FC<CapitalAppreciationChartProps> = ({
     const rfVal = propertyPrice * Math.pow(1 + BOE_BASE / 100, d.year);
     return `${getX(i)},${getY(rfVal)}`;
   }).join(' ');
-
-  if (loading) return (
-    <div className="bg-linear-card/30 border border-linear-border rounded-xl p-4 flex items-center justify-center animate-pulse h-48">
-      <span className="text-[10px] text-linear-text-muted uppercase tracking-widest">Loading appreciation model...</span>
-    </div>
-  );
-
-  if (!profile) return null;
 
   // Monte Carlo histogram bins
   const histogramBins = useMemo(() => {
@@ -248,9 +252,9 @@ const CapitalAppreciationChart: React.FC<CapitalAppreciationChartProps> = ({
                 {/* P10-P90 band */}
                 <path
                   d={[
-                    `M ${getX(0)},${getY(mc.yearlyBandP10[0])}`,
-                    ...mc.yearlyBandP10.map((v, i) => `L ${getX(i)},${getY(v)}`),
-                    ...[...mc.yearlyBandP90].reverse().map((v, i) => `L ${getX(mc.yearlyBandP90.length - 1 - i)},${getY(v)}`),
+                    `M ${getX(0)},${safeGetY(mc.yearlyBandP10[0])}`,
+                    ...mc.yearlyBandP10.map((v, i) => `L ${getX(i)},${safeGetY(v)}`),
+                    ...[...mc.yearlyBandP90].reverse().map((v, i) => `L ${getX(mc.yearlyBandP90.length - 1 - i)},${safeGetY(v)}`),
                     'Z',
                   ].join(' ')}
                   fill="#a855f7" opacity="0.08"
@@ -258,26 +262,26 @@ const CapitalAppreciationChart: React.FC<CapitalAppreciationChartProps> = ({
                 {/* P25-P75 band */}
                 <path
                   d={[
-                    `M ${getX(0)},${getY(mc.p25)}`,
-                    `L ${getX(mcHorizon)},${getY(mc.p25)}`,
-                    `L ${getX(mcHorizon)},${getY(mc.p75)}`,
-                    `L ${getX(0)},${getY(mc.p75)}`,
+                    `M ${getX(0)},${safeGetY(mc.p25)}`,
+                    `L ${getX(mcHorizon)},${safeGetY(mc.p25)}`,
+                    `L ${getX(mcHorizon)},${safeGetY(mc.p75)}`,
+                    `L ${getX(0)},${safeGetY(mc.p75)}`,
                     'Z',
                   ].join(' ')}
                   fill="#a855f7" opacity="0.12"
                 />
                 {/* P50 line */}
                 <polyline
-                  points={mc.yearlyBandP50.map((v, i) => `${getX(i)},${getY(v)}`).join(' ')}
+                  points={mc.yearlyBandP50.map((v, i) => `${getX(i)},${safeGetY(v)}`).join(' ')}
                   fill="none" stroke="#a855f7" strokeWidth="1.2"
                   strokeDasharray="3,1"
                 />
                 {/* P10/P90 endpoints */}
                 {mc.yearlyBandP10.map((v, i) => (
-                  <circle key={i} cx={getX(i)} cy={getY(v)} r="0.8" fill="#a855f7" opacity="0.5" />
+                  <circle key={i} cx={getX(i)} cy={safeGetY(v)} r="0.8" fill="#a855f7" opacity="0.5" />
                 ))}
                 {mc.yearlyBandP90.map((v, i) => (
-                  <circle key={i} cx={getX(i)} cy={getY(v)} r="0.8" fill="#a855f7" opacity="0.5" />
+                  <circle key={i} cx={getX(i)} cy={safeGetY(v)} r="0.8" fill="#a855f7" opacity="0.5" />
                 ))}
               </>
             )}
@@ -303,7 +307,7 @@ const CapitalAppreciationChart: React.FC<CapitalAppreciationChartProps> = ({
 
         {/* Year markers */}
         <div className="flex justify-between text-[8px] text-linear-text-muted font-mono px-1">
-          {['Now', 'Y1', 'Y2', 'Y3', 'Y4', 'Y5'].map((label, i) => <span key={label}>{label}</span>)}
+          {['Now', 'Y1', 'Y2', 'Y3', 'Y4', 'Y5'].map((label) => <span key={label}>{label}</span>)}
         </div>
 
         {/* Monte Carlo Panel */}

@@ -1,18 +1,24 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import PropertyImage from '../components/PropertyImage';
 import LoadingNode from '../components/LoadingNode';
-import { 
-  Check, 
-  ArrowRight, 
-  Keyboard, 
-  ShieldAlert, 
+import {
+  Check,
+  ArrowRight,
+  Keyboard,
+  ShieldAlert,
   ExternalLink,
   Trash2,
   CheckCircle2,
   Layers,
-  Maximize2
-} from 'lucide-react';
+  Maximize2,
+  History,
+  X,
 
+  Scale,
+  ArrowUpRight
+} from 'lucide-react';
+import { usePipeline } from '../hooks/usePipeline';
+import { useComparison } from '../hooks/useComparison';
 import FloorplanViewer from '../components/FloorplanViewer';
 
 const API_BASE = '/api';
@@ -28,7 +34,27 @@ interface RawListing {
   filename: string;
 }
 
+type TriageStatus = 'pending' | 'approved' | 'rejected' | 'processing';
+
+const SUBMISSION_KEY = 'propsearch_inbox_submissions';
+const STATUS_KEY = 'propsearch_inbox_status';
+
+interface Submission {
+  url: string;
+  address: string;
+  source: string;
+  date: string;
+}
+
+const loadSubmissions = (): Submission[] => JSON.parse(localStorage.getItem(SUBMISSION_KEY) || '[]');
+const saveSubmission = (s: Submission) => {
+  const prev = loadSubmissions();
+  localStorage.setItem(SUBMISSION_KEY, JSON.stringify([s, ...prev].slice(0, 20)));
+};
+
 const Inbox: React.FC = () => {
+  const { setStatus: setPipelineStatus } = usePipeline();
+  const comparison = useComparison();
   const [listings, setListings] = useState<RawListing[]>([]);
   const [currentIndex, setCurrentListIndex] = useState(0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -36,7 +62,57 @@ const Inbox: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [viewMode, setViewMode] = useState<'metrics' | 'portal' | 'floorplan'>('metrics');
+  const [triageStatus, setTriageStatus] = useState<Record<string, TriageStatus>>(() =>
+    JSON.parse(localStorage.getItem(STATUS_KEY) || '{}')
+  );
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [quickAddUrl, setQuickAddUrl] = useState('');
+  const [quickAddLoading, setQuickAddLoading] = useState(false);
+  const [quickAddMsg, setQuickAddMsg] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setSubmissions(loadSubmissions()); }, []);
+
+  const saveStatus = (id: string, status: TriageStatus) => {
+    const next = { ...triageStatus, [id]: status };
+    setTriageStatus(next);
+    localStorage.setItem(STATUS_KEY, JSON.stringify(next));
+  };
+
+  const handleQuickAdd = async () => {
+    if (!quickAddUrl.trim()) return;
+    setQuickAddLoading(true);
+    setQuickAddMsg(null);
+    const entry: Submission = { url: quickAddUrl.trim(), address: '', source: 'Manual', date: new Date().toISOString() };
+
+    try {
+      // POST to /api/inbox — writes to data/inbox/{timestamp}_RAW.json for sync pipeline to pick up
+      const res = await fetch(`${API_BASE}/inbox`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: entry.url, source: entry.source, date: entry.date })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+
+      saveSubmission(entry);
+      setSubmissions(loadSubmissions());
+      setQuickAddMsg('URL saved — refresh buffer to triage');
+      setQuickAddUrl('');
+    } catch (err: any) {
+      console.error('Quick-add failed:', err);
+      // Still save to localStorage so the submission is not lost
+      saveSubmission(entry);
+      setSubmissions(loadSubmissions());
+      setQuickAddMsg(`Saved locally — sync error: ${err.message}. Will retry on refresh.`);
+    } finally {
+      setQuickAddLoading(false);
+    }
+  };
 
   const fetchInbox = useCallback(async () => {
     try {
@@ -137,23 +213,36 @@ const Inbox: React.FC = () => {
   const handleAction = useCallback(async (action: 'approve' | 'reject', indexToTriage?: number) => {
     const idx = indexToTriage !== undefined ? indexToTriage : currentIndex;
     if (listings.length === 0 || idx >= listings.length) return;
-    
+
     const listing = listings[idx];
+    const newStatus: TriageStatus = action === 'approve' ? 'approved' : 'rejected';
+    saveStatus(listing.filename, newStatus);
+
+    // UX-010: Approve → set pipeline status to 'discovered' so it surfaces in Properties
+    if (action === 'approve') {
+      try {
+        // Try to set pipeline status. Use address as a lookup key in localStorage.
+        // The Data Engineer would assign a real ID on ingest; we use filename as a proxy.
+        setPipelineStatus(listing.filename, 'discovered');
+      } catch {
+        // Pipeline not available — non-fatal
+      }
+    }
+
     setIsProcessing(true);
-    
     try {
       const res = await fetch(`${API_BASE}/inbox`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          ...listing, 
+        body: JSON.stringify({
+          ...listing,
           action,
           triaged_at: new Date().toISOString()
         })
       });
 
       if (!res.ok) throw new Error('API Rejection');
-      
+
       setListings(prev => prev.filter((_, i) => i !== idx));
       if (currentIndex >= listings.length - 1 && currentIndex > 0) {
         setCurrentListIndex(prev => prev - 1);
@@ -165,7 +254,7 @@ const Inbox: React.FC = () => {
     } finally {
       setIsProcessing(false);
     }
-  }, [listings, currentIndex]);
+  }, [listings, currentIndex, setPipelineStatus]);
 
   const handlePeek = (url: string) => {
     // Open a focused, smaller window to simulate an "embedded" feel without header pollution
@@ -174,8 +263,10 @@ const Inbox: React.FC = () => {
 
   const handleBatchAction = async (action: 'approve' | 'reject') => {
     if (selectedIds.size === 0) return;
+    const newStatus: TriageStatus = action === 'approve' ? 'approved' : 'rejected';
+    selectedIds.forEach(id => saveStatus(id, newStatus));
     setIsProcessing(true);
-    
+
     const toProcess = listings.filter(l => selectedIds.has(l.filename));
     
     try {
@@ -278,10 +369,42 @@ const Inbox: React.FC = () => {
             {listings.length} Pending Leads • {selectedIds.size} Selected
           </p>
         </div>
-        
-        <div className="flex items-center gap-3">
+
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* FE-180: Quick-add URL submission */}
+          <div className="flex items-center gap-2 bg-linear-card border border-linear-border rounded-xl overflow-hidden">
+            <input
+              type="url"
+              value={quickAddUrl}
+              onChange={e => setQuickAddUrl(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleQuickAdd()}
+              placeholder="Paste URL..."
+              className="pl-3 pr-2 py-1.5 bg-transparent text-[10px] text-white placeholder-linear-text-muted focus:outline-none w-44 font-mono"
+            />
+            <button
+              onClick={handleQuickAdd}
+              disabled={quickAddLoading}
+              className="px-3 py-1.5 bg-blue-500/20 border-l border-linear-border text-blue-400 text-[9px] font-black uppercase hover:bg-blue-500/30 disabled:opacity-50 transition-all"
+            >
+              {quickAddLoading ? '...' : '+'}
+            </button>
+          </div>
+          {quickAddMsg && (
+            <span className="text-[9px] font-bold text-emerald-400 animate-in fade-in">{quickAddMsg}</span>
+          )}
+
+          {/* FE-180: Submission history toggle */}
+          <button
+            onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+              isHistoryOpen ? 'bg-retro-amber/20 border-retro-amber/30 text-retro-amber' : 'bg-linear-card border-linear-border text-linear-text-muted hover:text-white'
+            }`}
+          >
+            <History size={12} /> Submissions ({submissions.length})
+          </button>
+
           {selectedIds.size > 0 && (
-            <div className="flex items-center gap-2 mr-4 animate-in fade-in slide-in-from-right-4">
+            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4">
               <button 
                 onClick={() => handleBatchAction('approve')}
                 className="px-3 py-1.5 bg-retro-green/10 text-retro-green border border-retro-green/20 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-retro-green/20 transition-all"
@@ -309,7 +432,23 @@ const Inbox: React.FC = () => {
             <CheckCircle2 size={32} />
           </div>
           <h2 className="text-xl font-bold text-white mb-2 tracking-tight">Lead Buffer Depleted</h2>
-          <p className="text-linear-text-muted text-sm uppercase tracking-widest font-bold">Waiting for next automated scrape cycle</p>
+          <p className="text-linear-text-muted text-sm uppercase tracking-widest font-bold mb-4">Waiting for next automated scrape cycle</p>
+          {/* UX-009: CTA in empty state */}
+          <div className="flex items-center gap-3">
+            <a
+              href="/properties"
+              className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 text-white/70 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all"
+            >
+              View Properties
+              <ArrowUpRight size={12} />
+            </a>
+            <button
+              onClick={fetchInbox}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 border border-blue-500/30 text-blue-400 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-blue-500/30 transition-all"
+            >
+              Refresh Buffer
+            </button>
+          </div>
         </div>
       ) : (
         <div className="flex-grow flex gap-6 overflow-hidden">
@@ -325,32 +464,42 @@ const Inbox: React.FC = () => {
               </button>
             </div>
             <div ref={scrollRef} className="flex-grow overflow-y-auto custom-scrollbar">
-              {listings.map((listing, i) => (
-                <div 
-                  key={listing.filename}
-                  onClick={() => setCurrentListIndex(i)}
-                  className={`p-4 border-b border-linear-border/50 cursor-pointer transition-all flex items-start gap-3 group relative ${
-                    i === currentIndex ? 'bg-blue-500/10 border-l-2 border-l-blue-500' : 'hover:bg-linear-card/40'
-                  }`}
-                >
-                  <input 
-                    type="checkbox"
-                    checked={selectedIds.has(listing.filename)}
-                    onChange={(e) => { e.stopPropagation(); toggleSelect(listing.filename); }}
-                    className="mt-1 h-3.5 w-3.5 rounded border-linear-border bg-linear-bg text-blue-500 focus:ring-0 focus:ring-offset-0 transition-all cursor-pointer"
-                  />
-                  <div className="flex-grow min-w-0">
-                    <div className={`text-xs font-bold truncate tracking-tight transition-colors ${i === currentIndex ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-200'}`}>
-                      {listing.address}
+              {listings.map((listing, i) => {
+                const status = triageStatus[listing.filename] || 'pending';
+                const statusColor = status === 'approved' ? 'text-retro-green' : status === 'rejected' ? 'text-rose-400' : status === 'processing' ? 'text-amber-400' : 'text-linear-text-muted';
+                const statusBg = status === 'approved' ? 'bg-emerald-500/10 border-emerald-500/20' : status === 'rejected' ? 'bg-rose-500/10 border-rose-500/20' : status === 'processing' ? 'bg-amber-500/10 border-amber-500/20' : '';
+                return (
+                  <div
+                    key={listing.filename}
+                    onClick={() => setCurrentListIndex(i)}
+                    className={`p-4 border-b border-linear-border/50 cursor-pointer transition-all flex items-start gap-3 group relative ${
+                      i === currentIndex ? 'bg-blue-500/10 border-l-2 border-l-blue-500' : 'hover:bg-linear-card/40'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(listing.filename)}
+                      onChange={(e) => { e.stopPropagation(); toggleSelect(listing.filename); }}
+                      className="mt-1 h-3.5 w-3.5 rounded border-linear-border bg-linear-bg text-blue-500 focus:ring-0 focus:ring-offset-0 transition-all cursor-pointer"
+                    />
+                    <div className="flex-grow min-w-0">
+                      <div className={`text-xs font-bold truncate tracking-tight transition-colors ${i === currentIndex ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-200'}`}>
+                        {listing.address}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                        {/* FE-180: Source attribution badge */}
+                        <span className="text-[8px] font-black px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded uppercase tracking-tighter">{listing.source || 'Unknown'}</span>
+                        {/* FE-180: Status badge */}
+                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter border ${statusBg} ${statusColor}`}>
+                          {status}
+                        </span>
+                        <span className="text-[9px] font-bold text-blue-400/80">£{listing.price?.toLocaleString() ?? '—'}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-tighter">{listing.source}</span>
-                      <span className="text-[9px] font-bold text-blue-400/80">£{listing.price?.toLocaleString() ?? '—'}</span>
-                    </div>
+                    {i === currentIndex && <ArrowRight size={14} className="text-blue-500 shrink-0" />}
                   </div>
-                  {i === currentIndex && <ArrowRight size={14} className="text-blue-500 shrink-0" />}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -525,23 +674,66 @@ const Inbox: React.FC = () => {
             )}
 
             {/* Sticky Actions Footer */}
-            <div className="p-6 bg-linear-card border-t border-linear-border grid grid-cols-2 gap-4">
-              <button 
-                onClick={() => handleAction('approve')}
-                className="flex items-center justify-center gap-3 py-4 bg-retro-green/10 text-retro-green border border-retro-green/20 rounded-xl font-black text-xs uppercase tracking-[0.2em] hover:bg-retro-green/20 hover:border-retro-green/40 transition-all active:scale-95 group shadow-xl shadow-retro-green/5"
+            <div className="p-6 bg-linear-card border-t border-linear-border grid grid-cols-3 gap-4">
+              {/* UX-010: Add to Comparison */}
+              <button
+                onClick={() => comparison.toggleComparison(currentListing.filename)}
+                className="flex items-center justify-center gap-2 py-3.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-500/20 hover:border-blue-500/40 transition-all active:scale-95"
+                title="Add to comparison basket"
               >
-                <Check size={18} className="group-hover:scale-125 transition-transform" />
-                Approve Lead [A]
+                <Scale size={14} />
+                {comparison.isInComparison(currentListing.filename) ? 'In Basket' : 'Compare'}
               </button>
-              <button 
-                onClick={() => handleAction('reject')}
-                className="flex items-center justify-center gap-3 py-4 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-xl font-black text-xs uppercase tracking-[0.2em] hover:bg-rose-500/20 hover:border-rose-500/40 transition-all active:scale-95 group shadow-xl shadow-rose-500/5"
+              <button
+                onClick={() => handleAction('approve')}
+                className="flex items-center justify-center gap-2 py-3.5 bg-retro-green/10 text-retro-green border border-retro-green/20 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-retro-green/20 hover:border-retro-green/40 transition-all active:scale-95 shadow-xl shadow-retro-green/5"
               >
-                <Trash2 size={18} className="group-hover:scale-125 transition-transform" />
-                Reject Lead [R]
+                <Check size={14} className="group-hover:scale-125 transition-transform" />
+                Approve [A]
+              </button>
+              <button
+                onClick={() => handleAction('reject')}
+                className="flex items-center justify-center gap-2 py-3.5 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-rose-500/20 hover:border-rose-500/40 transition-all active:scale-95 shadow-xl shadow-rose-500/5"
+              >
+                <Trash2 size={14} className="group-hover:scale-125 transition-transform" />
+                Reject [R]
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* FE-180: Submission History Panel */}
+      {isHistoryOpen && (
+        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setIsHistoryOpen(false)} />
+      )}
+      {isHistoryOpen && (
+        <div className="absolute bottom-0 left-64 right-0 z-50 bg-linear-card/95 backdrop-blur-xl border-t border-linear-border shadow-2xl max-h-64 overflow-y-auto custom-scrollbar">
+          <div className="px-6 py-3 border-b border-linear-border bg-linear-card/50 flex items-center justify-between">
+            <span className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+              <History size={12} className="text-retro-amber" /> Manual Submissions
+            </span>
+            <button onClick={() => setIsHistoryOpen(false)} className="text-linear-text-muted hover:text-white">
+              <X size={14} />
+            </button>
+          </div>
+          {submissions.length === 0 ? (
+            <div className="p-6 text-center text-[10px] text-linear-text-muted">
+              No manually submitted URLs yet. Paste a Rightmove/Zoopla link above.
+            </div>
+          ) : (
+            <div className="divide-y divide-linear-border/50">
+              {submissions.map((s, i) => (
+                <div key={i} className="flex items-center gap-4 px-6 py-3 hover:bg-linear-bg/50 transition-colors">
+                  <a href={s.url} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-0 text-[10px] font-mono text-blue-400 hover:text-blue-300 truncate transition-colors">
+                    {s.url}
+                  </a>
+                  <span className="text-[9px] text-linear-text-muted font-bold px-1.5 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded text-blue-400">{s.source}</span>
+                  <span className="text-[9px] text-linear-text-muted shrink-0">{new Date(s.date).toLocaleDateString()}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -44,7 +44,22 @@ To maximize performance and minimize token usage, follow these surgical patterns
   jq '.tasks[] | select(.status!="Done" and .section!="superseded")' tasks/tasks.json  # live
   ```
 - **Task Status Updates:** Edit `tasks/tasks.json` directly — single object replacement, no column-count risk.
+- **⚠️ CRITICAL - File Structure:** `tasks/tasks.json` is a JSON object with a `"tasks"` key containing an array: `{"tasks": [...]}`. The Python generator expects this structure. NEVER use raw jq to replace the entire file content without preserving this structure.
+- **⚠️ CRITICAL - Safe Updates:** When using jq with `> file.json && mv`, the output may lose the object wrapper. Always verify with `jq 'keys' tasks/tasks.json` — should show `["tasks"]`.
+- **⚠️ CRITICAL - Recovery:** If the file becomes an array only, wrap it: `echo '{"tasks": ' > tmp && cat tasks/tasks.json >> tmp && echo '}' >> tmp && mv tmp tasks/tasks.json`
 - **Regenerate Markdown:** After updating `tasks/tasks.json`, run `python3 tasks/scripts/generate_tasks_markdown.py --write` or `make tasks-regen` to update `Tasks.md`.
+- **Alternative Python Approach:** For complex updates, use Python instead of jq:
+  ```python
+  python3 -c "
+  import json
+  with open('tasks/tasks.json') as f:
+      data = json.load(f)
+  # modify data['tasks']
+  with open('tasks/tasks.json', 'w') as f:
+      json.dump(data, f, indent=2)
+  print('Done')
+  "
+  ```
 - **MANDATE:** Use `grep_search` for requirement IDs (e.g., `Requirement 11`) in `REQUIREMENTS.md`.
 
 ### B. Range-Limited Reads

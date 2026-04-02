@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Info, ExternalLink, ChevronDown, Globe } from 'lucide-react';
+import { ExternalLink, ChevronDown, Globe } from 'lucide-react';
 
 interface SourceEntry {
   name: string;
   url?: string;
-  data_used: string[];
+  data_used?: string[];
   freshness?: 'current' | 'stale' | 'outdated';
   last_refreshed?: string;
 }

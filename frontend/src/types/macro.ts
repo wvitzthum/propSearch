@@ -76,11 +76,26 @@ export interface TimingSignals {
 }
 
 export interface MortgageHistoryEntry {
+  // Normalized canonical fields (used by MortgageTracker, SwapRateSignal)
   month: string;
   boe_rate: ProvenanceOrValue<number>;
-  mortgage_2yr: ProvenanceOrValue<number>;
-  mortgage_5yr: ProvenanceOrValue<number>;
+  mortgage_2yr: ProvenanceOrValue<number>; // maps from rate_90 (90% LTV 2yr fixed)
+  mortgage_5yr: ProvenanceOrValue<number>; // maps from rate_75 (75% LTV 5yr fixed)
   cpi: ProvenanceOrValue<number>;
+  // Aliases for MarketPulse compat — normalized values for each LTV tier
+  rate_90?: ProvenanceOrValue<number>;
+  rate_85?: ProvenanceOrValue<number>;
+  rate_75?: ProvenanceOrValue<number>;
+  rate_60?: ProvenanceOrValue<number>;
+  date?: string;
+  mortgage_2yr_90ltv?: ProvenanceOrValue<number>;
+  mortgage_2yr_85ltv?: ProvenanceOrValue<number>;
+  mortgage_2yr_75ltv?: ProvenanceOrValue<number>;
+  mortgage_2yr_60ltv?: ProvenanceOrValue<number>;
+  mortgage_5yr_90ltv?: ProvenanceOrValue<number>;
+  mortgage_5yr_85ltv?: ProvenanceOrValue<number>;
+  mortgage_5yr_75ltv?: ProvenanceOrValue<number>;
+  mortgage_5yr_60ltv?: ProvenanceOrValue<number>;
 }
 
 export interface MacroTrend {
@@ -95,6 +110,8 @@ export interface MacroTrend {
   market_pulse_summary?: ProvenanceOrValue<string>;
   mortgage_history?: MortgageHistoryEntry[];
   sdlt_countdown?: string;
+  sdlt_tiers?: SDLLTTiers;
+  purchase_cost_benchmarks?: PurchaseCostBenchmarks;
   epc_deadline_risk?: string;
   // FE-164: Market Conditions Radar
   boe_rate_consensus?: BoERateConsensus;
@@ -126,10 +143,10 @@ export interface RateScenario {
   path: ProvenanceOrValue<number>[]; // quarterly rate values
 }
 
-// FE-164: GBP Swap Rates (leading mortgage indicators)
+// FE-182: GBP Swap Rates — normalized to plain numbers to prevent NaN in SVG math
 export interface SwapRates {
- gbp_2yr: ProvenanceOrValue<number>;
-  gbp_5yr: ProvenanceOrValue<number>;
+  gbp_2yr: number;
+  gbp_5yr: number;
   trend_2yr: 'rising' | 'falling' | 'holding';
   trend_5yr: 'rising' | 'falling' | 'holding';
   history_2yr?: SwapRatePoint[];
@@ -138,7 +155,7 @@ export interface SwapRates {
 
 export interface SwapRatePoint {
   month: string;
-  rate: ProvenanceOrValue<number>;
+  rate: number;
 }
 
 // FE-164: HPI Forecasts (12-month regional forecasts)
@@ -244,6 +261,74 @@ export interface AppreciationModel {
       base_5yr_gbp: number;
       bull_5yr_gbp: number;
     };
+  };
+}
+
+// FE-169: SDLT Tiers (HMRC rates effective 2025-04-01)
+export interface SDLTBand {
+  bracket: string;
+  rate: number; // percentage
+}
+
+export interface SDLLTTiers {
+  effective_date: string;
+  first_time_buyer_relief?: {
+    threshold: number;
+    bands: SDLTBand[];
+  };
+  standard_rates: SDLTBand[];
+  additional_property_surcharge: number;
+}
+
+// FE-169: Purchase Cost Benchmarks
+export interface FeeTier {
+  value: number;
+  unit: string;
+  description: string;
+}
+
+export interface SolicitorConveyancingFees {
+  low: FeeTier;
+  typical: FeeTier;
+  high: FeeTier;
+  disbursements_estimate: FeeTier;
+}
+
+export interface RICSSurveyTier {
+  low: FeeTier;
+  typical: FeeTier;
+  high: FeeTier;
+  _provenance_note?: string;
+}
+
+export interface RICSSurveys {
+  homebuyer_report: RICSSurveyTier;
+  building_survey: RICSSurveyTier;
+  mortgage_valuation: RICSSurveyTier;
+}
+
+export interface MortgageArrangementFee {
+  low: FeeTier;
+  typical: FeeTier;
+  high: FeeTier;
+  note?: string;
+}
+
+export interface MovingCosts {
+  low: FeeTier;
+  typical: FeeTier;
+  high: FeeTier;
+}
+
+export interface PurchaseCostBenchmarks {
+  solicitor_conveyancing_fees: SolicitorConveyancingFees;
+  rics_surveys: RICSSurveys;
+  mortgage_arrangement_fee: MortgageArrangementFee;
+  moving_costs: MovingCosts;
+  total_indicative_range?: {
+    low: FeeTier;
+    typical: FeeTier;
+    high: FeeTier;
   };
 }
 

@@ -3,48 +3,38 @@ import {
   TrendingUp,
   Activity,
   Percent,
-  ArrowUpRight,
-  ArrowDownRight,
   Info,
-  ChevronRight
 } from 'lucide-react';
 import { useMacroData } from '../hooks/useMacroData';
 import Tooltip from './Tooltip';
 import { extractValue } from '../types/macro';
-import SparklineChart from './SparklineChart';
+
+const heatColor = (score: number): string => {
+  if (score >= 8) return '#22c55e';
+  if (score >= 6) return '#f59e0b';
+  return '#ef4444';
+};
 
 const MarketPulse: React.FC = () => {
   const { data, loading, error } = useMacroData();
 
   if (loading) return (
-    <div className="bg-linear-card/30 border border-linear-border rounded-2xl p-6 flex items-center justify-center animate-pulse h-64">
+    <div className="bg-linear-card/30 border border-linear-border rounded-xl p-4 flex items-center justify-center animate-pulse h-24">
       <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">Fetching Market Pulse...</span>
     </div>
   );
 
   if (error || !data) return (
-    <div className="bg-linear-card/50 border border-linear-border rounded-2xl overflow-hidden shadow-2xl animate-in fade-in duration-700">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-linear-border flex items-center justify-between bg-linear-card/80 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <div className="h-2 w-2 rounded-full bg-linear-accent-amber animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.5)]"></div>
-          <h2 className="text-[10px] font-black text-linear-text-muted uppercase tracking-[0.2em]">Market Pulse</h2>
-        </div>
-        <span className="text-[8px] font-mono text-linear-accent-rose">LIVE DATA UNAVAILABLE</span>
-      </div>
-      {/* Error state body */}
-      <div className="px-6 py-8 flex flex-col items-center justify-center gap-3">
-        <div className="text-[10px] text-linear-text-muted font-mono">{error || 'No data available'}</div>
-        <div className="text-[9px] text-linear-text-muted/60">Market indicators will appear when data is restored</div>
-      </div>
+    <div className="bg-linear-card/50 border border-linear-border rounded-xl p-4 flex items-center gap-3">
+      <div className="h-2 w-2 rounded-full bg-retro-amber animate-pulse" />
+      <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">LIVE DATA UNAVAILABLE</span>
     </div>
   );
 
-  // Extract values with provenance handling
+  // Core KPI values
   const londonHPI = data?.london_hpi;
   const annualChange = extractValue(londonHPI?.annual_change ?? londonHPI?.yoy_pct) ?? 0;
   const monthlyChange = extractValue(londonHPI?.monthly_change ?? londonHPI?.mom_pct) ?? 0;
-  const avgPrice = extractValue(londonHPI?.avg_price_pcl ?? londonHPI?.avg_price) ?? 0;
 
   const inventory = data?.inventory_velocity;
   const monthsSupply = extractValue(inventory?.months_of_supply) ?? 0;
@@ -53,308 +43,127 @@ const MarketPulse: React.FC = () => {
   const negotiation = data?.negotiation_delta;
   const avgDiscount = extractValue(negotiation?.avg_discount_pct) ?? 0;
   const sentiment = extractValue(negotiation?.market_sentiment) ?? 'Stable';
-  const pctBelow = extractValue(negotiation?.pct_below_asking) ?? 0;
 
   const econ = data?.economic_indicators;
   const boeRate = extractValue(econ?.boe_base_rate) ?? 0;
   const cpi = extractValue(econ?.uk_inflation_cpi) ?? 0;
 
+  // Area heat — top 5 for inline display
+  const areaHeat = (data?.area_heat_index || data?.area_trends || []).slice(0, 5);
+
   return (
-    <div className="bg-linear-card/50 border border-linear-border rounded-2xl overflow-hidden shadow-2xl animate-in fade-in duration-700">
+    <div className="bg-linear-card/50 border border-linear-border rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-linear-border flex items-center justify-between bg-linear-card/80 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <div className="h-2 w-2 rounded-full bg-linear-accent-blue animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
-          <h2 className="text-[10px] font-bold text-linear-text-primary uppercase tracking-[0.2em]">Market Pulse // Macro Intelligence</h2>
+      <div className="px-4 py-2.5 border-b border-linear-border bg-linear-card/80 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-linear-accent-blue animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+          <h2 className="text-[10px] font-bold text-white uppercase tracking-[0.15em]">Market Pulse</h2>
         </div>
-        <div className="text-[9px] font-mono text-linear-text-muted">
-          LATEST_SYNC: {londonHPI?.last_updated ?? new Date().toLocaleDateString()}
-        </div>
+        <span className="text-[8px] font-mono text-linear-text-muted">
+          {londonHPI?.last_updated ?? new Date().toLocaleDateString()}
+        </span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 border-b border-linear-border">
-        {/* KPI: London HPI */}
-        <Tooltip 
-          content="A localized liquidity score for specific London boroughs, tracking search volume vs. listing duration." 
+      {/* KPI Grid — 4 columns */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-linear-border">
+        <Tooltip
+          content="A localized liquidity score for specific London boroughs, tracking search volume vs. listing duration."
           methodology="Aggregated data from Rightmove/Zoopla on search volume vs. listing duration."
-          className="w-full"
         >
-          <div className="p-6 border-r border-linear-border group hover:bg-linear-card/80 transition-colors h-full">
-            <div className="flex justify-between items-start mb-2">
-              <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-[0.1em]">London HPI</span>
-              <TrendingUp size={12} className="text-linear-accent-blue" />
+          <div className="p-4 hover:bg-linear-card/60 transition-colors">
+            <div className="flex justify-between items-start mb-1.5">
+              <span className="text-[8px] font-bold text-linear-text-muted uppercase tracking-[0.1em]">London HPI</span>
+              <TrendingUp size={10} className="text-linear-accent-blue" />
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-linear-text-primary tracking-tighter">
-                {avgPrice > 0 ? `£${avgPrice.toLocaleString()}` : 'N/A'}
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl font-bold text-white tracking-tighter">
+                {annualChange > 0 ? '+' : ''}{annualChange}%
               </span>
-              <span className={`text-[10px] font-bold flex items-center gap-0.5 ${monthlyChange >= 0 ? 'text-linear-accent-emerald' : 'text-linear-accent-rose'}`}>
-                {monthlyChange >= 0 ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
-                {Math.abs(monthlyChange)}%
+              <span className={`text-[9px] font-bold ${monthlyChange >= 0 ? 'text-linear-accent-emerald' : 'text-linear-accent-rose'}`}>
+                {monthlyChange >= 0 ? '▲' : '▼'}{Math.abs(monthlyChange)}% MoM
               </span>
             </div>
-            <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">
-              YoY Change: <span className="text-linear-text-primary">{annualChange > 0 ? '+' : ''}{annualChange}%</span>
-            </p>
           </div>
         </Tooltip>
 
-        {/* KPI: Inventory Velocity */}
-        <Tooltip 
-          content="The number of months it would take to sell all current listings at the average monthly absorption rate." 
+        <Tooltip
+          content="The number of months it would take to sell all current listings at the average monthly absorption rate."
           methodology="Active Listings / Avg. Monthly Sales. < 4m = Seller's Market, > 6m = Buyer's Market."
-          className="w-full"
         >
-          <div className="p-6 border-r border-linear-border group hover:bg-linear-card/80 transition-colors h-full">
-            <div className="flex justify-between items-start mb-2">
-              <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-[0.1em]">Inventory Velocity</span>
-              <Activity size={12} className="text-linear-accent-blue" />
+          <div className="p-4 hover:bg-linear-card/60 transition-colors">
+            <div className="flex justify-between items-start mb-1.5">
+              <span className="text-[8px] font-bold text-linear-text-muted uppercase tracking-[0.1em]">Inventory</span>
+              <Activity size={10} className="text-linear-accent-blue" />
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-linear-text-primary tracking-tighter">{monthsSupply}</span>
-              <span className="text-[10px] text-linear-text-muted font-bold uppercase tracking-tighter">MOS</span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl font-bold text-white tracking-tighter">{monthsSupply}</span>
+              <span className="text-[8px] text-linear-text-muted font-bold uppercase">MOS</span>
+              <span className={`text-[9px] font-bold ml-auto ${newInstQChange >= 0 ? 'text-linear-accent-emerald' : 'text-linear-accent-rose'}`}>
+                {newInstQChange >= 0 ? '▲' : '▼'}{Math.abs(newInstQChange)}% Q
+              </span>
             </div>
-            <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">
-              New Inst Q-Change: <span className="text-linear-text-primary">{newInstQChange > 0 ? '+' : ''}{newInstQChange}%</span>
-            </p>
           </div>
         </Tooltip>
 
-        {/* KPI: Negotiation Delta */}
-        <Tooltip 
-          content="The average difference between the 'Asking Price' and 'Sold Price' in the current quarter." 
+        <Tooltip
+          content="The average difference between the 'Asking Price' and 'Sold Price' in the current quarter."
           methodology="Calculation based on Land Registry sold data vs. initial portal asking price."
-          className="w-full"
         >
-          <div className="p-6 border-r border-linear-border group hover:bg-linear-card/80 transition-colors h-full">
-            <div className="flex justify-between items-start mb-2">
-              <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-[0.1em]">Negotiation Delta</span>
-              <Percent size={12} className="text-linear-accent-emerald" />
+          <div className="p-4 hover:bg-linear-card/60 transition-colors">
+            <div className="flex justify-between items-start mb-1.5">
+              <span className="text-[8px] font-bold text-linear-text-muted uppercase tracking-[0.1em]">Negotiation</span>
+              <Percent size={10} className="text-linear-accent-emerald" />
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-linear-text-primary tracking-tighter">-{avgDiscount}%</span>
-              <span className="text-[10px] text-linear-accent-emerald font-bold uppercase tracking-tighter">{sentiment}</span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl font-bold text-white tracking-tighter">-{avgDiscount}%</span>
+              <span className="text-[8px] text-linear-accent-emerald font-bold uppercase">{sentiment}</span>
             </div>
-            <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">
-              Assets Below Asking: <span className="text-linear-text-primary">{pctBelow}%</span>
-            </p>
           </div>
         </Tooltip>
 
-        {/* KPI: Economic Rate */}
-        <Tooltip 
-          content="Current official Bank of England base interest rate, governing the floor for retail mortgage products." 
+        <Tooltip
+          content="Current official Bank of England base interest rate, governing the floor for retail mortgage products."
           methodology="Directly sourced from the BoE Monetary Policy Committee (MPC) latest release."
-          className="w-full"
         >
-          <div className="p-6 group hover:bg-linear-card/80 transition-colors h-full">
-            <div className="flex justify-between items-start mb-2">
-              <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-[0.1em]">BoE Base Rate</span>
-              <Info size={12} className="text-retro-amber" />
+          <div className="p-4 hover:bg-linear-card/60 transition-colors">
+            <div className="flex justify-between items-start mb-1.5">
+              <span className="text-[8px] font-bold text-linear-text-muted uppercase tracking-[0.1em]">BoE Base</span>
+              <Info size={10} className="text-retro-amber" />
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-linear-text-primary tracking-tighter">{boeRate}%</span>
-              <span className="text-[10px] text-retro-amber font-bold uppercase tracking-tighter">Stable</span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xl font-bold text-white tracking-tighter">{boeRate.toFixed(2)}%</span>
+              <span className="text-[8px] text-retro-amber font-bold uppercase">CPI {cpi}%</span>
             </div>
-            <p className="text-[9px] text-linear-text-muted mt-1 uppercase font-bold">
-              Inflation CPI: <span className="text-linear-text-primary">{cpi}%</span>
-            </p>
           </div>
         </Tooltip>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3">
-        {/* Area Heat Index */}
-        <div className="lg:col-span-1 p-6 border-r border-linear-border bg-linear-card/20">
-          <h3 className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest mb-4 flex items-center gap-2">
-            Area Heat Index <ChevronRight size={10} className="text-linear-accent" />
-          </h3>
-          <div className="space-y-3">
-            {(data?.area_heat_index || []).map((area) => {
-              const score = extractValue(area.score) ?? 0;
+      {/* Area Heat Strip — inline compact row */}
+      {areaHeat.length > 0 && (
+        <div className="px-4 py-2.5 border-t border-linear-border bg-linear-card/30 flex items-center gap-3 overflow-x-auto custom-scrollbar">
+          <span className="text-[8px] font-bold text-linear-text-muted uppercase tracking-widest shrink-0">
+            Area Heat
+          </span>
+          <div className="flex items-center gap-2">
+            {areaHeat.map((area: any) => {
+              const score = extractValue(area.score) ?? 5;
+              const color = heatColor(score);
               return (
-                <div key={area.area} className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-linear-text-primary tracking-tight">{area.area}</span>
-                  <div className="flex items-center gap-3">
-                    <div className="flex gap-0.5">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <div 
-                          key={i} 
-                          className={`h-1 w-3 rounded-full ${
-                            i <= (score / 2) 
-                              ? (score >= 8 ? 'bg-linear-accent-emerald' : score >= 6 ? 'bg-retro-amber' : 'bg-linear-accent-blue')
-                              : 'bg-linear-border'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className={`text-[9px] font-bold uppercase ${
-                      area.trend === 'Rising' || area.trend === 'High Demand' 
-                        ? 'text-linear-accent-emerald' 
-                        : 'text-linear-text-muted'
-                    }`}>
-                      {area.trend}
-                    </span>
-                  </div>
+                <div
+                  key={area.area}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded border shrink-0"
+                  style={{ backgroundColor: `${color}10`, borderColor: `${color}25` }}
+                >
+                  <div className="h-1 w-1 rounded-full" style={{ backgroundColor: color }} />
+                  <span className="text-[8px] font-bold text-white uppercase tracking-tight whitespace-nowrap">
+                    {area.area}
+                  </span>
+                  <span className="text-[8px] font-black" style={{ color }}>
+                    {score.toFixed(1)}
+                  </span>
                 </div>
               );
             })}
-          </div>
-        </div>
-
-        {/* Analyst Summary Ticker */}
-        <div className="lg:col-span-2 p-6 flex flex-col justify-center relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <Activity size={120} strokeWidth={1} />
-          </div>
-          <h3 className="text-[10px] font-bold text-linear-accent uppercase tracking-widest mb-3 flex items-center gap-2">
-             <div className="h-1 w-4 bg-linear-accent rounded-full"></div>
-             Strategic Intel Summary
-          </h3>
-          <div className="relative z-10">
-            <p className="text-xs text-linear-text-muted leading-relaxed font-medium italic">
-              "{extractValue(data?.market_pulse_summary) || 'Market data loading...'}"
-            </p>
-          </div>
-          <div className="mt-4 flex items-center gap-4 relative z-10">
-             <div className="flex items-center gap-1.5 px-2 py-0.5 bg-linear-accent-blue/10 border border-linear-accent-blue/20 rounded text-[9px] font-bold text-linear-accent-blue uppercase tracking-widest">
-                Liquidity: High
-             </div>
-             <div className="flex items-center gap-1.5 px-2 py-0.5 bg-linear-accent-emerald/10 border border-linear-accent-emerald/20 rounded text-[9px] font-bold text-linear-accent-emerald uppercase tracking-widest">
-                Sentiment: Opportunistic
-             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* FE-120: Rate Trajectory Sparklines */}
-      {data?.mortgage_history && data.mortgage_history.length > 0 && (
-        <div className="border-t border-linear-border bg-linear-card/20">
-          <div className="px-6 py-3 border-b border-linear-border/50">
-            <h3 className="text-[9px] font-black text-linear-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
-              <TrendingUp size={9} className="text-linear-accent-blue" />
-              Bloomberg // Rate Trajectory - 13M History
-            </h3>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-linear-border/50">
-            {/* 90% LTV */}
-            <div className="px-5 py-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">90% LTV -2yr Fixed</span>
-                <span className="text-[10px] font-black text-rose-400">
-                  {data.mortgage_history[data.mortgage_history.length - 1]?.rate_90?.toFixed(2)}%
-                </span>
-              </div>
-              <div className="flex items-end gap-2">
-                <SparklineChart
-                  data={data.mortgage_history.map((m) => m.rate_90 as number)}
-                  width={120}
-                  height={36}
-                  color="#f87171"
-                  fillColor="#f87171"
-                  showDot
-                />
-                <div className="flex flex-col items-start pb-0.5">
-                  <span className="text-[8px] text-linear-text-muted/60">peak</span>
-                  <span className="text-[9px] font-black text-rose-400/70">
-                    {Math.max(...data.mortgage_history.map((m) => m.rate_90 as number)).toFixed(2)}%
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* 85% LTV */}
-            <div className="px-5 py-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">85% LTV -5yr Fixed</span>
-                <span className="text-[10px] font-black text-amber-400">
-                  {data.mortgage_history[data.mortgage_history.length - 1]?.rate_85?.toFixed(2)}%
-                </span>
-              </div>
-              <div className="flex items-end gap-2">
-                <SparklineChart
-                  data={data.mortgage_history.map((m) => m.rate_85 as number)}
-                  width={120}
-                  height={36}
-                  color="#fbbf24"
-                  fillColor="#fbbf24"
-                  showDot
-                />
-                <div className="flex flex-col items-start pb-0.5">
-                  <span className="text-[8px] text-linear-text-muted/60">peak</span>
-                  <span className="text-[9px] font-black text-amber-400/70">
-                    {Math.max(...data.mortgage_history.map((m) => m.rate_85 as number)).toFixed(2)}%
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* 75% LTV */}
-            <div className="px-5 py-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">75% LTV -5yr Fixed</span>
-                <span className="text-[10px] font-black text-blue-400">
-                  {data.mortgage_history[data.mortgage_history.length - 1]?.rate_75?.toFixed(2)}%
-                </span>
-              </div>
-              <div className="flex items-end gap-2">
-                <SparklineChart
-                  data={data.mortgage_history.map((m) => m.rate_75 as number)}
-                  width={120}
-                  height={36}
-                  color="#60a5fa"
-                  fillColor="#60a5fa"
-                  showDot
-                />
-                <div className="flex flex-col items-start pb-0.5">
-                  <span className="text-[8px] text-linear-text-muted/60">peak</span>
-                  <span className="text-[9px] font-black text-blue-400/70">
-                    {Math.max(...data.mortgage_history.map((m) => m.rate_75 as number)).toFixed(2)}%
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* 60% LTV */}
-            <div className="px-5 py-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">60% LTV -5yr Fixed</span>
-                <span className="text-[10px] font-black text-emerald-400">
-                  {data.mortgage_history[data.mortgage_history.length - 1]?.rate_60?.toFixed(2)}%
-                </span>
-              </div>
-              <div className="flex items-end gap-2">
-                <SparklineChart
-                  data={data.mortgage_history.map((m) => m.rate_60 as number)}
-                  width={120}
-                  height={36}
-                  color="#34d399"
-                  fillColor="#34d399"
-                  showDot
-                />
-                <div className="flex flex-col items-start pb-0.5">
-                  <span className="text-[8px] text-linear-text-muted/60">peak</span>
-                  <span className="text-[9px] font-black text-emerald-400/70">
-                    {Math.max(...data.mortgage_history.map((m) => m.rate_60 as number)).toFixed(2)}%
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Confidence band annotation */}
-          <div className="px-5 pb-2 flex items-center gap-4">
-            <div className="flex items-center gap-1.5">
-              <div className="h-0.5 w-6 bg-rose-400/50 rounded-full" />
-              <span className="text-[7px] text-linear-text-muted/50 font-bold uppercase tracking-wider">Rate Spread (90-60% LTV)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="h-0.5 w-6 bg-linear-text-muted/30 rounded-full" />
-              <span className="text-[7px] text-linear-text-muted/50 font-bold uppercase tracking-wider">Peak vs Current</span>
-            </div>
-            <span className="text-[7px] text-linear-text-muted/40 font-mono ml-auto">
-              {data.mortgage_history[0]?.date}{' -> '}{data.mortgage_history[data.mortgage_history.length - 1]?.date}
-            </span>
           </div>
         </div>
       )}

@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { AppreciationModel, AppreciationProfile, ScenarioResult } from '../types/macro';
-import { extractValue } from '../types/macro';
 
 const IS_DEMO = import.meta.env.VITE_DEMO_MODE === 'true';
 
@@ -29,7 +28,7 @@ export const useAppreciationModel = (propertyPrice?: number) => {
   const profile = useMemo<AppreciationProfile | null>(() => {
     if (!data || propertyPrice == null) return null;
 
-    const { scenario_definitions, property_adjustments } = data;
+    const { scenario_definitions } = data;
     const scenarios: ScenarioResult[] = [];
 
     const scenarioConfig = {
@@ -41,7 +40,7 @@ export const useAppreciationModel = (propertyPrice?: number) => {
     let totalProbability = 0;
     let weightedFiveYearTotal = 0;
 
-    for (const [key, config] of Object.entries(scenarioConfig)) {
+    for (const [, config] of Object.entries(scenarioConfig)) {
       const def = scenario_definitions[config.key];
       const annualReturn = def.annual_return / 100;
       const fiveYearTotal = def.five_year_total / 100;

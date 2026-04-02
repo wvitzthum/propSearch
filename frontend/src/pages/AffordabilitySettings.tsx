@@ -9,7 +9,8 @@ import {
   TrendingUp,
   Info,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  Layers
 } from 'lucide-react';
 import { useAffordability } from '../hooks/useAffordability';
 import { useFinancialData } from '../hooks/useFinancialData';
@@ -17,6 +18,7 @@ import { extractValue } from '../types/macro';
 import LTVMatchBadge from '../components/LTVMatchBadge';
 import BudgetSlider from '../components/BudgetSlider';
 import LoadingNode from '../components/LoadingNode';
+import AdditionalCostsCard from '../components/AdditionalCostsCard';
 
 const AffordabilitySettings: React.FC = () => {
   const { macroData, loading } = useFinancialData();
@@ -24,20 +26,39 @@ const AffordabilitySettings: React.FC = () => {
     monthlyBudget,
     mortgageRate,
     mortgageRates,
-    getAffordablePrice,
     getBudgetProfile,
     getLTVMatchScore,
     termYears,
-    updateTermYears
+    updateTermYears,
+    depositMode,
+    depositPct,
+    setDepositMode,
+    setDepositPct,
+    DEPOSIT_PRESETS,
+    calculateTotalPurchaseCost,
+    calculateMortgageFromPayment,
   } = useAffordability();
 
   const [expandedSection, setExpandedSection] = useState<string | null>('budget');
+  // FE-169: Property price used for cost calculations
+  const [selectedPropertyPrice, setSelectedPropertyPrice] = useState<number>(() => {
+    const stored = localStorage.getItem('propSearch_property_price');
+    return stored ? JSON.parse(stored) : 750000;
+  });
+  const [isFtB, setIsFtB] = useState<boolean>(() => {
+    const stored = localStorage.getItem('propSearch_ftb');
+    return stored ? JSON.parse(stored) : true;
+  });
 
   const affordableRange = useMemo(() => {
-    const min = getAffordablePrice(monthlyBudget) * 0.85;
-    const max = getAffordablePrice(monthlyBudget);
-    return { min: Math.round(min), max: Math.round(max) };
-  }, [monthlyBudget, getAffordablePrice]);
+    // FE-169: Use configured deposit pct instead of hardcoded 15%
+    const effectiveDepositPct = depositMode === 'fixed' ? depositPct : 15;
+    const ltvFraction = 1 - effectiveDepositPct / 100;
+    const maxMortgage = calculateMortgageFromPayment(monthlyBudget);
+    const max = Math.round(maxMortgage / ltvFraction);
+    const min = Math.round(max * 0.85);
+    return { min, max };
+  }, [monthlyBudget, depositMode, depositPct, calculateMortgageFromPayment]);
 
   // Calculate estimated monthly payments at different property prices
   const priceScenarios = useMemo(() => {
@@ -58,6 +79,23 @@ const AffordabilitySettings: React.FC = () => {
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
+
+  // Persist property price and FTB status
+  const handlePropertyPriceChange = (price: number) => {
+    setSelectedPropertyPrice(price);
+    localStorage.setItem('propSearch_property_price', JSON.stringify(price));
+  };
+
+  const handleFtBChange = (ftb: boolean) => {
+    setIsFtB(ftb);
+    localStorage.setItem('propSearch_ftb', JSON.stringify(ftb));
+  };
+
+  // Calculate total purchase costs for the selected property price
+  const totalCosts = useMemo(
+    () => calculateTotalPurchaseCost(selectedPropertyPrice, isFtB, false, 'homebuyer', 'typical'),
+    [selectedPropertyPrice, isFtB, calculateTotalPurchaseCost]
+  );
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -95,7 +133,7 @@ const AffordabilitySettings: React.FC = () => {
             <div className="text-lg font-bold text-white tracking-tight">{mortgageRate.toFixed(2)}% <span className="text-[10px] text-linear-text-muted font-normal">5yr fixed</span></div>
           </div>
           <Link
-            to="/mortgage"
+            to="/affordability"
             className="px-4 py-2 bg-linear-accent/10 border border-linear-accent/20 rounded-xl text-xs font-bold text-linear-accent hover:bg-linear-accent/20 transition-colors flex items-center gap-2"
           >
             <ExternalLink size={14} />
@@ -180,6 +218,206 @@ const AffordabilitySettings: React.FC = () => {
               <div className="px-6 pb-6 border-t border-linear-border">
                 <div className="pt-6">
                   <BudgetSlider />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Deposit Panel Section (FE-169) */}
+          <div className="bg-linear-card border border-linear-border rounded-3xl overflow-hidden">
+            <button
+              onClick={() => toggleSection('deposit')}
+              className="w-full p-6 flex items-center justify-between hover:bg-linear-bg/50 transition-colors"
+            >
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                  <Layers size={20} />
+                </div>
+                <div className="text-left">
+                  <h2 className="text-sm font-bold text-white uppercase tracking-widest">Deposit Configuration</h2>
+                  <p className="text-[10px] text-linear-text-muted mt-1">
+                    {depositMode === 'auto'
+                      ? 'Auto: deposit derived from your monthly budget'
+                      : `Fixed: ${depositPct}% deposit locked — £${Math.round(selectedPropertyPrice * depositPct / 100).toLocaleString()} on £${(selectedPropertyPrice / 1000).toFixed(0)}K property`}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-lg font-bold text-white">
+                  {depositMode === 'auto' ? 'Auto' : `${depositPct}%`}
+                </span>
+                <ChevronDown size={20} className={`text-linear-text-muted transition-transform ${expandedSection === 'deposit' ? 'rotate-180' : ''}`} />
+              </div>
+            </button>
+
+            {expandedSection === 'deposit' && (
+              <div className="px-6 pb-6 border-t border-linear-border">
+                <div className="pt-6 space-y-6">
+                  {/* Auto / Fixed Toggle */}
+                  <div className="flex bg-linear-bg rounded-xl border border-linear-border p-1.5 gap-1">
+                    <button
+                      onClick={() => setDepositMode('auto')}
+                      className={`flex-1 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+                        depositMode === 'auto'
+                          ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                          : 'text-linear-text-muted hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      Auto
+                    </button>
+                    <button
+                      onClick={() => setDepositMode('fixed')}
+                      className={`flex-1 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+                        depositMode === 'fixed'
+                          ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20'
+                          : 'text-linear-text-muted hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      Fixed %
+                    </button>
+                  </div>
+
+                  {depositMode === 'auto' && (
+                    <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Info size={14} className="text-emerald-400" />
+                        <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Auto Mode</span>
+                      </div>
+                      <p className="text-[10px] text-linear-text-muted leading-relaxed">
+                        In Auto mode, your deposit is calculated as whatever is needed to bridge the gap between your mortgage capacity and the property price. It will vary automatically as your monthly budget changes.
+                      </p>
+                      <div className="mt-3 pt-3 border-t border-emerald-500/10 flex justify-between">
+                        <span className="text-[10px] text-linear-text-muted">Implied deposit at current budget:</span>
+                        <span className="text-[10px] font-bold text-emerald-400">
+                          {(() => {
+                            const profile = getBudgetProfile(selectedPropertyPrice);
+                            return profile.deposit > 0
+                              ? `£${profile.deposit.toLocaleString()} (${Math.round(profile.deposit / selectedPropertyPrice * 100)}%)`
+                              : 'Well within budget — minimal deposit needed';
+                          })()}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {depositMode === 'fixed' && (
+                    <div className="space-y-4">
+                      {/* Percentage Shortcut Buttons */}
+                      <div>
+                        <div className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest mb-2">
+                          Deposit Percentage
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                          {DEPOSIT_PRESETS.map((pct) => (
+                            <button
+                              key={pct}
+                              onClick={() => setDepositPct(pct)}
+                              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                                depositPct === pct
+                                  ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20'
+                                  : 'bg-linear-bg border border-linear-border text-linear-text-muted hover:text-white hover:border-amber-500/30'
+                              }`}
+                            >
+                              {pct}%
+                            </button>
+                          ))}
+                          <button
+                            onClick={() => setDepositPct(depositPct + 5)}
+                            className="px-3 py-2 rounded-lg text-[10px] font-bold bg-linear-bg border border-linear-border text-linear-text-muted hover:text-white hover:border-amber-500/30 transition-all"
+                          >
+                            +5%
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Manual input */}
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="range"
+                            min="5"
+                            max="60"
+                            step="1"
+                            value={depositPct}
+                            onChange={(e) => setDepositPct(Number(e.target.value))}
+                            className="flex-1 h-2 bg-linear-bg rounded-full appearance-none cursor-pointer accent-amber-500"
+                          />
+                          <div className="w-16 text-right">
+                            <span className="text-lg font-bold text-white">{depositPct}%</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between text-[9px] text-linear-text-muted mt-1">
+                          <span>5%</span>
+                          <span>60%</span>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-bold text-white">Deposit Amount</span>
+                          <span className="text-lg font-bold text-amber-400">
+                            £{Math.round(selectedPropertyPrice * depositPct / 100).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-[9px] text-linear-text-muted">
+                          <span>Property: £{selectedPropertyPrice.toLocaleString()}</span>
+                          <span>LTV: {100 - depositPct}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Property Price Reference */}
+                  <div>
+                    <div className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest mb-2">
+                      Property Price Reference
+                    </div>
+                    <div className="flex gap-2">
+                      {[500000, 750000, 1000000, 1500000].map((price) => (
+                        <button
+                          key={price}
+                          onClick={() => handlePropertyPriceChange(price)}
+                          className={`px-3 py-2 rounded-lg text-[10px] font-bold transition-all ${
+                            selectedPropertyPrice === price
+                              ? 'bg-blue-500/20 border border-blue-500/40 text-blue-400'
+                              : 'bg-linear-bg border border-linear-border text-linear-text-muted hover:text-white hover:border-blue-500/30'
+                          }`}
+                        >
+                          £{(price / 1000).toFixed(0)}K
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-3 flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={selectedPropertyPrice}
+                        onChange={(e) => handlePropertyPriceChange(Number(e.target.value))}
+                        className="w-40 bg-linear-bg border border-linear-border rounded-lg px-3 py-2 text-sm font-bold text-white placeholder-linear-text-muted focus:outline-none focus:border-blue-500/50"
+                        placeholder="Enter price..."
+                      />
+                      <span className="text-[10px] text-linear-text-muted">used for cost calculations</span>
+                    </div>
+                  </div>
+
+                  {/* FTB Toggle */}
+                  <div className="flex items-center justify-between p-4 bg-linear-bg rounded-xl border border-linear-border">
+                    <div>
+                      <div className="text-[10px] font-bold text-white">First-Time Buyer Relief</div>
+                      <div className="text-[9px] text-linear-text-muted mt-1">Reduces SDLT — nil rate up to £625K for FTB</div>
+                    </div>
+                    <button
+                      onClick={() => handleFtBChange(!isFtB)}
+                      className={`relative w-12 h-6 rounded-full transition-colors ${
+                        isFtB ? 'bg-emerald-500' : 'bg-linear-border'
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                          isFtB ? 'translate-x-6' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -326,9 +564,12 @@ const AffordabilitySettings: React.FC = () => {
               £{(affordableRange.min / 1000).toFixed(0)}K - £{(affordableRange.max / 1000).toFixed(0)}K
             </div>
             <p className="text-[10px] text-linear-text-muted">
-              Based on £{monthlyBudget.toLocaleString()}/month at {mortgageRate.toFixed(2)}% with 15% deposit
+              Based on £{monthlyBudget.toLocaleString()}/month at {mortgageRate.toFixed(2)}%
             </p>
           </div>
+
+          {/* FE-169: Additional Costs Card */}
+          <AdditionalCostsCard costs={totalCosts} />
 
           {/* LTV Match Score */}
           <div className="p-6 bg-linear-card border border-linear-border rounded-3xl">

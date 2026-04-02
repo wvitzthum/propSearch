@@ -76,7 +76,13 @@ function initializeDB() {
     { name: 'waitrose_distance', type: 'REAL' },
     { name: 'whole_foods_distance', type: 'REAL' },
     { name: 'wellness_hub_distance', type: 'REAL' },
-    { name: 'floorplan_url', type: 'TEXT' }
+    { name: 'floorplan_url', type: 'TEXT' },
+    // FE-186: pipeline_status — user pipeline decisions, persisted server-side
+    { name: 'pipeline_status', type: "TEXT DEFAULT 'discovered' CHECK(pipeline_status IN ('discovered','shortlisted','vetted','archived'))" },
+    // ADR-014: market_status — market reality (active/under_offer/sold_stc/sold_completed/withdrawn/unknown)
+    { name: 'market_status', type: "TEXT DEFAULT 'unknown' CHECK(market_status IN ('active','under_offer','sold_stc','sold_completed','withdrawn','unknown'))" },
+    // ADR-014: last_checked — last date property was verified against live portal
+    { name: 'last_checked', type: 'TEXT' }
   ];
 
   for (const col of missingColumns) {
@@ -325,7 +331,7 @@ function safeParse(val, defaultVal = []) {
 
 const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
@@ -392,6 +398,79 @@ const server = http.createServer((req, res) => {
       res.end(JSON.stringify(results));
     }
     // 1.5. Single Property Detail (DAT-140)
+    // NOTE: must come after POST /api/properties/:id/check — route more specific first
+    // 1.5a. POST /api/properties/:id/check — DE-165: re-check a property, update last_checked
+    else if (url.pathname.match(/^\/api\/properties\/[^/]+\/check$/) && req.method === 'POST') {
+      const parts = url.pathname.split('/');
+      const id = parts[parts.length - 2]; // /api/properties/{id}/check
+      const today = new Date().toISOString().split('T')[0];
+      const existing = db.prepare('SELECT * FROM properties WHERE id = ?').get(id);
+      if (!existing) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Property not found' }));
+      } else {
+        // Update last_checked to today; market_status unchanged (set by analyst/pipeline)
+        db.prepare('UPDATE properties SET last_checked = ? WHERE id = ?').run(today, id);
+        const updated = db.prepare('SELECT * FROM properties WHERE id = ?').get(id);
+        const history = db.prepare('SELECT price, date FROM price_history WHERE property_id = ? ORDER BY date ASC').all(id);
+        const result = {
+          ...updated,
+          gallery: safeParse(updated.gallery, []),
+          links: safeParse(updated.links, []),
+          metadata: safeParse(updated.metadata, {}),
+          is_value_buy: Boolean(updated.is_value_buy),
+          vetted: Boolean(updated.vetted),
+          archived: Boolean(updated.archived),
+          price_history: history,
+          _check: { checked_at: today, property_id: id }
+        };
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(result));
+      }
+    }
+    // FE-186: PATCH /api/properties/:id/status — persist pipeline_status to SQLite
+    // Valid values: discovered | shortlisted | vetted | archived
+    else if (url.pathname.match(/^\/api\/properties\/[^/]+\/status$/) && req.method === 'PATCH') {
+      const parts = url.pathname.split('/');
+      const id = parts[parts.length - 2]; // /api/properties/{id}/status
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          const validStatuses = ['discovered', 'shortlisted', 'vetted', 'archived'];
+          if (!data.pipeline_status || !validStatuses.includes(data.pipeline_status)) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: `pipeline_status must be one of: ${validStatuses.join('|')}` }));
+            return;
+          }
+          const existing = db.prepare('SELECT * FROM properties WHERE id = ?').get(id);
+          if (!existing) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Property not found' }));
+            return;
+          }
+          db.prepare('UPDATE properties SET pipeline_status = ? WHERE id = ?').run(data.pipeline_status, id);
+          const updated = db.prepare('SELECT * FROM properties WHERE id = ?').get(id);
+          const history = db.prepare('SELECT price, date FROM price_history WHERE property_id = ? ORDER BY date ASC').all(id);
+          const result = {
+            ...updated,
+            gallery: safeParse(updated.gallery, []),
+            links: safeParse(updated.links, []),
+            metadata: safeParse(updated.metadata, {}),
+            is_value_buy: Boolean(updated.is_value_buy),
+            vetted: Boolean(updated.vetted),
+            archived: Boolean(updated.archived),
+            price_history: history
+          };
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(result));
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON: ' + e.message }));
+        }
+      });
+    }
     else if (url.pathname.startsWith('/api/properties/') && req.method === 'GET') {
       const id = url.pathname.split('/').pop();
       const property = db.prepare('SELECT * FROM properties WHERE id = ?').get(id);

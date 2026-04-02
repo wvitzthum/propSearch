@@ -1,11 +1,11 @@
 name: Weekly Data Refresh
 
 on:
-  schedule:
-    # Every Monday at 09:00 UTC
-    - cron: '0 9 * * 1'
+  # DISABLED — 2026-04-02 per user directive. Analyst runs sync manually via `make sync`.
+  # schedule:
+  #   - cron: '0 9 * * 1'
   workflow_dispatch:
-    # Allow manual trigger from GitHub Actions UI
+    # Manual trigger only — analyst runs `make sync` ad-hoc
 
 jobs:
   sync:

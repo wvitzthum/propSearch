@@ -60,6 +60,19 @@ export interface Property {
   est_capex_requirement?: number;
   links: string[];
   link: string;
+  // FE-166: Price history entries for Property Price Evolution chart
+  price_history?: PriceHistoryEntry[];
+}
+
+// FE-166: Price history data for Property Price Evolution component
+export interface PriceHistoryEntry {
+  date: string;              // ISO date string e.g. "2026-03-15"
+  price: number;             // Listed price on that date
+  price_per_sqm: number;    // Price per sqm on that date
+  status: 'listed' | 'reduced' | 'under_offer' | 'sold' | 'withdrawn';
+  reduction_pct?: number;    // % reduction from previous price (only for 'reduced')
+  days_on_market?: number;   // DOM on that date
+  london_hpi?: number;       // London-wide HPI value on that date (for benchmark line)
 }
 
 export interface PropertyWithCoords extends Property {

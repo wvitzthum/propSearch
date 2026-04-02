@@ -124,17 +124,6 @@ agent-tmux-all:
 	@tmux select-window -t propSearch:PO
 	@tmux attach-session -t propSearch
 
-# ====================
-# OPTION 3: VSCode windows only (run commands manually)
-# ====================
-agent-windows:
-	@code --new-window . & \
-	 code --new-window . & \
-	 code --new-window . & \
-	 code --new-window . & \
-	 code --new-window . &
-	@echo "Opened 5 VSCode windows. Run in each: ./agents/run.sh <po|analyst|de|fe|qa>"
-
 # Invoke the Data Analyst agent
 agent-analyst:
 	@./agents/run.sh analyst

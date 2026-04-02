@@ -41,6 +41,7 @@ import ThesisTagSelector from '../components/ThesisTagSelector';
 import AffordabilityNode from '../components/AffordabilityNode';
 import CapitalAppreciationChart from '../components/CapitalAppreciationChart';
 import DataProvenanceSection from '../components/DataProvenanceSection';
+import PropertyPriceEvolution from '../components/PropertyPriceEvolution';
 import { useThesisTags } from '../hooks/useThesisTags';
 import { useMacroData } from '../hooks/useMacroData';
 
@@ -51,7 +52,7 @@ const PropertyDetail: React.FC = () => {
   const { getStatus, setStatus } = usePipeline();
   const { getTags } = useThesisTags();
   const { data: macroData } = useMacroData();
-  const [activeTab, setActiveTab] = useState<'gallery' | 'floorplan'>('gallery');
+  const [activeTab, setActiveTab] = useState<'gallery' | 'floorplan' | 'price_history'>('gallery');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showLightbox, setShowLightbox] = useState(false);
   const [notes, setLocalNotes] = useState(() => {
@@ -123,8 +124,8 @@ const PropertyDetail: React.FC = () => {
           </button>
           
           <div className="relative max-w-[85vw] max-h-[85vh] select-none">
-            <img 
-              src={allImages[activeImageIndex]} 
+            <img
+              src={allImages[activeImageIndex] ?? ''}
               alt="Gallery Zoom"
               className="max-w-full max-h-[85vh] object-contain shadow-2xl rounded-lg"
             />
@@ -207,23 +208,30 @@ const PropertyDetail: React.FC = () => {
                   Gallery Stream
                   {activeTab === 'gallery' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-accent" />}
                 </button>
-                <button 
+                <button
                   onClick={() => setActiveTab('floorplan')}
                   className={`pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === 'floorplan' ? 'text-white' : 'text-linear-text-muted hover:text-white'}`}
                 >
                   Spatial Blueprint
                   {activeTab === 'floorplan' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-accent" />}
                 </button>
+                <button
+                  onClick={() => setActiveTab('price_history')}
+                  className={`pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === 'price_history' ? 'text-white' : 'text-linear-text-muted hover:text-white'}`}
+                >
+                  Price Evolution
+                  {activeTab === 'price_history' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400" />}
+                </button>
               </div>
 
               {activeTab === 'gallery' ? (
                 <div className="space-y-4 animate-in fade-in duration-500">
-                  <div 
+                  <div
                     onClick={() => setShowLightbox(true)}
                     className="relative aspect-[16/9] w-full bg-linear-card rounded-2xl overflow-hidden group border border-linear-border/50 cursor-zoom-in"
                   >
-                    <PropertyImage 
-                      src={allImages[activeImageIndex]}
+                    <PropertyImage
+                      src={allImages[activeImageIndex] ?? ''}
                       alt={property.address}
                       className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                     />
@@ -235,35 +243,39 @@ const PropertyDetail: React.FC = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   {allImages.length > 1 && (
                     <div className="grid grid-cols-5 gap-4">
                       {allImages.map((url, i) => (
-                        <div 
-                          key={i} 
+                        <div
+                          key={i}
                           onClick={() => setActiveImageIndex(i)}
                           className={`aspect-[4/3] rounded-xl overflow-hidden border transition-all cursor-pointer relative group ${
                             i === activeImageIndex ? 'border-linear-accent ring-2 ring-linear-accent/20 scale-95' : 'border-linear-border hover:border-white/40'
                           }`}
                         >
-                          <PropertyImage 
-                            src={url} 
+                          <PropertyImage
+                            src={url}
                             className={`h-full w-full object-cover transition-all duration-500 ${
                               i === activeImageIndex ? 'opacity-100' : 'opacity-40 group-hover:opacity-70'
-                            }`} 
-                            alt={`Gallery ${i}`} 
+                            }`}
+                            alt={`Gallery ${i}`}
                           />
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
+              ) : activeTab === 'price_history' ? (
+                <div className="animate-in fade-in duration-500">
+                  <PropertyPriceEvolution property={property} />
+                </div>
               ) : (
                 <div className="animate-in fade-in duration-500 h-[600px]">
                   {property.floorplan_url ? (
-                    <FloorplanViewer 
-                      url={property.floorplan_url} 
-                      address={property.address} 
+                    <FloorplanViewer
+                      url={property.floorplan_url}
+                      address={property.address}
                     />
                   ) : (
                     <div className="py-20 h-full bg-linear-card/30 border border-dashed border-linear-border rounded-2xl flex flex-col items-center justify-center text-center px-8">
@@ -317,7 +329,7 @@ const PropertyDetail: React.FC = () => {
                 <div className="flex flex-col gap-3">
                   <span className="text-[10px] text-linear-text-muted uppercase font-black tracking-widest">Est. Service Charge</span>
                   <div className="text-4xl font-bold text-white tracking-tighter">
-                    £{property.service_charge.toLocaleString()}
+                    £{property.service_charge?.toLocaleString() ?? '—'}
                     <span className="text-sm text-linear-text-muted ml-1 uppercase font-black">/ Per Year</span>
                   </div>
                   <div className="h-1 w-full bg-linear-bg rounded-full overflow-hidden mt-2">
@@ -327,7 +339,7 @@ const PropertyDetail: React.FC = () => {
                 <div className="flex flex-col gap-3 sm:border-l sm:border-linear-border sm:pl-12">
                   <span className="text-[10px] text-linear-text-muted uppercase font-black tracking-widest">Ground Rent</span>
                   <div className="text-4xl font-bold text-white tracking-tighter">
-                    £{property.ground_rent.toLocaleString()}
+                    £{property.ground_rent?.toLocaleString() ?? '—'}
                     <span className="text-sm text-linear-text-muted ml-1 uppercase font-black">/ Per Year</span>
                   </div>
                   <div className="h-1 w-full bg-linear-bg rounded-full overflow-hidden mt-2">
