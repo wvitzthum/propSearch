@@ -2,6 +2,13 @@
   "_last_full_refresh": "2026-04-01",
   "_provenance_schema_version": "1.0",
   "_refresh_schedule": "Weekly (Mondays) + ad-hoc for market events",
+  "_meta": {
+    "last_refreshed": "2026-04-02",
+    "days_since_refresh": 1,
+    "data_freshness": "green",
+    "next_expected_refresh": "2026-04-06",
+    "note": "Manual analyst refresh — weekly automated pipeline scheduled to run Mondays 09:00 UTC (GitHub Actions weekly-refresh.yml)"
+  },
   "_source_citations": {
     "boe": {
       "name": "Bank of England",
@@ -149,7 +156,7 @@
     "source_url": "https://www.bankofengland.co.uk/monetary-policy/the-interest-rate-bank-rate",
     "methodology": "Official Bank Rate set by MPC vote; reflects inter-meeting consensus",
     "last_refreshed": "2026-03-20",
-    "next_expected_update": "2026-04-30"
+    "next_expected_update": "2026-05-07"
   },
   "boe_rate_consensus": {
     "_description": "Forward-looking BoE Base Rate expectations (Q3 2026 - Q2 2027)",
@@ -849,11 +856,11 @@
     }
   },
   "mpc_next_meeting": {
-    "value": "2026-04-30",
+    "value": "2026-05-07",
     "source": "Bank of England MPC Calendar",
     "source_url": "https://www.bankofengland.co.uk/monetary-policy/mpc",
-    "methodology": "Official scheduled meeting date",
-    "last_refreshed": "2026-01-01"
+    "methodology": "Official scheduled meeting date (first Thursday of each month)",
+    "last_refreshed": "2026-04-02"
   },
   "negotiation_delta": {
     "_provenance": {

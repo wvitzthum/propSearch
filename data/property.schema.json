@@ -242,6 +242,17 @@
       },
       "minItems": 1,
       "description": "A list of direct links to the property listing."
+    },
+    "market_status": {
+      "type": "string",
+      "enum": ["unknown", "active", "under_offer", "sold_stc", "withdrawn", "off_market"],
+      "default": "unknown",
+      "description": "Current market status of the property. Set to 'active' by sync pipeline on new ingest. Updated by analyst or /api/properties/:id/check endpoint."
+    },
+    "last_checked": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO date string (YYYY-MM-DD) of the last time this property was checked against its source portal. Updated by sync pipeline on re-seeing, or by POST /api/properties/:id/check."
     }
   }
 }
