@@ -3368,6 +3368,60 @@
         "chart-migration",
         "frontend"
       ]
+    },
+    {
+      "id": "FE-205",
+      "title": "Migrate HPIHistoryChart to @visx \u2014 replace hand-rolled SVG with visx scale/shape/axis primitives",
+      "description": "Migrate frontend/src/components/HPIHistoryChart.tsx to use @visx primitives. Replace manual getX/getY with scalePoint/scaleLinear. Replace polyline with LinePath. Replace SVG text axis labels with manual tick render (Bloomberg-style). Use ParentSize for responsive width. Add useTooltip for hover interaction. See ADR-015.",
+      "acceptance": "HPI trajectory chart renders identically, responds to width changes, hover tooltip works. Build clean, all smoke tests pass.",
+      "priority": "High",
+      "section": "new_approved",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "depends_on": [],
+      "created_at": "2026-04-03",
+      "completed_at": null,
+      "labels": [
+        "visx",
+        "chart-migration",
+        "frontend"
+      ]
+    },
+    {
+      "id": "FE-206",
+      "title": "Migrate LondonPrimePremiumChart to @visx \u2014 replace hand-rolled SVG with visx scale/shape/axis primitives",
+      "description": "Migrate frontend/src/components/LondonPrimePremiumChart.tsx to use @visx primitives. Replace manual getX/getY with scalePoint/scaleLinear. Replace polyline with LinePath. Replace SVG text axis labels with manual tick render. Use ParentSize for responsive width. Add useTooltip for hover interaction. See ADR-015.",
+      "acceptance": "London premium chart renders identically, responds to width changes, hover tooltip works. Build clean, all smoke tests pass.",
+      "priority": "Medium",
+      "section": "new_approved",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "depends_on": [],
+      "created_at": "2026-04-03",
+      "completed_at": null,
+      "labels": [
+        "visx",
+        "chart-migration",
+        "frontend"
+      ]
+    },
+    {
+      "id": "FE-207",
+      "title": "Migrate SwapRateSignal to @visx \u2014 replace hand-rolled SVG sparklines with visx LinePath",
+      "description": "Migrate frontend/src/components/SwapRateSignal.tsx to use @visx. Replace inline SVG sparklines with visx LinePath + scaleLinear. Use ParentSize for responsive width. Add useTooltip for hover interaction on sparklines. See ADR-015.",
+      "acceptance": "Swap rate sparklines render identically, respond to width changes, hover tooltip works. Build clean, all smoke tests pass.",
+      "priority": "Medium",
+      "section": "new_approved",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "depends_on": [],
+      "created_at": "2026-04-03",
+      "completed_at": null,
+      "labels": [
+        "visx",
+        "chart-migration",
+        "frontend"
+      ]
     }
   ],
   "_meta": {
