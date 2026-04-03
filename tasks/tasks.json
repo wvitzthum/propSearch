@@ -3296,6 +3296,78 @@
         "bug-fix",
         "data-enrichment"
       ]
+    },
+    {
+      "id": "FE-201",
+      "title": "Migrate PropertyTypePerformanceChart to @visx \u2014 replace hand-rolled bar chart with visx Bar",
+      "description": "Migrate frontend/src/components/PropertyTypePerformanceChart.tsx to use @visx. Replace manual horizontal bar rendering with visx Bar + scaleBand/scaleLinear. Use ParentSize for responsive width. Add useTooltip for hover interaction. See ADR-015.",
+      "acceptance": "Property type performance bars render identically, respond to width changes, hover tooltip works. Build clean, all smoke tests pass.",
+      "priority": "Medium",
+      "section": "new_approved",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "depends_on": [],
+      "created_at": "2026-04-03",
+      "completed_at": null,
+      "labels": [
+        "visx",
+        "chart-migration",
+        "frontend"
+      ]
+    },
+    {
+      "id": "FE-202",
+      "title": "Migrate RentalYieldVsGiltChart to @visx \u2014 replace hand-rolled SVG bar chart with visx Bar",
+      "description": "Migrate frontend/src/components/RentalYieldVsGiltChart.tsx to use @visx. Replace manual horizontal bar rendering with visx Bar + scaleBand/scaleLinear. Use ParentSize for responsive width. Add useTooltip for hover interaction. See ADR-015.",
+      "acceptance": "Rental yield vs gilt bars render identically, responds to width changes, hover tooltip works. Build clean, all smoke tests pass.",
+      "priority": "Medium",
+      "section": "new_approved",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "depends_on": [],
+      "created_at": "2026-04-03",
+      "completed_at": null,
+      "labels": [
+        "visx",
+        "chart-migration",
+        "frontend"
+      ]
+    },
+    {
+      "id": "FE-203",
+      "title": "Migrate CapitalAppreciationChart to @visx \u2014 replace complex SVG fan chart with visx LinePath/AreaClosed",
+      "description": "Migrate frontend/src/components/CapitalAppreciationChart.tsx to use @visx. This is the most complex chart \u2014 has fan projection area, 3 scenario lines, Monte Carlo bands, and histogram. Replace all polyline/path SVG with visx LinePath + AreaClosed + Bar (histogram). Use scaleLinear. Use ParentSize. Add useTooltip for hover interaction. See ADR-015.",
+      "acceptance": "Capital appreciation fan chart renders identically, Monte Carlo bands and histogram visible, responds to width changes, hover tooltip works. Build clean, all smoke tests pass.",
+      "priority": "High",
+      "section": "new_approved",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "depends_on": [],
+      "created_at": "2026-04-03",
+      "completed_at": null,
+      "labels": [
+        "visx",
+        "chart-migration",
+        "frontend"
+      ]
+    },
+    {
+      "id": "FE-204",
+      "title": "Migrate SparklineChart to @visx \u2014 replace simple SVG line with visx LinePath",
+      "description": "Migrate frontend/src/components/SparklineChart.tsx to use @visx. Simplest chart \u2014 just a line sparkline. Replace manual SVG path math with visx LinePath + scaleLinear. No axes needed. Keep the same width/height props interface. See ADR-015.",
+      "acceptance": "SparklineChart renders identically. Build clean, all smoke tests pass.",
+      "priority": "Low",
+      "section": "new_approved",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "depends_on": [],
+      "created_at": "2026-04-03",
+      "completed_at": null,
+      "labels": [
+        "visx",
+        "chart-migration",
+        "frontend"
+      ]
     }
   ],
   "_meta": {
