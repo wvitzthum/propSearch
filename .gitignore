@@ -1,21 +1,44 @@
+# Dependencies
+node_modules/
+
+# Environment variables
 .env
+.env*.local
+
+# Database files
 *.duckdb
 *.duckdb.*
 *duckdb
 *.db
 *.db-shm
 *.db-wal
+
+# Logs
 *.log
+frontend.log
+
+# Vercel
 .vercel
-.env*.local
-/data/inbox
-/data/archive/inbox/*
-/data/archive/imports/*
-/data/archive/triaged/*
-/data/backups/
-/data/import/
-/data/triaged/
-financial_context.json
+
+# Data files (research/workspace data, not source)
+data/inbox/
+data/archive/
+data/backups/
+data/import/
+data/triaged/
+
+# AI/assistant artifacts
 .aider*
 *.claude
-tasks/scripts/__pycache__/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# Playwright test reports
+frontend/playwright-report
+frontend/test-results
