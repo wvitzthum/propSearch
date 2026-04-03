@@ -13,9 +13,10 @@ import {
   Maximize2,
   History,
   X,
-
   Scale,
-  ArrowUpRight
+  ArrowUpRight,
+  Focus,
+  Info,
 } from 'lucide-react';
 import { usePipeline } from '../hooks/usePipeline';
 import { useComparison } from '../hooks/useComparison';
@@ -72,7 +73,21 @@ const Inbox: React.FC = () => {
   const [quickAddMsg, setQuickAddMsg] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // UX-021: Focus Mode — hides lead stream, shows current property only
+  const [isFocusMode, setIsFocusMode] = useState(false);
+
+  // UX-021: First-visit tooltip — shown once per localStorage flag
+  const [hasSeenTip, setHasSeenTip] = useState(() =>
+    localStorage.getItem('propsearch_inbox_tip_seen') === '1'
+  );
+
   useEffect(() => { setSubmissions(loadSubmissions()); }, []);
+
+  // UX-021: Dismiss first-visit tooltip
+  const dismissTip = useCallback(() => {
+    setHasSeenTip(true);
+    localStorage.setItem('propsearch_inbox_tip_seen', '1');
+  }, []);
 
   const saveStatus = (id: string, status: TriageStatus) => {
     const next = { ...triageStatus, [id]: status };
@@ -198,17 +213,6 @@ const Inbox: React.FC = () => {
   useEffect(() => {
     fetchInbox();
   }, [fetchInbox]);
-
-  const [iframeLoaded, setIframeLoaded] = useState(false);
-
-  useEffect(() => {
-    setIframeLoaded(false);
-  }, [currentIndex]);
-
-  const isKnownBlocker = (url: string) => {
-    const blockers = ['rightmove.co.uk', 'zoopla.co.uk', 'onthemarket.com', 'savills.com', 'knightfrank.com', 'dexters.co.uk'];
-    return blockers.some(b => url.includes(b));
-  };
 
   const handleAction = useCallback(async (action: 'approve' | 'reject', indexToTriage?: number) => {
     const idx = indexToTriage !== undefined ? indexToTriage : currentIndex;
@@ -403,15 +407,27 @@ const Inbox: React.FC = () => {
             <History size={12} /> Submissions ({submissions.length})
           </button>
 
+          {/* UX-021: Focus Mode toggle */}
+          <button
+            onClick={() => setIsFocusMode(v => !v)}
+            title={isFocusMode ? 'Exit Focus Mode' : 'Focus Mode — hide lead stream'}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+              isFocusMode ? 'bg-purple-500/20 border-purple-500/30 text-purple-400' : 'bg-linear-card border-linear-border text-linear-text-muted hover:text-white'
+            }`}
+          >
+            <Focus size={12} className={isFocusMode ? 'text-purple-400' : ''} />
+            {isFocusMode ? 'Exit Focus' : 'Focus Mode'}
+          </button>
+
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4">
-              <button 
+              <button
                 onClick={() => handleBatchAction('approve')}
                 className="px-3 py-1.5 bg-retro-green/10 text-retro-green border border-retro-green/20 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-retro-green/20 transition-all"
               >
                 Approve {selectedIds.size}
               </button>
-              <button 
+              <button
                 onClick={() => handleBatchAction('reject')}
                 className="px-3 py-1.5 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-rose-500/20 transition-all"
               >
@@ -419,10 +435,23 @@ const Inbox: React.FC = () => {
               </button>
             </div>
           )}
+
+          {/* UX-021: Keyboard hint label */}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-linear-card border border-linear-border rounded-lg text-[9px] font-bold text-linear-text-muted">
             <Keyboard size={12} />
             <span>J/K NAV • A/R ACTION • M/F/V TOGGLE • L PEEK</span>
           </div>
+
+          {/* UX-021: First-visit dismissible tooltip */}
+          {!hasSeenTip && (
+            <div className="relative flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-[10px] text-blue-300 animate-in fade-in">
+              <Info size={12} className="text-blue-400 shrink-0" />
+              <span>Tip: Use <kbd className="font-mono bg-blue-500/20 px-1 rounded">A</kbd>/<kbd className="font-mono bg-blue-500/20 px-1 rounded">R</kbd> to triage, <kbd className="font-mono bg-blue-500/20 px-1 rounded">J</kbd>/<kbd className="font-mono bg-blue-500/20 px-1 rounded">K</kbd> to navigate. Press <kbd className="font-mono bg-blue-500/20 px-1 rounded">?</kbd> for all shortcuts.</span>
+              <button onClick={dismissTip} className="shrink-0 text-blue-400/50 hover:text-blue-400 transition-colors ml-1">
+                <X size={10} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -452,7 +481,8 @@ const Inbox: React.FC = () => {
         </div>
       ) : (
         <div className="flex-grow flex gap-6 overflow-hidden">
-          {/* List Pane */}
+          {/* UX-021: Lead Stream — hidden in Focus Mode */}
+          {!isFocusMode && (
           <div className="w-1/4 flex flex-col bg-linear-card/30 border border-linear-border rounded-2xl overflow-hidden">
             <div className="p-3 border-b border-linear-border bg-linear-card/50 flex items-center justify-between">
               <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">Lead Stream</span>
@@ -502,38 +532,39 @@ const Inbox: React.FC = () => {
               })}
             </div>
           </div>
+          )}
 
           {/* Detail Pane */}
           <div className="flex-grow flex flex-col bg-linear-card border border-linear-border rounded-2xl overflow-hidden shadow-2xl relative">
             <div className="p-3 border-b border-linear-border bg-linear-card/50 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="flex bg-linear-bg p-1 rounded-lg border border-linear-border">
-                  <button 
+                  <button
                     onClick={() => setViewMode('metrics')}
-                    className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'metrics' ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
+                    className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1 ${viewMode === 'metrics' ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
                   >
-                    Metrics [M]
+                    Metrics <kbd className="font-mono text-[8px] opacity-60">[M]</kbd>
                   </button>
-                  <button 
+                  <button
                     onClick={() => setViewMode('floorplan')}
-                    className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'floorplan' ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
+                    className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1 ${viewMode === 'floorplan' ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
                   >
-                    Floorplan [F]
+                    Floorplan <kbd className="font-mono text-[8px] opacity-60">[F]</kbd>
                   </button>
-                  <button 
+                  <button
                     onClick={() => setViewMode('portal')}
-                    className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'portal' ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
+                    className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1 ${viewMode === 'portal' ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
                   >
-                    Live Portal [V]
+                    Portal Intel <kbd className="font-mono text-[8px] opacity-60">[V]</kbd>
                   </button>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => handlePeek(currentListing.url)}
                 className="flex items-center gap-2 px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-blue-500/20 transition-all"
               >
                 <ExternalLink size={12} />
-                Focused Peek [L]
+                Open Portal <kbd className="font-mono text-[8px] opacity-60">[L]</kbd>
               </button>
             </div>
 
@@ -630,52 +661,88 @@ const Inbox: React.FC = () => {
                 )}
               </div>
             ) : (
-              <div className="flex-grow relative bg-white">
-                {isKnownBlocker(currentListing.url) ? (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-linear-bg z-20 px-8 text-center">
-                    <div className="h-16 w-16 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center mb-6 border border-rose-500/20">
-                      <ShieldAlert size={32} />
+              // UX-025: Portal Intelligence — replaces CSP-blocked iframe with scraped metadata
+              <div className="flex-grow overflow-y-auto custom-scrollbar">
+                <div className="p-8 space-y-6">
+                  {/* Source + URL */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] font-black uppercase rounded tracking-wider">
+                          {currentListing.source || 'Unknown Portal'}
+                        </span>
+                        <span className="text-[9px] text-linear-text-muted font-mono truncate max-w-xs">
+                          {(() => { try { return new URL(currentListing.url).hostname; } catch { return currentListing.url; } })()}
+                        </span>
+                      </div>
+                      <h3 className="text-base font-bold text-white">{currentListing.address}</h3>
+                      {currentListing.area && (
+                        <p className="text-[10px] text-linear-text-muted mt-0.5">{currentListing.area}</p>
+                      )}
                     </div>
-                    <h2 className="text-xl font-bold text-white mb-2 tracking-tight uppercase tracking-widest">Security Block Active</h2>
-                    <p className="text-linear-text-muted text-xs uppercase tracking-widest font-bold opacity-70 mb-8 max-w-sm">
-                      {new URL(currentListing.url).hostname} blocks internal framing (CSP). Use the focused peek to review this lead.
-                    </p>
-                    <button 
+                    {/* Primary CTA: Open Portal */}
+                    <button
                       onClick={() => handlePeek(currentListing.url)}
-                      className="px-8 py-3 bg-blue-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-blue-500/10 flex items-center gap-3"
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-blue-500/10 shrink-0"
                     >
                       <ExternalLink size={14} />
-                      Launch Focused Peek [L]
+                      Open on {currentListing.source || 'Portal'} <kbd className="font-mono text-[8px] opacity-70 ml-1">[L]</kbd>
                     </button>
                   </div>
-                ) : (
-                  <>
-                    {!iframeLoaded && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-linear-bg z-20">
-                        <LoadingNode label={`Connecting to ${new URL(currentListing.url).hostname}...`} />
-                        <p className="mt-4 text-[10px] text-linear-text-muted uppercase font-black tracking-[0.2em]">Note: Portals may block internal embedding</p>
-                        <button 
-                          onClick={() => handlePeek(currentListing.url)}
-                          className="mt-6 px-6 py-2 bg-white/5 text-linear-text-muted border border-white/10 rounded-lg font-black text-[10px] uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all"
-                        >
-                          Use Focused Peek Instead
-                        </button>
+
+                  {/* Scraped metadata */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {currentListing.price && (
+                      <div className="p-4 bg-linear-bg border border-linear-border rounded-xl">
+                        <div className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest mb-1">Listed Price</div>
+                        <div className="text-lg font-black text-white">£{currentListing.price.toLocaleString()}</div>
                       </div>
                     )}
-                    <iframe 
-                      src={currentListing.url} 
-                      className="absolute inset-0 w-full h-full border-none z-10"
-                      title="Portal View"
-                      onLoad={() => setIframeLoaded(true)}
-                    />
-                  </>
-                )}
+                    {currentListing.area && (
+                      <div className="p-4 bg-linear-bg border border-linear-border rounded-xl">
+                        <div className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest mb-1">Area</div>
+                        <div className="text-sm font-bold text-white">{currentListing.area}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* URL */}
+                  <div className="p-3 bg-linear-bg border border-linear-border rounded-xl">
+                    <div className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest mb-1">Listing URL</div>
+                    <a
+                      href={currentListing.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => handlePeek(currentListing.url)}
+                      className="text-[10px] font-mono text-blue-400 hover:text-blue-300 underline underline-offset-2 truncate block transition-colors"
+                    >
+                      {currentListing.url}
+                    </a>
+                  </div>
+
+                  {/* No scraped data placeholder */}
+                  {!currentListing.price && !currentListing.area && (
+                    <div className="p-6 bg-blue-500/5 border border-blue-500/20 rounded-xl text-center">
+                      <p className="text-[10px] text-linear-text-muted italic leading-relaxed">
+                        No structured metadata scraped for this listing. All available data is shown above. Open the portal directly for full details.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Note */}
+                  <div className="p-4 bg-linear-card/50 border border-linear-border rounded-xl">
+                    <div className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest mb-1">Portal Embed Note</div>
+                    <p className="text-[10px] text-linear-text-muted leading-relaxed">
+                      Rightmove, Zoopla, and most agent portals block internal framing via CSP headers. Use the <strong className="text-white">Open on Portal</strong> button above to launch in a focused window, or press <kbd className="font-mono text-[8px] bg-blue-500/20 px-1 rounded">L</kbd> to open directly.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
             {/* Sticky Actions Footer */}
             <div className="p-6 bg-linear-card border-t border-linear-border grid grid-cols-3 gap-4">
-              {/* UX-010: Add to Comparison */}
+              {/* UX-021: Add to Comparison */}
               <button
                 onClick={() => comparison.toggleComparison(currentListing.filename)}
                 className="flex items-center justify-center gap-2 py-3.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-500/20 hover:border-blue-500/40 transition-all active:scale-95"
@@ -684,19 +751,21 @@ const Inbox: React.FC = () => {
                 <Scale size={14} />
                 {comparison.isInComparison(currentListing.filename) ? 'In Basket' : 'Compare'}
               </button>
+              {/* UX-021: Approve with inline shortcut */}
               <button
                 onClick={() => handleAction('approve')}
                 className="flex items-center justify-center gap-2 py-3.5 bg-retro-green/10 text-retro-green border border-retro-green/20 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-retro-green/20 hover:border-retro-green/40 transition-all active:scale-95 shadow-xl shadow-retro-green/5"
               >
-                <Check size={14} className="group-hover:scale-125 transition-transform" />
-                Approve [A]
+                <Check size={14} />
+                Approve <kbd className="font-mono text-[8px] opacity-60 ml-1">[A]</kbd>
               </button>
+              {/* UX-021: Reject with inline shortcut */}
               <button
                 onClick={() => handleAction('reject')}
                 className="flex items-center justify-center gap-2 py-3.5 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-rose-500/20 hover:border-rose-500/40 transition-all active:scale-95 shadow-xl shadow-rose-500/5"
               >
-                <Trash2 size={14} className="group-hover:scale-125 transition-transform" />
-                Reject [R]
+                <Trash2 size={14} />
+                Reject <kbd className="font-mono text-[8px] opacity-60 ml-1">[R]</kbd>
               </button>
             </div>
           </div>

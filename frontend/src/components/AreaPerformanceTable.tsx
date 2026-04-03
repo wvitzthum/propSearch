@@ -6,18 +6,21 @@ import { extractValue } from '../types/macro';
 const AreaPerformanceTable: React.FC = () => {
   const { data } = useMacroData();
 
+  // DE-166: Use area_heat_index (the normalized array with .area field) — area_trends
+  // is also an array but may lack .area in legacy API responses. area_heat_index is
+  // explicitly constructed by useMacroData with the area name from Object.keys().
   const areas = useMemo(() => {
-    const trends = data?.area_trends || data?.area_heat_index || [];
+    const trends = data?.area_heat_index || data?.area_trends || [];
     const londonBenchmark = extractValue(data?.london_hpi?.annual_change ?? data?.london_hpi?.yoy_pct) ?? 1.2;
-    
+
     return trends
       .map((a: any) => {
-        const heat = extractValue(a.heat_index ?? a.score) ?? 5;
+        const heat = extractValue(a.score ?? a.heat_index) ?? 5;
         const growth = extractValue(a.annual_growth) ?? 0;
         const forecast = extractValue(a.hpi_forecast_12m ?? a.forecast_12m);
         const benchmark = extractValue(a.london_benchmark ?? londonBenchmark);
         const delta = forecast != null ? forecast - benchmark : growth - benchmark;
-        
+
         return {
           name: a.area,
           heat,

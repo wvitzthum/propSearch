@@ -21,41 +21,62 @@ export const useMacroData = () => {
         const rawEcon = raw.economic_indicators || raw;
         const rawRates = rawEcon.mortgage_rates || raw.mortgage_rates || {};
 
-        // --- FE-164: area_heat_index normalization (from area_trends object) ---
-        const areaHeatRaw = raw.area_heat_index
-          || (raw.area_trends && typeof raw.area_trends === 'object' && !Array.isArray(raw.area_trends)
-            ? Object.entries(raw.area_trends)
+        // --- FE-164 / DE-166: area_heat_index normalization —
+        // DE-166: area_trends can now be an array OR a legacy object.
+        // Build area_heat_index from whichever source is available.
+        const areaHeatRaw: any[] = (() => {
+          // Source 1: explicit array in the JSON
+          if (Array.isArray(raw.area_heat_index)) return raw.area_heat_index;
+          // Source 2: area_trends as an array (DE-166 restructure)
+          if (Array.isArray(raw.area_trends)) {
+            return raw.area_trends.map((a: any) => ({
+              area: a.area,
+              score: extractValue(a.heat_index ?? a.score) ?? 5,
+              trend: (extractValue(a.annual_growth) ?? 0) > 0 ? 'Rising' : 'Cooling'
+            }));
+          }
+          // Source 3: legacy area_trends as object (pre-DE-166)
+          if (raw.area_trends && typeof raw.area_trends === 'object') {
+            return Object.entries(raw.area_trends)
                 .filter(([key]) => key !== '_provenance')
                 .map(([area, val]: [string, any]) => ({
                   area,
-                  score: extractValue(val?.heat_index) ?? 5,
+                  score: extractValue(val?.heat_index ?? val?.score) ?? 5,
                   trend: (extractValue(val?.annual_growth) ?? 0) > 0 ? 'Rising' : 'Cooling'
-                }))
-            : []);
+                }));
+          }
+          return [];
+        })();
 
         // --- FE-164: area_trends normalization ---
-        const areaTrendsNormalized = raw.area_trends
-          ? (Array.isArray(raw.area_trends)
-              ? raw.area_trends
-              : Object.entries(raw.area_trends)
-                  .filter(([key]) => key !== '_provenance')
-                  .map(([area, val]: [string, any]) => {
-                    const heat = extractValue(val?.heat_index) ?? 5;
-                    const growth = extractValue(val?.annual_growth) ?? 0;
-                    const forecast = extractValue(val?.hpi_forecast_12m);
-                    const benchmark = extractValue(val?.london_benchmark);
-                    return {
-                      area,
-                      heat_index: val?.heat_index ?? heat,
-                      annual_growth: val?.annual_growth ?? growth,
-                      hpi_forecast_12m: val?.hpi_forecast_12m ?? forecast,
-                      london_benchmark: val?.london_benchmark ?? benchmark,
-                      delta: forecast != null && benchmark != null
-                        ? forecast - benchmark
-                        : (forecast != null ? forecast - 1.2 : undefined)
-                    };
-                  }))
-          : [];
+        // DE-166: area_trends can now be an array (restructured JSON) or legacy object.
+        const areaTrendsNormalized: any[] = (() => {
+          if (!raw.area_trends) return [];
+          // Array format (DE-166+): already has .area field, pass through
+          if (Array.isArray(raw.area_trends)) return raw.area_trends;
+          // Legacy object format: convert to array
+          if (typeof raw.area_trends === 'object') {
+            return Object.entries(raw.area_trends)
+                .filter(([key]) => key !== '_provenance')
+                .map(([area, val]: [string, any]) => {
+                  const heat = extractValue(val?.heat_index) ?? 5;
+                  const growth = extractValue(val?.annual_growth) ?? 0;
+                  const forecast = extractValue(val?.hpi_forecast_12m);
+                  const benchmark = extractValue(val?.london_benchmark);
+                  return {
+                    area,
+                    heat_index: val?.heat_index ?? heat,
+                    annual_growth: val?.annual_growth ?? growth,
+                    hpi_forecast_12m: val?.hpi_forecast_12m ?? forecast,
+                    london_benchmark: val?.london_benchmark ?? benchmark,
+                    delta: forecast != null && benchmark != null
+                      ? forecast - benchmark
+                      : (forecast != null ? forecast - 1.2 : undefined)
+                  };
+                });
+          }
+          return [];
+        })();
 
         // --- FE-164: hpi_forecasts normalization ---
         const hpiForecastsNormalized = Array.isArray(raw.hpi_forecasts)

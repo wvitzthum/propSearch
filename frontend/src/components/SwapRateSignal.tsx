@@ -176,6 +176,70 @@ const SwapRateSignal: React.FC = () => {
             </table>
           </div>
         </div>
+
+        {/* FE-190: 10-year rate history sparkline */}
+        {sparkline2yr.length >= 10 && (
+          <div className="p-3 bg-purple-500/5 border border-purple-500/20 rounded-xl">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[9px] font-bold text-purple-400 uppercase tracking-widest">10-Year Rate Trajectory</span>
+              <span className="text-[8px] text-linear-text-muted/60 font-mono">2016–2026</span>
+            </div>
+            <div className="flex gap-6">
+              {/* 2yr trajectory mini-chart */}
+              <div className="flex-1">
+                <div className="text-[8px] text-linear-text-muted mb-1">2yr Fixed @ 90% LTV</div>
+                {renderSparkline(sparkline2yr.length >= 10 ? sparkline2yr : sparkline2yr.concat(sparkline2yr.slice().reverse()), '#a855f7')}
+                <div className="flex justify-between mt-0.5">
+                  <span className="text-[7px] text-linear-text-muted/60 font-mono">2016</span>
+                  <span className="text-[8px] text-purple-400 font-black">
+                    {sparkline2yr.length >= 10 ? sparkline2yr[0].toFixed(2) + '%' : '—'}
+                  </span>
+                  <span className="text-[8px] text-purple-400 font-black">
+                    {sparkline2yr[sparkline2yr.length - 1].toFixed(2)}%
+                  </span>
+                  <span className="text-[7px] text-linear-text-muted/60 font-mono">now</span>
+                </div>
+              </div>
+              {/* 5yr trajectory mini-chart */}
+              <div className="flex-1">
+                <div className="text-[8px] text-linear-text-muted mb-1">5yr Fixed @ 75% LTV</div>
+                {renderSparkline(sparkline5yr.length >= 10 ? sparkline5yr : sparkline5yr.concat(sparkline5yr.slice().reverse()), '#8b5cf6')}
+                <div className="flex justify-between mt-0.5">
+                  <span className="text-[7px] text-linear-text-muted/60 font-mono">2016</span>
+                  <span className="text-[8px] text-purple-400 font-black">
+                    {sparkline5yr.length >= 10 ? sparkline5yr[0].toFixed(2) + '%' : '—'}
+                  </span>
+                  <span className="text-[8px] text-purple-400 font-black">
+                    {sparkline5yr[sparkline5yr.length - 1].toFixed(2)}%
+                  </span>
+                  <span className="text-[7px] text-linear-text-muted/60 font-mono">now</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* FE-190: Affordability context */}
+        <div className="grid grid-cols-3 gap-3">
+          {/* Monthly cost at current rate */}
+          <div className="p-3 bg-linear-bg rounded-xl border border-linear-border">
+            <div className="text-[8px] text-linear-text-muted uppercase tracking-widest mb-1">Monthly @ 5yr 90%</div>
+            <div className="text-lg font-bold text-white tracking-tighter">£{Math.round((300000 * 0.9 * (recent5yr / 100 / 12) * 1.1) / 10) * 10}</div>
+            <div className="text-[7px] text-linear-text-muted/60">£300K loan, 25yr</div>
+          </div>
+          {/* vs peak (2022) */}
+          <div className="p-3 bg-linear-bg rounded-xl border border-linear-border">
+            <div className="text-[8px] text-linear-text-muted uppercase tracking-widest mb-1">vs 2022 Peak</div>
+            <div className="text-lg font-bold text-retro-green tracking-tighter">-{(5.75 - recent5yr).toFixed(1)}pp</div>
+            <div className="text-[7px] text-linear-text-muted/60">From 5.75% peak</div>
+          </div>
+          {/* vs pre-rate hike */}
+          <div className="p-3 bg-linear-bg rounded-xl border border-linear-border">
+            <div className="text-[8px] text-linear-text-muted uppercase tracking-widest mb-1">vs 2021 Low</div>
+            <div className="text-lg font-bold text-amber-400 tracking-tighter">{(recent5yr - 2.5).toFixed(1)}pp</div>
+            <div className="text-[7px] text-linear-text-muted/60">Above 2.5% floor</div>
+          </div>
+        </div>
       </div>
     </div>
   );

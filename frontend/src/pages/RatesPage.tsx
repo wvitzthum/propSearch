@@ -7,6 +7,8 @@ import {
 import SwapRateSignal from '../components/SwapRateSignal';
 import BoERatePathChart from '../components/BoERatePathChart';
 import AreaPerformanceTable from '../components/AreaPerformanceTable';
+import HPIHistoryChart from '../components/HPIHistoryChart';
+import LondonPrimePremiumChart from '../components/LondonPrimePremiumChart';
 
 const RatesPage: React.FC = () => {
   return (
@@ -40,8 +42,8 @@ const RatesPage: React.FC = () => {
         <SwapRateSignal />
       </div>
 
-      {/* BoE Rate Path + Area Performance — main grid */}
-      <div className="grid lg:grid-cols-2 gap-8">
+      {/* BoE Rate Path + HPI Trajectory + Area Performance — main grid */}
+      <div className="grid lg:grid-cols-3 gap-8">
         {/* BoE Rate Path */}
         <div className="bg-linear-card border border-linear-border rounded-2xl p-6 shadow-xl">
           <div className="flex items-center gap-2 mb-4">
@@ -51,14 +53,32 @@ const RatesPage: React.FC = () => {
           <BoERatePathChart />
         </div>
 
-        {/* Area Performance Table */}
+        {/* HPI Trajectory Chart */}
         <div className="bg-linear-card border border-linear-border rounded-2xl p-6 shadow-xl">
           <div className="flex items-center gap-2 mb-4">
             <Activity size={14} className="text-retro-green" />
+            <h2 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">HPI Historical Trajectory</h2>
+          </div>
+          <HPIHistoryChart />
+        </div>
+
+        {/* Area Performance Table */}
+        <div className="bg-linear-card border border-linear-border rounded-2xl p-6 shadow-xl">
+          <div className="flex items-center gap-2 mb-4">
+            <Activity size={14} className="text-purple-400" />
             <h2 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">Area Performance</h2>
           </div>
           <AreaPerformanceTable />
         </div>
+      </div>
+
+      {/* FE-191: London Prime Premium */}
+      <div className="bg-linear-card border border-linear-border rounded-2xl p-6 shadow-xl">
+        <div className="flex items-center gap-2 mb-4">
+          <Activity size={14} className="text-amber-400" />
+          <h2 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">London Prime Premium Tracker</h2>
+        </div>
+        <LondonPrimePremiumChart />
       </div>
     </div>
   );

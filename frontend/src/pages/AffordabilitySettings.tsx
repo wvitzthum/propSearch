@@ -19,6 +19,7 @@ import LTVMatchBadge from '../components/LTVMatchBadge';
 import BudgetSlider from '../components/BudgetSlider';
 import LoadingNode from '../components/LoadingNode';
 import AdditionalCostsCard from '../components/AdditionalCostsCard';
+import RentalYieldVsGiltChart from '../components/RentalYieldVsGiltChart';
 
 const AffordabilitySettings: React.FC = () => {
   const { macroData, loading } = useFinancialData();
@@ -639,6 +640,20 @@ const AffordabilitySettings: React.FC = () => {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* FE-192: Rental Yield vs Gilt yield comparison */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-xl bg-linear-card border border-linear-border flex items-center justify-center">
+            <Percent size={16} className="text-retro-green" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white tracking-tight">Investment Yield Analysis</h2>
+            <p className="text-[11px] text-linear-text-muted">Gross rental yields vs UK gilt (risk-free) — investment thesis validation</p>
+          </div>
+        </div>
+        <RentalYieldVsGiltChart />
       </div>
     </div>
   );

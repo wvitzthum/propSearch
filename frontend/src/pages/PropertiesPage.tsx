@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom';
 import {
   Building2, Search, Table as TableIcon, LayoutGrid, Filter,
-  X, Check, Eye, ChevronRight
+  X, Check, Eye, ChevronRight, Star, TrendingUp
 } from 'lucide-react';
 import PropertyTable from '../components/PropertyTable';
 import LoadingNode from '../components/LoadingNode';
@@ -53,6 +53,19 @@ const PropertiesPage: React.FC = () => {
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
   const [isColumnMenuOpen, setIsColumnMenuOpen] = useState(false);
 
+  // UX-018: Smart filter state
+  const [isValueBuyFilter, setIsValueBuyFilter] = useState(false);
+
+  // UX-018: Pipeline counts for Status Pipeline Strip
+  const pipelineCounts = useMemo(() => {
+    const c = { discovered: 0, shortlisted: 0, vetted: 0, archived: 0 };
+    properties.forEach(p => {
+      const s = getStatus(p.id);
+      if (s in c) c[s as keyof typeof c]++;
+    });
+    return c;
+  }, [properties, getStatus]);
+
   const allColumns = [
     { key: 'alpha', label: 'Alpha Score' },
     { key: 'price', label: 'Price' },
@@ -68,7 +81,7 @@ const PropertiesPage: React.FC = () => {
 
   // --- Computed values (declared before useEffects that depend on them) ---
 
-  const hasActiveFilters = statusFilter !== 'all' || areaFilter !== 'All Areas' || alphaThreshold > 0 || maxPrice < 3000000 || minSqft > 0;
+  const hasActiveFilters = statusFilter !== 'all' || areaFilter !== 'All Areas' || alphaThreshold > 0 || maxPrice < 3000000 || minSqft > 0 || isValueBuyFilter;
 
   const availableAreas = useMemo(() => {
     if (!properties) return [];
@@ -84,6 +97,7 @@ const PropertiesPage: React.FC = () => {
     if (alphaThreshold > 0) result = result.filter(p => p.alpha_score >= alphaThreshold);
     result = result.filter(p => p.realistic_price <= maxPrice);
     if (minSqft > 0) result = result.filter(p => (p.sqft ?? 0) >= minSqft);
+    if (isValueBuyFilter) result = result.filter(p => p.is_value_buy);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(p => p.address?.toLowerCase().includes(q) || p.area?.toLowerCase().includes(q) || String(p.realistic_price).includes(q));
@@ -102,7 +116,7 @@ const PropertiesPage: React.FC = () => {
       }
     });
     return result;
-  }, [properties, statusFilter, areaFilter, alphaThreshold, maxPrice, minSqft, searchQuery, filters, getStatus]);
+  }, [properties, statusFilter, areaFilter, alphaThreshold, maxPrice, minSqft, isValueBuyFilter, searchQuery, filters, getStatus]);
 
   // Keep ref in sync with filteredProperties (for use inside keyboard handler)
   useEffect(() => { filteredPropsRef.current = filteredProperties; }, [filteredProperties]);
@@ -240,8 +254,71 @@ const PropertiesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Control Bar */}
+      {/* UX-018: Smart Command Bar */}
       <div className="flex items-center gap-3">
+        {/* Smart filter buttons */}
+        <div className="flex bg-linear-card border border-linear-border rounded-lg p-0.5 gap-0.5">
+          {/* Top Alpha */}
+          <button
+            onClick={() => {
+              if (alphaThreshold >= 7.5) {
+                handleFilterChange(() => setAlphaThreshold(0));
+              } else {
+                handleFilterChange(() => { setAlphaThreshold(7.5); setStatusFilter('all'); setIsValueBuyFilter(false); });
+              }
+            }}
+            title="Top Alpha: Show properties with alpha ≥ 7.5"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold transition-all ${alphaThreshold >= 7.5 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-linear-text-muted hover:text-white hover:bg-linear-bg'}`}
+          >
+            <Star size={10} className={alphaThreshold >= 7.5 ? 'text-emerald-400 fill-current' : ''} />
+            Top Alpha
+          </button>
+
+          {/* Value Buys */}
+          <button
+            onClick={() => {
+              handleFilterChange(() => {
+                setIsValueBuyFilter(v => !v);
+                setStatusFilter('all');
+                setAlphaThreshold(0);
+              });
+            }}
+            title="Value Buys: Show only value buy properties"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold transition-all ${isValueBuyFilter ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-linear-text-muted hover:text-white hover:bg-linear-bg'}`}
+          >
+            <TrendingUp size={10} className={isValueBuyFilter ? 'text-emerald-400' : ''} />
+            Value Buys
+          </button>
+
+          {/* Shortlisted */}
+          <button
+            onClick={() => {
+              handleFilterChange(() => {
+                setStatusFilter('shortlisted');
+                setIsValueBuyFilter(false);
+                setAlphaThreshold(0);
+              });
+            }}
+            title="Shortlisted: Show shortlisted properties"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold transition-all ${statusFilter === 'shortlisted' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-linear-text-muted hover:text-white hover:bg-linear-bg'}`}
+          >
+            Shortlisted
+          </button>
+
+          {/* All */}
+          <button
+            onClick={() => {
+              clearFilters();
+              setIsValueBuyFilter(false);
+            }}
+            title="All: Show all properties"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold transition-all ${hasActiveFilters ? 'text-linear-text-muted hover:text-white hover:bg-linear-bg' : 'text-white bg-linear-bg border border-linear-border'}`}
+          >
+            All
+          </button>
+        </div>
+
+        {/* View mode toggle */}
         <div className="flex bg-linear-card border border-linear-border rounded-lg p-0.5 gap-0.5">
           <button onClick={() => setViewMode('table')} title="Table view (T)"
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold transition-all ${viewMode === 'table' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-linear-text-muted hover:text-white'}`}>
@@ -314,6 +391,39 @@ const PropertiesPage: React.FC = () => {
             <X size={10} />Clear
           </button>
         )}
+      </div>
+
+      {/* UX-018: Status Pipeline Strip */}
+      <div className="flex items-center gap-1">
+        <span className="text-[9px] font-black text-linear-text-muted/60 uppercase tracking-widest mr-1">Status:</span>
+        {[
+          { key: 'discovered' as PropertyStatus, label: 'Discovered', color: 'blue' },
+          { key: 'shortlisted' as PropertyStatus, label: 'Shortlisted', color: 'amber' },
+          { key: 'vetted' as PropertyStatus, label: 'Vetted', color: 'emerald' },
+          { key: 'archived' as PropertyStatus, label: 'Archived', color: 'rose' },
+        ].map(({ key, label, color }) => (
+          <button
+            key={key}
+            onClick={() => handleStatusFilter(statusFilter === key ? 'all' : key)}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all border ${
+              statusFilter === key
+                ? color === 'blue' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                  color === 'amber' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                  color === 'emerald' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                  'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                : 'bg-linear-card border-linear-border text-linear-text-muted hover:text-white hover:border-linear-accent/30'
+            }`}
+          >
+            <div className={`h-1.5 w-1.5 rounded-full ${
+              color === 'blue' ? 'bg-blue-400' :
+              color === 'amber' ? 'bg-amber-400' :
+              color === 'emerald' ? 'bg-emerald-400' :
+              'bg-rose-400'
+            }`} />
+            {pipelineCounts[key]}
+            <span className="text-[9px] opacity-70">{label}</span>
+          </button>
+        ))}
       </div>
 
       {/* Filter Panel */}

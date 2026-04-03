@@ -2,10 +2,12 @@ import React from 'react';
 import {
   Map,
   Activity,
-  TrendingUp
+  TrendingUp,
+  BarChart2
 } from 'lucide-react';
 import MicroMarketVelocityMap from '../components/MicroMarketVelocityMap';
 import AreaPerformanceTable from '../components/AreaPerformanceTable';
+import PropertyTypePerformanceChart from '../components/PropertyTypePerformanceChart';
 
 const MarketPage: React.FC = () => {
   return (
@@ -51,6 +53,15 @@ const MarketPage: React.FC = () => {
           <h2 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">Area Performance Data</h2>
         </div>
         <AreaPerformanceTable />
+      </div>
+
+      {/* FE-189: Property Type Performance */}
+      <div className="bg-linear-card border border-linear-border rounded-2xl p-6 shadow-xl">
+        <div className="flex items-center gap-2 mb-4">
+          <BarChart2 size={14} className="text-blue-400" />
+          <h2 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">Property Type Segment Performance</h2>
+        </div>
+        <PropertyTypePerformanceChart />
       </div>
     </div>
   );

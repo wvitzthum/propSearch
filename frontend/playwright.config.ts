@@ -22,10 +22,20 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
+  webServer: [
+    {
+      // Start the backend API server first (Vite proxies /api to it)
+      command: 'cd /workspaces/propSearch && node server/index.js',
+      url: 'http://localhost:3001/api/health',
+      reuseExistingServer: !process.env.CI,
+      timeout: 30000,
+    },
+    {
+      // Then start the Vite dev server
+      command: 'npm run dev',
+      url: 'http://localhost:5173',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120000,
+    },
+  ],
 });
