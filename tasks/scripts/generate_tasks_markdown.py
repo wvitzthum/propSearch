@@ -34,12 +34,14 @@ RESOLVED_JSON = ROOT / "tasks" / "tasks_resolved.json"
 OUTPUT = ROOT / "Tasks.md"
 
 SECTION_META = {
-    "new_approved":  {"title": "🆕 New Approved Features (2026-03-30)"},
-    "bug_fixes":     {"title": "🐛 Bug Fixes"},
-    "data_research": {"title": "📊 Data & Research (Unblocked First)"},
-    "blocked":       {"title": "🔗 Blocked by Outstanding Data (Clear Dependencies)"},
-    "superseded":    {"title": "⚠️ Superseded"},
-    "completed":     {"title": "✅ Completed"},
+    "new_approved":   {"title": "🆕 New Approved Features (2026-03-30)"},
+    "bug_fixes":      {"title": "🐛 Bug Fixes"},
+    "data_research":  {"title": "📊 Data & Research (Unblocked First)"},
+    "ux_improvements":{"title": "🎨 UX Improvements"},
+    "testing":        {"title": "🧪 Test Coverage"},
+    "blocked":        {"title": "🔗 Blocked by Outstanding Data (Clear Dependencies)"},
+    "superseded":     {"title": "⚠️ Superseded"},
+    "completed":      {"title": "✅ Completed"},
 }
 
 
@@ -87,18 +89,51 @@ def dep_str(deps):
 
 # ── HTML table builders ───────────────────────────────────────────────────────
 
+def extract_blocked_reason(task):
+    """Extract first BLOCKED: line from notes as the blocked reason."""
+    notes = task.get('notes', [])
+    if isinstance(notes, list):
+        for line in notes:
+            if 'BLOCKED' in line.upper() or 'BLOCKED BY' in line.upper():
+                # Strip prefix if present
+                line = re.sub(r'BLOCKED:?\s*', '', line, flags=re.IGNORECASE)
+                line = re.sub(r'BLOCKED BY:?\s*', '', line, flags=re.IGNORECASE)
+                return line.strip()
+    # Also check blocked_reason field
+    reason = task.get('blocked_reason', '')
+    if reason:
+        return reason
+    return ''
+
+
 def html_row_8col(task):
     """8-column HTML row for new_approved / bug_fixes / data_research / blocked."""
+    is_blocked = task.get('status') == 'Blocked'
+    blocked_reason = extract_blocked_reason(task) if is_blocked else ''
+
+    status_html = (
+        f"<span style='color:#f59e0b;font-weight:bold'>⚠️ Blocked</span>"
+        if is_blocked
+        else escape(task.get('status', 'Todo'))
+    )
+
+    reason_html = (
+        f"<span style='color:#ef4444;font-size:11px' title='{escape(blocked_reason)}'>"
+        f"{escape(blocked_reason[:120])}</span>"
+        if blocked_reason
+        else ''
+    )
+
     return (
         f"<tr>"
         f"<td>{bold(escape(task['id']))}</td>"
         f"<td>{escape(task.get('priority', '-'))}</td>"
         f"<td>{escape(task.get('effort', '-'))}</td>"
         f"<td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='{escape(task.get('title',''))}'>{render_inline_code(task.get('title',''))}</td>"
-        f"<td>{escape(task.get('status', 'Todo'))}</td>"
+        f"<td>{status_html}</td>"
         f"<td>{escape(task.get('responsible') or '')}</td>"
         f"<td>{escape(dep_str(task.get('dependencies', [])))}</td>"
-        f"<td>{escape(task.get('date', ''))}</td>"
+        f"<td>{reason_html}</td>"
         f"</tr>"
     )
 
@@ -126,7 +161,7 @@ def html_row_4col_resolved(task):
 
 
 def html_table_8col(section_title, tasks):
-    """8-column table: ID | Priority | Effort | Task | Status | Responsible | Dependencies | Date"""
+    """8-column table: ID | Priority | Effort | Task | Status | Responsible | Dependencies | Block Reason"""
     rows = "\n".join(html_row_8col(t) for t in tasks)
     return f"""
 ## {section_title}
@@ -141,7 +176,7 @@ def html_table_8col(section_title, tasks):
   <th align="left">Status</th>
   <th align="left">Responsible</th>
   <th align="left">Dependencies</th>
-  <th align="left">Date</th>
+  <th align="left">Block Reason / Notes</th>
 </tr>
 </thead>
 <tbody>
@@ -195,14 +230,22 @@ def html_table_4col_completed(section_title, tasks):
 def render_live(tasks_data):
     all_tasks = tasks_data["tasks"]
     parts = []
-    for sid in ["new_approved", "bug_fixes", "data_research", "blocked"]:
+    # Standard sections filtered by section
+    for sid in ["new_approved", "bug_fixes", "data_research", "ux_improvements", "testing"]:
         section_tasks = [t for t in all_tasks
                          if t.get("section") == sid
-                         and t.get("status") != "Done"]
+                         and t.get("status") != "Done"
+                         and t.get("status") != "Blocked"]  # exclude blocked tasks
         if not section_tasks:
             continue
         meta = SECTION_META[sid]
         parts.append(html_table_8col(meta["title"], section_tasks))
+
+    # Blocked tasks: filter by status="Blocked" across all sections
+    blocked_tasks = [t for t in all_tasks if t.get("status") == "Blocked"]
+    if blocked_tasks:
+        parts.append(html_table_8col(SECTION_META["blocked"]["title"], blocked_tasks))
+
     return "\n".join(parts)
 
 

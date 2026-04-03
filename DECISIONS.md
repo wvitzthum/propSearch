@@ -107,7 +107,34 @@ While DuckDB provided superior analytical performance, the implementation encoun
 ## Status
 Accepted
 
-# ADR-012: Visual Intelligence & Spatial Research (Floorplans)
+# ADR-015: @visx for All Chart and Data Visualization Components
+## Context
+The current charting approach uses hand-crafted inline SVG — hardcoded viewBox coordinates, manual `getX`/`getY` math, and per-chart unique logic. This is brittle, hard to reuse, and makes responsive scaling complex. The codebase now has 8+ raw-SVG chart components (BoERatePathChart, HPIHistoryChart, SwapRateSignal, LondonPrimePremiumChart, PropertyTypePerformanceChart, RentalYieldVsGiltChart, CapitalAppreciationChart, SparklineChart) with no shared abstraction.
+
+## Decision
+1.  **Library:** Adopt **@visx** (airbnb/visx) as the single charting library for all new and refactored data visualization components.
+2.  **Scope:** All line charts, area charts, bar charts, sparklines, and fan/projection overlays must use visx primitives. Raw `<svg>` tags are only permitted for purely decorative shapes (icons, decorative dividers, progress rings).
+3.  **Core packages to use:**
+    - `@visx/scale` — declarative scale functions (replaces all manual getX/getY)
+    - `@visx/shape` — LinePath, AreaClosed, Bar, etc.
+    - `@visx/axis` — AxisBottom, AxisLeft (optional — manual tick labels are acceptable for dense Bloomberg-style UI)
+    - `@visx/grid` — GridRows, GridColumns
+    - `@visx/responsive` — ParentSize for responsive charts
+    - `@visx/tooltip` — useTooltip, TooltipWithBounds
+    - `@visx/group` — Group for coordinate transforms
+    - `@visx/event` — localPoint for mouse interaction
+    - `@visx/gradient` — gradient fills for area charts
+4.  **Migration order:** Prototype first (BoERatePathChart as proof-of-concept ✅), then migrate remaining charts in priority order: HPIHistoryChart, LondonPrimePremiumChart, SwapRateSignal, PropertyTypePerformanceChart, RentalYieldVsGiltChart, CapitalAppreciationChart, SparklineChart.
+5.  **Anti-patterns to avoid:**
+    - `<svg><polyline>` or `<svg><line>` for data series → use visx shapes
+    - Hand-rolled `getX`/`getY` functions → use scalePoint/scaleLinear
+    - Hardcoded `viewBox` for chart dimensions → use visx responsive pattern with ParentSize
+6.  **Installation:** `npm install @visx/scale @visx/shape @visx/axis @visx/grid @visx/responsive @visx/tooltip @visx/group @visx/event @visx/gradient --legacy-peer-deps` (React 19 peer dep conflict requires `--legacy-peer-deps`)
+
+## Status
+Accepted
+
+# ADR-016: Visual Intelligence & Spatial Research (Floorplans)
 ## Context
 Floorplans are a critical data point for judging spatial volume and flow before an acquisition decision. Standard property imagery often fails to provide this context, leading to inefficient triage.
 ## Decision
@@ -142,6 +169,35 @@ The binary `archived = 1` flag conflates multiple distinct market states: genuin
 5.  **UI surfaces:** Archive Review view grouped by `market_status` with prominent "Active — Recheck Needed" section; active property cards show freshness badge; recheck and reactivate actions exposed on archived records.
 ## Status
 Accepted
+
+# ADR-015: @visx for All Chart and Data Visualization Components
+## Context
+The current charting approach uses hand-crafted inline SVG — hardcoded viewBox coordinates, manual `getX`/`getY` math, and per-chart unique logic. This is brittle, hard to reuse, and makes responsive scaling complex. The codebase now has 8+ raw-SVG chart components (BoERatePathChart, HPIHistoryChart, SwapRateSignal, LondonPrimePremiumChart, PropertyTypePerformanceChart, RentalYieldVsGiltChart, CapitalAppreciationChart, SparklineChart) with no shared abstraction.
+
+## Decision
+1.  **Library:** Adopt **@visx** (airbnb/visx) as the single charting library for all new and refactored data visualization components.
+2.  **Scope:** All line charts, area charts, bar charts, sparklines, and fan/projection overlays must use visx primitives. Raw `<svg>` tags are only permitted for purely decorative shapes (icons, decorative dividers, progress rings).
+3.  **Core packages to use:**
+    - `@visx/scale` — declarative scale functions (replaces all manual getX/getY)
+    - `@visx/shape` — LinePath, AreaClosed, Bar, etc.
+    - `@visx/axis` — AxisBottom, AxisLeft (optional — manual tick labels are acceptable for dense Bloomberg-style UI)
+    - `@visx/grid` — GridRows, GridColumns
+    - `@visx/responsive` — ParentSize for responsive charts
+    - `@visx/tooltip` — useTooltip, TooltipWithBounds
+    - `@visx/group` — Group for coordinate transforms
+    - `@visx/event` — localPoint for mouse interaction
+    - `@visx/gradient` — gradient fills for area charts
+4.  **Migration order:** Prototype first (BoERatePathChart as proof-of-concept ✅), then migrate remaining charts in priority order: HPIHistoryChart, LondonPrimePremiumChart, SwapRateSignal, PropertyTypePerformanceChart, RentalYieldVsGiltChart, CapitalAppreciationChart, SparklineChart.
+5.  **Anti-patterns to avoid:**
+    - `<svg><polyline>` or `<svg><line>` for data series → use visx shapes
+    - Hand-rolled `getX`/`getY` functions → use scalePoint/scaleLinear
+    - Hardcoded `viewBox` for chart dimensions → use visx responsive pattern with ParentSize
+6.  **Installation:** `npm install @visx/scale @visx/shape @visx/axis @visx/grid @visx/responsive @visx/tooltip @visx/group @visx/event @visx/gradient --legacy-peer-deps` (React 19 peer dep conflict requires `--legacy-peer-deps`)
+
+## Status
+Accepted
+
+# ADR-016: Visual Intelligence & Spatial Research (Floorplans)
 
 # ADR-014: Market Status Taxonomy & Listing Freshness Tracking
 ## Context

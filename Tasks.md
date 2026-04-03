@@ -13,6 +13,28 @@
 -->
 
 
+## 🆕 New Approved Features (2026-03-30)
+
+<table>
+<thead>
+<tr>
+  <th align="left">ID</th>
+  <th align="left">Priority</th>
+  <th align="left">Effort</th>
+  <th align="left" style="width:480px">Task</th>
+  <th align="left">Status</th>
+  <th align="left">Responsible</th>
+  <th align="left">Dependencies</th>
+  <th align="left">Block Reason / Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr><td><strong>FE-194</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Audit and complete demo data files in frontend/public/data/ -- full demo mode'>FE: Audit and complete demo data files in frontend/public/data/ -- full demo mode</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-195</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Create mock inbox leads data for demo mode'>FE: Create mock inbox leads data for demo mode</td><td>Todo</td><td>Frontend Engineer</td><td>FE-194</td><td></td></tr>
+<tr><td><strong>FE-196</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Add DEMO_MODE indicator to UI -- show when running in demo mode'>FE: Add DEMO_MODE indicator to UI -- show when running in demo mode</td><td>Todo</td><td>Frontend Engineer</td><td>FE-194</td><td></td></tr>
+</tbody>
+</table>
+
 ## 📊 Data & Research (Unblocked First)
 
 <table>
@@ -25,18 +47,15 @@
   <th align="left">Status</th>
   <th align="left">Responsible</th>
   <th align="left">Dependencies</th>
-  <th align="left">Date</th>
+  <th align="left">Block Reason / Notes</th>
 </tr>
 </thead>
 <tbody>
-<tr><td><strong>DAT-177</strong></td><td>High</td><td>High</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source London property price indexed by bedroom type — 1-bed, 2-bed, 3-bed, detached premiums and trends'>Source London property price indexed by bedroom type — 1-bed, 2-bed, 3-bed, detached premiums and trends</td><td>Todo</td><td>Data Analyst</td><td>DAT-176</td><td>2026-04-03</td></tr>
-<tr><td><strong>DAT-178</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source 10-year mortgage rate history by LTV band — for long-range affordability context'>Source 10-year mortgage rate history by LTV band — for long-range affordability context</td><td>In Progress</td><td>Data Analyst</td><td>None</td><td>2026-04-03</td></tr>
-<tr><td><strong>DAT-179</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source quarterly London transaction volume and new listing volume data — market cycle visualization'>Source quarterly London transaction volume and new listing volume data — market cycle visualization</td><td>Todo</td><td>Data Analyst</td><td>DAT-176</td><td>2026-04-03</td></tr>
-<tr><td><strong>DAT-180</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source rental yield history by London area — critical for investment thesis validation'>Source rental yield history by London area — critical for investment thesis validation</td><td>Todo</td><td>Data Analyst</td><td>None</td><td>2026-04-03</td></tr>
-<tr><td><strong>DAT-181</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source London prime premium vs Greater London discount history — tracks London premium erosion/recovery'>Source London prime premium vs Greater London discount history — tracks London premium erosion/recovery</td><td>Todo</td><td>Data Analyst</td><td>DAT-176</td><td>2026-04-03</td></tr>
-<tr><td><strong>DAT-182</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source EPC energy efficiency distribution by London area — MEES deadline risk mapping'>Source EPC energy efficiency distribution by London area — MEES deadline risk mapping</td><td>Todo</td><td>Data Analyst</td><td>None</td><td>2026-04-03</td></tr>
-<tr><td><strong>DAT-183</strong></td><td>Low</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source foreign buyer activity and international capital flows into London prime residential'>Source foreign buyer activity and international capital flows into London prime residential</td><td>Todo</td><td>Data Analyst</td><td>DAT-181</td><td>2026-04-03</td></tr>
-<tr><td><strong>DAT-184</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Data Analyst: Process 10 new leads from inbox -- normalize, dedup, import to SQLite'>Data Analyst: Process 10 new leads from inbox -- normalize, dedup, import to SQLite</td><td>Todo</td><td>Data Analyst</td><td>None</td><td>2026-04-03</td></tr>
+<tr><td><strong>DAT-178</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source 10-year mortgage rate history by LTV band — for long-range affordability context'>Source 10-year mortgage rate history by LTV band — for long-range affordability context</td><td>In Progress</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>DAT-180</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source rental yield history by London area — critical for investment thesis validation'>Source rental yield history by London area — critical for investment thesis validation</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>DAT-181</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source London prime premium vs Greater London discount history — tracks London premium erosion/recovery'>Source London prime premium vs Greater London discount history — tracks London premium erosion/recovery</td><td>Todo</td><td>Data Analyst</td><td>DAT-176</td><td></td></tr>
+<tr><td><strong>DAT-183</strong></td><td>Low</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source foreign buyer activity and international capital flows into London prime residential'>Source foreign buyer activity and international capital flows into London prime residential</td><td>Todo</td><td>Data Analyst</td><td>DAT-181</td><td></td></tr>
+<tr><td><strong>DAT-185</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Data Analyst: Review and fix Area Performance Data -- gaps in area_trends'>Data Analyst: Review and fix Area Performance Data -- gaps in area_trends</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
 </tbody>
 </table>
 
@@ -52,16 +71,37 @@
   <th align="left">Status</th>
   <th align="left">Responsible</th>
   <th align="left">Dependencies</th>
-  <th align="left">Date</th>
+  <th align="left">Block Reason / Notes</th>
 </tr>
 </thead>
 <tbody>
-<tr><td><strong>QA-188</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Plan and write Playwright tests for HPI Trajectory Chart (FE-188)'>QA: Plan and write Playwright tests for HPI Trajectory Chart (FE-188)</td><td>Todo</td><td>UI/UX QA</td><td>FE-188</td><td>2026-04-03</td></tr>
-<tr><td><strong>QA-189</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Plan and write Playwright tests for Property Type Segment Performance chart (FE-189)'>QA: Plan and write Playwright tests for Property Type Segment Performance chart (FE-189)</td><td>Todo</td><td>UI/UX QA</td><td>FE-189</td><td>2026-04-03</td></tr>
-<tr><td><strong>QA-190</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Write Playwright tests for SwapRateSignal 10-year sparkline extension (FE-190)'>QA: Write Playwright tests for SwapRateSignal 10-year sparkline extension (FE-190)</td><td>Todo</td><td>UI/UX QA</td><td>FE-190</td><td>2026-04-03</td></tr>
-<tr><td><strong>QA-191</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Write Playwright tests for London Prime Premium tracker (FE-191)'>QA: Write Playwright tests for London Prime Premium tracker (FE-191)</td><td>Todo</td><td>UI/UX QA</td><td>FE-191</td><td>2026-04-03</td></tr>
-<tr><td><strong>QA-192</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Write Playwright tests for Rental Yield vs Gilt yield comparison chart (FE-192)'>QA: Write Playwright tests for Rental Yield vs Gilt yield comparison chart (FE-192)</td><td>Todo</td><td>UI/UX QA</td><td>FE-192</td><td>2026-04-03</td></tr>
-<tr><td><strong>QA-193</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Write Playwright tests for EPC/MEES Risk Map (FE-193)'>QA: Write Playwright tests for EPC/MEES Risk Map (FE-193)</td><td>Todo</td><td>UI/UX QA</td><td>FE-193</td><td>2026-04-03</td></tr>
+<tr><td><strong>QA-188</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Plan and write Playwright tests for HPI Trajectory Chart (FE-188)'>QA: Plan and write Playwright tests for HPI Trajectory Chart (FE-188)</td><td>Todo</td><td>UI/UX QA</td><td>FE-188</td><td></td></tr>
+<tr><td><strong>QA-189</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Plan and write Playwright tests for Property Type Segment Performance chart (FE-189)'>QA: Plan and write Playwright tests for Property Type Segment Performance chart (FE-189)</td><td>Todo</td><td>UI/UX QA</td><td>FE-189</td><td></td></tr>
+<tr><td><strong>QA-190</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Write Playwright tests for SwapRateSignal 10-year sparkline extension (FE-190)'>QA: Write Playwright tests for SwapRateSignal 10-year sparkline extension (FE-190)</td><td>Todo</td><td>UI/UX QA</td><td>FE-190</td><td></td></tr>
+<tr><td><strong>QA-191</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Write Playwright tests for London Prime Premium tracker (FE-191)'>QA: Write Playwright tests for London Prime Premium tracker (FE-191)</td><td>Todo</td><td>UI/UX QA</td><td>FE-191</td><td></td></tr>
+<tr><td><strong>QA-192</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Write Playwright tests for Rental Yield vs Gilt yield comparison chart (FE-192)'>QA: Write Playwright tests for Rental Yield vs Gilt yield comparison chart (FE-192)</td><td>Todo</td><td>UI/UX QA</td><td>FE-192</td><td></td></tr>
+<tr><td><strong>QA-193</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Write Playwright tests for EPC/MEES Risk Map (FE-193)'>QA: Write Playwright tests for EPC/MEES Risk Map (FE-193)</td><td>Todo</td><td>UI/UX QA</td><td>FE-193</td><td></td></tr>
+</tbody>
+</table>
+
+## 🔗 Blocked by Outstanding Data (Clear Dependencies)
+
+<table>
+<thead>
+<tr>
+  <th align="left">ID</th>
+  <th align="left">Priority</th>
+  <th align="left">Effort</th>
+  <th align="left" style="width:480px">Task</th>
+  <th align="left">Status</th>
+  <th align="left">Responsible</th>
+  <th align="left">Dependencies</th>
+  <th align="left">Block Reason / Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr><td><strong>DAT-177</strong></td><td>High</td><td>High</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source London property price indexed by bedroom type — 1-bed, 2-bed, 3-bed, detached premiums and trends'>Source London property price indexed by bedroom type — 1-bed, 2-bed, 3-bed, detached premiums and trends</td><td><span style='color:#f59e0b;font-weight:bold'>⚠️ Blocked</span></td><td>Data Analyst</td><td>DAT-176</td><td></td></tr>
+<tr><td><strong>DAT-182</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source EPC energy efficiency distribution by London area — MEES deadline risk mapping'>Source EPC energy efficiency distribution by London area — MEES deadline risk mapping</td><td><span style='color:#f59e0b;font-weight:bold'>⚠️ Blocked</span></td><td>Data Analyst</td><td>None</td><td></td></tr>
 </tbody>
 </table>
 

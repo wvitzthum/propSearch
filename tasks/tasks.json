@@ -2140,7 +2140,7 @@
       "effort": "High",
       "section": "data_research",
       "title": "Source London property price indexed by bedroom type \u2014 1-bed, 2-bed, 3-bed, detached premiums and trends",
-      "status": "Todo",
+      "status": "Blocked",
       "responsible": "Data Analyst",
       "dependencies": [
         "DAT-176"
@@ -2193,7 +2193,9 @@
         "property-type",
         "market-segment",
         "prices"
-      ]
+      ],
+      "resolution": "All primary sources (ONS API, Rightmove, Zoopla, DLUHC EPC portal) are JS-gated or rate-limited. See data/DAT-177_bedroom_type_research.json and data/DAT-182_epc_research.json",
+      "reason": "All primary sources (ONS Price Paid by Property Type API, Land Registry price-paid-data, Rightmove PPI, Zoopla Market Insights) require JavaScript or are rate-limited/empty. The canonical ONS dataset (PPDAIT/PPI) returns no data from api.ons.gov.uk. gov.uk pages are blocked by JS-gated cookie consent. FlareSolverr returns empty for all attempted portals."
     },
     {
       "id": "DAT-178",
@@ -2252,7 +2254,7 @@
       "effort": "Medium",
       "section": "data_research",
       "title": "Source quarterly London transaction volume and new listing volume data \u2014 market cycle visualization",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Data Analyst",
       "dependencies": [
         "DAT-176"
@@ -2293,7 +2295,8 @@
         "market-cycles",
         "historical",
         "inventory"
-      ]
+      ],
+      "resolution": "PARTIAL - Existing Rightmove/HM Land Registry transaction data documented in macro_trend.json. Monthly supply = 4.3 (Q1 2026). Full quarterly London transaction volume series blocked by JS/Akamai on gov.uk/ONS. See data/DAT-179_transaction_vol_research.json"
     },
     {
       "id": "DAT-180",
@@ -2407,7 +2410,7 @@
       "effort": "Medium",
       "section": "data_research",
       "title": "Source EPC energy efficiency distribution by London area \u2014 MEES deadline risk mapping",
-      "status": "Todo",
+      "status": "Blocked",
       "responsible": "Data Analyst",
       "dependencies": [],
       "date": "2026-04-03",
@@ -2453,7 +2456,9 @@
         "mees",
         "energy-efficiency",
         "retrofit-costs"
-      ]
+      ],
+      "resolution": "All primary sources (ONS API, Rightmove, Zoopla, DLUHC EPC portal) are JS-gated or rate-limited. See data/DAT-177_bedroom_type_research.json and data/DAT-182_epc_research.json",
+      "reason": "DLUHC EPC open data portal (epc.opendatacommunities.org) requires registration/authentication. gov.uk EPC statistics pages are JS-gated by cookie consent wall. London Datastore API returns empty. EPC Register statistics page returns 404."
     },
     {
       "id": "DAT-183",
@@ -3016,7 +3021,7 @@
       "effort": "Medium",
       "section": "data_research",
       "title": "Data Analyst: Process 10 new leads from inbox -- normalize, dedup, import to SQLite",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Data Analyst",
       "dependencies": [],
       "date": "2026-04-03",
@@ -3078,6 +3083,218 @@
         "import",
         "normalization",
         "dedup"
+      ]
+    },
+    {
+      "id": "FE-194",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "new_approved",
+      "title": "FE: Audit and complete demo data files in frontend/public/data/ -- full demo mode",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-03",
+      "notes": [
+        "EXISTING INFRASTRUCTURE:",
+        "- VITE_DEMO_MODE environment variable (set in vercel.json build command)",
+        "- Hooks check IS_DEMO and load from /data/ instead of /api/",
+        "- 5 demo files exist in frontend/public/data/",
+        "- vercel.json builds with DEMO_MODE=true",
+        "",
+        "AUDIT FINDINGS:",
+        "",
+        "1. demo_master.json -- INCOMPLETE",
+        "   - Currently has only 3 properties (demo-001, 002, 003)",
+        "   - Need 10-15 properties for a compelling demo",
+        "   - Should cover all areas: N1, N7, NW3, NW6, W2, SW3/SW10",
+        "   - Should show variety: different alpha scores, shortlist/vetted/archived states",
+        "   - Should include value buys, price-reduced listings",
+        "",
+        "2. macro_trend.json -- BROKEN (see DE-166)",
+        "   - area_trends stored as object keyed by area name, not array",
+        "   - Components expect array -- rendering empty",
+        "   - Missing many fields: hpi_forecasts, inventory_velocity, negotiation_delta, etc.",
+        "   - Missing long-term history for trajectory charts",
+        "",
+        "3. appreciation_model.json -- MISSING",
+        "   - Referenced in useAppreciationModel: useAppreciationModel loads /data/appreciation_model.json in demo mode",
+        "   - Currently this file does not exist in public/data/",
+        "   - Copy from data/appreciation_model.json and adapt for demo",
+        "",
+        "4. No inbox demo data",
+        "   - Inbox.tsx will show empty state in demo mode",
+        "   - Need mock inbox leads for demo",
+        "",
+        "5. No archive demo data",
+        "   - Archive page will be empty",
+        "",
+        "6. financial_context.json -- OK",
+        "   - Has budget, council tax, stamp duty thresholds",
+        "   - Looks complete for demo",
+        "",
+        "REQUIRED DEMO PROPERTIES (add to demo_master.json):",
+        "   - Property with alpha > 8 (high priority)",
+        "   - Property that is shortlisted",
+        "   - Property that is vetted",
+        "   - Property with price reduction",
+        "   - Property flagged as value buy",
+        "   - At least 2 per area (N1, NW3, NW6, W2)",
+        "   - Mix of Share of Freehold and Leasehold",
+        "",
+        "REQUIRED MACRO DATA (fix in public/data/macro_trend.json):",
+        "   - Convert area_trends to array format (fix DE-166 bug)",
+        "   - Add all required fields for all chart components",
+        "   - Add inventory_velocity, negotiation_delta sections",
+        "   - Add hpi_forecasts section",
+        "   - Add mortgage_history with proper structure",
+        ""
+      ],
+      "acceptance_criteria": [
+        "demo_master.json has 10+ properties covering all target areas",
+        "Demo properties show variety: different pipeline statuses, alpha scores",
+        "macro_trend.json has area_trends as array (fixes DE-166)",
+        "appreciation_model.json exists in public/data/",
+        "All charts render without errors in demo mode",
+        "Inbox page shows mock leads in demo mode",
+        "Vercel deploys with VITE_DEMO_MODE=true and app is fully functional"
+      ],
+      "tags": [
+        "demo",
+        "mock-data",
+        "frontend",
+        "deployment"
+      ]
+    },
+    {
+      "id": "FE-195",
+      "priority": "Medium",
+      "effort": "Low",
+      "section": "new_approved",
+      "title": "FE: Create mock inbox leads data for demo mode",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [
+        "FE-194"
+      ],
+      "date": "2026-04-03",
+      "notes": [
+        "CONTEXT: Inbox.tsx needs mock leads for demo mode.",
+        "",
+        "Create frontend/public/data/demo_inbox.json:",
+        "   - 5-8 mock inbox leads in the same format as data/inbox/leads_YYYYMMDD.json",
+        "   - Should show variety: different areas, prices, statuses",
+        "   - Some approved, some rejected, some pending",
+        "   - Include some flagged leads",
+        "",
+        "Then update Inbox.tsx or PropertyContext to load demo_inbox.json in demo mode.",
+        "The inbox submission endpoint should also be mocked."
+      ],
+      "acceptance_criteria": [
+        "frontend/public/data/demo_inbox.json exists with 5+ mock leads",
+        "Inbox page renders with mock leads in demo mode",
+        "Mock leads show realistic property data"
+      ],
+      "tags": [
+        "demo",
+        "inbox",
+        "mock-data"
+      ]
+    },
+    {
+      "id": "FE-196",
+      "priority": "Medium",
+      "effort": "Low",
+      "section": "new_approved",
+      "title": "FE: Add DEMO_MODE indicator to UI -- show when running in demo mode",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [
+        "FE-194"
+      ],
+      "date": "2026-04-03",
+      "notes": [
+        "CONTEXT: Users need to know when they are in demo mode vs real mode.",
+        "",
+        "IMPLEMENTATION:",
+        "   - Add a small \"DEMO\" badge in the header when VITE_DEMO_MODE=true",
+        "   - Badge should be subtle but visible (top-right corner)",
+        "   - Color: amber/yellow to indicate non-production",
+        "   - Click shows: \"Running in demo mode with mock data\"",
+        "   - Position: next to data freshness indicator or in footer"
+      ],
+      "acceptance_criteria": [
+        "Demo mode badge visible in header when DEMO_MODE=true",
+        "Badge is subtle but noticeable (amber/\u9ec4\u8272)",
+        "Clicking badge shows explanation tooltip"
+      ],
+      "tags": [
+        "demo",
+        "ui",
+        "indicator"
+      ]
+    },
+    {
+      "id": "DAT-185",
+      "priority": "High",
+      "effort": "Low",
+      "section": "data_research",
+      "title": "Data Analyst: Review and fix Area Performance Data -- gaps in area_trends",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-04-03",
+      "notes": [
+        "AUDIT FINDINGS:",
+        "",
+        "1. frontend/public/data/macro_trend.json -- AREA_TRENDS IS AN OBJECT (not array)",
+        "   Components (AreaPerformanceTable, MicroMarketVelocityMap) use .map() on area_trends",
+        "   They expect: [{area: \"Islington (N1)\", heat_index: {...}, ...}]",
+        "   They get: {\"Islington (N1)\": {...}, \"Belsize Park (NW3)\": {...}}",
+        "   Result: Components render BLANK -- no data visible",
+        "   Fix: Convert to array format like data/macro_trend.json has it",
+        "",
+        "2. data/macro_trend.json -- MISSING FIELDS in area_trends",
+        "   All 5 areas have null for:",
+        "   - hpi_forecast_12m (should be populated with 12-month forecast)",
+        "   - london_benchmark (should reference London-wide HPI)",
+        "",
+        "3. MISSING AREAS",
+        "   Target areas covered: N1, NW3, NW6, W2 (partial)",
+        "   Missing: N7, W2 (Bayswater), SW3, SW10",
+        "   Should add at minimum: Bayswater (W2), Chelsea (SW3/SW10)",
+        "",
+        "4. MISSING DATA FIELDS",
+        "   - No quarterly/annual HPI history per area",
+        "   - No rental yield data per area",
+        "   - No transaction volume per area",
+        "   - No price per sqm benchmark per area",
+        "   These are needed for the trajectory charts (FE-188)",
+        "",
+        "IMMEDIATE FIXES REQUIRED:",
+        "1. Fix frontend/public/data/macro_trend.json: convert area_trends to array",
+        "2. Populate hpi_forecast_12m for all 5 existing areas (from hpi_forecasts.by_area)",
+        "3. Populate london_benchmark for all areas",
+        "4. Add Bayswater (W2) and Chelsea (SW3/SW10) to area_trends",
+        "",
+        "LONG-TERM:",
+        "- Source quarterly HPI history per area (see DAT-176)",
+        "- Source rental yields per area (see DAT-180)",
+        "- Source transaction volumes per area (see DAT-179)"
+      ],
+      "acceptance_criteria": [
+        "frontend/public/data/macro_trend.json has area_trends as array (not object)",
+        "AreaPerformanceTable renders all 5 areas with data",
+        "MicroMarketVelocityMap renders all 5 areas with data",
+        "hpi_forecast_12m populated for all areas (from hpi_forecasts.by_area)",
+        "Bayswater (W2) and Chelsea (SW3/SW10) added to area_trends",
+        "london_benchmark populated for all areas"
+      ],
+      "tags": [
+        "area-performance",
+        "macro-data",
+        "bug-fix",
+        "data-enrichment"
       ]
     }
   ],

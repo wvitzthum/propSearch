@@ -27,6 +27,12 @@ Responsive, high-fidelity research dashboard to visualize property leads.
 ## Design Standards
 - **Aesthetic:** "Bloomberg Terminal meets Linear."
 - **Tech Stack:** React 19, Tailwind CSS.
+- **Charting:** Use **@visx** (airbnb/visx) for all data visualizations. See `DECISIONS.md` ADR-015.
+  - Install: `npm install @visx/scale @visx/shape @visx/axis @visx/grid @visx/responsive @visx/tooltip @visx/group @visx/event @visx/gradient --legacy-peer-deps`
+  - Use `scaleLinear`/`scalePoint` instead of hand-rolled getX/getY
+  - Use `LinePath`, `AreaClosed`, `Bar` instead of raw `<polyline>`/`<line>` SVG
+  - Use `ParentSize` from `@visx/responsive` for responsive charts
+  - Raw `<svg>` only for decorative shapes (icons, dividers)
 
 ## Verification & Health Check (MANDATORY)
 - **Import Audit:** Ensure no orphaned imports exist.
