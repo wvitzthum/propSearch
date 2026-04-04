@@ -32,6 +32,13 @@
 <tr><td><strong>FE-194</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Audit and complete demo data files in frontend/public/data/ -- full demo mode'>FE: Audit and complete demo data files in frontend/public/data/ -- full demo mode</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
 <tr><td><strong>FE-195</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Create mock inbox leads data for demo mode'>FE: Create mock inbox leads data for demo mode</td><td>Todo</td><td>Frontend Engineer</td><td>FE-194</td><td></td></tr>
 <tr><td><strong>FE-196</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Add DEMO_MODE indicator to UI -- show when running in demo mode'>FE: Add DEMO_MODE indicator to UI -- show when running in demo mode</td><td>Todo</td><td>Frontend Engineer</td><td>FE-194</td><td></td></tr>
+<tr><td><strong>FE-201</strong></td><td>Medium</td><td>-</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Migrate PropertyTypePerformanceChart to @visx — replace hand-rolled bar chart with visx Bar'>Migrate PropertyTypePerformanceChart to @visx — replace hand-rolled bar chart with visx Bar</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-202</strong></td><td>Medium</td><td>-</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Migrate RentalYieldVsGiltChart to @visx — replace hand-rolled SVG bar chart with visx Bar'>Migrate RentalYieldVsGiltChart to @visx — replace hand-rolled SVG bar chart with visx Bar</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-203</strong></td><td>High</td><td>-</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Migrate CapitalAppreciationChart to @visx — replace complex SVG fan chart with visx LinePath/AreaClosed'>Migrate CapitalAppreciationChart to @visx — replace complex SVG fan chart with visx LinePath/AreaClosed</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-204</strong></td><td>Low</td><td>-</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Migrate SparklineChart to @visx — replace simple SVG line with visx LinePath'>Migrate SparklineChart to @visx — replace simple SVG line with visx LinePath</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-205</strong></td><td>High</td><td>-</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Migrate HPIHistoryChart to @visx — replace hand-rolled SVG with visx scale/shape/axis primitives'>Migrate HPIHistoryChart to @visx — replace hand-rolled SVG with visx scale/shape/axis primitives</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-206</strong></td><td>Medium</td><td>-</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Migrate LondonPrimePremiumChart to @visx — replace hand-rolled SVG with visx scale/shape/axis primitives'>Migrate LondonPrimePremiumChart to @visx — replace hand-rolled SVG with visx scale/shape/axis primitives</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-207</strong></td><td>Medium</td><td>-</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Migrate SwapRateSignal to @visx — replace hand-rolled SVG sparklines with visx LinePath'>Migrate SwapRateSignal to @visx — replace hand-rolled SVG sparklines with visx LinePath</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
 </tbody>
 </table>
 
@@ -51,36 +58,7 @@
 </tr>
 </thead>
 <tbody>
-<tr><td><strong>DAT-178</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source 10-year mortgage rate history by LTV band — for long-range affordability context'>Source 10-year mortgage rate history by LTV band — for long-range affordability context</td><td>In Progress</td><td>Data Analyst</td><td>None</td><td></td></tr>
-<tr><td><strong>DAT-180</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source rental yield history by London area — critical for investment thesis validation'>Source rental yield history by London area — critical for investment thesis validation</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
 <tr><td><strong>DAT-181</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source London prime premium vs Greater London discount history — tracks London premium erosion/recovery'>Source London prime premium vs Greater London discount history — tracks London premium erosion/recovery</td><td>Todo</td><td>Data Analyst</td><td>DAT-176</td><td></td></tr>
-<tr><td><strong>DAT-183</strong></td><td>Low</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source foreign buyer activity and international capital flows into London prime residential'>Source foreign buyer activity and international capital flows into London prime residential</td><td>Todo</td><td>Data Analyst</td><td>DAT-181</td><td></td></tr>
-<tr><td><strong>DAT-185</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Data Analyst: Review and fix Area Performance Data -- gaps in area_trends'>Data Analyst: Review and fix Area Performance Data -- gaps in area_trends</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
-</tbody>
-</table>
-
-## 🧪 Test Coverage
-
-<table>
-<thead>
-<tr>
-  <th align="left">ID</th>
-  <th align="left">Priority</th>
-  <th align="left">Effort</th>
-  <th align="left" style="width:480px">Task</th>
-  <th align="left">Status</th>
-  <th align="left">Responsible</th>
-  <th align="left">Dependencies</th>
-  <th align="left">Block Reason / Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr><td><strong>QA-188</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Plan and write Playwright tests for HPI Trajectory Chart (FE-188)'>QA: Plan and write Playwright tests for HPI Trajectory Chart (FE-188)</td><td>Todo</td><td>UI/UX QA</td><td>FE-188</td><td></td></tr>
-<tr><td><strong>QA-189</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Plan and write Playwright tests for Property Type Segment Performance chart (FE-189)'>QA: Plan and write Playwright tests for Property Type Segment Performance chart (FE-189)</td><td>Todo</td><td>UI/UX QA</td><td>FE-189</td><td></td></tr>
-<tr><td><strong>QA-190</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Write Playwright tests for SwapRateSignal 10-year sparkline extension (FE-190)'>QA: Write Playwright tests for SwapRateSignal 10-year sparkline extension (FE-190)</td><td>Todo</td><td>UI/UX QA</td><td>FE-190</td><td></td></tr>
-<tr><td><strong>QA-191</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Write Playwright tests for London Prime Premium tracker (FE-191)'>QA: Write Playwright tests for London Prime Premium tracker (FE-191)</td><td>Todo</td><td>UI/UX QA</td><td>FE-191</td><td></td></tr>
-<tr><td><strong>QA-192</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Write Playwright tests for Rental Yield vs Gilt yield comparison chart (FE-192)'>QA: Write Playwright tests for Rental Yield vs Gilt yield comparison chart (FE-192)</td><td>Todo</td><td>UI/UX QA</td><td>FE-192</td><td></td></tr>
-<tr><td><strong>QA-193</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Write Playwright tests for EPC/MEES Risk Map (FE-193)'>QA: Write Playwright tests for EPC/MEES Risk Map (FE-193)</td><td>Todo</td><td>UI/UX QA</td><td>FE-193</td><td></td></tr>
 </tbody>
 </table>
 
@@ -140,6 +118,36 @@
 </tr>
 </thead>
 <tbody>
+<tr><td><strong>FE-162</strong></td><td>Runtime crash in Inbox.tsx — Cannot read properties of undefined (reading toLoca...</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-187</strong></td><td>Responsive Layout Audit: Sidebar layout (pl-64 fixed) not mobile-optimised — res...</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-172</strong></td><td>Runtime React error in MarketConditionsBar.tsx:141 — &#x27;Objects are not valid as a...</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-183</strong></td><td>QA: Fix failing Playwright test selectors — test selectors do not match actual U...</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-175</strong></td><td>UX Research: Page Architecture + Navigation Patterns. Conduct a structured usabi...</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-174</strong></td><td>QA: Verify deposit + additional costs flow on AffordabilitySettings — deposit pa...</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-170</strong></td><td>UI: MetroOverlay lines in Dashboard map are too faint. Per MAP_USABILITY_GUIDE.m...</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-157</strong></td><td>Accessibility: MortgageTracker.tsx has two unlabelled <code>&lt;input&gt;</code> elements (Monthl...</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-158</strong></td><td>UI/UX Audit: After FE-162 (Market Conditions Radar), verify all new components...</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-193</strong></td><td>QA: Write Playwright tests for EPC/MEES Risk Map (FE-193)</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-192</strong></td><td>QA: Write Playwright tests for Rental Yield vs Gilt yield comparison chart (FE-192)</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-191</strong></td><td>QA: Write Playwright tests for London Prime Premium tracker (FE-191)</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-190</strong></td><td>QA: Write Playwright tests for SwapRateSignal 10-year sparkline extension (FE-190)</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-189</strong></td><td>QA: Plan and write Playwright tests for Property Type Segment Performance chart...</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-188</strong></td><td>QA: Plan and write Playwright tests for HPI Trajectory Chart (FE-188)</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-165</strong></td><td>Systemic API failure crashes entire pages in test environment — LandingPage, Das...</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-161</strong></td><td>UI Tests failing — ComparisonPage empty-state selectors don&#x27;t match actual UI. C...</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-163</strong></td><td>UI Tests failing — Dashboard &#x27;property count&#x27; test (Dashboard.spec.ts line 62) l...</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-162</strong></td><td>UI Tests failing — AlphaBadge.spec.ts uses <code>@testing-library/react</code> (render, scr...</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-159</strong></td><td>UI Tests failing — Dashboard: Alpha Score badge selector wrong. Dashboard.spec.ts...</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-173</strong></td><td>PropertyContext.tsx uses hardcoded <code>http://localhost:3001/api</code> instead of relative URLs</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-164</strong></td><td>Runtime error in useMacroData.ts:35 — <code>raw.hpi_forecasts.map is not a function</code></td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-171</strong></td><td>Runtime React error in Inbox.tsx — duplicate key warning: <code>leasehold_verification</code></td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-186</strong></td><td>Metric Clarity Audit: MarketConditionsBar — all 7 market metrics lack institutional methodology labels</td><td>Done</td><td></td></tr>
+<tr><td><strong>QA-185</strong></td><td>Bug: SVG NaN rendering — CapitalAppreciationChart and SparklineChart produce invalid SVG values</td><td>Done</td><td></td></tr>
+<tr><td><strong>UX-009</strong></td><td>UX: Add Data Freshness Indicator — Show when market data was last updated</td><td>Done</td><td></td></tr>
+<tr><td><strong>UX-004</strong></td><td>UX: Consolidate London Benchmark Calculation — Single source in useMacroData</td><td>Done</td><td></td></tr>
+<tr><td><strong>UX-001</strong></td><td>UX: Consolidate Area Data — Remove AreaPerformanceTable duplication on MarketPage</td><td>Done</td><td></td></tr>
+<tr><td><strong>FE-166</strong></td><td>UI: Build &#x27;Property Price Evolution&#x27; component</td><td>Done</td><td></td></tr>
+<tr><td><strong>FE-121</strong></td><td>UI: Implement regional heatmaps for London postcodes to visualize Micro-Market Velocity</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-156</strong></td><td>Data: 4 Legacy Migration properties have malformed UUIDs (<code>c1a2b3c4...</code>, <code>d2e3f4g5...</code>, <code>e3f4g5h6...</code>, <code>1773181669681</code>). These IDs contain non-hex characters or numeric-only format, violating UUID spec. Regenerate proper UUIDs for all 4 records in <code>propSearch.db</code>. All are <code>source=&#x27;Legacy Migration&#x27;</code>.</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-155</strong></td><td>Audit: Quarterly data integrity audit — scan all records in <code>propSearch.db</code> and <code>master.jsonl</code> for hallucinated IDs (<code>a1b2c3d4-</code> pattern), missing mandatory fields, and records with <code>is_estimated=false</code> but no source citation. Report findings to user.</td><td>Done</td><td></td></tr>
 <tr><td><strong>DE-140</strong></td><td>Create <code>price_history</code> table and update sync pipeline</td><td>Done</td><td>2026-03-21</td></tr>
@@ -155,6 +163,21 @@
 <tr><td><strong>FE-089</strong></td><td>UI/UX: Enhance <code>Inbox.tsx</code> to gracefully handle CSP framing blocks from property portals. Added detection for known blockers and a prominent &#x27;Focused Peek&#x27; workflow.</td><td>Done</td><td>2026-03-16</td></tr>
 <tr><td><strong>UX-028</strong></td><td>UX Enhancement: Market Intel — Area Heat map data not populated, show meaningful empty state</td><td>Done</td><td></td></tr>
 <tr><td><strong>DE-166</strong></td><td>BUG: area_trends parsing broken — object keyed by area name, not array</td><td>Done</td><td></td></tr>
+<tr><td><strong>FE-194</strong></td><td>FE: Audit and complete demo data files in frontend/public/data/ -- full demo mode</td><td>Done</td><td></td></tr>
+<tr><td><strong>FE-195</strong></td><td>FE: Create mock inbox leads data for demo mode</td><td>Done</td><td></td></tr>
+<tr><td><strong>FE-196</strong></td><td>FE: Add DEMO_MODE indicator to UI</td><td>Done</td><td></td></tr>
+<tr><td><strong>FE-201</strong></td><td>Migrate PropertyTypePerformanceChart to @visx</td><td>Done</td><td></td></tr>
+<tr><td><strong>FE-202</strong></td><td>Migrate RentalYieldVsGiltChart to @visx</td><td>Done</td><td></td></tr>
+<tr><td><strong>FE-203</strong></td><td>Migrate CapitalAppreciationChart to @visx</td><td>Done</td><td></td></tr>
+<tr><td><strong>FE-204</strong></td><td>Migrate SparklineChart to @visx</td><td>Done</td><td></td></tr>
+<tr><td><strong>FE-205</strong></td><td>Migrate HPIHistoryChart to @visx</td><td>Done</td><td></td></tr>
+<tr><td><strong>FE-206</strong></td><td>Migrate LondonPrimePremiumChart to @visx</td><td>Done</td><td></td></tr>
+<tr><td><strong>FE-207</strong></td><td>Migrate SwapRateSignal to @visx</td><td>Done</td><td></td></tr>
+<tr><td><strong>DAT-178</strong></td><td>Source 10-year mortgage rate history by LTV band</td><td>Done</td><td>2026-04-04</td></tr>
+<tr><td><strong>DAT-179</strong></td><td>Source transaction volumes by area</td><td>Done</td><td>2026-04-04</td></tr>
+<tr><td><strong>DAT-180</strong></td><td>Source rental yield history by London area</td><td>Done</td><td>2026-04-04</td></tr>
+<tr><td><strong>DAT-181</strong></td><td>Source London prime premium vs Greater London discount history</td><td>Done</td><td>2026-04-04</td></tr>
+<tr><td><strong>DAT-185</strong></td><td>Review and fix Area Performance Data</td><td>Done</td><td>2026-04-04</td></tr>
 </tbody>
 </table>
 
