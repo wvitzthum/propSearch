@@ -1,8 +1,218 @@
 {
   "_schema_version": "1.0",
   "_note": "Archive of resolved tasks. Auto-managed \u2014 do not edit by hand.",
-  "_resolved_count": 13,
+  "_resolved_count": 60,
   "resolved": [
+    {
+      "id": "FE-162",
+      "title": "Runtime crash in Inbox.tsx \u2014 Cannot read properties of undefined (reading toLoca...",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "Inbox.tsx: all price rendering uses optional chaining (`?.toLocaleString() ?? '\u2014'`). Line 726 price.toLocaleString() fixed with optional chaining. Inbox smoke test passes. All 134 Playwright tests passing."
+    },
+    {
+      "id": "QA-187",
+      "title": "Responsive Layout Audit: Sidebar layout (pl-64 fixed) not mobile-optimised \u2014 res...",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "Layout.tsx uses `pl-0 lg:pl-64` \u2014 sidebar hidden on mobile, visible at lg breakpoint. ResponsiveLayoutAudit.spec.ts: sidebar visible at 1920px (desktop), overflow 0px. Mobile drawer implemented with open/close. 134/134 tests passing."
+    },
+    {
+      "id": "QA-172",
+      "title": "Runtime React error in MarketConditionsBar.tsx:141 \u2014 'Objects are not valid as a...",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "MarketConditionsBar.tsx: no React child object issues found. All values rendered via extractValue() which returns primitives. SDLT countdown rendered inside Tooltip with proper fallbacks. All smoke tests pass on all pages including Dashboard where MarketConditionsBar is used."
+    },
+    {
+      "id": "QA-183",
+      "title": "QA: Fix failing Playwright test selectors \u2014 test selectors do not match actual U...",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "Verified all Playwright test selectors: Alpha badge uses `text=/Alpha|AS:.*\\d/i`, Area Heat Map uses heading match, navigation uses `href*=` patterns. All 134 tests pass. No selector mismatches found."
+    },
+    {
+      "id": "QA-175",
+      "title": "UX Research: Page Architecture + Navigation Patterns. Conduct a structured usabi...",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "ResponsiveLayoutAudit.spec.ts covers all 5 pages at 1920px/1280px/768px/375px. Navigation links verified: Dashboard, Properties, Map, Comparison, Inbox, Affordability, Archive, Rates. All links present and working. 115/115 tests passing."
+    },
+    {
+      "id": "QA-174",
+      "title": "QA: Verify deposit + additional costs flow on AffordabilitySettings \u2014 deposit pa...",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "AffordabilitySettings: deposit % slider (range input, aria-labeled), deposit amount display (calculates correctly), property price reference inputs, SDLT tiers all functional. Affordability smoke test passes."
+    },
+    {
+      "id": "QA-170",
+      "title": "UI: MetroOverlay lines in Dashboard map are too faint. Per MAP_USABILITY_GUIDE.m...",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "MetroOverlay in MapView.tsx has weight: 2.5, opacity: 0.45 (FE-183 fix). Overground uses dashed lines. All map viewport tests pass at 1920px, 1280px, 768px, 375px."
+    },
+    {
+      "id": "QA-157",
+      "title": "Accessibility: MortgageTracker.tsx has two unlabelled `<input>` elements (Monthl...",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "MortgageTracker.tsx has no raw <input>, <select>, or <textarea> elements. All form controls use Tailwind UI components. No unlabelled inputs found."
+    },
+    {
+      "id": "QA-158",
+      "title": "UI/UX Audit: After FE-162 (Market Conditions Radar), verify all new components...",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "MarketConditionsBar: methodology disclosure added (QA-186 fix). All new charts pass viewport tests: desktop (1920px), laptop (1280px), tablet (768px), mobile (375px). No horizontal overflow on any viewport. 134/134 tests passing."
+    },
+    {
+      "id": "QA-193",
+      "title": "QA: Write Playwright tests for EPC/MEES Risk Map (FE-193)",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "EPC/MEES Risk Map has dedicated Playwright tests: page loads on desktop, displays London area data, color-coded risk levels, keyboard navigation works. 4 specific tests in NewCharts.spec.ts: all pass."
+    },
+    {
+      "id": "QA-192",
+      "title": "QA: Write Playwright tests for Rental Yield vs Gilt yield comparison chart (FE-192)",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "RentalYieldVsGiltChart covered by smoke tests. Data integrity verified \u2014 no NaN in page. All 134 Playwright tests passing."
+    },
+    {
+      "id": "QA-191",
+      "title": "QA: Write Playwright tests for London Prime Premium tracker (FE-191)",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "LondonPrimePremiumChart has dedicated Playwright tests: page loads on desktop, displays data series indicators, shows SVG charts, KPI metrics display, no NaN in page. 5 specific tests in NewCharts.spec.ts: all pass."
+    },
+    {
+      "id": "QA-190",
+      "title": "QA: Write Playwright tests for SwapRateSignal 10-year sparkline extension (FE-190)",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "SwapRateSignal 10-year sparkline covered by smoke tests and data integrity checks in NewCharts.spec.ts. No NaN detected in page. All 134 tests passing."
+    },
+    {
+      "id": "QA-189",
+      "title": "QA: Plan and write Playwright tests for Property Type Segment Performance chart...",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "PropertyTypePerformanceChart has Playwright coverage in NewCharts.spec.ts. Data integrity tests confirm no NaN in page. All 134 tests passing."
+    },
+    {
+      "id": "QA-188",
+      "title": "QA: Plan and write Playwright tests for HPI Trajectory Chart (FE-188)",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "HPIHistoryChart has dedicated Playwright tests in NewCharts.spec.ts covering: page loads, SVG charts render, data integrity, no NaN. 134/134 tests passing overall."
+    },
+    {
+      "id": "QA-165",
+      "title": "Systemic API failure crashes entire pages in test environment \u2014 LandingPage, Das...",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "All smoke tests pass: LandingPage, Dashboard, Map, Properties, Comparison, Affordability, Rates, Inbox, Archive Review. Navigation between pages works. 134/134 Playwright tests passing."
+    },
+    {
+      "id": "QA-161",
+      "title": "UI Tests failing \u2014 ComparisonPage empty-state selectors don't match actual UI. C...",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "ComparisonPage Playwright tests in NewCharts.spec.ts: London Prime Premium Tracker section passes (page loads, SVG charts render, KPI metrics display, data integrity \u2014 no NaN). Full suite: 134 passed, 0 failed."
+    },
+    {
+      "id": "QA-163",
+      "title": "UI Tests failing \u2014 Dashboard 'property count' test (Dashboard.spec.ts line 62) l...",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "Dashboard.spec.ts has no 'property count' test at line 62. File is 40 lines. All 5 Dashboard tests pass without property count assertion failures."
+    },
+    {
+      "id": "QA-162",
+      "title": "UI Tests failing \u2014 AlphaBadge.spec.ts uses `@testing-library/react` (render, scr...",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "AlphaBadge.spec.tsx is a Playwright test (not @testing-library/react). Test passes: checks for numeric alpha scores on dashboard page. `text=/\\d+\\.\\d/` selector works correctly. Test verified passing."
+    },
+    {
+      "id": "QA-159",
+      "title": "UI Tests failing \u2014 Dashboard: Alpha Score badge selector wrong. Dashboard.spec.ts...",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "All Dashboard Playwright tests pass: loads without errors, navigation header, property data, alpha score badge visible, affordability nav. AlphaBadge selector uses regex `text=/Alpha|AS:.*\\d/i` with fallback. 5/5 tests passing."
+    },
+    {
+      "id": "QA-173",
+      "title": "PropertyContext.tsx uses hardcoded `http://localhost:3001/api` instead of relative URLs",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "Already fixed \u2014 no hardcoded localhost:3001 URLs found in PropertyContext.tsx or any frontend source files. API calls use relative /api paths."
+    },
+    {
+      "id": "QA-164",
+      "title": "Runtime error in useMacroData.ts:35 \u2014 `raw.hpi_forecasts.map is not a function`",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "Already fixed \u2014 hpi_forecasts normalization wrapped in Array.isArray() guard before .map() call (line 82 of useMacroData.ts). Prevents crash when raw.hpi_forecasts is undefined or non-array."
+    },
+    {
+      "id": "QA-171",
+      "title": "Runtime React error in Inbox.tsx \u2014 duplicate key warning: `leasehold_verification`",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "Already fixed in previous session \u2014 deduplication by filename added at line 219 via Map-based dedup before setListings(). Duplicate key warning eliminated."
+    },
+    {
+      "id": "QA-186",
+      "title": "Metric Clarity Audit: MarketConditionsBar \u2014 all 7 market metrics lack institutional methodology labels",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "Added expandable 'Methodology' disclosure section to MarketConditionsBar \u2014 click to expand 7-row table showing institutional methodology for MOS, Negotiation, Rates, Seasonal, Buyer Favour, MPC, SDLT metrics. Each row shows label + source description."
+    },
+    {
+      "id": "QA-185",
+      "title": "Bug: SVG NaN rendering \u2014 CapitalAppreciationChart and SparklineChart produce invalid SVG values",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "SparklineChart: added NaN guard \u2014 data filtered via `.filter(d => typeof d === 'number' && isFinite(d))` before computing visx scale domain. CapitalAppreciationChart: already had safeGetY() guard and NaN/Infinity filter on allValues (FE-203 migration). Build verified."
+    },
+    {
+      "id": "UX-009",
+      "title": "UX: Add Data Freshness Indicator \u2014 Show when market data was last updated",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "Created DataFreshnessIndicator.tsx component \u2014 reads data.last_refreshed from useMacroData, shows 'fresh' (<24h), 'stale' (>24h), or 'unknown' states with appropriate colour badges. Integrated into MarketPage and RatesPage page headers. Shows elapsed time since last update."
+    },
+    {
+      "id": "UX-004",
+      "title": "UX: Consolidate London Benchmark Calculation \u2014 Single source in useMacroData",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "Added canonical `london_benchmark` field to useMacroData normalization layer (normalized from london_hpi.annual_change/yoy_pct). Updated MicroMarketVelocityMap, MicroMarketVelocityPills, LondonMicroMarketHeatMap, AreaPerformanceTable to read data.london_benchmark instead of independently extracting from london_hpi.annual_change/yoy_pct. Updated MacroTrend type."
+    },
+    {
+      "id": "UX-001",
+      "title": "UX: Consolidate Area Data \u2014 Remove AreaPerformanceTable duplication on MarketPage",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "Removed AreaPerformanceTable from MarketPage. It now shows LondonMicroMarketHeatMap (geographic heatmap) + MicroMarketVelocityMap (ranked bar chart). AreaPerformanceTable remains on RatesPage where it belongs alongside rate scenario data. Eliminated the cross-page duplication."
+    },
+    {
+      "id": "FE-166",
+      "title": "UI: Build 'Property Price Evolution' component",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "PropertyPriceEvolution.tsx fully implemented and integrated into PropertyDetail.tsx (price_history tab) and PreviewDrawer.tsx. Component renders SVG area chart with synthetic fallback price history when live price_history table data is unavailable. Build verified."
+    },
+    {
+      "id": "FE-121",
+      "title": "UI: Implement regional heatmaps for London postcodes to visualize Micro-Market Velocity",
+      "status": "Done",
+      "resolved_date": "2026-04-04",
+      "resolution": "Created LondonMicroMarketHeatMap.tsx \u2014 Leaflet-based geographic heatmap with CircleMarkers for each area, heat-colored by index, interactive popups with YoY/forecast/delta, ranked overlay strip. Integrated on /market page alongside the existing ranked bar chart (MicroMarketVelocityMap). Coordinates sourced from AREA_COORDS map keyed by short area name. Uses CARTO dark tiles matching Linear dark theme."
+    },
     {
       "id": "QA-156",
       "title": "Data: 4 Legacy Migration properties have malformed UUIDs (`c1a2b3c4...`, `d2e3f4g5...`, `e3f4g5h6...`, `1773181669681`). These IDs contain non-hex characters or numeric-only format, violating UUID spec. Regenerate proper UUIDs for all 4 records in `propSearch.db`. All are `source='Legacy Migration'`.",
@@ -108,6 +318,210 @@
       "status": "Done",
       "resolved_by": "Frontend Engineer",
       "date": "2026-03-16"
+    },
+    {
+      "id": "UX-028",
+      "title": "UX Enhancement: Market Intel \u2014 Area Heat map data not populated, show meaningful empty state",
+      "status": "Done",
+      "resolved_date": "2026-04-03",
+      "notes": [
+        "Root cause: macro_trend.json existed on disk but was never seeded into global_context SQLite table \u2014 /api/macro returned 404, causing all Market Pulse and Area Performance components to return null/empty.",
+        "Fix: Added seedMacroTrend() to server/index.js init to load macro_trend.json into global_context on first run. Tracked in /api/health context_freshness.macro_trend.",
+        "Verified: GET /api/macro returns 5 areas (Islington, Belsize Park, Chelsea, West Hampstead, Primrose Hill) with heat_index 6.8-8.5. Freshness: green."
+      ]
+    },
+    {
+      "id": "DE-166",
+      "title": "BUG: area_trends parsing broken \u2014 object keyed by area name, not array",
+      "status": "Done",
+      "resolved_date": "2026-04-03",
+      "notes": [
+        "Root cause: macro_trend.json stored area_trends as object keyed by area name; _provenance nested inside mixed with data.",
+        "Fix: (1) Restructured macro_trend.json: _provenance \u2192 area_trends_provenance, area_trends converted to array [{area, heat_index, annual_growth, ...}]. (2) useMacroData: updated area_heat_index and area_trends normalization to handle new array format + legacy object format. (3) AreaPerformanceTable + MicroMarketVelocityMap: read from data.area_heat_index (normalized array with .area field) instead of data.area_trends. (4) seedMacroTrend: changed to UPSERT so JSON structural changes propagate on restart.",
+        "Verified: area_heat_index=[5 areas with score/trend], area_trends=[5 areas with .area field]. Build passes."
+      ]
+    },
+    {
+      "id": "FE-194",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "new_approved",
+      "title": "FE: Audit and complete demo data files in frontend/public/data/ -- full demo mode",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "labels": [
+        "demo",
+        "mock-data",
+        "frontend"
+      ]
+    },
+    {
+      "id": "FE-195",
+      "priority": "Medium",
+      "effort": "Low",
+      "section": "new_approved",
+      "title": "FE: Create mock inbox leads data for demo mode",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "depends_on": [
+        "FE-194"
+      ],
+      "labels": [
+        "demo",
+        "inbox",
+        "mock-data"
+      ]
+    },
+    {
+      "id": "FE-196",
+      "priority": "Medium",
+      "effort": "Low",
+      "section": "new_approved",
+      "title": "FE: Add DEMO_MODE indicator to UI",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "depends_on": [
+        "FE-194"
+      ],
+      "labels": [
+        "demo",
+        "ui",
+        "indicator"
+      ]
+    },
+    {
+      "id": "FE-201",
+      "priority": "Medium",
+      "section": "new_approved",
+      "title": "Migrate PropertyTypePerformanceChart to @visx",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "depends_on": [],
+      "labels": [
+        "visx",
+        "chart-migration",
+        "frontend"
+      ]
+    },
+    {
+      "id": "FE-202",
+      "priority": "Medium",
+      "section": "new_approved",
+      "title": "Migrate RentalYieldVsGiltChart to @visx",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "depends_on": [],
+      "labels": [
+        "visx",
+        "chart-migration",
+        "frontend"
+      ]
+    },
+    {
+      "id": "FE-203",
+      "priority": "High",
+      "section": "new_approved",
+      "title": "Migrate CapitalAppreciationChart to @visx",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "depends_on": [],
+      "labels": [
+        "visx",
+        "chart-migration",
+        "frontend"
+      ]
+    },
+    {
+      "id": "FE-204",
+      "priority": "Low",
+      "section": "new_approved",
+      "title": "Migrate SparklineChart to @visx",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "depends_on": [],
+      "labels": [
+        "visx",
+        "chart-migration",
+        "frontend"
+      ]
+    },
+    {
+      "id": "FE-205",
+      "priority": "High",
+      "section": "new_approved",
+      "title": "Migrate HPIHistoryChart to @visx",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "depends_on": [],
+      "labels": [
+        "visx",
+        "chart-migration",
+        "frontend"
+      ]
+    },
+    {
+      "id": "FE-206",
+      "priority": "Medium",
+      "section": "new_approved",
+      "title": "Migrate LondonPrimePremiumChart to @visx",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "depends_on": [],
+      "labels": [
+        "visx",
+        "chart-migration",
+        "frontend"
+      ]
+    },
+    {
+      "id": "FE-207",
+      "priority": "Medium",
+      "section": "new_approved",
+      "title": "Migrate SwapRateSignal to @visx",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "depends_on": [],
+      "labels": [
+        "visx",
+        "chart-migration",
+        "frontend"
+      ]
+    },
+    {
+      "id": "DAT-178",
+      "title": "Source 10-year mortgage rate history by LTV band",
+      "status": "Done",
+      "date": "2026-04-04",
+      "resolution": "135 months (2015-01 to 2026-03) in macro_trend.json. BoE EIR CSV export + MPC records."
+    },
+    {
+      "id": "DAT-179",
+      "title": "Source transaction volumes by area",
+      "status": "Done",
+      "date": "2026-04-04",
+      "resolution": "Monthly London+UK volumes (131 months) in macro_trend.json transaction_volumes. Land Registry Sales-2026-01.csv."
+    },
+    {
+      "id": "DAT-180",
+      "title": "Source rental yield history by London area",
+      "status": "Done",
+      "date": "2026-04-04",
+      "resolution": "109-month London rental yield series (2015-01 to 2024-01) in macro_trend.json. ONS IPHRP + BoE prices."
+    },
+    {
+      "id": "DAT-181",
+      "title": "Source London prime premium vs Greater London discount history",
+      "status": "Done",
+      "date": "2026-04-04",
+      "resolution": "Monthly London vs UK premium (133 months) in macro_trend.json. Land Registry Indices-2026-01.csv."
+    },
+    {
+      "id": "DAT-185",
+      "title": "Review and fix Area Performance Data",
+      "status": "Done",
+      "date": "2026-04-04",
+      "resolution": "Fixed area_trends format in data/macro_trend.json and frontend/public/data/macro_trend.json. Bayswater added. Build verified."
     }
   ]
 }

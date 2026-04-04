@@ -4,9 +4,10 @@ import { extractValue } from '../types/macro';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
-// FE-187: Redesigned MicroMarketVelocityMap — compact ranked horizontal bar chart
+// FE-187 + FE-121 fix: Redesigned MicroMarketVelocityMap — compact ranked horizontal bar chart
 // Replaces SVG bubble map with Bloomberg/Linear data-dense ranked bars
-// Acceptance: fits ~200px, all 6 areas visible, heat bar + YoY + forecast per area
+// Bug fix: was reading from data?.area_heat_index (doesn't exist) → now reads data?.area_trends
+// Each area carries its own london_benchmark for accurate delta calculation
 
 const heatColor = (heat: number): string => {
   if (heat >= 8) return '#22c55e'; // green — hot
@@ -30,25 +31,28 @@ const MicroMarketVelocityMap: React.FC = () => {
   const { data } = useMacroData();
   const { properties } = usePropertyContext();
 
-  // DE-166: use area_heat_index (structured array) — area_trends can be broken object
+  // FE-121 fix: use area_trends — each entry has its own london_benchmark for per-area delta
   const areas = useMemo(() => {
-    const heatData = data?.area_heat_index || [];
-    const londonBenchmark = extractValue(data?.london_hpi?.annual_change ?? 1.2) ?? 1.2;
+    // area_trends is an array of { area, heat_index: {value}, annual_growth: {value}, london_benchmark, ... }
+    const heatData: any[] = data?.area_trends || [];
+    const globalLondonBenchmark = data?.london_benchmark ?? 1.2;
 
     return heatData.map((a: any) => {
-      const heat = extractValue(a.heat_index ?? a.score) ?? 5;
-      const growth = extractValue(a.annual_growth) ?? 0;
+      const heat = extractValue(a.heat_index?.value ?? a.heat_index ?? a.score) ?? 5;
+      const growth = extractValue(a.annual_growth?.value ?? a.annual_growth) ?? 0;
       const forecast = extractValue(a.hpi_forecast_12m);
+      // Each area has its own london_benchmark; fall back to global London HPI annual change
+      const areaBenchmark = extractValue(a.london_benchmark) ?? globalLondonBenchmark;
       const delta = forecast != null
-        ? forecast - londonBenchmark
-        : growth - londonBenchmark;
+        ? forecast - areaBenchmark
+        : growth - areaBenchmark;
       return {
         name: a.area || 'Unknown',
         heat,
         growth,
         forecast,
         delta,
-        londonBenchmark,
+        londonBenchmark: areaBenchmark,
       };
     }).sort((a, b) => b.heat - a.heat); // ranked: highest heat first
   }, [data]);
@@ -212,7 +216,7 @@ const MicroMarketVelocityMap: React.FC = () => {
           {areas.length} Markets · {data?.london_hpi?.last_updated || '2026-03'}
         </span>
         <span className="text-[8px] text-linear-text-muted/40 font-mono uppercase tracking-widest">
-          vs London {((extractValue(data?.london_hpi?.annual_change) ?? 1.2) - 1).toFixed(1)}%
+          vs London {((data?.london_benchmark ?? 1.2) - 1).toFixed(1)}%
         </span>
       </div>
     </div>

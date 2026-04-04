@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import type { PropertyWithCoords } from '../types/property';
+import { fmtPrice } from '../utils/format';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -588,7 +589,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="text-right">
-                            <div className="text-xs font-bold text-white">£{p.realistic_price.toLocaleString()}</div>
+                            <div className="text-xs font-bold text-white">{fmtPrice(p.realistic_price)}</div>
                             <div className="text-[9px] text-linear-text-muted uppercase font-bold">Target</div>
                           </div>
                           {selectedIndex === globalIndex && (

@@ -11,18 +11,48 @@ High-fidelity property research, metric normalization, and "Alpha" acquisition s
 - **Tenure:** Share of Freehold (Priority 1) or Leasehold strictly >90 years (Priority 2).
 - **Running Costs:** Every asset must include annual `service_charge` and `ground_rent` estimates.
 
-### ⚠️ Zone Filter Applies to Automated Scraping Only — NOT Manual Imports
-**The acquisition criteria above are a pipeline filter for automated scraper output only.**
+### ⚠️ ALL Guardrails Suspended for User-Submitted Leads
 
-**Manual and user-submitted leads are never filtered by acquisition zone or criteria.** The user's decision to submit a property overrides any zone filter. If a lead arrives via:
-- Manual frontend submission
-- User copy-paste
-- Agent email forwarded to inbox
-- Any user-initiated import
+**When a user submits a lead directly, ALL data guardrails are suspended for that record.** The user's intent is authoritative. Process and import immediately — do not apply any filtering, rejection, or pre-archiving logic.
 
-…it is **always imported as active**, enriched by the analyst, and surfaced in the UI. The user applies their own criteria filters in the frontend — not the analyst.
+#### What This Means in Practice
 
-**Analyst's job:** Enrich every imported lead with the best available data. Flag incomplete records (`analyst_notes`). Do not filter, exclude, or pre-archive user-submitted leads based on acquisition criteria.
+| Guardrail | Automated Scraper Output | User-Submitted Lead |
+|-----------|------------------------|---------------------|
+| Acquisition criteria (zone, price, sqft, tenure) | Applied — filter out non-compliant | **Suspended — import as-is** |
+| Schema validation (mandatory fields) | Applied — reject incomplete records | **Suspended — import even if shallow** |
+| Hallucination checks | Applied — flag synthetic data | **Suspended — trust user's data** |
+| Pre-archive for shallow/incomplete data | Applied — flag and archive | **Suspended — never pre-archive user leads** |
+| Enrichment before import | Required — images/sqft must be scraped | **Suspended — enrich after import** |
+| Duplicate detection and flagging | Applied — flag weaker duplicate | **Suspended — still merge links, but do not flag as duplicate** |
+
+#### What Counts as a User-Submitted Lead
+
+A lead is considered user-submitted if it arrives via:
+- Manual frontend submission (directly pasted/entered into the UI)
+- User copy-paste from any source
+- Agent email forwarded to the system
+- Any user-initiated import or upload
+
+#### How to Identify User-Submitted Leads
+
+User-submitted leads are tagged with:
+- `source: 'MANUAL_INJECTION'` (set by sync pipeline on inbox promotion)
+- `source: 'USER_SUBMISSION'` (set by frontend on direct entry)
+
+When processing records, check `source` first. If `source` is `MANUAL_INJECTION` or `USER_SUBMISSION`, apply the suspended-guardrails protocol.
+
+#### Analyst Protocol for User-Submitted Leads
+
+1. **Import immediately** — write to `data/inbox/` and sync to DB with `archived = 0`, `pipeline_status = 'discovered'`
+2. **Never pre-archive** — even if `sqft` is missing, tenure is unknown, or the address is outside acquisition zones
+3. **Never skip or reject** — no acquisition criteria filtering, no "fails_criteria" flag
+4. **Enrich opportunistically** — scrape visuals and spatial data where possible, but leave the record active regardless of enrichment outcome
+5. **Still merge duplicates** — if the same property arrives twice from the user, merge links/gallery (DE-164 pattern), but do not flag or archive
+6. **Document in analyst_notes** — "User-submitted lead — guardrails suspended. [Enrichment notes]"
+
+The user's decision to submit a property is their explicit signal that they want it in the pipeline. The analyst's role is to enrich, not to gatekeep.
+
 
 ## Logic & Calculations
 
@@ -279,6 +309,58 @@ The user reviews flagged records in the frontend and decides whether to move `pi
 
 ---
 
+## Property State Model: Two Independent Axes (FE-204)
+
+Every property has two independent state axes that must not be conflated:
+
+| Axis | Column | Owner | Values |
+|------|--------|-------|--------|
+| **User Pipeline** | `pipeline_status` | User (frontend) | `discovered` → `shortlisted` → `vetted` → `archived` |
+| **Market Reality** | `market_status` | Analyst | `active` · `under_offer` · `sold_stc` · `sold_completed` · `withdrawn` · `unknown` |
+
+### What Each State Means
+
+**pipeline_status (User's decision — set by user in UI):**
+- `discovered` — New in the pipeline, not yet reviewed
+- `shortlisted` — User is interested, actively reviewing
+- `vetted` — User has vetted this property seriously
+- `archived` — User is not interested / deprioritised
+
+**market_status (Market reality — set by analyst on research):**
+- `active` — Property is listed on Rightmove/Zoopla/agent site
+- `under_offer` — Offer accepted, not yet completed
+- `sold_stc` — Sold subject to contract
+- `sold_completed` — Land Registry confirmed
+- `withdrawn` — Removed from market (agent/portal delisted)
+- `unknown` — Cannot determine market status
+
+### Analyst Rules for Setting market_status
+
+| Situation | market_status to set |
+|-----------|---------------------|
+| Listed and visible on portal | `active` |
+| Listing confirmed removed / delisted | `withdrawn` |
+| Offer visible on portal | `under_offer` |
+| Cannot verify (blocked scraper) | `unknown` |
+| Re-sighted after being withdrawn | `active` + clear any `withdrawn` flags |
+
+### Conflation to Avoid
+
+**Never confuse `pipeline_status = 'archived'` with `market_status = 'withdrawn'`.**
+- A property can be `archived` (user not interested) but still be `active` on the market
+- A property can be `withdrawn` (off-market) but still be in the user's pipeline as `discovered`
+- These are independent — a property in `archived` + `active` state is one the user deprioritised but is still listed
+
+### UI Display (for reference)
+
+The frontend shows both axes:
+- Pipeline status: Discovered / Shortlisted / Vetted / Archived
+- Market status: Listed (green) / Under Offer (amber) / Sold (grey) / Off-Market (red)
+
+The Properties page defaults to hiding `archived` records (user's deprioritised ones) to reduce noise.
+
+---
+
 ## Lead Import Policy (Revised — Effective 2026-04-02)
 
 ### Rule: Always Import as Active. User Decides.
@@ -312,6 +394,7 @@ The user reviews flagged records in the frontend and decides whether to move `pi
 
 ### What the Analyst Still Does
 - **Enrichment:** Scrape images, sqft, floor levels, EPC, lease years from portals/agents.
+- **Spatial Enrichment:** Geocode addresses and compute `nearest_tube_distance`, `park_proximity` (see Spatial Enrichment section below).
 - **Alpha Score:** Calculate spatial component when tube/park data becomes available.
 - **Re-activation:** Clear `analyst_flag` (set to null) and update `market_status = 'active'` when enrichment confirms quality. The `archived` / `pipeline_status` column is not touched — that is the user's pipeline decision.
 - **Duplicates:** Flag the weaker duplicate with `analyst_flag = 'duplicate'` and note the richer record's ID in `analyst_notes`. Do NOT archive — the user acts on analyst flags.
@@ -321,8 +404,137 @@ The user reviews flagged records in the frontend and decides whether to move `pi
 ### EPC Data Enrichment
 EPC ratings cannot be reliably scraped from portal listings. For properties missing `epc`:
 1. Attempt manual lookup via UK EPC Register: https://www.mezh.org/ or https://www.epcregister.com/
-2. If unverifiable, set `archive_reason = 'Cannot Verify — Discard: EPC unverifiable'`.
-3. Never fabricate or estimate an EPC rating.
+2. If unverifiable, set `analyst_flag = 'needs_enrichment'` with a note in `analyst_notes`. Do NOT fabricate or estimate an EPC rating.
+
+### Realistic Price Policy (Effective 2026-04-04)
+
+**Core Rule:** `realistic_price` represents the analyst's independent estimate of a property's true market value. It is NOT the same as `list_price`.
+
+#### New Leads (User-Submitted or Scraper-Derived)
+**Default `realistic_price = list_price`.** There is no empirical basis to estimate a property is worth more than its asking price without:
+- A recent comparable sale at the same address or in the same block
+- A formal surveyor valuation
+- A confirmed asking-price reduction that makes it genuinely cheap
+
+Do NOT compute `realistic_price = area_£psqm × sqft` where the sqft was estimated (not measured from a floorplan). This inflates `realistic_price` above `list_price` — backwards and confusing for the user.
+
+#### Updating Existing Records
+- `realistic_price` is recalculated when: (a) a comparable sale is confirmed, or (b) `sqft` is updated with a measured value from a floorplan or EPC.
+- When `realistic_price` is updated, also re-run the Alpha Score calculation (price efficiency component may have changed).
+- Always document the basis for `realistic_price` changes in `analyst_notes`.
+
+#### When realistic_price CAN exceed list_price
+Only when there is independent empirical evidence:
+- Confirmed comparable sale at higher price in same block/development
+- Formal RICS surveyor valuation exceeding asking price
+- Documented market evidence (e.g., multiple bids at asking price)
+
+#### When realistic_price MUST be below list_price (flagging overpriced)
+When area comparables consistently show `list_price > realistic_price`:
+- The property is overpriced vs area market — flag in `analyst_notes`
+- `realistic_price` remains below `list_price` as the model intended
+- This is correct signal, not an error
+
+#### Import-Time Safe Harbor
+On first import, always set `realistic_price = list_price` unless the lead contains an explicit surveyor valuation. Enrich to `realistic_price = area_psqm × measured_sqft` only after sqft is confirmed from floorplan or EPC register.
+
+---
+
+## Spatial Enrichment (2026-04-04)
+
+**Why it matters:** `nearest_tube_distance` and `park_proximity` are direct inputs to the Alpha Score spatial component (30% of total score). Currently 69% of records are missing these fields — every missing property is scored with the worst-case spatial assumption (1,000m).
+
+#### Field Definitions
+| Field | Unit | Alpha Role | Data Source |
+|-------|------|-----------|-------------|
+| `nearest_tube_distance` | meters | Alpha input (+7/+5/+3) | TfL StopPoint API (lat/lon radius query, free, no key) |
+| `park_proximity` | meters | Alpha input (+3/+1) | Overpass API (OSM Grade II parks, free, no key) |
+| `commute_paternoster` | minutes | display only | Estimated: walk-to-tube + tube time to City |
+| `commute_canada_square` | minutes | display only | Estimated: walk-to-tube + Jubilee line |
+| `waitrose_distance` | meters | display only | Postcode-based lookup (see fallback below) |
+| `whole_foods_distance` | meters | display only | Postcode-based lookup |
+| `wellness_hub_distance` | meters | display only | Overpass API (gyms/leisure centres) |
+
+#### Step 1 — Geocode address (Nominatim, ~1 req/sec rate limit)
+```python
+import urllib.request, urllib.parse, json, time
+
+def geocode(addr):
+    params = urllib.parse.urlencode({'q': addr, 'format': 'json', 'limit': 1})
+    url = f'https://nominatim.openstreetmap.org/search?{params}'
+    req = urllib.request.Request(url, headers={'User-Agent': 'propSearch-research/1.0'})
+    with urllib.request.urlopen(req, timeout=15) as r:
+        result = json.load(r)
+    if result:
+        return float(result[0]['lat']), float(result[0]['lon'])
+    return None, None
+```
+⚠️ Nominatim: 1 request/second max. Always `time.sleep(1.1)` between calls.
+
+#### Step 2 — Nearest tube station (TfL StopPoint API, no key required)
+```python
+def nearest_tube(lat, lon, radius_m=800):
+    url = (f'https://api.tfl.gov.uk/StopPoint/?lat={lat}&lon={lon}'
+           f'&stopTypes=NaptanMetroStation&radius={radius_m}&modes=tube')
+    req = urllib.request.Request(url, headers={'User-Agent': 'propSearch-research/1.0'})
+    with urllib.request.urlopen(req, timeout=15) as r:
+        result = json.load(r)
+    stops = result.get('stopPoints', [])
+    if stops:
+        nearest = min(stops, key=lambda s: s.get('distance', 99999))
+        return nearest['commonName'].replace(' Underground Station',''), nearest['distance']
+    return None, None
+```
+
+#### Step 3 — Nearest park (Overpass API, OSM Grade II parks)
+```python
+def nearest_park(lat, lon, radius_m=1000):
+    q = (f'[out:json][timeout:25];'
+         f'node["leisure"="park"]["access"!="private"](around:{radius_m},{lat},{lon});'
+         f'out body;')
+    data = json.dumps({'data': q}).encode()
+    req = urllib.request.Request('https://overpass-api.de/api/interpreter', data=data)
+    with urllib.request.urlopen(req, timeout=30) as r:
+        result = json.load(r)
+    elements = result.get('elements', [])
+    if not elements:
+        return None
+    # Pick largest-named park as proxy for Grade II parks
+    named = [e for e in elements if 'name' in e.get('tags', {})]
+    return named[0]['tags']['name'] if named else None
+```
+
+#### Run Spatial Enrichment
+```bash
+python3 agents/data_analyst/enrich_spatial.py   # geocode + nearest tube + nearest park
+```
+⚠️ Process all 29 properties in a single session. Nominatim rate limit = ~30 properties/minute. Total runtime: ~2 minutes for 29 properties.
+
+After running, re-export to demo_master.json:
+```bash
+python3 - << 'EOF'
+import sqlite3, json
+def clean(v):
+    if v is None: return None
+    if isinstance(v, float): return round(v, 6) if v == v else None
+    return v
+conn = sqlite3.connect('data/propsearch.db')
+cur = conn.cursor()
+cur.execute("SELECT ... FROM properties WHERE archived=0")
+rows = cur.fetchall()
+cols = [d[0] for d in cur.description]
+records = [{cols[i]: clean(v) for i, v in enumerate(r) if clean(v) is not None} for r in rows]
+for path in ('data/demo_master.json', 'frontend/public/data/demo_master.json'):
+    with open(path, 'w') as f: json.dump(records, f, indent=2)
+print(f'Exported {len(records)} records')
+EOF
+```
+
+#### Commute Time Estimation (display only — low priority)
+After getting nearest tube name, estimate tube journey time:
+- Walk to tube: `nearest_tube_distance / 80` minutes (80m/min walking pace)
+- Known tube times: Belsize Park → St Pauls ~12 min (Northern → Central), Belsize Park → Canary Wharf ~28 min (Northern → Jubilee at Baker Street)
+- If unverifiable: leave as `null` — commute time is not used in alpha score
 
 ---
 
@@ -345,6 +557,69 @@ The Data Analyst MUST observe the following backup discipline:
 
 ---
 
+## Enrichment Request Queue — User-Initiated Repairs (FE-207)
+
+**NEW (2026-04-04):** Users can now explicitly request enrichment for specific properties. These requests are queued in the `enrichment_requests` table and must be picked up by the analyst.
+
+### Workflow: Start of Every Analyst Session
+
+Before processing inbox leads or running enrichment scripts, check the enrichment request queue:
+
+```bash
+# 1. Fetch all pending requests
+curl http://localhost:3001/api/enrichment-requests?status=pending
+
+# 2. For each request (work top-to-bottom, oldest first):
+#    a. Mark as in_progress
+curl -X PATCH http://localhost:3001/api/enrichment-requests/{id} \
+  -H "Content-Type: application/json" \
+  -d '{"status": "in_progress"}'
+
+#    b. Fetch the data (see field-specific methods below)
+
+#    c. Mark as completed with analyst_notes
+curl -X PATCH http://localhost:3001/api/enrichment-requests/{id} \
+  -H "Content-Type: application/json" \
+  -d '{"status": "completed", "analyst_notes": "Fetched sqft from EPC register. Images scraped from agent direct listing."}'
+```
+
+### Field-Specific Enrichment Methods
+
+| Field | Priority | Source | Notes |
+|-------|----------|--------|-------|
+| `images` / `gallery` | 1 | FlareSolverr on agent URL from `links`, then Rightmove/Zoopla | Look for `/1024/` or `/1280/` for high-res |
+| `floorplan_url` | 1 | Same as images — check `floorplans` array in PAGE_MODEL | |
+| `sqft` | 2 | EPC Register (mezh.org), agent listing | Cross-reference multiple sources |
+| `bedrooms` | 2 | Agent listing, EPC register | |
+| `epc` | 2 | EPC Register (mezh.org or epcregister.com) | Cannot fabricate — set `status: 'failed'` if unverifiable |
+| `tenure` | 2 | Land Registry, agent listing | Look for "share of freehold" mentions |
+
+### Rules
+
+1. **Max 3 concurrent in-progress requests** — avoid overwhelming FlareSolverr / scraping infra
+2. **Priority order** — work oldest-first (`created_at ASC`)
+3. **Never fabricate data** — if unverifiable, set `status: 'failed'` with reason in `analyst_notes`
+4. **Update the property in-place** — use `UPDATE properties SET ... WHERE id = ?` in SQLite
+5. **Preserve existing data** — only overwrite if new data is verified and better
+6. **Analyst notes are mandatory on completion** — document what was fetched and from where
+
+### Conflict Detection
+
+If a property already has a `pending` or `in_progress` enrichment request:
+- Do not create a duplicate request
+- The frontend will show "Enrichment already requested" to the user
+
+### Enrichment Request vs. Manual Queue
+
+| | Enrichment Request | Manual Queue |
+|--|--|--|
+| For | Existing property | New lead URL |
+| Triggered by | User (frontend button) | Analyst or pipeline |
+| Goal | Fill missing fields | Scrape and import new listing |
+| Table | `enrichment_requests` | `manual_queue` |
+
+---
+
 ## Manual Sync Protocol (DE-162 — Effective 2026-04-01, Amended 2026-04-02)
 
 **Automated GitHub Actions cron is DISABLED.** All sync is manual.
@@ -361,6 +636,7 @@ The Data Analyst MUST observe the following backup discipline:
 - `GET /api/health` reports `context_freshness` with bytes and last updated timestamp
 
 **Analyst responsibilities:**
+- **⚠️ FIRST ACTION on every launch: Check the lead inbox.** Run `ls data/inbox/*.json` or `GET /api/inbox` and review all pending entries before doing anything else. Enrich and research every item — calculate Alpha Scores, spatial metrics, and analyst notes. User-submitted leads bypass all guardrails (see above) but still require full enrichment.
 - Review `macro_trend.json` weekly; update if BoE rates, HPI, or market volume data is stale
 - Run `make tasks-regen` after any task status changes
 - Manual enrichment: new leads must be written to `data/inbox/` as JSON files first, then processed through the pipeline — do NOT process conversation-pasted leads without writing to inbox

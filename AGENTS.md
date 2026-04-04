@@ -13,11 +13,11 @@ A multi-agent system that automates the discovery, normalization, and visualizat
   - **Linear:** Precision typography, subtle border/surface shadows, high-quality focus states, and a clean, minimalist layout (see: `linear.app`).
 
 ### Agents & Territorial Boundaries (Write Access)
-1. **Product Owner & Strategic Lead (`agents/product_owner/`):** Authorized to write to `REQUIREMENTS.md`, `Tasks.md` (management), and `agents/product_owner/`.
+1. **Product Owner & Strategic Lead (`agents/product_owner/`):** Authorized to write to `tasks/tasks.json` (task management), `REQUIREMENTS.md`, `DECISIONS.md`, `STRATEGIC_ROADMAP.md`, and `agents/product_owner/`.
 2. **Senior Real Estate Data Analyst (`agents/data_analyst/`):** Authorized to write to `data/` (research outputs: macro_trend.json, import/, inbox/) and `agents/data_analyst/`.
 3. **Senior Real Estate Data Engineer (`agents/data_engineer/`):** Authorized to write to `data/` (infrastructure: SQLite schema, pipelines), `agents/data_engineer/`, `scripts/sync_data.js`, and `server/index.js`. **Not authorized to modify frontend types.**
 4. **Lead Frontend Engineer & UX Architect (`agents/frontend_engineer/`):** Authorized to write to `frontend/` and `agents/frontend_engineer/`. Owns `frontend/src/types/property.ts` and all frontend type definitions.
-5. **UI/UX Quality Assurance Engineer (`agents/ui_ux_qa/`):** Authorized to write to `Tasks.md` (issue creation, status updates) and `agents/ui_ux_qa/`.
+5. **UI/UX Quality Assurance Engineer (`agents/ui_ux_qa/`):** Authorized to write to `tasks/tasks.json` (issue creation, status updates) and `agents/ui_ux_qa/`.
 
 ---
 
@@ -25,8 +25,8 @@ A multi-agent system that automates the discovery, normalization, and visualizat
 1. **RTK Mandatory:** ALL high-volume shell operations (`npm install`, `npm run build`, `lint`, `node scripts/sync_data.js`, large `grep`, `ls -R`, batch file reads) **MUST** be proxied through **rtk** (Rust Token Killer). Use `rtk gain` to review token savings.
 2. **Data Authenticity:** Agents are FORBIDDEN from creating synthetic or "hallucinated" property listings or market metrics. Use empirical data only. **SEE: `agents/DATA_GUARDRAILS.md` — mandatory reading before any data write.**
 3. **Aesthetic Direction:** Adhere strictly to the "Bloomberg Terminal meets Linear" standards in all UI changes.
-4. **Workflow Lifecycle:** `Select (identify highest priority task from Tasks.md) -> Claim (Status: In Progress) -> Execute (follow logic in agent README + MANDATORY external enrichment for Analyst) -> Verify (build/lint/QA) -> Resolve (Status: Done)`.
-5. **Cross-Agent Task Creation:** Any agent is authorized to create new tasks in `Tasks.md` if a completed task requires a follow-up.
+4. **Workflow Lifecycle:** `Select (identify highest priority task from tasks/tasks.json) -> Claim (Status: In Progress) -> Execute (follow logic in agent README + MANDATORY external enrichment for Analyst) -> Verify (build/lint/QA) -> Resolve (Status: Done)`.
+5. **Cross-Agent Task Creation:** Any agent is authorized to create new tasks in `tasks/tasks.json` if a completed task requires a follow-up.
 6. **Data Guardrails:** Before writing, modifying, or deleting any data in `data/` or SQLite, agents **MUST** follow the protocols in `agents/DATA_GUARDRAILS.md`. Violations trigger immediate rollback and user notification.
 
 ## Surgical Workflow & Efficiency
@@ -68,6 +68,60 @@ To maximize performance and minimize token usage, follow these surgical patterns
 
 ### C. Agent Instruction Loading
 - Reference your specialized `agents/<role>/README.md` for logic-heavy tasks, but rely on `AGENTS.md` for all behavioral and territorial rules. Do not load all agent READMEs at once.
+
+### D. Handling Blocked Tasks
+
+**Definition of "Blocked":**
+A task is blocked when you cannot proceed due to a dependency outside your control, such as:
+- Waiting for user approval or decision
+- Waiting for another agent to complete their part
+- External data/resource not yet available
+- Infrastructure/system issue
+- Missing context required to proceed
+
+**Blocking Protocol (MANDATORY):**
+
+1. **Mark the task as `Blocked`** in `tasks/tasks.json`:
+   ```python
+   # Example: marking a task blocked
+   task['status'] = 'Blocked'
+   task['blocked_reason'] = 'Waiting for user approval'
+   task['unblock_requires'] = [
+       'User approval to proceed with schema change',
+       'Data Engineer to complete DE-140 first'
+   ]
+   ```
+
+2. **Document in the notes field** with `BLOCKED:` prefix:
+   ```
+   BLOCKED: Waiting for user approval on approach.
+   BLOCKED BY: User decision required.
+   TO UNBLOCK: Need explicit approval to:
+     1. Delete record X (see DATA_GUARDRAILS.md Rule 2)
+     2. Modify schema in production
+   
+   I've done all I can until you review. Please run `make tasks-regen` after reviewing.
+   ```
+
+3. **Be specific about what's needed:**
+   - ❌ Bad: "Blocked, need help"
+   - ✅ Good: "Blocked: Cannot proceed until you approve the mortgage rate data source (Land Registry vs BoE). Preference?"
+
+4. **Run `make tasks-regen`** after marking blocked so Tasks.md reflects the status.
+
+5. **Communication:** If the block requires user action, clearly state what you need:
+   ```
+   ⛔ BLOCKED: Cannot complete DAT-178 without your input.
+   
+   Question: Should we source HPI history from:
+   A) Land Registry (free, monthly, 1995-present)
+   B) ONS (free, monthly, 2005-present)  
+   C) Knight Frank (better segmentation, requires scraping)
+   
+   Please advise and I'll proceed.
+   ```
+
+**Important:** Never leave a task in "In Progress" if you're blocked. Either complete it, mark it Blocked with clear instructions, or escalate it back to Todo if you've done your part.
 
 ---
 

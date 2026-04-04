@@ -1,4 +1,8 @@
+// FE-204: Migrated to @visx — replaces hand-rolled SVG path math
 import React, { useMemo } from 'react';
+import { scaleLinear } from '@visx/scale';
+import { LinePath, AreaClosed } from '@visx/shape';
+import { curveMonotoneX } from '@visx/curve';
 
 interface SparklineChartProps {
   data: number[];
@@ -24,34 +28,34 @@ const SparklineChart: React.FC<SparklineChartProps> = ({
   dotIndex,
   className = '',
 }) => {
-  const points = useMemo(() => {
-    if (!data.length) return { line: '', area: '', dotX: 0, dotY: 0 };
-    const min = Math.min(...data);
-    const max = Math.max(...data);
-    const range = max - min || 1;
+  const chart = useMemo(() => {
+    // QA-185: Guard against NaN values in data
+    const validData = data.filter(d => typeof d === 'number' && isFinite(d));
+    if (validData.length < 2) return null;
     const pad = 2;
-    const effectiveHeight = height - pad * 2;
-    const stepX = (width - pad * 2) / (data.length - 1 || 1);
+    const innerWidth = width - pad * 2;
+    const innerHeight = height - pad * 2;
 
-    const coords = data.map((v, i) => ({
-      x: pad + i * stepX,
-      y: pad + effectiveHeight - ((v - min) / range) * effectiveHeight,
-    }));
+    const xScale = scaleLinear({
+      domain: [0, validData.length - 1],
+      range: [pad, width - pad],
+    });
+    const yScale = scaleLinear({
+      domain: [Math.min(...validData), Math.max(...validData)],
+      range: [height - pad, pad],
+    });
 
-    const line = coords.map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
+    const di = dotIndex !== undefined ? dotIndex : validData.length - 1;
+    const dotX = xScale(di);
+    const dotY = yScale(validData[di] ?? 0);
 
-    let area = '';
-    if (showArea) {
-      area =
-        line +
-        ` L${(width - pad).toFixed(1)},${(height - pad).toFixed(1)} L${pad.toFixed(1)},${(height - pad).toFixed(1)} Z`;
-    }
+    return { xScale, yScale, dotX, dotY, innerWidth, innerHeight, validData };
+  }, [data, width, height, dotIndex]);
 
-    const di = dotIndex !== undefined ? dotIndex : data.length - 1;
-    return { line, area, dotX: coords[di]?.x ?? width - pad, dotY: coords[di]?.y ?? pad };
-  }, [data, width, height, showArea, dotIndex]);
+  if (data.length < 2) return null;
 
-  if (!data.length) return null;
+  // QA-185: Use validData for SVG rendering to prevent NaN in path coordinates
+  const renderData = chart?.validData ?? data.filter((d: number) => isFinite(d));
 
   return (
     <svg
@@ -61,21 +65,31 @@ const SparklineChart: React.FC<SparklineChartProps> = ({
       className={className}
       aria-hidden="true"
     >
-      {fillColor && points.area && (
-        <path d={points.area} fill={fillColor} opacity={0.15} />
+      {fillColor && showArea && chart && (
+        <AreaClosed
+          data={renderData}
+          x={(_, i) => chart.xScale(i)}
+          y={d => chart.yScale(d)}
+          yScale={chart.yScale}
+          curve={curveMonotoneX}
+          fill={fillColor}
+          opacity={0.15}
+        />
       )}
-      <path
-        d={points.line}
-        fill="none"
+      <LinePath
+        data={renderData}
+        x={(_, i) => chart!.xScale(i)}
+        y={d => chart!.yScale(d)}
         stroke={color}
         strokeWidth={1.5}
         strokeLinecap="round"
         strokeLinejoin="round"
+        curve={curveMonotoneX}
       />
-      {showDot && (
+      {showDot && chart && (
         <>
-          <circle cx={points.dotX} cy={points.dotY} r={2.5} fill={color} />
-          <circle cx={points.dotX} cy={points.dotY} r={5} fill={color} opacity={0.2} />
+          <circle cx={chart.dotX} cy={chart.dotY} r={2.5} fill={color} />
+          <circle cx={chart.dotX} cy={chart.dotY} r={5} fill={color} opacity={0.2} />
         </>
       )}
     </svg>

@@ -24,6 +24,7 @@ import ThesisTagBadge from './ThesisTagBadge';
 import ThesisTagSelector from './ThesisTagSelector';
 import BatchTagPanel from './BatchTagPanel';
 import LTVMatchBadge from './LTVMatchBadge';
+import MarketStatusBadge from './MarketStatusBadge';
 import { useAffordability } from '../hooks/useAffordability';
 
 interface PropertyTableProps {
@@ -295,6 +296,10 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
               <th rowSpan={2} className="px-2 py-3 text-center text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap min-w-[80px]">
                 LTV
               </th>
+              {/* ADR-017: Market status column — analyst axis, independent of pipeline */}
+              <th rowSpan={2} className="px-2 py-3 text-center text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap">
+                Market
+              </th>
               {showThesisTags && (
                 <th rowSpan={2} className="px-2 py-3 text-center text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap min-w-[100px]">
                   Thesis
@@ -331,6 +336,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
               <th className="border-r border-linear-border/30"></th>
               <th className="border-r border-linear-border/30"></th>
               {showThesisTags && <th className="border-r border-linear-border/30"></th>}
+              {/* Empty cell for Market column (rowSpan=2 covers it) */}
             </tr>
           </thead>
           <tbody className="divide-y divide-linear-border/50">
@@ -391,15 +397,9 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                             <Archive size={8} /> ARCHIVED
                           </span>
                         )}
-                        {/* FE-185 Part 4: market_status badge for archived rows */}
-                        {status === 'archived' && (property as any).market_status && (
-                          <span className={`flex items-center gap-0.5 text-[8px] font-black px-1 rounded border uppercase tracking-tighter ${
-                            (property as any).market_status === 'active' ? 'text-retro-amber bg-retro-amber/10 border-retro-amber/20' :
-                            (property as any).market_status === 'under_offer' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' :
-                            'text-linear-text-muted bg-linear-bg border-linear-border'
-                          }`}>
-                            {(property as any).market_status === 'active' ? '⚠ ' : ''}{(property as any).market_status}
-                          </span>
+                        {/* ADR-017: market_status badge — analyst axis, shown for archived rows to clarify dual state */}
+                        {status === 'archived' && property.market_status && (
+                          <MarketStatusBadge status={property.market_status} />
                         )}
                         {property.is_value_buy && (
                           <span className="flex items-center gap-0.5 text-[8px] font-black text-retro-green bg-retro-green/10 px-1 rounded border border-retro-green/20">
@@ -460,6 +460,10 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                   </td>
                   <td className="px-2 py-4 text-[11px] text-zinc-500 font-bold italic">
                     {property.dom || 0}d
+                  </td>
+                  {/* ADR-017: Market status cell — analyst-owned axis */}
+                  <td className="px-2 py-4" onClick={(e) => e.stopPropagation()}>
+                    <MarketStatusBadge status={property.market_status} />
                   </td>
                   <td className="px-2 py-4" onClick={(e) => e.stopPropagation()}>
                     <LTVMatchBadge score={getLTVMatchScore(property.realistic_price)} />

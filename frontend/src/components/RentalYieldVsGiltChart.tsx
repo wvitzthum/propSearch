@@ -1,28 +1,44 @@
+// FE-202: Migrated to @visx — replaces HTML/CSS bar chart with visx scale/shape primitives
 import React, { useMemo } from 'react';
 import { useMacroData } from '../hooks/useMacroData';
+import { scaleLinear, scaleBand } from '@visx/scale';
+import { Bar } from '@visx/shape';
+import { useTooltip, TooltipWithBounds } from '@visx/tooltip';
+import { localPoint } from '@visx/event';
+import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
-// FE-192: Rental Yield vs Gilt yield comparison chart — investment thesis validation
-// Shows: gross rental yields by area vs current UK gilt (risk-free benchmark)
-// MEES warning flags for low-rated properties
+interface YieldRow {
+  area: string;
+  gross: number;
+  net: number;
+  epcRisk: boolean;
+}
 
 const RentalYieldVsGiltChart: React.FC = () => {
   const { data } = useMacroData();
   const raw = data as any;
 
+  const {
+    showTooltip,
+    hideTooltip,
+    tooltipOpen,
+    tooltipData,
+    tooltipLeft,
+    tooltipTop,
+  } = useTooltip<YieldRow>();
+
   // UK gilt yield (10yr) — current risk-free benchmark
   const giltYield = useMemo(() => {
-    // Approximate from swap rates or BoE base rate context
     const swapRaw = raw?.swap_rates?.gbp_5yr;
     const swap5yr = typeof swapRaw === 'number' ? swapRaw : 3.95;
-    return Math.min(swap5yr - 0.5, 4.25); // gilt typically below swap
+    return Math.min(swap5yr - 0.5, 4.25);
   }, [raw]);
 
-  // Rental yield data from appreciation_model.rental_yield_estimates
-  const yieldData = useMemo(() => {
+  // Rental yield data
+  const yieldData = useMemo((): YieldRow[] => {
     const re = raw?.appreciation_model?.rental_yield_estimates ?? {};
     if (!re || typeof re !== 'object' || Object.keys(re).length === 0) {
-      // Synthetic fallback: typical PCL gross yields by area
       return [
         { area: 'Islington (N1)', gross: 3.8, net: 2.9, epcRisk: false },
         { area: 'Camden (NW1)', gross: 3.4, net: 2.6, epcRisk: false },
@@ -43,12 +59,15 @@ const RentalYieldVsGiltChart: React.FC = () => {
       }));
   }, [raw]);
 
-  // Sort by gross yield descending
   const sorted = [...yieldData].sort((a, b) => b.gross - a.gross).slice(0, 6);
-
-  const maxYield = Math.max(...sorted.map(d => d.gross), giltYield);
+  const maxYield = Math.max(...sorted.map(d => d.gross), giltYield) * 1.1;
   const yieldSpread = (sorted[0]?.gross ?? 0) - giltYield;
   const isPositiveThesis = yieldSpread > 0;
+
+  const barHeight = 16;
+  const barPad = 5;
+  const labelWidth = 72;
+  const valueWidth = 44;
 
   return (
     <div className="bg-linear-card border border-linear-border rounded-xl overflow-hidden">
@@ -97,62 +116,127 @@ const RentalYieldVsGiltChart: React.FC = () => {
         </div>
       </div>
 
-      {/* Bar chart: yields vs gilt */}
+      {/* @visx Bar chart: yields vs gilt */}
       <div className="p-4">
-        <div className="space-y-2">
-          {sorted.map((d) => {
-            const spread = d.gross - giltYield;
-            const isPositive = spread >= 0;
-            const barFillWidth = (d.gross / (maxYield * 1.1)) * 100;
-            const giltLinePos = (giltYield / (maxYield * 1.1)) * 100;
+        <ParentSize>
+          {({ width: parentWidth }) => {
+            if (parentWidth < 10) return null;
+            const chartWidth = Math.max(parentWidth - labelWidth - valueWidth - 12, 40);
+            const innerHeight = sorted.length * (barHeight + barPad);
+
+            const xScale = scaleLinear({
+              domain: [0, maxYield],
+              range: [0, chartWidth],
+            });
+
+            const yScale = scaleBand({
+              domain: sorted.map(d => d.area),
+              range: [0, innerHeight],
+              round: true,
+            });
+
+            const handleMouseMove = (event: React.MouseEvent<SVGRectElement>, row: YieldRow) => {
+              const coords = localPoint(event);
+              if (!coords) return;
+              showTooltip({ tooltipData: row, tooltipLeft: coords.x, tooltipTop: coords.y });
+            };
+
             return (
-              <div key={d.area} className="flex items-center gap-3">
-                {/* Area label */}
-                <div className="w-28 shrink-0">
-                  <div className="text-[9px] font-semibold text-white truncate flex items-center gap-1">
-                    {d.epcRisk && <span className="text-amber-400 text-[7px]">⚠</span>}
-                    {d.area.split(' (')[0]}
-                  </div>
-                  <div className="text-[7px] text-linear-text-muted/60">net {d.net.toFixed(1)}%</div>
+              <div className="flex items-start gap-0">
+                {/* Area labels */}
+                <div className="shrink-0" style={{ width: labelWidth }}>
+                  {sorted.map(row => (
+                    <div key={row.area} className="flex flex-col justify-center" style={{ height: barHeight + barPad }}>
+                      <div className="text-[9px] font-semibold text-white truncate flex items-center gap-1">
+                        {row.epcRisk && <span className="text-amber-400 text-[7px]">⚠</span>}
+                        {row.area.split(' (')[0]}
+                      </div>
+                      <div className="text-[7px] text-linear-text-muted/60">net {row.net.toFixed(1)}%</div>
+                    </div>
+                  ))}
                 </div>
 
-                {/* Bar + gilt line */}
-                <div className="flex-1 relative">
-                  <div className="h-5 bg-linear-bg rounded-full overflow-hidden relative">
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${barFillWidth}%`,
-                        backgroundColor: isPositive ? '#22c55e' : '#ef4444',
-                        opacity: 0.7,
-                      }}
+                {/* SVG Chart */}
+                <svg width={chartWidth} height={innerHeight} className="overflow-visible">
+                  {/* Background track */}
+                  {sorted.map(row => (
+                    <rect
+                      key={`bg-${row.area}`}
+                      x={0}
+                      y={yScale(row.area)! + 1}
+                      width={chartWidth}
+                      height={barHeight}
+                      fill="rgba(255,255,255,0.04)"
+                      rx={8}
                     />
-                    {/* Gilt yield reference line */}
-                    <div
-                      className="absolute inset-y-0 w-px bg-white/60"
-                      style={{ left: `${giltLinePos}%` }}
-                    />
-                  </div>
-                  {/* Gilt label */}
-                  <div className="absolute" style={{ left: `calc(${giltLinePos}% + 4px)`, top: '-2px' }}>
-                    <span className="text-[7px] text-amber-400 font-mono">gilt</span>
-                  </div>
-                </div>
+                  ))}
 
-                {/* Yield value */}
-                <div className="w-12 shrink-0 text-right">
-                  <div className={`text-[10px] font-black tabular-nums ${isPositive ? 'text-retro-green' : 'text-rose-400'}`}>
-                    {isPositive ? '+' : ''}{spread.toFixed(1)}pp
-                  </div>
-                  <div className="text-[8px] text-white font-bold">{d.gross.toFixed(1)}%</div>
+                  {/* Gilt yield threshold line */}
+                  <line
+                    x1={xScale(giltYield)}
+                    y1={0}
+                    x2={xScale(giltYield)}
+                    y2={innerHeight}
+                    stroke="rgba(255,255,255,0.6)"
+                    strokeWidth="1"
+                    strokeDasharray="3,2"
+                  />
+                  <text
+                    x={xScale(giltYield) + 3}
+                    y={6}
+                    className="text-[7px] fill-amber-400 font-mono"
+                  >
+                    gilt
+                  </text>
+
+                  {/* Yield bars */}
+                  {sorted.map(row => {
+                    const spread = row.gross - giltYield;
+                    const isPositive = spread >= 0;
+                    const barW = Math.max(xScale(row.gross) - xScale(0), 2);
+                    const y = yScale(row.area)!;
+                    return (
+                      <Bar
+                        key={row.area}
+                        x={0}
+                        y={y + 1}
+                        width={barW}
+                        height={barHeight}
+                        fill={isPositive ? '#22c55e' : '#ef4444'}
+                        opacity={0.7}
+                        rx={8}
+                        onMouseMove={(e) => handleMouseMove(e, row)}
+                        onMouseLeave={hideTooltip}
+                        className="cursor-crosshair"
+                      />
+                    );
+                  })}
+                </svg>
+
+                {/* Yield values */}
+                <div className="shrink-0 flex flex-col justify-start" style={{ width: valueWidth, paddingLeft: 8 }}>
+                  {sorted.map(row => {
+                    const spread = row.gross - giltYield;
+                    const isPositive = spread >= 0;
+                    return (
+                      <div key={row.area} className="flex flex-col items-end justify-center" style={{ height: barHeight + barPad }}>
+                        <div className={`text-[9px] font-black tabular-nums ${isPositive ? 'text-retro-green' : 'text-rose-400'}`}>
+                          {isPositive ? '+' : ''}{spread.toFixed(1)}pp
+                        </div>
+                        <div className="text-[8px] text-white font-bold">{row.gross.toFixed(1)}%</div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
-          })}
-        </div>
+          }}
+        </ParentSize>
+      </div>
 
-        {/* Investment thesis signal */}
-        <div className="mt-3 p-2 rounded-lg border" style={{
+      {/* Investment thesis signal */}
+      <div className="px-4 pb-4">
+        <div className="p-2 rounded-lg border" style={{
           backgroundColor: isPositiveThesis ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)',
           borderColor: isPositiveThesis ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)',
         }}>
@@ -174,6 +258,20 @@ const RentalYieldVsGiltChart: React.FC = () => {
         <span className="text-[8px] text-linear-text-muted/40 font-mono">Gross yield · net ~24% lower · no void allowance</span>
         <span className="text-[8px] text-linear-text-muted/40 font-mono">vs UK Gilt 10yr · {new Date().getFullYear()}</span>
       </div>
+
+      {/* Tooltip */}
+      {tooltipOpen && tooltipData && (
+        <TooltipWithBounds
+          left={tooltipLeft}
+          top={tooltipTop}
+          className="bg-black/90 backdrop-blur border border-linear-border rounded-lg px-3 py-2 pointer-events-none z-50"
+        >
+          <div className="text-[10px] font-black text-white">{tooltipData.area.split(' (')[0]}</div>
+          <div className="text-[9px] text-retro-green font-bold">Gross: {tooltipData.gross.toFixed(1)}%</div>
+          <div className="text-[9px] text-linear-text-muted">Net: {tooltipData.net.toFixed(1)}%</div>
+          <div className="text-[9px] text-linear-text-muted">vs gilt: {tooltipData.gross - giltYield >= 0 ? '+' : ''}{(tooltipData.gross - giltYield).toFixed(1)}pp</div>
+        </TooltipWithBounds>
+      )}
     </div>
   );
 };

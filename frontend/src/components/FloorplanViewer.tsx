@@ -13,6 +13,22 @@ const FloorplanViewer: React.FC<FloorplanViewerProps> = ({ url, address }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
+  // Guard against empty/blank URL
+  if (!url) {
+    return (
+      <div className="flex flex-col items-center justify-center h-48 bg-linear-card border border-linear-border rounded-xl">
+        <div className="opacity-20">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <line x1="9" y1="3" x2="9" y2="21" />
+            <line x1="3" y1="9" x2="21" y2="9" />
+          </svg>
+        </div>
+        <span className="text-[8px] font-black uppercase tracking-widest text-linear-text-muted mt-2">Floorplan Unavailable</span>
+      </div>
+    );
+  }
+
   const containerRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);

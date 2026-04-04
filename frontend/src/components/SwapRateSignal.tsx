@@ -1,7 +1,11 @@
+// FE-207: Migrated sparklines to @visx — replaces hand-rolled polyline with visx LinePath
 import React, { useMemo } from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { useMacroData } from '../hooks/useMacroData';
 import { extractValue } from '../types/macro';
+import { scaleLinear } from '@visx/scale';
+import { LinePath } from '@visx/shape';
+import { curveMonotoneX } from '@visx/curve';
 
 const SwapRateSignal: React.FC = () => {
   const { data } = useMacroData();
@@ -49,28 +53,30 @@ const SwapRateSignal: React.FC = () => {
     return swap5yr + 0.5; // approx spread
   }, [swap.gbp_5yr, recent5yr]);
 
-  const renderSparkline = (points: number[], color: string) => {
-    // QA-185 Bug 2: filter NaN before computing range to prevent invalid SVG coords
-    const valid = points.filter((p) => !isNaN(p) && isFinite(p));
+  // FE-207: @visx sparkline helper
+  const VisxSparkline: React.FC<{ data: number[]; color: string; width?: number; height?: number }> = ({
+    data, color, width = 60, height = 20,
+  }) => {
+    const valid = data.filter((p) => !isNaN(p) && isFinite(p));
     if (valid.length < 2) return null;
-    const min = Math.min(...valid);
-    const max = Math.max(...valid);
-    const range = max - min || 0.1;
-    const w = 60, h = 20;
-    const coords = valid.map((p, i) => {
-      const x = (i / (valid.length - 1)) * w;
-      const y = h - ((p - min) / range) * h;
-      return `${x},${y}`;
-    }).join(' ');
+
+    const xScale = scaleLinear({ domain: [0, valid.length - 1], range: [0, width] });
+    const yScale = scaleLinear({
+      domain: [Math.min(...valid), Math.max(...valid)],
+      range: [height, 0],
+    });
+
     return (
-      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="overflow-visible">
-        <polyline
-          points={coords}
-          fill="none"
+      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
+        <LinePath
+          data={valid}
+          x={(_, i) => xScale(i)}
+          y={d => yScale(d)}
           stroke={color}
-          strokeWidth="1.5"
+          strokeWidth={1.5}
           strokeLinecap="round"
           strokeLinejoin="round"
+          curve={curveMonotoneX}
         />
       </svg>
     );
@@ -105,7 +111,7 @@ const SwapRateSignal: React.FC = () => {
                   {!isNaN(swap.gbp_2yr) ? swap.gbp_2yr.toFixed(2) : recent2yr.toFixed(2)}%
                 </span>
               </div>
-              {renderSparkline(sparkline2yr, trendColor(trend2yr))}
+              <VisxSparkline data={sparkline2yr} color={trendColor(trend2yr)} />
             </div>
           </div>
 
@@ -124,7 +130,7 @@ const SwapRateSignal: React.FC = () => {
                   {!isNaN(swap.gbp_5yr) ? swap.gbp_5yr.toFixed(2) : recent5yr.toFixed(2)}%
                 </span>
               </div>
-              {renderSparkline(sparkline5yr, trendColor(trend5yr))}
+              <VisxSparkline data={sparkline5yr} color={trendColor(trend5yr)} />
             </div>
           </div>
         </div>
@@ -188,7 +194,7 @@ const SwapRateSignal: React.FC = () => {
               {/* 2yr trajectory mini-chart */}
               <div className="flex-1">
                 <div className="text-[8px] text-linear-text-muted mb-1">2yr Fixed @ 90% LTV</div>
-                {renderSparkline(sparkline2yr.length >= 10 ? sparkline2yr : sparkline2yr.concat(sparkline2yr.slice().reverse()), '#a855f7')}
+                <VisxSparkline data={sparkline2yr.length >= 10 ? sparkline2yr : sparkline2yr.concat(sparkline2yr.slice().reverse())} color="#a855f7" />
                 <div className="flex justify-between mt-0.5">
                   <span className="text-[7px] text-linear-text-muted/60 font-mono">2016</span>
                   <span className="text-[8px] text-purple-400 font-black">
@@ -203,7 +209,7 @@ const SwapRateSignal: React.FC = () => {
               {/* 5yr trajectory mini-chart */}
               <div className="flex-1">
                 <div className="text-[8px] text-linear-text-muted mb-1">5yr Fixed @ 75% LTV</div>
-                {renderSparkline(sparkline5yr.length >= 10 ? sparkline5yr : sparkline5yr.concat(sparkline5yr.slice().reverse()), '#8b5cf6')}
+                <VisxSparkline data={sparkline5yr.length >= 10 ? sparkline5yr : sparkline5yr.concat(sparkline5yr.slice().reverse())} color="#8b5cf6" />
                 <div className="flex justify-between mt-0.5">
                   <span className="text-[7px] text-linear-text-muted/60 font-mono">2016</span>
                   <span className="text-[8px] text-purple-400 font-black">

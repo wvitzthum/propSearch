@@ -38,24 +38,19 @@ const AlphaBadge: React.FC<AlphaBadgeProps> = ({ score, className = '', showLabe
         </span>
       </div>
       <div className="space-y-1.5">
-        <div className="flex justify-between items-center">
-          <span className="text-[9px] text-linear-text-muted font-medium">Tenure Quality</span>
-          <div className="flex gap-0.5">
-            {[1,2,3].map(i => <div key={i} className={`h-1 w-2 rounded-full ${i <= (score * 0.4 / 10 * 3) ? 'bg-linear-accent-blue' : 'bg-linear-bg border border-linear-border'}`} />)}
+        {[
+          { label: 'Tenure Quality', weight: '40%' },
+          { label: 'Spatial Alpha', weight: '30%' },
+          { label: 'Price Efficiency', weight: '30%' },
+        ].map(factor => (
+          <div key={factor.label} className="flex justify-between items-center">
+            <span className="text-[9px] text-linear-text-muted font-medium">{factor.label}</span>
+            <span className="text-[8px] text-linear-text-muted/50">{factor.weight}</span>
           </div>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-[9px] text-linear-text-muted font-medium">Price Efficiency</span>
-          <div className="flex gap-0.5">
-            {[1,2,3].map(i => <div key={i} className={`h-1 w-2 rounded-full ${i <= (score * 0.3 / 10 * 3) ? 'bg-linear-accent-blue' : 'bg-linear-bg border border-linear-border'}`} />)}
-          </div>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-[9px] text-linear-text-muted font-medium">Spatial Alpha</span>
-          <div className="flex gap-0.5">
-            {[1,2,3].map(i => <div key={i} className={`h-1 w-2 rounded-full ${i <= (score * 0.3 / 10 * 3) ? 'bg-linear-accent-blue' : 'bg-linear-bg border border-linear-border'}`} />)}
-          </div>
-        </div>
+        ))}
+      </div>
+      <div className="pt-1 border-t border-linear-border/50 flex items-center justify-center gap-1">
+        <span className="text-[8px] text-blue-400 font-bold">See full breakdown ↓</span>
       </div>
     </div>
   );

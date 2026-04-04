@@ -9,6 +9,7 @@ import BoERatePathChart from '../components/BoERatePathChart';
 import AreaPerformanceTable from '../components/AreaPerformanceTable';
 import HPIHistoryChart from '../components/HPIHistoryChart';
 import LondonPrimePremiumChart from '../components/LondonPrimePremiumChart';
+import DataFreshnessIndicator from '../components/DataFreshnessIndicator';
 
 const RatesPage: React.FC = () => {
   return (
@@ -26,6 +27,7 @@ const RatesPage: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-4">
+          <DataFreshnessIndicator />
           <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-lg">
             <Activity size={12} className="text-purple-400" />
             <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest">Live</span>

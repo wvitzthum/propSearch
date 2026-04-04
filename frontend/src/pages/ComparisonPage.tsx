@@ -7,6 +7,7 @@ import type { PropertyWithCoords } from '../types/property';
 import AlphaBadge from '../components/AlphaBadge';
 import PropertyImage from '../components/PropertyImage';
 import LoadingNode from '../components/LoadingNode';
+import { fmtPrice, fmtNum } from '../utils/format';
 
 // FE-179: Analyst notes storage (per property, localStorage)
 const NOTES_KEY = 'propsearch_analyst_notes';
@@ -45,7 +46,7 @@ const MATRIX_ROWS: MatrixRowConfig[] = [
     mode: 'min',
     isCurrency: true,
     getValue: (p) => p.realistic_price,
-    render: (p) => <div className="text-sm font-bold tracking-tight">£{p.realistic_price.toLocaleString()}</div>
+    render: (p) => <div className="text-sm font-bold tracking-tight">{fmtPrice(p.realistic_price)}</div>
   },
   {
     id: 'price_per_sqm',
@@ -54,7 +55,7 @@ const MATRIX_ROWS: MatrixRowConfig[] = [
     mode: 'min',
     isCurrency: true,
     getValue: (p) => p.price_per_sqm,
-    render: (p) => <div className="text-sm font-bold tracking-tight">£{p.price_per_sqm.toLocaleString()}/m²</div>
+    render: (p) => <div className="text-sm font-bold tracking-tight">{fmtNum(p.price_per_sqm)}/m²</div>
   },
   {
     id: 'sqft',
@@ -90,8 +91,8 @@ const MATRIX_ROWS: MatrixRowConfig[] = [
     getValue: (p) => p.service_charge + p.ground_rent,
     render: (p) => (
       <div className="flex flex-col gap-0.5">
-        <div className="text-xs font-bold text-white">£{(p.service_charge + p.ground_rent).toLocaleString()}/yr</div>
-        <span className="text-[8px] text-white/40 uppercase font-black tracking-tighter">S:{p.service_charge} G:{p.ground_rent}</span>
+        <div className="text-xs font-bold text-white">{fmtNum((p.service_charge ?? 0) + (p.ground_rent ?? 0))}/yr</div>
+        <span className="text-[8px] text-white/40 uppercase font-black tracking-tighter">S:{fmtNum(p.service_charge)} G:{fmtNum(p.ground_rent)}</span>
       </div>
     )
   }

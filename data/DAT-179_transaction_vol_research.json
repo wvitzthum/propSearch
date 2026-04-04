@@ -1,0 +1,19 @@
+{
+  "task": "DAT-179",
+  "date": "2026-04-04",
+  "status": "RESOLVED \u2014 monthly London and UK transaction volumes now in macro_trend.json",
+  "requirement": "Transaction volumes (flats listed vs sold) by area",
+  "sources_used": [
+    {
+      "source": "Land Registry/ONS UK HPI \u2014 Sales-2026-01.csv",
+      "file": "data/sources/Sales-2026-01.csv",
+      "data": "Monthly residential sales volumes by local authority",
+      "result": "SUCCESS \u2014 131 monthly entries (Jan 2015\u2013Nov 2025)"
+    }
+  ],
+  "data_now_in_macro_trend": {
+    "transaction_volumes.data": "131 monthly entries with london_sales and uk_sales",
+    "property_type_composition.london_new_vs_existing": "New build vs existing property volumes for London"
+  },
+  "note": "Transaction volumes represent completed sales registrations (Land Registry ~6-week lag). New vs existing split available. London borough breakdown available."
+}

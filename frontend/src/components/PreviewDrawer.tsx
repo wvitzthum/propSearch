@@ -181,7 +181,7 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
             
             <div className={`h-full w-full bg-linear-bg flex items-center justify-center p-4 transition-all duration-500 ${activeView === 'floorplan' ? 'opacity-100 scale-100' : 'opacity-0 scale-95 invisible absolute inset-0'}`}>
               <FloorplanViewer
-                url={property.floorplan_url || ''}
+                url={property.floorplan_url ?? ''}
                 address={property.address}
               />
             </div>

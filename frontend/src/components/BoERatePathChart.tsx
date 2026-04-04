@@ -25,7 +25,7 @@ interface TooltipData {
   bull: number;
 }
 
-const MARGIN = { top: 12, right: 8, bottom: 28, left: 32 };
+const MARGIN = { top: 12, right: 8, bottom: 40, left: 32 };
 const QUARTERS = ['Now', 'Q3 2026', 'Q4 2026', 'Q1 2027', 'Q2 2027'];
 const INNER_HEIGHT = 140;
 
@@ -232,7 +232,7 @@ function BoEChart({ width }: { width: number }) {
             return <circle key={ki} cx={last.x} cy={last.y} r={1.5} fill={colors[ki]} fillOpacity={0.85} />;
           })}
 
-          {/* X-axis tick labels (manual) */}
+          {/* X-axis tick labels (manual) — FE-206: rotated -35deg to prevent overlap with MPC labels */}
           {QUARTERS.map((q) => (
             <text
               key={q}
@@ -242,13 +242,14 @@ function BoEChart({ width }: { width: number }) {
               fontSize={8}
               fontWeight={700}
               fontFamily="inherit"
-              textAnchor="middle"
+              textAnchor="end"
+              transform={`rotate(-35, ${xScale(q) ?? 0}, ${INNER_HEIGHT - MARGIN.top - MARGIN.bottom + 14})`}
             >
               {q}
             </text>
           ))}
 
-          {/* MPC meeting vertical markers */}
+          {/* MPC meeting vertical markers — FE-206: labels above quarter labels to avoid overlap */}
           {MPC_POSITIONS.map(mpc => {
             const x = xScale(QUARTERS[mpc.qIndex] ?? '') ?? 0;
             if (x <= 0 || x >= innerWidth) return null;
@@ -263,7 +264,7 @@ function BoEChart({ width }: { width: number }) {
                 />
                 <text
                   x={x}
-                  y={INNER_HEIGHT - MARGIN.top - MARGIN.bottom + 14}
+                  y={-6}
                   fill={SCENARIO_COLORS.base}
                   fontSize={7}
                   fontWeight={700}

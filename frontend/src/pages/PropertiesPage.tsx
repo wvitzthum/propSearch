@@ -16,6 +16,8 @@ import { useThesisTags } from '../hooks/useThesisTags';
 import { useComparison } from '../hooks/useComparison';
 import type { PropertyWithCoords } from '../types/property';
 import type { PropertyStatus } from '../hooks/usePipeline';
+import type { MarketStatus } from '../types/property';
+import MarketStatusBadge from '../components/MarketStatusBadge';
 
 /** UX-007: URL-persisted filters. UX-008: vim-style keyboard navigation. */
 const PropertiesPage: React.FC = () => {
@@ -39,7 +41,11 @@ const PropertiesPage: React.FC = () => {
 
   // Filter panel state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  // FE-204.1: Default hides archived to reduce noise — user sees active pipeline only
   const [statusFilter, setStatusFilter] = useState<PropertyStatus | 'all'>('all');
+  const [showArchived, setShowArchived] = useState(false); // FE-204.1: toggle for archived visibility
+  // ADR-017: market_status filter — analyst-owned axis
+  const [marketStatusFilter, setMarketStatusFilter] = useState<MarketStatus | 'all'>('all');
   const [alphaThreshold, setAlphaThreshold] = useState(0);
   const [maxPrice, setMaxPrice] = useState(3000000);
   const [minSqft, setMinSqft] = useState(0);
@@ -81,7 +87,7 @@ const PropertiesPage: React.FC = () => {
 
   // --- Computed values (declared before useEffects that depend on them) ---
 
-  const hasActiveFilters = statusFilter !== 'all' || areaFilter !== 'All Areas' || alphaThreshold > 0 || maxPrice < 3000000 || minSqft > 0 || isValueBuyFilter;
+  const hasActiveFilters = statusFilter !== 'all' || marketStatusFilter !== 'all' || areaFilter !== 'All Areas' || alphaThreshold > 0 || maxPrice < 3000000 || minSqft > 0 || isValueBuyFilter;
 
   const availableAreas = useMemo(() => {
     if (!properties) return [];
@@ -89,10 +95,17 @@ const PropertiesPage: React.FC = () => {
   }, [properties]);
 
   // Filtered + sorted properties — MUST be before keyboard nav useEffect
+  // FE-204.1: If showArchived is false, filter out archived pipeline_status by default
   const filteredProperties = useMemo(() => {
     if (!properties) return [];
     let result = [...properties];
+    // FE-204.1: Always exclude archived unless showArchived is true or statusFilter === 'archived'
+    if (!showArchived && statusFilter !== 'archived') {
+      result = result.filter(p => getStatus(p.id) !== 'archived');
+    }
     if (statusFilter !== 'all') result = result.filter(p => getStatus(p.id) === statusFilter);
+    // ADR-017: market_status filter — analyst-owned axis
+    if (marketStatusFilter !== 'all') result = result.filter(p => p.market_status === marketStatusFilter);
     if (areaFilter !== 'All Areas') result = result.filter(p => (p.area ?? '').includes(areaFilter));
     if (alphaThreshold > 0) result = result.filter(p => p.alpha_score >= alphaThreshold);
     result = result.filter(p => p.realistic_price <= maxPrice);
@@ -116,7 +129,7 @@ const PropertiesPage: React.FC = () => {
       }
     });
     return result;
-  }, [properties, statusFilter, areaFilter, alphaThreshold, maxPrice, minSqft, isValueBuyFilter, searchQuery, filters, getStatus]);
+  }, [properties, statusFilter, marketStatusFilter, areaFilter, alphaThreshold, maxPrice, minSqft, isValueBuyFilter, searchQuery, filters, getStatus, showArchived]);
 
   // Keep ref in sync with filteredProperties (for use inside keyboard handler)
   useEffect(() => { filteredPropsRef.current = filteredProperties; }, [filteredProperties]);
@@ -126,13 +139,15 @@ const PropertiesPage: React.FC = () => {
   const syncAllFiltersToUrl = useCallback(() => {
     const next = new URLSearchParams();
     if (statusFilter !== 'all') next.set('status', statusFilter);
+    if (marketStatusFilter !== 'all') next.set('marketStatus', marketStatusFilter);
     if (areaFilter !== 'All Areas') next.set('area', encodeURIComponent(areaFilter));
     if (alphaThreshold > 0) next.set('alpha', String(alphaThreshold));
     if (maxPrice < 3000000) next.set('maxPrice', String(maxPrice));
     if (minSqft > 0) next.set('minSqft', String(minSqft));
     if (searchQuery.trim()) next.set('q', encodeURIComponent(searchQuery.trim()));
+    if (showArchived) next.set('showArchived', 'true');
     setSearchParams(next, { replace: true });
-  }, [statusFilter, areaFilter, alphaThreshold, maxPrice, minSqft, searchQuery, setSearchParams]);
+  }, [statusFilter, marketStatusFilter, areaFilter, alphaThreshold, maxPrice, minSqft, searchQuery, showArchived, setSearchParams]);
 
   const handleStatusFilter = useCallback((status: PropertyStatus | 'all') => {
     setStatusFilter(status);
@@ -149,6 +164,8 @@ const PropertiesPage: React.FC = () => {
 
   const clearFilters = useCallback(() => {
     setStatusFilter('all');
+    setShowArchived(false); // FE-204.1: reset to hiding archived
+    setMarketStatusFilter('all'); // ADR-017: reset market status filter
     setAreaFilter('All Areas');
     setAlphaThreshold(0);
     setMaxPrice(3000000);
@@ -176,6 +193,14 @@ const PropertiesPage: React.FC = () => {
     if (urlSqft) setMinSqft(Number(urlSqft));
     const urlQ = searchParams.get('q');
     if (urlQ) setSearchQuery(decodeURIComponent(urlQ));
+    // FE-204.1: Allow URL override of archived visibility
+    const urlShowArchived = searchParams.get('showArchived');
+    if (urlShowArchived === 'true') setShowArchived(true);
+    // ADR-017: Initialize market_status filter from URL
+    const urlMarketStatus = searchParams.get('marketStatus') as MarketStatus | null;
+    if (urlMarketStatus && ['active', 'under_offer', 'sold_stc', 'sold_completed', 'withdrawn', 'unknown'].includes(urlMarketStatus)) {
+      setMarketStatusFilter(urlMarketStatus);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -400,7 +425,8 @@ const PropertiesPage: React.FC = () => {
           { key: 'discovered' as PropertyStatus, label: 'Discovered', color: 'blue' },
           { key: 'shortlisted' as PropertyStatus, label: 'Shortlisted', color: 'amber' },
           { key: 'vetted' as PropertyStatus, label: 'Vetted', color: 'emerald' },
-          { key: 'archived' as PropertyStatus, label: 'Archived', color: 'rose' },
+          // FE-204.3: Label clarifies this is user's archived pipeline, not market withdrawal
+          { key: 'archived' as PropertyStatus, label: 'Archived (User)', color: 'rose' },
         ].map(({ key, label, color }) => (
           <button
             key={key}
@@ -424,11 +450,49 @@ const PropertiesPage: React.FC = () => {
             <span className="text-[9px] opacity-70">{label}</span>
           </button>
         ))}
+        {/* FE-204.1: Show/hide archived toggle */}
+        <button
+          onClick={() => setShowArchived(v => !v)}
+          title={showArchived ? 'Hiding archived properties' : `Show ${pipelineCounts.archived} archived properties`}
+          className={`ml-2 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all border ${
+            showArchived
+              ? 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+              : 'bg-linear-card border-linear-border text-linear-text-muted hover:text-white hover:border-linear-accent/30'
+          }`}
+        >
+          <div className={`h-1.5 w-1.5 rounded-full ${showArchived ? 'bg-rose-400' : 'bg-linear-text-muted/30'}`} />
+          {showArchived ? 'Hide Archived' : `Archived (${pipelineCounts.archived})`}
+        </button>
+        {/* ADR-017: Market status filter — analyst-owned axis */}
+        <div className="ml-3 flex items-center gap-1 border-l border-linear-border/50 pl-3">
+          <span className="text-[9px] font-black text-linear-text-muted/50 uppercase tracking-widest mr-1">Market:</span>
+          {([
+            { key: 'all' as MarketStatus | 'all', label: 'All' },
+            { key: 'active' as MarketStatus, label: 'Active' },
+            { key: 'under_offer' as MarketStatus, label: 'Under Offer' },
+            { key: 'withdrawn' as MarketStatus, label: 'Withdrawn' },
+          ]).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => { setMarketStatusFilter(key); syncAllFiltersToUrl(); }}
+              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all border ${
+                marketStatusFilter === key
+                  ? key === 'active' ? 'bg-retro-green/10 text-retro-green border-retro-green/30' :
+                    key === 'under_offer' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+                    key === 'withdrawn' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' :
+                    'bg-linear-bg text-white border-linear-border'
+                  : 'bg-linear-card border-linear-border text-linear-text-muted hover:text-white hover:border-linear-accent/30'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Filter Panel */}
       {isFilterOpen && (
-        <div className="bg-linear-card border border-linear-border rounded-xl p-4 grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="bg-linear-card border border-linear-border rounded-xl p-4 grid grid-cols-2 md:grid-cols-6 gap-4">
           <div>
             <div className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest mb-2">Status</div>
             <div className="flex flex-wrap gap-1">
@@ -441,7 +505,32 @@ const PropertiesPage: React.FC = () => {
                       'bg-linear-bg text-white border border-linear-border'
                     : 'bg-linear-bg text-linear-text-muted border border-linear-border hover:text-white'
                   }`}>
-                  {s}
+                  {s === 'archived' ? 'Archived (User)' : s}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* ADR-017: Market status filter — analyst-owned axis */}
+          <div>
+            <div className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest mb-2">Market</div>
+            <div className="flex flex-wrap gap-1">
+              {([
+                { key: 'all' as MarketStatus | 'all', label: 'All' },
+                { key: 'active' as MarketStatus, label: 'Active' },
+                { key: 'under_offer' as MarketStatus, label: 'Under Offer' },
+                { key: 'sold_stc' as MarketStatus, label: 'Sold STC' },
+                { key: 'withdrawn' as MarketStatus, label: 'Withdrawn' },
+              ]).map(({ key, label }) => (
+                <button key={key} onClick={() => { setMarketStatusFilter(key); syncAllFiltersToUrl(); }}
+                  className={`px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all ${marketStatusFilter === key
+                    ? key === 'active' ? 'bg-retro-green/20 text-retro-green border border-retro-green/30' :
+                      key === 'under_offer' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                      key === 'sold_stc' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                      key === 'withdrawn' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                      'bg-linear-bg text-white border border-linear-border'
+                    : 'bg-linear-bg text-linear-text-muted border border-linear-border hover:text-white'
+                  }`}>
+                  {label}
                 </button>
               ))}
             </div>
@@ -606,11 +695,21 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, status, onStatusC
             {status[0].toUpperCase()}
           </button>
         </div>
-        {property.is_value_buy && (
+        {/* FE-204.2: VALUE badge — shown in bottom-left only when no dual badge overlaps */}
+        {property.is_value_buy && !(status === 'archived' && property.market_status === 'active') && (
           <div className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-emerald-500/90 rounded text-[8px] font-black text-white uppercase">VALUE</div>
         )}
-        {(property as any).market_status === 'active' && (
-          <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-emerald-500/80 backdrop-blur-sm rounded text-[8px] font-black text-white uppercase">Listed</div>
+        {/* ADR-017: market_status badge — covers all market states */}
+        {property.market_status && (
+          <div className="absolute bottom-2 right-2">
+            <MarketStatusBadge status={property.market_status} />
+          </div>
+        )}
+        {/* ADR-017: Dual badge — archived + active means user deprioritised but still listed */}
+        {status === 'archived' && property.market_status === 'active' && (
+          <div className="absolute bottom-2 left-2 right-16 px-1.5 py-0.5 bg-blue-500/90 backdrop-blur-sm rounded text-[8px] font-black text-white uppercase flex items-center gap-1">
+            <span className="opacity-70">⚠</span>Archived — Still Listed
+          </div>
         )}
       </div>
       <div className="p-3 space-y-2">

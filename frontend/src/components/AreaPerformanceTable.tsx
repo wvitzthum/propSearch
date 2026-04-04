@@ -11,7 +11,7 @@ const AreaPerformanceTable: React.FC = () => {
   // explicitly constructed by useMacroData with the area name from Object.keys().
   const areas = useMemo(() => {
     const trends = data?.area_heat_index || data?.area_trends || [];
-    const londonBenchmark = extractValue(data?.london_hpi?.annual_change ?? data?.london_hpi?.yoy_pct) ?? 1.2;
+    const londonBenchmark = data?.london_benchmark ?? 1.2;
 
     return trends
       .map((a: any) => {
@@ -41,7 +41,7 @@ const AreaPerformanceTable: React.FC = () => {
     );
   }
 
-  const londonBenchmark = extractValue(data?.london_hpi?.annual_change ?? data?.london_hpi?.yoy_pct) ?? 1.2;
+  const londonBenchmark = data?.london_benchmark ?? 1.2;
 
   return (
     <div className="bg-linear-card border border-linear-border rounded-xl overflow-hidden">

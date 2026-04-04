@@ -118,6 +118,10 @@ export interface MacroTrend {
   swap_rates?: SwapRates;
   hpi_forecasts?: HPIForecast[];
   area_trends?: AreaTrend[];
+  // UX-004: Single canonical London benchmark — use data.london_benchmark instead of reading london_hpi.annual_change/yoy_pct
+  london_benchmark?: number;
+  // UX-009: Data freshness timestamp
+  last_refreshed?: string;
   // FE-155: Data Provenance
   _source_citations?: Record<string, {
     name: string;

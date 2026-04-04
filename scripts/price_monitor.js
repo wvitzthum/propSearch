@@ -103,7 +103,7 @@ function runPriceMonitor() {
           updatePropertyReduction(prop.id, reductionAmount, reductionPct, daysSince);
           reductionsFound++;
           
-          console.log(`  [REDUCED]  £${reductionAmount.toLocaleString()} ({reductionPct}%) | ${daysSince} days since last price | ${prop.address.substring(0, 45)}`);
+          console.log(`  [REDUCED]  £${reductionAmount.toLocaleString()} (${reductionPct}%) | ${daysSince} days since last price | ${prop.address.substring(0, 45)}`);
         }
         
         // Detect price increase — clear reduction fields

@@ -1,0 +1,57 @@
+{
+  "task": "DAT-180",
+  "date": "2026-04-04",
+  "status": "RESOLVED",
+  "requirement": "Source London rental yield history by area — investment thesis validation",
+  "sources_used": [
+    {
+      "source": "ONS IPHRP — Index of Private Housing Rental Prices",
+      "file": "data/sources/processed/iphrpreferencetablejanuary2024accessible1.xlsx",
+      "data": "Monthly London rental index (E12000007), Jan 2005–Jan 2024",
+      "result": "SUCCESS — 229 monthly entries extracted from Table 1"
+    },
+    {
+      "source": "BoE/ONS London average rent benchmark",
+      "file": "data/macro_trend.json (pre-existing)",
+      "data": "Jan-2015 London avg rent £1,392/mo, avg price £477,197",
+      "result": "SUCCESS — anchor for IPHRP index → absolute rent conversion"
+    },
+    {
+      "source": "Land Registry Average Prices by LA",
+      "file": "data/sources/Average-prices-2026-01.csv",
+      "data": "Monthly London borough prices for yield denominator",
+      "result": "SUCCESS — used for avg_price_gbp in london_wide series"
+    },
+    {
+      "source": "propSearch comparable properties (SQLite)",
+      "file": "data/propsearch.db",
+      "data": "Per-property price/sqft → £psqm for by-area yield derivation",
+      "result": "SUCCESS — 14 distinct areas with 1–5 comparables each"
+    }
+  ],
+  "what_now_in_macro_trend": {
+    "london_wide": "109 monthly rows (2015-01 to 2024-01), each with: london_rental_idx, avg_price_gbp, estimated_monthly_rent, gross_yield_pct, net_yield_pct",
+    "london_idx": "229 monthly rows (2005-01 to 2024-01), raw IPHRP index",
+    "by_area": "14 London areas with gross/net yields, est_rent_psm, est_price_psm, premium_vs_london, n_comparables",
+    "yield_vs_gilt": "Qualitative note on yield spread vs 5yr gilt (~4.5% Apr 2026)"
+  },
+  "by_area_summary": {
+    "Chelsea (SW3)":        "gross=3.48% net=2.78%  £psqm=10,224  prem=+22%  n=2",
+    "Belsize Park (NW3)":   "gross=3.45% net=2.76%  £psqm=9,717   prem=+15%  n=2",
+    "Bayswater (W2)":       "gross=3.41% net=2.73%  £psqm=9,390   prem=+10%  n=4",
+    "NW8 (St John's Wood)":"gross=3.37% net=2.70%  £psqm=9,682   prem=+12%  n=1",
+    "Islington (N7)":       "gross=3.74% net=2.99%  £psqm=7,473   prem=-4%   n=2 ← best yield",
+    "Islington (N1)":       "gross=2.74% net=2.19%  £psqm=10,830  prem=+2%   n=2 ← compressed yield",
+    "West Hampstead (NW6)": "gross=3.15% net=2.52%  £psqm=9,066   prem=-2%   n=5"
+  },
+  "data_quality": {
+    "london_wide_series": "MEDIUM-HIGH — anchored to ONS IPHRP index (official), BoE/ONS benchmark rent (authoritative), Land Registry prices (official). Monthly."
+  },
+  "gaps": [
+    "IPHRP data ends Jan 2024 — no 2024-2026 data yet (ONS publishes with ~2 month lag)",
+    "By-area IPHRP breakdown not available at London borough level from ONS — using DB comparables + area premium instead",
+    "No bedroom-type yield breakdown",
+    "Yield vs gilt note is qualitative — could be enriched with actual gilt time series"
+  ],
+  "recommendation": "DAT-180 is RESOLVED. ONS IPHRP extends to Jan 2024. Refresh IPHRP XLSX quarterly (Feb/May/Aug/Nov). For current yields, cross-reference Rightmove Rental Price Tracker. by-area yields from DB comparables are functional but improve with more comparables per area."
+}

@@ -12,6 +12,9 @@ export interface PropertyFilters {
   is_value_buy?: boolean;
   vetted?: boolean;
   archived?: boolean;
+  // ADR-017: Dual-axis filtering — pipeline (user) and market (analyst)
+  pipeline_status?: PropertyStatus;
+  market_status?: string;
 }
 
 interface PropertyContextType {

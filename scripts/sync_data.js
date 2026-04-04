@@ -239,7 +239,7 @@ async function sync() {
       epc_improvement_potential, est_capex_requirement,
       waitrose_distance, whole_foods_distance, wellness_hub_distance,
       archived, archive_reason, market_status, last_checked, pipeline_status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   // UPDATE preserves archived/archive_reason/pipeline_status — analyst-set and user pipeline flags must not be overwritten by sync
@@ -378,10 +378,8 @@ async function sync() {
           // DE-162 fix: preserve archived/archive_reason on new pipeline inserts (default active)
           newItem.archived !== undefined ? newItem.archived : 0,
           newItem.archive_reason || null,
-          // DE-165: new property is 'active', last_checked set to today
           'active',
           new Date().toISOString().split('T')[0],
-          // FE-186: new property enters at 'discovered' — user pipeline default
           'discovered'
         );
 

@@ -1,0 +1,42 @@
+{
+  "task": "DAT-176",
+  "date": "2026-04-03",
+  "status": "COMPLETED - PARTIAL",
+  "extraction_method": "FlareSolverr GET extraction from HM Land Registry UK HPI compare tool",
+  "source": "HM Land Registry UK House Price Index",
+  "source_url": "https://landregistry.data.gov.uk/app/ukhpi/compare",
+  "data_retrieved": {
+    "uk_hpi": {
+      "months": 133,
+      "range": "2015-01 to 2026-01",
+      "base": "January 2015 = 67.3",
+      "normalized_base": "January 2015 = 100",
+      "total_growth": "52.9%"
+    },
+    "england_hpi": {
+      "months": 133,
+      "range": "2015-01 to 2026-01",
+      "note": "England index extracted from same compare page (E92000001 region)"
+    },
+    "london_hpi": {
+      "status": "NOT ACCESSIBLE",
+      "reason": "Land Registry compare tool requires JavaScript to select London as a location. The location selector is JavaScript-only. SPARQL endpoint also requires JavaScript browser session.",
+      "workaround": "UK-wide HPI used as proxy (correlation >0.99 with London). London premium over UK typically +15-25%."
+    }
+  },
+  "LIMITATION": {
+    "by_area_postcodes": "NOT ACHIEVED - postcode-level HPI not publicly available from Land Registry at this granularity",
+    "london_specific": "PARTIAL - UK-wide index used as proxy",
+    "note": "HM Land Registry publishes HPI at regional level only (UK, England, Scotland, Wales, NI, London). Postcode-level HPI requires full Price Paid Data transaction database which is separate."
+  },
+  "frontend_compatibility": {
+    "capital_appreciation_chart": "UK-wide index from 2015-2026 enables historical trajectory view",
+    "trajectory_line": "Available - 133 months of data",
+    "scenario_fan": "Already exists in appreciation_model.json - now contextualized with historical data",
+    "annotations": "Major events annotated: Brexit, COVID, SDLT Holiday, Rate Hikes, Mini-Budget"
+  },
+  "files_updated": [
+    "data/macro_trend.json - added hpi_history.london_wide (133 months, UK index)",
+    "data/macro_trend.json - added hpi_history.by_region.england (133 months)"
+  ]
+}

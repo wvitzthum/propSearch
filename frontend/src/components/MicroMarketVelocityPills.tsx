@@ -13,7 +13,7 @@ const MicroMarketVelocityPills: React.FC = () => {
 
   const areas = useMemo(() => {
     const trends = data?.area_trends || data?.area_heat_index || [];
-    const londonBenchmark = extractValue(data?.london_hpi?.annual_change ?? 1.2) ?? 1.2;
+    const londonBenchmark = data?.london_benchmark ?? 1.2;
     return trends.map((a: any) => {
       const heat = extractValue(a.heat_index ?? a.score) ?? 5;
       const forecast = extractValue(a.hpi_forecast_12m);

@@ -3,6 +3,13 @@
   "installCommand": "cd frontend && npm install",
   "outputDirectory": "frontend/dist",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/api/:path*",
+      "destination": "https://propsearch-api.fly.dev/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

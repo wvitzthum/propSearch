@@ -2,12 +2,12 @@ import React from 'react';
 import {
   Map,
   Activity,
-  TrendingUp,
   BarChart2
 } from 'lucide-react';
 import MicroMarketVelocityMap from '../components/MicroMarketVelocityMap';
-import AreaPerformanceTable from '../components/AreaPerformanceTable';
+import LondonMicroMarketHeatMap from '../components/LondonMicroMarketHeatMap';
 import PropertyTypePerformanceChart from '../components/PropertyTypePerformanceChart';
+import DataFreshnessIndicator from '../components/DataFreshnessIndicator';
 
 const MarketPage: React.FC = () => {
   return (
@@ -25,6 +25,7 @@ const MarketPage: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-4">
+          <DataFreshnessIndicator />
           <div className="flex items-center gap-2 px-3 py-1.5 bg-retro-green/10 border border-retro-green/20 rounded-lg">
             <Activity size={12} className="text-retro-green" />
             <span className="text-[9px] font-black text-retro-green uppercase tracking-widest">Live</span>
@@ -32,27 +33,21 @@ const MarketPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Velocity Heat Map */}
+      {/* Geographic Heat Map */}
+      <LondonMicroMarketHeatMap />
+
+      {/* Ranked Velocity Table */}
       <div className="bg-linear-card border border-linear-border rounded-2xl overflow-hidden shadow-xl">
         <div className="px-6 pt-6 pb-4">
           <div className="flex items-center gap-2 mb-1">
             <Map size={14} className="text-retro-green" />
-            <h2 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">Micro-Market Velocity Heat Map</h2>
+            <h2 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">Micro-Market Velocity — Ranked</h2>
           </div>
           <p className="text-[10px] text-linear-text-muted/60">
             Composite signal strength across London prime postcodes. Higher scores indicate faster velocity markets.
           </p>
         </div>
         <MicroMarketVelocityMap />
-      </div>
-
-      {/* Area Performance */}
-      <div className="bg-linear-card border border-linear-border rounded-2xl p-6 shadow-xl">
-        <div className="flex items-center gap-2 mb-4">
-          <TrendingUp size={14} className="text-blue-400" />
-          <h2 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">Area Performance Data</h2>
-        </div>
-        <AreaPerformanceTable />
       </div>
 
       {/* FE-189: Property Type Performance */}

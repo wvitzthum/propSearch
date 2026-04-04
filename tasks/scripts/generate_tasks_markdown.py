@@ -34,14 +34,15 @@ RESOLVED_JSON = ROOT / "tasks" / "tasks_resolved.json"
 OUTPUT = ROOT / "Tasks.md"
 
 SECTION_META = {
-    "new_approved":   {"title": "🆕 New Approved Features (2026-03-30)"},
-    "bug_fixes":      {"title": "🐛 Bug Fixes"},
-    "data_research":  {"title": "📊 Data & Research (Unblocked First)"},
-    "ux_improvements":{"title": "🎨 UX Improvements"},
-    "testing":        {"title": "🧪 Test Coverage"},
-    "blocked":        {"title": "🔗 Blocked by Outstanding Data (Clear Dependencies)"},
-    "superseded":     {"title": "⚠️ Superseded"},
-    "completed":      {"title": "✅ Completed"},
+    "new_approved":       {"title": "🆕 New Approved Features (2026-03-30)"},
+    "new_approved_features": {"title": "🆕 New Approved Features (2026-03-30)"},
+    "bug_fixes":          {"title": "🐛 Bug Fixes"},
+    "data_research":      {"title": "📊 Data & Research (Unblocked First)"},
+    "ux_improvements":    {"title": "🎨 UX Improvements"},
+    "testing":            {"title": "🧪 Test Coverage"},
+    "blocked":            {"title": "🔗 Blocked by Outstanding Data (Clear Dependencies)"},
+    "superseded":         {"title": "⚠️ Superseded"},
+    "completed":          {"title": "✅ Completed"},
 }
 
 
@@ -231,7 +232,7 @@ def render_live(tasks_data):
     all_tasks = tasks_data["tasks"]
     parts = []
     # Standard sections filtered by section
-    for sid in ["new_approved", "bug_fixes", "data_research", "ux_improvements", "testing"]:
+    for sid in ["new_approved", "new_approved_features", "bug_fixes", "data_research", "ux_improvements", "testing"]:
         section_tasks = [t for t in all_tasks
                          if t.get("section") == sid
                          and t.get("status") != "Done"
@@ -256,11 +257,14 @@ def render_superseded(tasks_data):
     return html_table_4col_superseded(SECTION_META["superseded"]["title"], section_tasks)
 
 
-def render_completed(resolved_data):
+def render_completed(tasks_data, resolved_data):
+    # Merge: Done tasks from tasks.json + historical resolved from tasks_resolved.json
+    done_in_json = [t for t in tasks_data.get("tasks", []) if t.get("status") == "Done"]
     resolved = resolved_data.get("resolved", [])
-    if not resolved:
+    combined = done_in_json + resolved
+    if not combined:
         return ""
-    return html_table_4col_completed(SECTION_META["completed"]["title"], resolved)
+    return html_table_4col_completed(SECTION_META["completed"]["title"], combined)
 
 
 # ── entry point ────────────────────────────────────────────────────────────────
@@ -283,7 +287,7 @@ def build_markdown(tasks_data, resolved_data):
         + "\n"
         + render_live(tasks_data) + "\n"
         + render_superseded(tasks_data) + "\n"
-        + render_completed(resolved_data) + "\n"
+        + render_completed(tasks_data, resolved_data) + "\n"
         + "\n"
         + "> **Source:** `tasks/tasks.json`  |  **Archive:** `tasks/tasks_resolved.json`  |  "
         + "**Generator:** `tasks/scripts/generate_tasks_markdown.py`"

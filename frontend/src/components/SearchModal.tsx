@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, ArrowRight, Command, Check, Zap } from 'lucide-react';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import type { PropertyWithCoords } from '../types/property';
+import { fmtPrice } from '../utils/format';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -182,7 +183,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <div className="text-xs font-bold text-white">£{p.realistic_price.toLocaleString()}</div>
+                        <div className="text-xs font-bold text-white">{fmtPrice(p.realistic_price)}</div>
                         <div className="text-[9px] text-linear-text-muted uppercase font-bold">Target Price</div>
                       </div>
                       <ArrowRight size={14} className="text-linear-accent opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />

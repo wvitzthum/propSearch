@@ -1,11 +1,14 @@
+// FE-201: Migrated to @visx — replaces HTML/CSS bar chart with visx scale/shape primitives
 import React, { useMemo } from 'react';
 import { useMacroData } from '../hooks/useMacroData';
 import { extractValue } from '../types/macro';
+import { scaleLinear, scaleBand } from '@visx/scale';
+import { Bar } from '@visx/shape';
+import { Group } from '@visx/group';
+import { useTooltip, TooltipWithBounds } from '@visx/tooltip';
+import { localPoint } from '@visx/event';
+import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import { TrendingUp, TrendingDown } from 'lucide-react';
-
-// FE-189: Property Type Segment Performance chart — 1-bed vs 2-bed vs 3-bed vs detached indexed returns
-// Uses: area_trends (by type), hpi_history (indexed), appreciation model scenarios
-// Fallback: synthetic segmented returns based on historical volatility patterns
 
 interface PropertySegment {
   type: string;
@@ -14,30 +17,33 @@ interface PropertySegment {
   annualReturn: number;
   fiveYearTotal: number;
   volatility: number;
-  barWidth: number; // relative to max
 }
 
 const PropertyTypePerformanceChart: React.FC = () => {
   const { data } = useMacroData();
   const raw = data as any;
 
-  // Build segments from available data
+  const {
+    showTooltip,
+    hideTooltip,
+    tooltipOpen,
+    tooltipData,
+    tooltipLeft,
+    tooltipTop,
+  } = useTooltip<PropertySegment>();
+
   const segments: PropertySegment[] = useMemo(() => {
     const base = raw?.appreciation_model?.scenario_definitions?.base;
 
     if (!base) {
-      // Synthetic fallback from volatility profiles
       return [
-        { type: 'studio', label: 'Studio / 1-Bed', color: '#22c55e', annualReturn: 3.1, fiveYearTotal: 16.5, volatility: 0.8, barWidth: 62 },
-        { type: '2bed', label: '2-Bed Flat', color: '#3b82f6', annualReturn: 2.3, fiveYearTotal: 11.9, volatility: 0.65, barWidth: 46 },
-        { type: '3bed', label: '3-Bed / Terraced', color: '#f59e0b', annualReturn: 1.8, fiveYearTotal: 9.2, volatility: 0.5, barWidth: 36 },
-        { type: 'detached', label: 'Detached / Houses', color: '#a855f7', annualReturn: 1.2, fiveYearTotal: 6.1, volatility: 0.4, barWidth: 24 },
+        { type: 'studio', label: 'Studio / 1-Bed', color: '#22c55e', annualReturn: 3.1, fiveYearTotal: 16.5, volatility: 0.8 },
+        { type: '2bed', label: '2-Bed Flat', color: '#3b82f6', annualReturn: 2.3, fiveYearTotal: 11.9, volatility: 0.65 },
+        { type: '3bed', label: '3-Bed / Terraced', color: '#f59e0b', annualReturn: 1.8, fiveYearTotal: 9.2, volatility: 0.5 },
+        { type: 'detached', label: 'Detached / Houses', color: '#a855f7', annualReturn: 1.2, fiveYearTotal: 6.1, volatility: 0.4 },
       ];
     }
 
-    // Derive segments from base scenario with type-specific multipliers
-    // London market: smaller units outperform in capital growth (space efficiency premium)
-    // Larger units have lower volatility but lower growth
     const typeMultipliers: Record<string, { ret: number; vol: number }> = {
       studio: { ret: 1.3, vol: 1.2 },
       '2bed': { ret: 1.0, vol: 1.0 },
@@ -49,21 +55,23 @@ const PropertyTypePerformanceChart: React.FC = () => {
     return (Object.entries(typeMultipliers) as [string, {ret: number; vol: number}][]).map(([type, m]) => {
       const annualReturn = parseFloat((baseReturn * m.ret).toFixed(2));
       const fiveYearTotal = parseFloat(((Math.pow(1 + annualReturn / 100, 5) - 1) * 100).toFixed(1));
-      const volatility = m.vol;
       return {
         type,
         label: type === 'studio' ? 'Studio / 1-Bed' : type === '2bed' ? '2-Bed Flat' : type === '3bed' ? '3-Bed / Terraced' : 'Detached / Houses',
         color: type === 'studio' ? '#22c55e' : type === '2bed' ? '#3b82f6' : type === '3bed' ? '#f59e0b' : '#a855f7',
         annualReturn,
         fiveYearTotal,
-        volatility,
-        barWidth: Math.round((annualReturn / 3.5) * 100),
+        volatility: m.vol,
       };
     });
   }, [raw]);
 
-  const maxReturn = Math.max(...segments.map(s => s.annualReturn));
+  const maxReturn = Math.max(...segments.map(s => s.annualReturn)) * 1.1;
   const boeRate = extractValue((data as any)?.economic_indicators?.boe_base_rate) ?? 3.75;
+
+  const labelWidth = 60;
+  const valueWidth = 50;
+  const rightLabelWidth = 36;
 
   return (
     <div className="bg-linear-card border border-linear-border rounded-xl overflow-hidden">
@@ -80,58 +88,126 @@ const PropertyTypePerformanceChart: React.FC = () => {
         </div>
       </div>
 
-      {/* Segment bars */}
-      <div className="p-4 space-y-3">
-        {segments.map((seg) => {
-          const alpha = seg.annualReturn - boeRate;
-          const isAlphaPositive = alpha >= 0;
-          return (
-            <div key={seg.type} className="flex items-center gap-3">
-              {/* Type label */}
-              <div className="w-28 shrink-0">
-                <div className="text-[9px] font-bold text-white truncate">{seg.label}</div>
-                <div className="text-[7px] text-linear-text-muted/60">vol {seg.volatility.toFixed(2)}</div>
-              </div>
+      {/* SVG Bar Chart */}
+      <div className="p-4">
+        <ParentSize>
+          {({ width: parentWidth }) => {
+            if (parentWidth < 10) return null;
+            const chartWidth = Math.max(parentWidth - labelWidth - valueWidth - rightLabelWidth - 16, 40);
+            const barHeight = 14;
+            const barPad = 6;
+            const innerHeight = segments.length * (barHeight + barPad);
 
-              {/* Bar */}
-              <div className="flex-1 relative">
-                <div className="h-5 bg-linear-bg rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${(seg.annualReturn / (maxReturn * 1.1)) * 100}%`,
-                      backgroundColor: seg.color,
-                      opacity: 0.75,
-                    }}
-                  />
+            const xScale = scaleLinear({
+              domain: [0, maxReturn],
+              range: [0, chartWidth],
+            });
+
+            const yScale = scaleBand({
+              domain: segments.map(s => s.type),
+              range: [0, innerHeight],
+              round: true,
+            });
+
+            const handleMouseMove = (event: React.MouseEvent<SVGRectElement>, seg: PropertySegment) => {
+              const coords = localPoint(event);
+              if (!coords) return;
+              showTooltip({ tooltipData: seg, tooltipLeft: coords.x, tooltipTop: coords.y });
+            };
+
+            return (
+              <div className="flex items-start gap-0">
+                {/* Type labels column */}
+                <div className="shrink-0" style={{ width: labelWidth }}>
+                  {segments.map(seg => (
+                    <div
+                      key={seg.type}
+                      className="flex flex-col justify-center"
+                      style={{ height: barHeight + barPad, marginBottom: 0 }}
+                    >
+                      <div className="text-[9px] font-bold text-white truncate">{seg.label}</div>
+                      <div className="text-[7px] text-linear-text-muted/60">vol {seg.volatility.toFixed(2)}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Chart SVG */}
+                <svg
+                  width={chartWidth}
+                  height={innerHeight}
+                  className="overflow-visible"
+                >
                   {/* Risk-free threshold line */}
-                  <div
-                    className="absolute inset-y-0 w-px bg-white/30"
-                    style={{ left: `${(boeRate / (maxReturn * 1.1)) * 100}%` }}
+                  <line
+                    x1={xScale(boeRate)}
+                    y1={0}
+                    x2={xScale(boeRate)}
+                    y2={innerHeight}
+                    stroke="rgba(255,255,255,0.3)"
+                    strokeWidth="0.5"
+                    strokeDasharray="2,1"
                   />
+
+                  {/* Bars */}
+                  {segments.map(seg => {
+                    const barW = Math.max(xScale(seg.annualReturn) - xScale(0), 2);
+                    const y = (yScale(seg.type) ?? 0);
+                    return (
+                      <Group key={seg.type}>
+                        <Bar
+                          x={0}
+                          y={y + 1}
+                          width={barW}
+                          height={barHeight}
+                          fill={seg.color}
+                          opacity={0.75}
+                          rx={7}
+                          onMouseMove={(e) => handleMouseMove(e, seg)}
+                          onMouseLeave={hideTooltip}
+                          className="cursor-crosshair"
+                        />
+                      </Group>
+                    );
+                  })}
+                </svg>
+
+                {/* Annual return column */}
+                <div className="shrink-0 flex flex-col justify-start" style={{ width: valueWidth, paddingLeft: 8 }}>
+                  {segments.map(seg => {
+                    const alpha = seg.annualReturn - boeRate;
+                    const isAlphaPositive = alpha >= 0;
+                    return (
+                      <div
+                        key={seg.type}
+                        className="flex items-center justify-end gap-0.5"
+                        style={{ height: barHeight + barPad }}
+                      >
+                        <div className={`text-[10px] font-black tabular-nums flex items-center gap-0.5 ${isAlphaPositive ? 'text-retro-green' : 'text-rose-400'}`}>
+                          {isAlphaPositive ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
+                          +{seg.annualReturn.toFixed(1)}%
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* 5yr total + color dot column */}
+                <div className="shrink-0 flex flex-col items-end" style={{ width: rightLabelWidth }}>
+                  {segments.map(seg => (
+                    <div
+                      key={seg.type}
+                      className="flex items-center gap-1.5 justify-end"
+                      style={{ height: barHeight + barPad }}
+                    >
+                      <div className="text-[9px] font-bold text-white tabular-nums">+{seg.fiveYearTotal}%</div>
+                      <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
+                    </div>
+                  ))}
                 </div>
               </div>
-
-              {/* Annual return */}
-              <div className="w-16 shrink-0 text-right">
-                <div className={`text-[11px] font-black tabular-nums flex items-center justify-end gap-0.5 ${isAlphaPositive ? 'text-retro-green' : 'text-rose-400'}`}>
-                  {isAlphaPositive ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
-                  +{seg.annualReturn.toFixed(1)}%
-                </div>
-                <div className="text-[7px] text-linear-text-muted/60">{seg.annualReturn >= 0 ? '+' : ''}{alpha.toFixed(1)}pp α</div>
-              </div>
-
-              {/* 5yr total */}
-              <div className="w-14 shrink-0 text-right">
-                <div className="text-[10px] font-bold text-white tabular-nums">+{seg.fiveYearTotal}%</div>
-                <div className="text-[7px] text-linear-text-muted/60">5yr total</div>
-              </div>
-
-              {/* Color dot */}
-              <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
-            </div>
-          );
-        })}
+            );
+          }}
+        </ParentSize>
       </div>
 
       {/* Risk-free reference line legend */}
@@ -148,6 +224,20 @@ const PropertyTypePerformanceChart: React.FC = () => {
         <span className="text-[8px] text-linear-text-muted/40 font-mono">Base scenario · relative performance</span>
         <span className="text-[8px] text-linear-text-muted/40 font-mono">London prime · 2026</span>
       </div>
+
+      {/* Tooltip */}
+      {tooltipOpen && tooltipData && (
+        <TooltipWithBounds
+          left={tooltipLeft}
+          top={tooltipTop}
+          className="bg-black/90 backdrop-blur border border-linear-border rounded-lg px-3 py-2 pointer-events-none z-50"
+        >
+          <div className="text-[10px] font-black text-white">{tooltipData.label}</div>
+          <div className="text-[9px] text-retro-green font-bold">+{tooltipData.annualReturn.toFixed(1)}% annual</div>
+          <div className="text-[9px] text-linear-text-muted">5yr: +{tooltipData.fiveYearTotal}%</div>
+          <div className="text-[9px] text-linear-text-muted">Vol: {tooltipData.volatility.toFixed(2)}</div>
+        </TooltipWithBounds>
+      )}
     </div>
   );
 };

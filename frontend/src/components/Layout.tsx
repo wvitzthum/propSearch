@@ -60,6 +60,36 @@ const ZoneHeader: React.FC<{ label: string }> = ({ label }) => (
   </div>
 );
 
+// FE-196: Demo mode indicator
+const IS_DEMO = import.meta.env.VITE_DEMO_MODE === 'true';
+
+const DemoBadge: React.FC = () => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  if (!IS_DEMO) return null;
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setShowTooltip(v => !v)}
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-400 text-[8px] font-black uppercase tracking-widest hover:bg-amber-500/30 transition-colors cursor-help"
+        title="Demo Mode"
+      >
+        DEMO
+      </button>
+      {showTooltip && (
+        <div className="absolute bottom-full left-0 mb-2 w-48 bg-black/90 backdrop-blur border border-linear-border rounded-lg px-3 py-2 shadow-xl z-[100]">
+          <div className="text-[9px] font-black text-amber-400 uppercase tracking-widest mb-1">Demo Mode Active</div>
+          <div className="text-[8px] text-linear-text-muted leading-relaxed">
+            Running with mock data. No live API connection.
+          </div>
+          <div className="absolute top-full left-3 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-black/90" />
+        </div>
+      )}
+    </div>
+  );
+};
+
 // UX-023: Searchable Target Areas dropdown
 const TargetAreasDropdown: React.FC<{
   areas: string[];
@@ -316,7 +346,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <div className="p-4 border-t border-linear-border bg-linear-bg/50 mt-auto">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-linear-card border border-linear-border flex items-center justify-center text-[10px] font-black text-linear-accent shadow-inner">v1.2</div>
+            <div className="flex items-center gap-1.5">
+              <div className="h-7 w-7 rounded-lg bg-linear-card border border-linear-border flex items-center justify-center text-[10px] font-black text-linear-accent shadow-inner">v1.2</div>
+              <DemoBadge />
+            </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-black text-white uppercase tracking-widest leading-none">Terminal</span>
               <span className="text-[8px] font-bold text-linear-text-muted uppercase tracking-tighter mt-1">Institutional Mode</span>

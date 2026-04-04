@@ -19,19 +19,21 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, address, classNam
 
   const viewportRef = useRef<HTMLDivElement>(null);
 
-  const currentImage = images[activeIndex];
+  // Filter out empty/falsy URLs — prevents empty-string src attribute errors
+  const validImages = images.filter(Boolean);
+  const currentImage = validImages[activeIndex] ?? null;
 
   const handlePrev = useCallback(() => {
-    setActiveIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
+    setActiveIndex(prev => (prev === 0 ? validImages.length - 1 : prev - 1));
     setZoom(1);
     setPosition({ x: 0, y: 0 });
-  }, [images.length]);
+  }, [validImages.length]);
 
   const handleNext = useCallback(() => {
-    setActiveIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
+    setActiveIndex(prev => (prev === validImages.length - 1 ? 0 : prev + 1));
     setZoom(1);
     setPosition({ x: 0, y: 0 });
-  }, [images.length]);
+  }, [validImages.length]);
 
   const handleThumbnailClick = useCallback((index: number) => {
     setActiveIndex(index);
@@ -97,7 +99,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, address, classNam
     setImgLoading(true);
   }, [currentImage]);
 
-  if (!images || images.length === 0) {
+  if (!images || validImages.length === 0) {
     return (
       <div className={`flex items-center justify-center bg-linear-card border border-linear-border rounded-xl ${className}`}>
         <div className="flex flex-col items-center gap-2 opacity-20">
@@ -156,7 +158,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, address, classNam
           )}
 
           {/* Navigation Arrows */}
-          {images.length > 1 && (
+          {validImages.length > 1 && (
             <>
               <button
                 onClick={handlePrev}
@@ -212,14 +214,14 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, address, classNam
 
           {/* Image Counter */}
           <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded text-[10px] font-mono font-bold text-white border border-white/10 z-20">
-            {activeIndex + 1} / {images.length}
+            {activeIndex + 1} / {validImages.length}
           </div>
         </div>
 
         {/* Thumbnail Strip */}
-        {images.length > 1 && (
+        {validImages.length > 1 && (
           <div className="absolute bottom-3 right-3 flex gap-1.5 z-20">
-            {images.slice(0, 5).map((url, i) => (
+            {validImages.slice(0, 5).map((url, i) => (
               <button
                 key={i}
                 onClick={() => handleThumbnailClick(i)}
@@ -239,9 +241,9 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, address, classNam
                 />
               </button>
             ))}
-            {images.length > 5 && (
+            {validImages.length > 5 && (
               <div className="h-10 px-2 rounded border border-white/20 bg-black/60 backdrop-blur-md flex items-center justify-center text-[10px] font-bold text-white">
-                +{images.length - 5}
+                +{validImages.length - 5}
               </div>
             )}
           </div>
@@ -263,7 +265,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, address, classNam
           </button>
 
           {/* Navigation */}
-          {images.length > 1 && (
+          {validImages.length > 1 && (
             <>
               <button
                 onClick={(e) => { e.stopPropagation(); handlePrev(); }}
@@ -325,13 +327,13 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({ images, address, classNam
             <div className="w-px h-6 bg-white/20 mx-1" />
 
             <div className="px-2 text-sm font-mono text-white/60">
-              {activeIndex + 1} / {images.length}
+              {activeIndex + 1} / {validImages.length}
             </div>
           </div>
 
           {/* Thumbnails Strip */}
           <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-xl border border-white/10 rounded-lg p-2 max-w-[90vw] overflow-x-auto z-30">
-            {images.map((url, i) => (
+            {validImages.map((url, i) => (
               <button
                 key={i}
                 onClick={(e) => { e.stopPropagation(); handleThumbnailClick(i); }}

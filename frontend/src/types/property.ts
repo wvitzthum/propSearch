@@ -12,6 +12,9 @@ export type Area =
 
 export type EPCRating = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
 
+/** ADR-017: Market status — analyst-owned axis. Independent of user pipeline_status. */
+export type MarketStatus = 'active' | 'under_offer' | 'sold_stc' | 'sold_completed' | 'withdrawn' | 'unknown';
+
 export interface PropertyMetadata {
   first_seen: string;
   last_seen: string;
@@ -60,6 +63,8 @@ export interface Property {
   est_capex_requirement?: number;
   links: string[];
   link: string;
+  // ADR-017: Analyst-owned market status axis (independent of user pipeline_status)
+  market_status?: MarketStatus;
   // FE-166: Price history entries for Property Price Evolution chart
   price_history?: PriceHistoryEntry[];
 }

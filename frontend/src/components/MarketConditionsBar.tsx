@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   TrendingDown,
   TrendingUp,
@@ -17,6 +17,7 @@ interface MarketConditionsBarProps {
 
 const MarketConditionsBar: React.FC<MarketConditionsBarProps> = ({ compact = false }) => {
   const { data } = useMacroData();
+  const [showMethodology, setShowMethodology] = useState(false);
 
   // Derive Market Mode from Months of Supply
   const mos = extractValue(data?.inventory_velocity?.months_of_supply) ?? 4.2;
@@ -67,6 +68,7 @@ const MarketConditionsBar: React.FC<MarketConditionsBarProps> = ({ compact = fal
   }
 
   return (
+    <>
     <div className="bg-linear-card border border-linear-border rounded-xl px-4 py-2.5 flex items-center gap-6 overflow-x-auto custom-scrollbar">
       {/* 1. Market Mode / MOS */}
       <Tooltip
@@ -179,6 +181,39 @@ const MarketConditionsBar: React.FC<MarketConditionsBarProps> = ({ compact = fal
         </>
       )}
     </div>
+
+    {/* QA-186: Institutional methodology disclosure */}
+    <button
+      onClick={() => setShowMethodology(v => !v)}
+      className="w-full px-4 py-1.5 border-t border-linear-border/40 flex items-center justify-between hover:bg-white/[0.02] transition-colors cursor-pointer"
+    >
+      <span className="text-[8px] text-linear-text-muted/50 font-bold uppercase tracking-widest">
+        Methodology
+      </span>
+      <span className="text-[8px] text-linear-text-muted/50">
+        {showMethodology ? '▲' : '▼'}
+      </span>
+    </button>
+
+    {showMethodology && (
+      <div className="px-4 pb-3 pt-1 border-t border-linear-border/30 bg-linear-card/30 space-y-1.5">
+        {[
+          { label: 'MOS', text: 'Active Listings / Avg Monthly Sales Volume (12m rolling). < 4m = Seller\'s Market, 4-6m = Balanced, > 6m = Buyer\'s Market. Source: RICS UK Residential Survey + Land Registry.' },
+          { label: 'Negotiation', text: 'Average asking-to-sold price discount in prime postcodes. Q1 2026 transactions. Source: HM Land Registry vs. Rightmove/RICS asking price data.' },
+          { label: 'Rates', text: '5yr GBP Swap Rate trend from market feeds (ICE SwapCut). Rising/Falling = ±5bp threshold over 30-day window.' },
+          { label: 'Seasonal', text: 'Historical price seasonality (Land Registry, 2012-2024). Q4-Q1 discount vs spring peak. Score: winter dip (+3), spring surge (-2), supply glut (+2), inventory drought (-1).' },
+          { label: 'Buyer Favour', text: 'Composite: Base 5.0 + MOS (-1.5 if <4, +2.0 if >6) + Negotiation (discount%/10 × 2.0) + Seasonal ((score-5)/5 × 1.5). Clamped [0, 10].' },
+          { label: 'MPC', text: 'Bank of England Monetary Policy Committee meeting dates from BoE official MPC calendar.' },
+          { label: 'SDLT', text: 'Q2 2026 SDLT milestone thresholds per HMRC. Surcharge thresholds reviewed annually. Next review: April 2026.' },
+        ].map(({ label, text }) => (
+          <div key={label} className="flex items-start gap-2">
+            <span className="text-[8px] font-black text-linear-text-muted/60 uppercase tracking-widest shrink-0 w-16 pt-px">{label}</span>
+            <span className="text-[8px] text-linear-text-muted/50 leading-relaxed">{text}</span>
+          </div>
+        ))}
+      </div>
+    )}
+    </>
   );
 };
 

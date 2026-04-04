@@ -23,6 +23,7 @@ import { useComparison } from '../hooks/useComparison';
 import FloorplanViewer from '../components/FloorplanViewer';
 
 const API_BASE = '/api';
+const IS_DEMO = import.meta.env.VITE_DEMO_MODE === 'true';
 
 interface RawListing {
   address: string;
@@ -71,7 +72,15 @@ const Inbox: React.FC = () => {
   const [quickAddUrl, setQuickAddUrl] = useState('');
   const [quickAddLoading, setQuickAddLoading] = useState(false);
   const [quickAddMsg, setQuickAddMsg] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' | 'info' } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-dismiss toasts after 4 seconds
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   // UX-021: Focus Mode — hides lead stream, shows current property only
   const [isFocusMode, setIsFocusMode] = useState(false);
@@ -101,6 +110,26 @@ const Inbox: React.FC = () => {
     setQuickAddMsg(null);
     const entry: Submission = { url: quickAddUrl.trim(), address: '', source: 'Manual', date: new Date().toISOString() };
 
+    // FE-213: Client-side duplicate URL guard
+    const existing = loadSubmissions();
+    if (existing.some(s => s.url === entry.url)) {
+      setToast({ msg: 'Already submitted — duplicate URL detected', type: 'error' });
+      setQuickAddLoading(false);
+      return;
+    }
+
+    // FE-212: Demo mode — simulate success and refresh immediately
+    if (IS_DEMO) {
+      saveSubmission(entry);
+      setSubmissions(loadSubmissions());
+      setQuickAddMsg('Added to inbox');
+      setToast({ msg: 'Lead added to inbox', type: 'success' });
+      setQuickAddUrl('');
+      setQuickAddLoading(false);
+      await fetchInbox();
+      return;
+    }
+
     try {
       // POST to /api/inbox — writes to data/inbox/{timestamp}_RAW.json for sync pipeline to pick up
       const res = await fetch(`${API_BASE}/inbox`, {
@@ -111,19 +140,27 @@ const Inbox: React.FC = () => {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
+        // FE-214: Handle server-side URL dedup 409 — don't save locally, show structured feedback
+        if (res.status === 409 && err.duplicate_found) {
+          setToast({ msg: `Duplicate URL — ${err.hint || 'already in inbox'}`, type: 'error' });
+          setQuickAddLoading(false);
+          return;
+        }
         throw new Error(err.error || `HTTP ${res.status}`);
       }
 
       saveSubmission(entry);
       setSubmissions(loadSubmissions());
-      setQuickAddMsg('URL saved — refresh buffer to triage');
+      // FE-212: Auto-refresh after successful submission
+      await fetchInbox();
+      setToast({ msg: 'Lead added to inbox', type: 'success' });
       setQuickAddUrl('');
     } catch (err: any) {
       console.error('Quick-add failed:', err);
       // Still save to localStorage so the submission is not lost
       saveSubmission(entry);
       setSubmissions(loadSubmissions());
-      setQuickAddMsg(`Saved locally — sync error: ${err.message}. Will retry on refresh.`);
+      setToast({ msg: `Saved locally — sync error: ${err.message}`, type: 'error' });
     } finally {
       setQuickAddLoading(false);
     }
@@ -132,6 +169,29 @@ const Inbox: React.FC = () => {
   const fetchInbox = useCallback(async () => {
     try {
       setLoading(true);
+
+      // FE-195 / FE-212: Demo mode — load mock inbox leads instead of hitting the live API
+      if (IS_DEMO) {
+        const res = await fetch('/data/demo_inbox.json');
+        if (!res.ok) throw new Error('Failed to fetch demo inbox');
+        const demoLeads = await res.json();
+
+        const normalized: RawListing[] = (Array.isArray(demoLeads) ? demoLeads : []).map((lead: any, i: number) => ({
+          filename: `demo-lead-${String(i + 1).padStart(3, '0')}`,
+          address: lead.address || 'Unknown Address',
+          price: lead.list_price ?? lead.price,
+          area: lead.area || '',
+          url: lead.source_url || lead.url || '',
+          source: lead.source || '',
+          image_url: lead.image_url,
+          floorplan_url: lead.floorplan_url,
+        }));
+
+        setListings(normalized);
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch(`${API_BASE}/inbox`);
       if (!res.ok) throw new Error('Failed to fetch inbox manifest');
       const rawData = await res.json();
@@ -220,18 +280,6 @@ const Inbox: React.FC = () => {
 
     const listing = listings[idx];
     const newStatus: TriageStatus = action === 'approve' ? 'approved' : 'rejected';
-    saveStatus(listing.filename, newStatus);
-
-    // UX-010: Approve → set pipeline status to 'discovered' so it surfaces in Properties
-    if (action === 'approve') {
-      try {
-        // Try to set pipeline status. Use address as a lookup key in localStorage.
-        // The Data Engineer would assign a real ID on ingest; we use filename as a proxy.
-        setPipelineStatus(listing.filename, 'discovered');
-      } catch {
-        // Pipeline not available — non-fatal
-      }
-    }
 
     setIsProcessing(true);
     try {
@@ -245,16 +293,29 @@ const Inbox: React.FC = () => {
         })
       });
 
-      if (!res.ok) throw new Error('API Rejection');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      // FE-209: Only persist state AFTER server confirms success
+      saveStatus(listing.filename, newStatus);
+
+      // UX-010: Approve → set pipeline status to 'discovered' so it surfaces in Properties
+      if (action === 'approve') {
+        try {
+          setPipelineStatus(listing.filename, 'discovered');
+        } catch {
+          // Pipeline not available — non-fatal
+        }
+      }
 
       setListings(prev => prev.filter((_, i) => i !== idx));
       if (currentIndex >= listings.length - 1 && currentIndex > 0) {
         setCurrentListIndex(prev => prev - 1);
       }
+      setToast({ msg: action === 'approve' ? 'Lead approved' : 'Lead rejected', type: 'success' });
     } catch (err) {
       console.error('Triage sync error:', err);
-      // Fallback for demo
-      setListings(prev => prev.filter((_, i) => i !== idx));
+      // FE-209: Listing stays visible on error — server not yet updated
+      setToast({ msg: `Triage failed: ${err instanceof Error ? err.message : 'Unknown error'}`, type: 'error' });
     } finally {
       setIsProcessing(false);
     }
@@ -267,27 +328,37 @@ const Inbox: React.FC = () => {
 
   const handleBatchAction = async (action: 'approve' | 'reject') => {
     if (selectedIds.size === 0) return;
-    const newStatus: TriageStatus = action === 'approve' ? 'approved' : 'rejected';
-    selectedIds.forEach(id => saveStatus(id, newStatus));
+    const filenames = Array.from(selectedIds);
     setIsProcessing(true);
 
-    const toProcess = listings.filter(l => selectedIds.has(l.filename));
-    
     try {
-      // Parallel processing for prototype
-      await Promise.all(toProcess.map(listing => 
-        fetch(`${API_BASE}/inbox`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...listing, action, triaged_at: new Date().toISOString() })
-        })
-      ));
-      
-      setListings(prev => prev.filter(l => !selectedIds.has(l.filename)));
+      // FE-210: Use dedicated batch endpoint — single POST instead of N individual calls
+      const res = await fetch(`${API_BASE}/inbox/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, filenames })
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
+
+      // FE-209: Only remove listings after server confirms success — keep failed ones visible
+      const failedFilenames = new Set((data.results?.failed ?? []).map((f: any) => f.filename));
+      setListings(prev => prev.filter(l => !selectedIds.has(l.filename) || failedFilenames.has(l.filename)));
+
+      if (data.results?.failed?.length > 0) {
+        setToast({ msg: `${data.results.failed.length}/${filenames.length} failed — see individual leads`, type: 'error' });
+      } else {
+        setToast({ msg: `${filenames.length} leads ${action === 'approve' ? 'approved' : 'rejected'}`, type: 'success' });
+      }
+
       setSelectedIds(new Set());
       setCurrentListIndex(0);
     } catch (err) {
       console.error('Batch error:', err);
+      // FE-209: Keep all listings visible on batch failure
+      setToast({ msg: `Batch action failed: ${err instanceof Error ? err.message : 'Unknown error'}`, type: 'error' });
     } finally {
       setIsProcessing(false);
     }
@@ -364,6 +435,20 @@ const Inbox: React.FC = () => {
 
   return (
     <div className="h-[calc(100vh-140px)] flex flex-col">
+      {/* FE-211: Toast notification banner */}
+      {toast && (
+        <div className={`mb-4 px-4 py-2 rounded-xl border text-xs font-bold flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 ${
+          toast.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+          toast.type === 'error'   ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' :
+                                    'bg-blue-500/10 border-blue-500/20 text-blue-300'
+        }`}>
+          <span>{toast.msg}</span>
+          <button onClick={() => setToast(null)} className="shrink-0 opacity-60 hover:opacity-100 transition-opacity">
+            <X size={12} />
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight mb-1 flex items-center gap-3">

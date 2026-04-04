@@ -1,6 +1,11 @@
+// FE-205: Migrated to @visx — replaces hand-rolled SVG with visx scale/shape/axis primitives
 import React, { useMemo, useState } from 'react';
 import { useMacroData } from '../hooks/useMacroData';
 import { extractValue } from '../types/macro';
+import { scaleLinear } from '@visx/scale';
+import { LinePath, AreaClosed } from '@visx/shape';
+import { Group } from '@visx/group';
+import { localPoint } from '@visx/event';
 
 // FE-188: London HPI Trajectory Chart — historical index with event annotations and 3-scenario fan overlay
 // Accepts: 10+ year London/UK HPI time series, key event markers, bear/base/bull projections
@@ -92,34 +97,21 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '' }) => 
     'Market Peak': '#f59e0b',
   };
 
-  // SVG layout
-  const W = 220, H = 100;
+  // SVG layout (viewBox coords) — increased H from 100 to 200 for better readability (FE-205)
+  const W = 220, H = 200;
   const PAD = 4;
 
   // Visible window: last 60 months of history + 36 months projection
   const displayHistory = history.slice(-60);
 
+  // Scales (viewBox coordinates)
+  const xMax = displayHistory.length + 36 - 1;
   const allValues = [
     ...displayHistory.map(h => h.index_uk),
     ...(scenarios ? [...scenarios.bear.path, ...scenarios.base.path, ...scenarios.bull.path] : []),
   ];
   const minV = Math.min(...allValues) * 0.94;
   const maxV = Math.max(...allValues) * 1.04;
-  const range = maxV - minV;
-
-  const getX = (idx: number) => PAD + (idx / (displayHistory.length + 36 - 1)) * (W - 2 * PAD);
-  const getY = (v: number) => H - PAD - ((v - minV) / range) * (H - 2 * PAD);
-
-  // Build historical polyline
-  const historyPath = displayHistory.map((h, i) => `${getX(i)},${getY(h.index_uk)}`).join(' ');
-
-  // Scenario fan area (current → 3yr projections)
-  const fanPath = scenarios ? [
-    `M ${getX(0)},${getY(scenarios.bull.path[0])}`,
-    ...scenarios.bull.path.map((v, i) => `L ${getX(displayHistory.length - 1 + i)},${getY(v)}`),
-    ...[...scenarios.bear.path].reverse().map((v, i) => `L ${getX(displayHistory.length - 1 + scenarios.bear.path.length - 1 - i)},${getY(v)}`),
-    'Z',
-  ].join(' ') : '';
 
   // Annotation x positions (month index in displayHistory)
   const annotationX = useMemo(() => {
@@ -196,143 +188,233 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '' }) => 
         )}
       </div>
 
-      {/* SVG Chart */}
+      {/* SVG Chart — @visx */}
       <div className="px-4 py-3 relative">
-        <div style={{ height: 180 }}>
+        <div style={{ height: 260 }}>
           <svg
             viewBox={`0 0 ${W} ${H}`}
             preserveAspectRatio="xMidYMid meet"
             className="w-full h-full overflow-visible"
           >
-            {/* Horizontal grid lines */}
-            {[0, 0.25, 0.5, 0.75, 1].map(pct => {
-              const v = minV + range * pct;
-              return (
-                <g key={pct}>
-                  <line x1={PAD} y1={getY(v)} x2={W - PAD} y2={getY(v)} stroke="currentColor" strokeWidth="0.08" className="text-white/5" />
-                  <text x={PAD - 0.8} y={getY(v) + 0.9} className="text-[2.5px] fill-linear-text-muted/60" textAnchor="end">{v.toFixed(0)}</text>
-                </g>
-              );
-            })}
-
-            {/* Scenario fan area */}
-            {scenarios && fanPath && (
-              <path d={fanPath} fill="#3b82f6" opacity="0.06" />
-            )}
-
-            {/* Historical line */}
-            <polyline
-              points={historyPath}
-              fill="none" stroke="#22c55e" strokeWidth="0.9"
-              strokeLinecap="round" strokeLinejoin="round"
-            />
-
-            {/* Projection lines */}
-            {scenarios && displayHistory.length > 0 && (
-              <>
-                {/* Bear projection */}
-                <polyline
-                  points={scenarios.bear.path.map((v, i) => `${getX(displayHistory.length - 1 + i)},${getY(v)}`).join(' ')}
-                  fill="none" stroke={scenarios.bear.color} strokeWidth="0.7" strokeDasharray="2,1" opacity="0.7"
-                />
-                {/* Bull projection */}
-                <polyline
-                  points={scenarios.bull.path.map((v, i) => `${getX(displayHistory.length - 1 + i)},${getY(v)}`).join(' ')}
-                  fill="none" stroke={scenarios.bull.color} strokeWidth="0.7" strokeDasharray="2,1" opacity="0.7"
-                />
-                {/* Base projection (solid) */}
-                <polyline
-                  points={scenarios.base.path.map((v, i) => `${getX(displayHistory.length - 1 + i)},${getY(v)}`).join(' ')}
-                  fill="none" stroke={scenarios.base.color} strokeWidth="1.1"
-                  strokeLinecap="round" strokeLinejoin="round"
-                />
-              </>
-            )}
-
-            {/* Current index dot */}
-            <circle
-              cx={getX(displayHistory.length - 1)}
-              cy={getY(lastHpi?.index_uk ?? 0)}
-              r="1.5" fill="#22c55e" stroke="#000" strokeWidth="0.4"
-            />
-
-            {/* Annotation markers */}
-            {annotations.map(ann => {
-              const idx = annotationX[ann.date];
-              if (idx === undefined) return null;
-              const color = eventColors[ann.event] ?? '#a1a1aa';
-              return (
-                <g key={ann.date}>
-                  <line
-                    x1={getX(idx)} y1={PAD}
-                    x2={getX(idx)} y2={H - PAD}
-                    stroke={color} strokeWidth="0.15" opacity="0.4" strokeDasharray="1,1"
-                  />
-                  <text
-                    x={getX(idx)} y={PAD - 0.5}
-                    className="text-[2.5px] font-black" fill={color} opacity="0.8"
-                    textAnchor="middle"
-                  >
-                    {ann.event}
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* Hover interaction */}
-            <rect
-              x={PAD} y={PAD}
-              width={W - 2 * PAD} height={H - 2 * PAD}
-              fill="transparent"
-              onMouseMove={(e) => {
-                const rect = (e.currentTarget as SVGRectElement).getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const totalW = rect.width;
-                const ratio = x / totalW;
-                const idx = Math.round(ratio * (displayHistory.length - 1));
-                if (idx >= 0 && idx < displayHistory.length) {
-                  setHoverDate(displayHistory[idx].date);
-                } else {
-                  setHoverDate(null);
-                }
-              }}
-              onMouseLeave={() => setHoverDate(null)}
-            />
-
-            {/* Year labels on x-axis */}
-            {useMemo(() => {
-              const labels: Array<{x: number; label: string}> = [];
-              let lastYear = '';
-              displayHistory.forEach((h, i) => {
-                const yr = h.date.slice(0, 4);
-                if (yr !== lastYear) {
-                  labels.push({ x: i, label: yr });
-                  lastYear = yr;
-                }
+            {/* @visx scales (viewBox coordinate space) */}
+            {(() => {
+              const xScale = scaleLinear({
+                domain: [0, xMax],
+                range: [PAD, W - PAD],
+                nice: false,
               });
-              // Every other year to avoid clutter
-              return labels.filter((_, i) => i % 2 === 0);
-            }, [displayHistory]).map(({ x, label }) => (
-              <text
-                key={label}
-                x={getX(x)} y={H - PAD + 4}
-                className="text-[2.5px] fill-linear-text-muted/60 font-bold"
-                textAnchor="middle"
-              >
-                {label}
-              </text>
-            ))}
+              const yScale = scaleLinear({
+                domain: [minV, maxV],
+                range: [H - PAD, PAD],
+                nice: false,
+              });
+              const getX = (i: number) => xScale(i);
+              const getY = (v: number) => yScale(v);
 
-            {/* Projection label */}
-            {scenarios && (
-              <text
-                x={getX(displayHistory.length)} y={PAD - 0.5}
-                className="text-[2.5px] fill-blue-400/60 font-bold"
-                textAnchor="start"
-              >
-                +3yr projections
-              </text>
-            )}
+              // Year label positions
+              const yearLabels = displayHistory.reduce<Array<{ x: number; label: string }>>((acc, h, i) => {
+                const yr = h.date.slice(0, 4);
+                if (acc.length === 0 || acc[acc.length - 1].label !== yr) {
+                  acc.push({ x: i, label: yr });
+                }
+                return acc;
+              }, []).filter((_, i) => i % 2 === 0);
+
+              // Fan area data arrays
+              const fanBullData = scenarios
+                ? scenarios.bull.path.map((v, i) => ({
+                    x: displayHistory.length - 1 + i,
+                    y: v,
+                  }))
+                : [];
+
+              const fanBearData = scenarios
+                ? [...scenarios.bear.path]
+                    .reverse()
+                    .map((v, i) => ({
+                      x: displayHistory.length - 1 + scenarios.bear.path.length - 1 - i,
+                      y: v,
+                    }))
+                : [];
+
+              // Historical line data
+              const historyData = displayHistory.map((h, i) => ({
+                x: i,
+                y: h.index_uk,
+              }));
+
+              // Projection lines data
+              const projBase = scenarios
+                ? scenarios.base.path.map((v, i) => ({ x: displayHistory.length - 1 + i, y: v }))
+                : [];
+              const projBear = scenarios
+                ? scenarios.bear.path.map((v, i) => ({ x: displayHistory.length - 1 + i, y: v }))
+                : [];
+              const projBull = scenarios
+                ? scenarios.bull.path.map((v, i) => ({ x: displayHistory.length - 1 + i, y: v }))
+                : [];
+
+              return (
+                <Group>
+                  {/* Horizontal grid lines */}
+                  {[0, 0.25, 0.5, 0.75, 1].map(pct => {
+                    const v = minV + (maxV - minV) * pct;
+                    return (
+                      <g key={pct}>
+                        <line
+                          x1={PAD} y1={getY(v)} x2={W - PAD} y2={getY(v)}
+                          stroke="rgba(255,255,255,0.05)" strokeWidth="0.08"
+                        />
+                        <text
+                          x={PAD - 0.8} y={getY(v) + 0.9}
+                          className="text-[2.5px] fill-linear-text-muted/60"
+                          textAnchor="end"
+                        >
+                          {v.toFixed(0)}
+                        </text>
+                      </g>
+                    );
+                  })}
+
+                  {/* Scenario fan area (bull to bear band) */}
+                  {scenarios && (
+                    <AreaClosed
+                      data={fanBullData}
+                      x={d => getX(d.x)}
+                      y0={d => getY(fanBearData[fanBullData.indexOf(d)]?.y ?? d.y)}
+                      y1={d => getY(d.y)}
+                      yScale={yScale}
+                      fill="#3b82f6"
+                      opacity={0.06}
+                    />
+                  )}
+
+                  {/* Historical line — @visx LinePath */}
+                  <LinePath
+                    data={historyData}
+                    x={d => getX(d.x)}
+                    y={d => getY(d.y)}
+                    stroke="#22c55e"
+                    strokeWidth={0.9}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+
+                  {/* Projection lines */}
+                  {scenarios && (
+                    <>
+                      <LinePath
+                        data={projBear}
+                        x={d => getX(d.x)}
+                        y={d => getY(d.y)}
+                        stroke={scenarios.bear.color}
+                        strokeWidth={0.7}
+                        strokeDasharray="2,1"
+                        opacity={0.7}
+                      />
+                      <LinePath
+                        data={projBull}
+                        x={d => getX(d.x)}
+                        y={d => getY(d.y)}
+                        stroke={scenarios.bull.color}
+                        strokeWidth={0.7}
+                        strokeDasharray="2,1"
+                        opacity={0.7}
+                      />
+                      <LinePath
+                        data={projBase}
+                        x={d => getX(d.x)}
+                        y={d => getY(d.y)}
+                        stroke={scenarios.base.color}
+                        strokeWidth={1.1}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </>
+                  )}
+
+                  {/* Current index dot */}
+                  <circle
+                    cx={getX(displayHistory.length - 1)}
+                    cy={getY(lastHpi?.index_uk ?? 0)}
+                    r={1.5}
+                    fill="#22c55e"
+                    stroke="#000"
+                    strokeWidth={0.4}
+                  />
+
+                  {/* Annotation markers */}
+                  {annotations.map(ann => {
+                    const idx = annotationX[ann.date];
+                    if (idx === undefined) return null;
+                    const color = eventColors[ann.event] ?? '#a1a1aa';
+                    return (
+                      <g key={ann.date}>
+                        <line
+                          x1={getX(idx)} y1={PAD}
+                          x2={getX(idx)} y2={H - PAD}
+                          stroke={color} strokeWidth={0.15}
+                          opacity={0.4}
+                          strokeDasharray="1,1"
+                        />
+                        <text
+                          x={getX(idx)} y={PAD - 0.5}
+                          className="text-[2.5px] font-black"
+                          fill={color}
+                          opacity={0.8}
+                          textAnchor="middle"
+                        >
+                          {ann.event}
+                        </text>
+                      </g>
+                    );
+                  })}
+
+                  {/* Year labels on x-axis */}
+                  {yearLabels.map(({ x, label }) => (
+                    <text
+                      key={label}
+                      x={getX(x)} y={H - PAD + 4}
+                      className="text-[2.5px] fill-linear-text-muted/60 font-bold"
+                      textAnchor="middle"
+                    >
+                      {label}
+                    </text>
+                  ))}
+
+                  {/* Projection label */}
+                  {scenarios && (
+                    <text
+                      x={getX(displayHistory.length)} y={PAD - 0.5}
+                      className="text-[2.5px] fill-blue-400/60 font-bold"
+                      textAnchor="start"
+                    >
+                      +3yr projections
+                    </text>
+                  )}
+
+                  {/* Hover interaction */}
+                  <rect
+                    x={PAD} y={PAD}
+                    width={W - 2 * PAD} height={H - 2 * PAD}
+                    fill="transparent"
+                    onMouseMove={(e) => {
+                      const coords = localPoint(e);
+                      if (!coords) return;
+                      // coords are in viewBox units since rect is positioned in viewBox space
+                      const ratio = (coords.x - PAD) / (W - 2 * PAD);
+                      const idx = Math.round(ratio * (displayHistory.length - 1));
+                      if (idx >= 0 && idx < displayHistory.length) {
+                        setHoverDate(displayHistory[idx].date);
+                      } else {
+                        setHoverDate(null);
+                      }
+                    }}
+                    onMouseLeave={() => setHoverDate(null)}
+                  />
+                </Group>
+              );
+            })()}
           </svg>
         </div>
 

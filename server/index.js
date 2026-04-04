@@ -22,7 +22,7 @@ let db;
 
 function initializeDB() {
   console.log('Stabilizing SQLite database...');
-  db = new Database(DB_PATH, { verbose: console.log });
+  db = new Database(DB_PATH);
   db.pragma('journal_mode = WAL');
 
   // 1. properties table
@@ -646,6 +646,60 @@ const server = http.createServer((req, res) => {
               res.end(JSON.stringify({ error: 'Not found' }));
             }
           } else {
+            // FE-214: Server-side URL dedup — check inbox files and manual_queue
+            const submittedUrl = (data.url || '').trim().toLowerCase();
+            if (submittedUrl) {
+              // 1. Scan inbox files for existing URL
+              const existingInbox = (() => {
+                try {
+                  const files = fs.readdirSync(INBOX_DIR).filter(f => f.endsWith('.json'));
+                  for (const file of files) {
+                    try {
+                      const content = JSON.parse(fs.readFileSync(path.join(INBOX_DIR, file), 'utf8'));
+                      const urls = [];
+                      if (Array.isArray(content)) {
+                        content.forEach(item => { if (item.url) urls.push(item.url); });
+                      } else if (content.url) {
+                        urls.push(content.url);
+                      }
+                      for (const u of urls) {
+                        if ((u || '').trim().toLowerCase() === submittedUrl) {
+                          return { source: 'inbox', filename: file };
+                        }
+                      }
+                    } catch { /* skip malformed files */ }
+                  }
+                } catch { /* dir may not exist */ }
+                return null;
+              })();
+
+              if (existingInbox) {
+                res.writeHead(409, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                  error: 'Duplicate URL',
+                  duplicate_found: true,
+                  existing: existingInbox,
+                  hint: 'This URL already exists in your inbox. Remove the existing entry first or submit a different URL.'
+                }));
+                return;
+              }
+
+              // 2. Check manual_queue table
+              try {
+                const mqRows = db.prepare('SELECT id, url, source, status, queued_at FROM manual_queue WHERE LOWER(TRIM(url)) = ?').all(submittedUrl);
+                if (mqRows.length > 0) {
+                  res.writeHead(409, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({
+                    error: 'Duplicate URL',
+                    duplicate_found: true,
+                    existing: { source: 'manual_queue', entry: mqRows[0] },
+                    hint: 'This URL is already in your manual queue. Check /api/manual-queue for the existing entry.'
+                  }));
+                  return;
+                }
+              } catch { /* table may not exist */ }
+            }
+
             const filename = `${new Date().toISOString().replace(/[:.]/g, '-')}_RAW.json`;
             fs.writeFileSync(path.join(INBOX_DIR, filename), JSON.stringify(data, null, 2));
             res.writeHead(201, { 'Content-Type': 'application/json' });

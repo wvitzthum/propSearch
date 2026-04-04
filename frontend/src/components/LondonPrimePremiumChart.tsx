@@ -1,8 +1,21 @@
+// FE-206: Migrated to @visx — replaces hand-rolled SVG with visx scale/shape/axis primitives
 import React, { useMemo } from 'react';
 import { useMacroData } from '../hooks/useMacroData';
+import { scaleLinear } from '@visx/scale';
+import { LinePath, AreaClosed } from '@visx/shape';
+import { useTooltip, TooltipWithBounds } from '@visx/tooltip';
+import { localPoint } from '@visx/event';
 
 // FE-191: London Prime Premium tracker — PCL vs London avg vs UK avg time series
 // Data: hpi_history provides UK-indexed series. London premium is computed relative to UK.
+
+interface PremiumPoint {
+  date: string;
+  uk: number;
+  london: number;
+  premium: number;
+  premiumPct: number;
+}
 
 interface PremiumPoint {
   date: string;
@@ -16,6 +29,15 @@ const LondonPrimePremiumChart: React.FC = () => {
   const { data } = useMacroData();
   const raw = data as any;
 
+  const {
+    showTooltip,
+    hideTooltip,
+    tooltipOpen,
+    tooltipData,
+    tooltipLeft,
+    tooltipTop,
+  } = useTooltip<PremiumPoint>();
+
   // Historical series from hpi_history
   const history = useMemo(() => {
     const rawHpi = raw?.hpi_history?.london_wide ?? [];
@@ -23,17 +45,14 @@ const LondonPrimePremiumChart: React.FC = () => {
     return rawHpi.map((h: any) => ({
       date: h.date,
       ukIndex: h.index_uk ?? 100,
-      englandIndex: h.index_england ?? 100,
-      // London premium vs UK: London's index tends to be 15-25% above UK avg historically
-      londonImplied: (h.index_uk ?? 100) * 1.18, // 18% London premium proxy
-      ukRaw: h.uk_hpi_raw ?? 67.3,
+      londonImplied: (h.index_uk ?? 100) * 1.18,
     }));
   }, [raw]);
 
   // Show last 36 months for cleaner chart
   const display = history.slice(-36);
 
-  // Compute premium series (London implied vs UK)
+  // Compute premium series
   const premiumData: PremiumPoint[] = useMemo(() => {
     if (display.length < 2) return [];
     return display.map((h: any) => ({
@@ -48,9 +67,11 @@ const LondonPrimePremiumChart: React.FC = () => {
   // Key metrics
   const latest = premiumData[premiumData.length - 1];
   const yearAgo = premiumData[premiumData.length - 13];
-  const peak = premiumData.reduce((max: PremiumPoint, d: PremiumPoint) => d.premiumPct > max.premiumPct ? d : max, premiumData[0] || { premiumPct: 0 } as PremiumPoint);
+  const peak = premiumData.reduce(
+    (max: PremiumPoint, d: PremiumPoint) => d.premiumPct > max.premiumPct ? d : max,
+    premiumData[0] || { premiumPct: 0 } as PremiumPoint
+  );
 
-  // SVG setup
   const W = 200, H = 80;
   const PAD = 4;
   if (!display.length) return null;
@@ -58,21 +79,19 @@ const LondonPrimePremiumChart: React.FC = () => {
   const allValues = premiumData.flatMap(d => [d.uk, d.london]);
   const minV = Math.min(...allValues) * 0.95;
   const maxV = Math.max(...allValues) * 1.03;
-  const range = maxV - minV;
-  const getX = (i: number) => PAD + (i / (premiumData.length - 1)) * (W - 2 * PAD);
-  const getY = (v: number) => H - PAD - ((v - minV) / range) * (H - 2 * PAD);
-
-  const ukPath = premiumData.map((d, i) => `${getX(i)},${getY(d.uk)}`).join(' ');
-  const londonPath = premiumData.map((d, i) => `${getX(i)},${getY(d.london)}`).join(' ');
-
-  // Premium fill
-  const premiumFill = premiumData.map((d, i) => {
-    const top = Math.max(getY(d.uk), getY(d.london));
-    const bot = Math.min(getY(d.uk), getY(d.london));
-    return `${i === 0 ? 'M' : 'L'}${getX(i)},${top} L${getX(i)},${bot}`;
-  }).join(' ') + ' Z';
 
   const londonPremium = latest ? ((latest.london / latest.uk - 1) * 100).toFixed(1) : '18.0';
+
+  // Prepare data arrays for @visx
+  const ukData = premiumData.map((d, i) => ({ x: i, y: d.uk }));
+  const londonData = premiumData.map((d, i) => ({ x: i, y: d.london }));
+
+  // Premium fill: London above UK = area between them
+  const premiumFillData = premiumData.map((d, i) => ({
+    x: i,
+    yTop: Math.max(d.uk, d.london),
+    yBot: Math.min(d.uk, d.london),
+  }));
 
   return (
     <div className="bg-linear-card border border-linear-border rounded-xl overflow-hidden">
@@ -113,40 +132,124 @@ const LondonPrimePremiumChart: React.FC = () => {
         </div>
       </div>
 
-      {/* Chart */}
+      {/* Chart — @visx */}
       <div className="p-4">
         <div style={{ height: 120 }}>
-          <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" className="w-full h-full overflow-visible">
-            {/* Grid */}
-            {[0, 0.5, 1].map(pct => {
-              const v = minV + range * pct;
+          <svg
+            viewBox={`0 0 ${W} ${H}`}
+            preserveAspectRatio="xMidYMid meet"
+            className="w-full h-full overflow-visible"
+          >
+            {(() => {
+              const xScale = scaleLinear({
+                domain: [0, Math.max(premiumData.length - 1, 1)],
+                range: [PAD, W - PAD],
+              });
+              const yScale = scaleLinear({
+                domain: [minV, maxV],
+                range: [H - PAD, PAD],
+              });
+
+              const getX = (i: number) => xScale(i);
+              const getY = (v: number) => yScale(v);
+
+              const yearLabels = premiumData.reduce<Array<{ i: number; yr: string }>>((acc, d, i) => {
+                const yr = d.date.slice(0, 4);
+                if (acc.length === 0 || acc[acc.length - 1].yr !== yr) {
+                  acc.push({ i, yr });
+                }
+                return acc;
+              }, []).filter((_, idx) => idx % 2 === 0);
+
+              const handleMouseMove = (event: React.MouseEvent<SVGRectElement>) => {
+                const coords = localPoint(event);
+                if (!coords) return;
+                const ratio = (coords.x - PAD) / (W - 2 * PAD);
+                const idx = Math.round(ratio * (premiumData.length - 1));
+                const clamped = Math.max(0, Math.min(premiumData.length - 1, idx));
+                showTooltip({
+                  tooltipData: premiumData[clamped],
+                  tooltipLeft: coords.x,
+                  tooltipTop: coords.y,
+                });
+              };
+
               return (
-                <g key={pct}>
-                  <line x1={PAD} y1={getY(v)} x2={W - PAD} y2={getY(v)} stroke="currentColor" strokeWidth="0.08" className="text-white/5" />
-                  <text x={PAD - 0.5} y={getY(v) + 0.8} className="text-[2.5px] fill-linear-text-muted/60" textAnchor="end">{v.toFixed(0)}</text>
+                <g>
+                  {/* Grid */}
+                  {[0, 0.5, 1].map(pct => {
+                    const v = minV + (maxV - minV) * pct;
+                    return (
+                      <g key={pct}>
+                        <line
+                          x1={PAD} y1={getY(v)} x2={W - PAD} y2={getY(v)}
+                          stroke="rgba(255,255,255,0.05)" strokeWidth="0.08"
+                        />
+                        <text
+                          x={PAD - 0.5} y={getY(v) + 0.8}
+                          className="text-[2.5px] fill-linear-text-muted/60"
+                          textAnchor="end"
+                        >
+                          {v.toFixed(0)}
+                        </text>
+                      </g>
+                    );
+                  })}
+
+                  {/* Premium area fill */}
+                  <AreaClosed
+                    data={premiumFillData}
+                    x={d => getX(d.x)}
+                    y0={d => getY(d.yBot)}
+                    y1={d => getY(d.yTop)}
+                    yScale={yScale}
+                    fill="#f59e0b"
+                    opacity={0.07}
+                  />
+
+                  {/* UK index line — @visx LinePath */}
+                  <LinePath
+                    data={ukData}
+                    x={d => getX(d.x)}
+                    y={d => getY(d.y)}
+                    stroke="#22c55e"
+                    strokeWidth={0.8}
+                    strokeLinecap="round"
+                  />
+
+                  {/* London (PCL) implied line — @visx LinePath */}
+                  <LinePath
+                    data={londonData}
+                    x={d => getX(d.x)}
+                    y={d => getY(d.y)}
+                    stroke="#f59e0b"
+                    strokeWidth={0.9}
+                    strokeLinecap="round"
+                  />
+
+                  {/* Year labels */}
+                  {yearLabels.map(({ i, yr }) => (
+                    <text
+                      key={yr}
+                      x={getX(i)} y={H - PAD + 4}
+                      className="text-[2.5px] fill-linear-text-muted/60 font-bold"
+                      textAnchor="middle"
+                    >
+                      {yr}
+                    </text>
+                  ))}
+
+                  {/* Hover interaction */}
+                  <rect
+                    x={PAD} y={PAD}
+                    width={W - 2 * PAD} height={H - 2 * PAD}
+                    fill="transparent"
+                    onMouseMove={handleMouseMove}
+                    onMouseLeave={hideTooltip}
+                  />
                 </g>
               );
-            })}
-
-            {/* Premium area fill */}
-            <path d={premiumFill} fill="#f59e0b" opacity="0.07" />
-
-            {/* UK index line */}
-            <polyline points={ukPath} fill="none" stroke="#22c55e" strokeWidth="0.8" strokeLinecap="round" />
-
-            {/* London (PCL) implied line */}
-            <polyline points={londonPath} fill="none" stroke="#f59e0b" strokeWidth="0.9" strokeLinecap="round" />
-
-            {/* Year labels */}
-            {premiumData.reduce((labels, d, i) => {
-              const yr = d.date.slice(0, 4);
-              if (labels.length === 0 || labels[labels.length - 1].yr !== yr) {
-                labels.push({ i, yr });
-              }
-              return labels;
-            }, [] as {i: number; yr: string}[]).filter((_, idx) => idx % 2 === 0).map(({ i, yr }) => (
-              <text key={yr} x={getX(i)} y={H - PAD + 4} className="text-[2.5px] fill-linear-text-muted/60 font-bold" textAnchor="middle">{yr}</text>
-            ))}
+            })()}
           </svg>
         </div>
 
@@ -166,6 +269,20 @@ const LondonPrimePremiumChart: React.FC = () => {
         <span className="text-[8px] text-linear-text-muted/40 font-mono">PCL vs UK Index · UK=100</span>
         <span className="text-[8px] text-linear-text-muted/40 font-mono">Source: HM Land Registry</span>
       </div>
+
+      {/* Tooltip */}
+      {tooltipOpen && tooltipData && (
+        <TooltipWithBounds
+          left={tooltipLeft}
+          top={tooltipTop}
+          className="bg-black/90 backdrop-blur border border-linear-border rounded-lg px-3 py-2 pointer-events-none z-50"
+        >
+          <div className="text-[10px] font-bold text-white">{tooltipData.date}</div>
+          <div className="text-[9px] text-retro-green">UK: {tooltipData.uk.toFixed(1)}</div>
+          <div className="text-[9px] text-amber-400">PCL: {tooltipData.london.toFixed(1)}</div>
+          <div className="text-[9px] text-linear-text-muted">Premium: +{tooltipData.premiumPct.toFixed(1)}%</div>
+        </TooltipWithBounds>
+      )}
     </div>
   );
 };

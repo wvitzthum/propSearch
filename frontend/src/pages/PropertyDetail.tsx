@@ -5,7 +5,6 @@ import {
   MapPin,
   CheckCircle2,
   ShieldAlert,
-  Calendar,
   Maximize2,
   LayoutGrid,
   Home,
@@ -27,7 +26,6 @@ import {
 } from 'lucide-react';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import { useFinancialData } from '../hooks/useFinancialData';
-import AlphaBadge from '../components/AlphaBadge';
 import LoadingNode from '../components/LoadingNode';
 import PropertyImage from '../components/PropertyImage';
 import LocationNodeMap from '../components/LocationNodeMap';
@@ -44,6 +42,8 @@ import DataProvenanceSection from '../components/DataProvenanceSection';
 import PropertyPriceEvolution from '../components/PropertyPriceEvolution';
 import { useThesisTags } from '../hooks/useThesisTags';
 import { useMacroData } from '../hooks/useMacroData';
+import { fmtPrice, fmtNum } from '../utils/format';
+import AlphaScoreBreakdown from '../components/AlphaScoreBreakdown';
 
 const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -124,11 +124,17 @@ const PropertyDetail: React.FC = () => {
           </button>
           
           <div className="relative max-w-[85vw] max-h-[85vh] select-none">
-            <img
-              src={allImages[activeImageIndex] ?? ''}
-              alt="Gallery Zoom"
-              className="max-w-full max-h-[85vh] object-contain shadow-2xl rounded-lg"
-            />
+            {allImages[activeImageIndex] ? (
+              <img
+                src={allImages[activeImageIndex]}
+                alt="Gallery Zoom"
+                className="max-w-full max-h-[85vh] object-contain shadow-2xl rounded-lg"
+              />
+            ) : (
+              <div className="w-full h-full min-h-[200px] flex items-center justify-center bg-linear-card rounded-lg">
+                <span className="text-linear-text-muted text-sm">Image unavailable</span>
+              </div>
+            )}
             <div className="absolute -bottom-12 left-0 right-0 text-center">
               <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
                 Institutional Perspective {activeImageIndex + 1} of {allImages.length}
@@ -452,7 +458,7 @@ const PropertyDetail: React.FC = () => {
                       </div>
                       <p className="text-linear-text-muted text-sm leading-relaxed max-w-lg">
                         Based on a market duration of {property.dom} days, we recommend an {(property.neg_strategy || '').toLowerCase().includes('aggressive') ? 'aggressive bidding posture' : 'entry at market value'}. 
-                        The Realistic Price of £{property.realistic_price.toLocaleString()} represents a target entry point for immediate equity capture.
+                        The Realistic Price of £{fmtPrice(property.realistic_price)} represents a target entry point for immediate equity capture.
                       </p>
                     </div>
                     <TrendingDown className="absolute -right-8 -bottom-8 text-white/5 group-hover:text-blue-500/10 transition-colors" size={200} />
@@ -491,9 +497,9 @@ const PropertyDetail: React.FC = () => {
                             <span>List Price</span>
                           </div>
                           <div className="flex justify-between mt-1 font-mono text-[10px]">
-                            <span className="text-retro-green font-black">£{Math.round(property.realistic_price * 0.95).toLocaleString()}</span>
-                            <span className="text-white">£{property.realistic_price.toLocaleString()}</span>
-                            <span className="text-linear-text-muted opacity-60">£{property.list_price.toLocaleString()}</span>
+                            <span className="text-retro-green font-black">£{fmtNum(Math.round((property.realistic_price ?? 0) * 0.95))}</span>
+                            <span className="text-white">£{fmtPrice(property.realistic_price)}</span>
+                            <span className="text-linear-text-muted opacity-60">£{fmtPrice(property.list_price)}</span>
                           </div>
                         </div>
                       </div>
@@ -502,7 +508,7 @@ const PropertyDetail: React.FC = () => {
                     <div className="mt-6 pt-4 border-t border-linear-border flex items-center justify-between">
                       <div className="flex flex-col">
                         <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">Max Capture</span>
-                        <span className="text-xs font-bold text-retro-green tracking-tight">£{Math.round(property.list_price - (property.realistic_price * 0.95)).toLocaleString()}</span>
+                        <span className="text-xs font-bold text-retro-green tracking-tight">£{fmtNum(Math.round((property.list_price ?? 0) - ((property.realistic_price ?? 0) * 0.95)))}</span>
                       </div>
                       <div className="text-right flex flex-col">
                         <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">Post-90d Delta</span>
@@ -514,60 +520,7 @@ const PropertyDetail: React.FC = () => {
               </div>
 
               <div>
-                <h2 className="text-xs font-bold text-linear-text-muted uppercase tracking-widest mb-4">Institutional Alpha Analysis</h2>
-                <div className="grid sm:grid-cols-2 gap-4 mb-8">
-                  <div className="p-5 border border-linear-border bg-linear-card rounded-2xl shadow-sm">
-                    <div className="flex justify-between items-center mb-6">
-                      <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">Alpha Score</span>
-                      <AlphaBadge score={property.alpha_score} className="scale-125 origin-right" />
-                    </div>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-linear-text-muted">Location Score</span>
-                        <span className="font-bold text-white uppercase tracking-tighter">Prime / High</span>
-                      </div>
-                      <div className="flex justify-between items-center text-xs border-t border-linear-border/50 pt-3">
-                        <span className="text-linear-text-muted">Value Prop</span>
-                        <span className={`font-bold uppercase tracking-tighter ${property.is_value_buy ? 'text-retro-green' : 'text-white'}`}>
-                          {property.is_value_buy ? 'Excellent' : 'Stable'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center text-xs border-t border-linear-border/50 pt-3">
-                        <span className="text-linear-text-muted">Liquidity Rating</span>
-                        <span className="font-bold text-white uppercase tracking-tighter text-blue-400">AA+</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-5 border border-linear-border bg-linear-bg/50 rounded-2xl">
-                    <h3 className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest mb-6 flex items-center gap-2">
-                      <Calendar size={14} className="text-linear-accent" />
-                      Market Metrics
-                    </h3>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center text-xs">
-                        <div className="flex items-center gap-2 text-linear-text-muted">
-                          <Clock size={12} />
-                          Days on Market
-                        </div>
-                        <span className="font-bold text-white">{property.dom} Days</span>
-                      </div>
-                      <div className="flex justify-between items-center text-xs border-t border-linear-border/50 pt-3">
-                        <div className="flex items-center gap-2 text-linear-text-muted">
-                          <Scale size={12} />
-                          Price/SQM
-                        </div>
-                        <span className="font-bold text-white">£{property.price_per_sqm.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-xs border-t border-linear-border/50 pt-3">
-                        <div className="flex items-center gap-2 text-linear-text-muted">
-                          <Clock size={12} />
-                          Last Verified
-                        </div>
-                        <span className="text-[10px] font-bold text-retro-green uppercase">Live / Today</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <AlphaScoreBreakdown property={property} />
 
                 {/* CAPEX & Retrofit Node */}
                 <h2 className="text-xs font-bold text-linear-text-muted uppercase tracking-widest mb-4">CAPEX & Retrofit Modeling</h2>
@@ -691,11 +644,13 @@ const PropertyDetail: React.FC = () => {
                 <span className="text-[10px] text-linear-text-muted block uppercase font-bold tracking-[0.2em] mb-3">Institutional Target</span>
                 <div className="text-4xl font-bold text-white tracking-tighter mb-1 flex items-baseline gap-1">
                   <span className="text-2xl text-linear-accent font-medium">£</span>
-                  {property.realistic_price.toLocaleString()}
+                  {fmtNum(property.realistic_price)}
                 </div>
                 <div className="text-xs text-linear-text-muted">
-                  List Price: <span className="line-through opacity-50">£{property.list_price.toLocaleString()}</span>
-                  <span className="ml-2 text-rose-400 font-bold">-{Math.round((1 - property.realistic_price / property.list_price) * 100)}% Delta</span>
+                  List Price: <span className="line-through opacity-50">£{fmtPrice(property.list_price)}</span>
+                  {property.list_price && property.realistic_price ? (
+                    <span className="ml-2 text-rose-400 font-bold">-{Math.round((1 - property.realistic_price / property.list_price) * 100)}% Delta</span>
+                  ) : null}
                 </div>
               </div>
 
