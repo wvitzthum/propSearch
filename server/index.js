@@ -577,6 +577,103 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({ error: 'Failed to load regional velocity data: ' + e.message }));
       }
     }
+    // DE-214: Unified /api/market-data endpoint — reads from SQLite, falls back to global_context
+    // Unifies market_indicators, appreciation_model, financial_context, research_archives
+    else if (url.pathname === '/api/market-data' && req.method === 'GET') {
+      try {
+        const marketData = {};
+
+        // 1. Reconstruct macro from market_indicators table
+        const indicators = db.prepare('SELECT indicator_key, sub_key, date, value, source, source_url, methodology, raw_json FROM market_indicators ORDER BY indicator_key, date').all();
+        for (const row of indicators) {
+          if (!marketData[row.indicator_key]) marketData[row.indicator_key] = {};
+          if (row.raw_json) {
+            // Store as raw JSON object for complex indicators
+            try { marketData[row.indicator_key] = JSON.parse(row.raw_json); } catch { /* skip */ }
+          } else if (row.sub_key) {
+            // Time-series with sub_key (area, etc.)
+            if (!marketData[row.indicator_key].data) marketData[row.indicator_key].data = [];
+            if (row.date !== null) {
+              marketData[row.indicator_key].data.push({ date: row.date, value: row.value, area: row.sub_key });
+            }
+          } else if (row.date === null && row.value !== null) {
+            // Scalar indicator
+            marketData[row.indicator_key] = { value: row.value, source: row.source, source_url: row.source_url, methodology: row.methodology };
+          }
+        }
+
+        // 2. Reconstruct appreciation_model
+        const appreciationRows = db.prepare('SELECT area, metric_key, value, label, scenario, probability, trigger_condition FROM appreciation_model').all();
+        const appreciation = { scenario_definitions: {}, property_adjustments: {}, postcode_volatility: {}, rental_yield_estimates: {}, boe_rate_path_fan: { scenarios: [] } };
+        for (const row of appreciationRows) {
+          if (row.metric_key.startsWith('scenario_')) {
+            const scen = row.metric_key.replace('scenario_', '');
+            if (!appreciation.scenario_definitions[scen]) appreciation.scenario_definitions[scen] = {};
+            appreciation.scenario_definitions[scen][row.metric_key.replace(`scenario_${scen}_`, '')] = row.value;
+            if (row.probability !== null) appreciation.scenario_definitions[scen].probability = row.probability;
+            if (row.trigger_condition) appreciation.scenario_definitions[scen].trigger = row.trigger_condition;
+          } else if (row.metric_key.startsWith('adjustment_')) {
+            const parts = row.metric_key.split('_');
+            const adjType = parts[1];
+            if (!appreciation.property_adjustments[adjType]) appreciation.property_adjustments[adjType] = {};
+            appreciation.property_adjustments[adjType][row.metric_key.replace(`adjustment_${adjType}_`, '')] = row.value;
+          } else if (row.metric_key.startsWith('volatility_') && row.area) {
+            if (!appreciation.postcode_volatility[row.area]) appreciation.postcode_volatility[row.area] = {};
+            appreciation.postcode_volatility[row.area][row.metric_key.replace('volatility_', '')] = row.value;
+          } else if (row.metric_key.startsWith('rental_yield_') && row.area) {
+            if (!appreciation.rental_yield_estimates[row.area]) appreciation.rental_yield_estimates[row.area] = {};
+            appreciation.rental_yield_estimates[row.area][row.metric_key.replace('rental_yield_', '')] = row.value;
+          } else if (row.metric_key.startsWith('boe_rate_path_') && row.area) {
+            const scenario = row.metric_key.replace('boe_rate_path_', '');
+            const existing = appreciation.boe_rate_path_fan.scenarios.find(s => s.q === row.area);
+            if (existing) {
+              existing[scenario] = row.value;
+            } else {
+              appreciation.boe_rate_path_fan.scenarios.push({ q: row.area, [scenario]: row.value });
+            }
+          } else if (row.metric_key.startsWith('appreciation_') && row.area === null) {
+            appreciation[row.metric_key.replace('appreciation_', '')] = row.value;
+          }
+        }
+        marketData.appreciation_model = appreciation;
+
+        // 3. Reconstruct financial_context
+        const finRows = db.prepare('SELECT metric_key, value, json_value, label, area FROM financial_context').all();
+        const financialContext = {};
+        for (const row of finRows) {
+          if (row.json_value) {
+            try { financialContext[row.metric_key] = JSON.parse(row.json_value); } catch { /* skip */ }
+          } else if (row.value !== null) {
+            financialContext[row.metric_key] = row.value;
+          }
+        }
+        marketData.financial_context = financialContext;
+
+        // 4. Market meta provenance
+        const metaRows = db.prepare('SELECT key, value FROM market_meta ORDER BY key').all();
+        for (const row of metaRows) {
+          try { marketData[row.key] = JSON.parse(row.value); } catch { marketData[row.key] = row.value; }
+        }
+
+        // 5. Legacy fallback: if global_context.macro_trend still exists (pre-migration), inject it for compatibility
+        const legacy = db.prepare("SELECT data FROM global_context WHERE key = 'macro_trend'").get();
+        if (legacy) {
+          try {
+            const parsed = JSON.parse(legacy.data);
+            // Only use legacy for fields not yet in marketData (backward compat)
+            for (const k of Object.keys(parsed)) {
+              if (!marketData[k] && k !== 'appreciate') marketData[k] = parsed[k];
+            }
+          } catch { /* skip */ }
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(marketData));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to load market data: ' + e.message }));
+      }
+    }
     // 5. Inbox
     else if (url.pathname === '/api/inbox/batch' && req.method === 'POST') {
       let body = '';

@@ -4244,7 +4244,7 @@
       "effort": "Medium",
       "section": "frontend",
       "title": "UX: /rates page — add Market Verdict hero + affordability signal above all charts.",
-      "status": "In Progress",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-05",
@@ -4277,7 +4277,8 @@
         "  Mobile: stacked cards, verdict badge + 2 metrics per row",
         "FILE: RatesPage.tsx — add as first child of max-w-7xl container.",
         "ACCEPTANCE: Users understand the macro context in <5 seconds. Affordability delta is actionable. Narrative updates reactively."
-      ]
+      ],
+      "completed_date": "2026-04-04"
     },
     {
       "id": "UX-033",
@@ -4285,7 +4286,7 @@
       "effort": "Low",
       "section": "frontend",
       "title": "UX: /market page — add Market Verdict strip + compact Property Type summary replacing full chart.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "UX-031"
@@ -4314,7 +4315,8 @@
         "FILES: MarketPage.tsx",
         "DEPENDENCY: UX-031 (Property Type hero redesign on /rates) should be done first — UX-033 references the same data in compact form.",
         "ACCEPTANCE: /market page now has a clear market verdict at top. Property type data accessible without leaving the page (links to /rates)."
-      ]
+      ],
+      "completed_date": "2026-04-04"
     },
     {
       "id": "VISX-001",

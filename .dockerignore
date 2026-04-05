@@ -1,0 +1,11 @@
+.env.local
+.env*.local
+*.log
+node_modules/
+.next/
+dist/
+.vercel/
+data/sources/processed/
+frontend/test-results2/
+*.png
+*.jpg

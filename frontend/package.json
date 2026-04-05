@@ -19,15 +19,22 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
     "@types/leaflet": "^1.9.21",
+    "@visx/annotation": "^3.12.0",
     "@visx/axis": "^3.12.0",
+    "@visx/brush": "^3.12.0",
     "@visx/event": "^3.12.0",
     "@visx/gradient": "^3.12.0",
     "@visx/grid": "^3.12.0",
     "@visx/group": "^3.12.0",
+    "@visx/heatmap": "^3.12.0",
+    "@visx/legend": "^3.12.0",
     "@visx/responsive": "^3.12.0",
     "@visx/scale": "^3.12.0",
     "@visx/shape": "^3.12.0",
+    "@visx/stats": "^3.12.0",
+    "@visx/threshold": "^3.12.0",
     "@visx/tooltip": "^3.12.0",
+    "@visx/voronoi": "^3.12.0",
     "autoprefixer": "^10.4.27",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.577.0",
@@ -55,5 +62,12 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",
     "vite": "^7.3.1"
+  },
+  "overrides": {
+    "@visx/axis": {
+      "peerDependencies": {
+        "react": "^19.0.0"
+      }
+    }
   }
 }
