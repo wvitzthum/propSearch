@@ -1,64 +1,81 @@
 # Lead Frontend Engineer: Domain Logic
 
-## Task Discovery
-Before reading the task backlog, use `jq` against `tasks/tasks.json`:
-```
-jq '.tasks[] | select(.responsible=="Frontend Engineer" and .status=="Todo")' tasks/tasks.json
-jq '.tasks[] | select(.section=="new_approved")' tasks/tasks.json
-jq '.tasks[] | select(.id=="FE-150")' tasks/tasks.json
-```
-After updating any task status, run `make tasks-regen` to regenerate `Tasks.md`.
-
----
-
 ## Role
 Responsive, high-fidelity research dashboard to visualize property leads.
 
+## Session Startup Checklist
+
+1. **Check task backlog** — `jq '.tasks[] | select(.responsible=="Frontend Engineer" and .status=="Todo")' tasks/tasks.json`
+2. **Check active UX tickets** — `jq '.tasks[] | select(.responsible=="UI/UX QA" and .status=="Todo")' tasks/tasks.json`
+3. **Run `make tasks-regen`** — after any task status change
+
+---
+
 ## Core UI Components
-1. **KPI Header (Top):** Total Properties, Avg Alpha, Value Buys.
-2. **Control Panel:** Sort (Alpha, Price, Price/SQM), Filter Toggles (Value Buys, Fresh Discoveries).
-3. **Property Grid:** High-density data cards.
 
-## Visual Hierarchy & Logic
-- **Discovery Status:** "Fresh Discovery" vs "Repeat Find" badges.
-- **Alpha Score Indicator:** Colored badge/ring (>=8: Emerald, 5-7: Amber, <5: Rose).
-- **Meta-tags:** Compact Tenure & EPC displays.
+- **KPI Header:** Total Properties, Avg Alpha, Value Buys
+- **Control Panel:** Sort (Alpha, Price, Price/SQM), Filter Toggles
+- **Property Grid:** High-density data cards
 
-## Design Standards
-- **Aesthetic:** "Bloomberg Terminal meets Linear."
-- **Tech Stack:** React 19, Tailwind CSS.
-- **Charting:** Use **@visx** (airbnb/visx) for all data visualizations. See `DECISIONS.md` ADR-015.
-  - Install: `npm install @visx/scale @visx/shape @visx/axis @visx/grid @visx/responsive @visx/tooltip @visx/group @visx/event @visx/gradient --legacy-peer-deps`
-  - Use `scaleLinear`/`scalePoint` instead of hand-rolled getX/getY
-  - Use `LinePath`, `AreaClosed`, `Bar` instead of raw `<polyline>`/`<line>` SVG
-  - Use `ParentSize` from `@visx/responsive` for responsive charts
-  - Raw `<svg>` only for decorative shapes (icons, dividers)
+## Alpha Score Display
+- ≥8: Emerald (`text-retro-green`)
+- 5–7: Amber (`text-retro-amber`)
+- <5: Rose (`text-linear-accent-rose`)
+
+---
+
+## Critical Rules (Always Inline — Never Move)
+
+### ⛔ Tests Are Mandatory Before Completion
+Before marking any task as **Done**, run the full test suite:
+```bash
+cd frontend && npm run test          # Full suite — must pass
+npm run test:smoke                   # Quick smoke — must pass
+npm run test:accessibility           # Accessibility — must pass
+```
+Failures: identify pre-existing vs new regression. Fix new regressions before marking Done.
+
+### ⛔ Never Skip Tests
+Do NOT use `test.skip()` unless you have confirmed the UI feature genuinely does not exist and logged a feature-gap ticket.
+
+### ⛔ No Raw SVG for Charts
+All data visualizations must use `@visx`. Raw `<svg>` only for decorative shapes (icons, dividers).
+
+### ⛔ Approval Required
+- Modifying global state types in `frontend/src/types/` (always)
+- Bulk updates to `public/data/*.json` (always)
+- Deleting or refactoring core components: `PropertyTable`, `MarketPulse`, `KPICard`, `AlphaBadge`, `ComparisonBar` (always)
+
+---
 
 ## Development Ports — User Only
-The frontend dev server runs on **port 5173** and the backend API runs on **port 3001**. These are reserved exclusively for the **user's manual testing** (browser, Postman, etc.). Agents must not start `npm run dev` or `vite` — these should only be started by the user. When you need to verify rendering or UI behavior programmatically, use the **Playwright test suite** (`npm run test`, `npm run test:smoke`) which runs headless against the built files or a pre-started server.
+
+Ports **5173** (frontend) and **3001** (backend) are reserved for the user's manual testing. Do not start `npm run dev` or `vite`. Use Playwright test suite for programmatic verification.
 
 ---
 
-## Verification & Health Check (MANDATORY)
-- **Import Audit:** Ensure no orphaned imports exist.
-- **Type Integrity:** Verify all props and interfaces align.
-- **Visual Continuity:** Adhere to "Bloomberg meets Linear" aesthetics.
-- **Playwright Test Suite (MANDATORY before task completion):** Before marking any task as Done, you MUST run the full test suite and ensure all tests pass (or are documented as skipped with a known ticket reference). Running tests is not optional — it is a gate on task completion.
-  ```
-  cd frontend && npm run test          # Full suite — must pass
-  npm run test:smoke                  # Quick smoke tests — must pass
-  npm run test:accessibility          # Accessibility checks — must pass
-  ```
-  If tests fail:
-  1. Identify whether the failure is a pre-existing bug (check `Tasks.md` for a ticket) or a new regression introduced by your change.
-  2. If pre-existing: document the failing test in your task notes and note the blocking ticket ID.
-  3. If new regression: fix the bug before completing the task. Do NOT mark Done while tests are red due to your changes.
-  4. If a test has the wrong selector but catches a real bug: file a QA ticket instead of ignoring it.
-  5. NEVER skip tests with `test.skip()` unless you have confirmed the UI feature genuinely does not exist and logged a feature-gap ticket.
-  6. If the test environment has a known backend issue (e.g. `Failed to fetch`, `hpi_forecasts.map`): check `Tasks.md` — if a ticket exists, note it. If no ticket exists, create one instead of adding test filters.
+## Protocol Files (Detailed Procedures)
 
-## Data Integrity & Approval Protocol
-- **MANDATORY:** You must explicitly ask for user approval before modifying global state types in `frontend/src/types/` or performing bulk updates to frontend data mocks (`public/data/*.json`).
-- **Component Deletion:** Deleting or significantly refactoring core components (e.g., `PropertyTable`, `MarketPulse`) requires prior consent.
+| File | When to Read |
+|------|-------------|
+| `PROTOCOLS/01_UI_STANDARDS.md` | Design tokens, color coding, typography, component patterns |
+| `PROTOCOLS/02_VISX_CHARTS.md` | All chart implementations (@visx patterns, required packages) |
+| `PROTOCOLS/03_TESTING.md` | Playwright commands, failure handling, viewport matrix |
+| `PROTOCOLS/04_COMPONENT_ARCHITECTURE.md` | Layout hierarchy, key hooks, core components |
 
 ---
+
+## Data Integrity
+
+**READ FIRST:** Before modifying `frontend/src/types/` or `public/data/*.json`, consult `agents/DATA_GUARDRAILS.md`.
+
+---
+
+## Task Discovery
+
+```bash
+jq '.tasks[] | select(.responsible=="Frontend Engineer" and .status=="Todo")' tasks/tasks.json
+jq '.tasks[] | select(.section=="new_approved")' tasks/tasks.json
+```
+
+After updating any task status: `make tasks-regen`
