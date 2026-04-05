@@ -1,76 +1,16 @@
-# Agent Learnings — Corrections & Permanent Improvements
+# Learnings — user corrections made permanent
 
-> **What is this file?**
-> Every time a user corrects your behaviour, you record it here. These entries
-> become permanent institutional memory. The next time you launch, you read
-> this file before doing anything else — so the same correction never needs to
-> happen twice.
->
-> **How to use it:**
-> - READ this file on every session startup (before anything else)
-> - APPEND a new entry whenever the user corrects you — structured, not free text
-> - The PO reviews and formalises stable learnings into PROTOCOLS/ or README.md
+**Read on every launch.** Append new entries below when the user corrects you.
+**Format:** `## YYYY-MM-DD` + `**Trigger:**` + `**Was:**` + `**Now:**` + `**Scope:**` + `**Status:**`
+**Never delete.** Mark `Superseded` when a later correction replaces a rule.
+**PO formalises** stable entries into PROTOCOLS/ or README.md.
 
 ---
 
-## Learning Entry Template
+## 2026-04-04
 
-```markdown
-## Learning Entry — YYYY-MM-DD
-
-**Trigger:** One-sentence description of what the user corrected.
-**Before:**   The rule/belief that caused the wrong behaviour.
-**After:**    The corrected rule to follow going forward.
-**Scope:**    All tasks / specific component / specific agent / etc.
-**Tasks:**    Any task IDs updated as a result (or N/A)
-**Status:**   Active | Superseded | Review
-**PO Note:** PO review date (filled by PO on formalisation)
-```
-
----
-
-## Adding an Entry — Step by Step
-
-When the user says something like:
-> "actually no — you should always X, not Y"
-
-1. **Acknowledge** the correction and apply it immediately in the current session
-2. **Append** a structured entry to this file (see template above)
-3. **Update** any affected tasks in `tasks/tasks.json` if the correction changes behaviour
-4. **Read** this file on your next launch — the corrected rule is now active
-
-**Never delete entries.** Mark them `Superseded` if a later correction replaces them.
-The PO formally consolidates stable entries into PROTOCOLS/ or README.md.
-
----
-
-## Example Entry
-
-```
-## Learning Entry — 2026-04-04
-
-**Trigger:** User said "don't start dev servers — ports 3001 and 5173 are mine"
-**Before:**  Agent started `npm run dev` or `node server/index.js` as part of task workflow
-**After:**   Agent uses `node -e` with `better-sqlite3` for direct DB access or curl against
-             a pre-started server. Does not start servers unless explicitly asked.
-**Scope:**   All data_engineer and frontend_engineer tasks
-**Tasks:**   N/A
-**Status:**   Active
-**PO Note:** Formalised into agent READMEs — 2026-04-04
-```
-
----
-
-## Status Definitions
-
-| Status | Meaning |
-|--------|---------|
-| `Active` | Applied on every relevant session. The current correct rule. |
-| `Superseded` | Replaced by a later correction. Kept for audit trail. |
-| `Review` | Unclear scope or potentially invalid. PO to clarify. |
-
----
-
-## Active Entries
-
-*(No entries yet — add your first correction above)*
+**Trigger:** Ports 3001 and 5173 are the user's own dev servers — agents must not start them
+**Was:** Agent started `npm run dev` or `node server/index.js` during tasks
+**Now:** Uses `node -e` with `better-sqlite3` or curls against a pre-started server. Never starts servers.
+**Scope:** All agents
+**Status:** Active
