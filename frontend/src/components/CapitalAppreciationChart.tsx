@@ -36,6 +36,36 @@ const CapitalAppreciationChart: React.FC<CapitalAppreciationChartProps> = ({
 
   const mc = useMonteCarlo(propertyPrice, area, data, 10000, mcHorizon);
 
+  // Monte Carlo histogram bins — must be called before any early returns (Rules of Hooks)
+  const histogramBins = useMemo(() => {
+    if (!mc) return [];
+    const bins = 20;
+    const min = mc.p10 * 0.95;
+    const max = mc.p90 * 1.05;
+    const binWidth = (max - min) / bins;
+    const counts = new Array(bins).fill(0);
+    const binCenters: number[] = [];
+    for (let i = 0; i < bins; i++) {
+      binCenters.push(min + binWidth * (i + 0.5));
+    }
+    for (const v of mc.finalValues) {
+      const binIdx = Math.min(Math.floor((v - min) / binWidth), bins - 1);
+      if (binIdx >= 0) counts[binIdx]++;
+    }
+    const maxCount = Math.max(...counts);
+    return binCenters.map((center, i) => ({ center, count: counts[i], pct: counts[i] / maxCount }));
+  }, [mc]);
+
+  // useTooltip must be called before any early returns (Rules of Hooks)
+  const {
+    showTooltip,
+    hideTooltip,
+    tooltipOpen,
+    tooltipData,
+    tooltipLeft,
+    tooltipTop,
+  } = useTooltip<{ year: number; adjBase: number }>();
+
   // Property adjustment total
   const adjustments = useMemo(() => {
     if (!data) return 0;
@@ -93,7 +123,14 @@ const CapitalAppreciationChart: React.FC<CapitalAppreciationChartProps> = ({
     ] : []),
   ].filter((v) => isFinite(v) && !isNaN(v));
 
+  // Early returns after all hooks
   if (allValues.length === 0) return null;
+  if (loading) return (
+    <div className="bg-linear-card/30 border border-linear-border rounded-xl p-4 flex items-center justify-center animate-pulse h-48">
+      <span className="text-[10px] text-linear-text-muted uppercase tracking-widest">Loading appreciation model...</span>
+    </div>
+  );
+  if (!profile) return null;
 
   const minV = Math.min(...allValues) * 0.97;
   const maxV = Math.max(...allValues) * 1.03;
@@ -104,14 +141,6 @@ const CapitalAppreciationChart: React.FC<CapitalAppreciationChartProps> = ({
     if (v == null || !isFinite(v) || isNaN(v)) return H - pad;
     return H - pad - ((v - minV) / range) * (H - 2 * pad);
   };
-
-  if (loading) return (
-    <div className="bg-linear-card/30 border border-linear-border rounded-xl p-4 flex items-center justify-center animate-pulse h-48">
-      <span className="text-[10px] text-linear-text-muted uppercase tracking-widest">Loading appreciation model...</span>
-    </div>
-  );
-
-  if (!profile) return null;
 
   // @visx scales
   const xScale = scaleLinear({ domain: [0, yearlyData.length - 1], range: [pad, W - pad] });
@@ -135,35 +164,6 @@ const CapitalAppreciationChart: React.FC<CapitalAppreciationChartProps> = ({
   const mcP10Data = (mc?.yearlyBandP10 ?? []).map((v, i) => ({ x: i, y: v }));
   const mcP50Data = (mc?.yearlyBandP50 ?? []).map((v, i) => ({ x: i, y: v }));
   const mcP90Data = (mc?.yearlyBandP90 ?? []).map((v, i) => ({ x: i, y: v }));
-
-  const {
-    showTooltip,
-    hideTooltip,
-    tooltipOpen,
-    tooltipData,
-    tooltipLeft,
-    tooltipTop,
-  } = useTooltip<{ year: number; adjBase: number }>();
-
-  // Monte Carlo histogram bins
-  const histogramBins = useMemo(() => {
-    if (!mc) return [];
-    const bins = 20;
-    const min = mc.p10 * 0.95;
-    const max = mc.p90 * 1.05;
-    const binWidth = (max - min) / bins;
-    const counts = new Array(bins).fill(0);
-    const binCenters: number[] = [];
-    for (let i = 0; i < bins; i++) {
-      binCenters.push(min + binWidth * (i + 0.5));
-    }
-    for (const v of mc.finalValues) {
-      const binIdx = Math.min(Math.floor((v - min) / binWidth), bins - 1);
-      if (binIdx >= 0) counts[binIdx]++;
-    }
-    const maxCount = Math.max(...counts);
-    return binCenters.map((center, i) => ({ center, count: counts[i], pct: counts[i] / maxCount }));
-  }, [mc]);
 
   if (compact) {
     const yData5 = yearlyData[mcHorizon];

@@ -34,6 +34,11 @@ Responsive, high-fidelity research dashboard to visualize property leads.
   - Use `ParentSize` from `@visx/responsive` for responsive charts
   - Raw `<svg>` only for decorative shapes (icons, dividers)
 
+## Development Ports — User Only
+The frontend dev server runs on **port 5173** and the backend API runs on **port 3001**. These are reserved exclusively for the **user's manual testing** (browser, Postman, etc.). Agents must not start `npm run dev` or `vite` — these should only be started by the user. When you need to verify rendering or UI behavior programmatically, use the **Playwright test suite** (`npm run test`, `npm run test:smoke`) which runs headless against the built files or a pre-started server.
+
+---
+
 ## Verification & Health Check (MANDATORY)
 - **Import Audit:** Ensure no orphaned imports exist.
 - **Type Integrity:** Verify all props and interfaces align.

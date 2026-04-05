@@ -3811,7 +3811,7 @@
       "effort": "Low",
       "section": "todo",
       "title": "UI: MarketConditionsBar overflow on tablet/mobile \u2014 add compact mode trigger at <1024px viewport.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-04",
@@ -3824,7 +3824,9 @@
         "Option B: Add responsive class to MarketConditionsBar wrapper \u2014 hide/show compact vs full based on screen width.",
         "Test in ResponsiveLayoutAudit.spec.ts: verify overflow < 50px at 768px and < 100px at 375px.",
         "See: agents/ui_ux_qa/REPORT_2026_04_04_FUNCTIONAL_AUDIT.md \u00a73.1 for full diagnostic data."
-      ]
+      ],
+      "resolved_date": "2026-04-04",
+      "completed_date": "2026-04-04"
     },
     {
       "id": "DE-213",
@@ -3843,6 +3845,231 @@
         "Also verified: server/index.js startup is clean with full schema init."
       ],
       "dependencies": []
+    },
+    {
+      "id": "FE-216",
+      "priority": "Medium",
+      "effort": "Small",
+      "section": "todo",
+      "title": "UI: Add \"Date Added\" sort option to /properties page \u2014 sort properties by most recently added (date_added DESC)",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-04",
+      "notes": [
+        "User request: sort by most recent properties to surface new listings quickly"
+      ],
+      "resolved_date": "2026-04-04",
+      "completed_date": "2026-04-04"
+    },
+    {
+      "id": "UX-026",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "new_approved",
+      "title": "Mobile Layout Audit: Sidebar, Header, and Pipeline Bar overflow on viewports < 1024px",
+      "status": "Todo",
+      "responsible": "UI/UX QA",
+      "dependencies": [],
+      "date": "2026-04-04",
+      "notes": [
+        "Audit the Layout.tsx sidebar drawer and mobile header \u2014 review isMobileSidebarOpen state, sidebar width (w-72), backdrop overlay, and the sticky header pipeline bar (overflow-x-auto check).",
+        "Review the ComparisonPage analytics matrix \u2014 the grid uses fixed 200px label column + repeat(N, 1fr) which will overflow on mobile (viewport < 768px).",
+        "Review PropertyTable sticky left-10 columns that cause horizontal overflow on small screens.",
+        "Review the AffordabilityNode compact view \u2014 the 2-column grid may collapse badly on narrow viewports.",
+        "Review all pages with < 768px breakpoints: Dashboard, PropertiesPage, ComparisonPage, PropertyDetail, MapView, AffordabilitySettings.",
+        "Document root causes and specific breakpoints where each component breaks."
+      ]
+    },
+    {
+      "id": "UX-027",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "new_approved",
+      "title": "Mobile Navigation Audit: Touch targets, command palette usability, and breadcrumb truncation on small screens",
+      "status": "Todo",
+      "responsible": "UI/UX QA",
+      "dependencies": [],
+      "date": "2026-04-04",
+      "notes": [
+        "Audit hamburger button tap target size in Layout.tsx header (h-8 w-8 may be below 44px touch minimum on mobile).",
+        "Audit command palette (\u2318K) on mobile \u2014 does it trigger, is the search input accessible, does the overlay work on touch devices?",
+        "Review breadcrumb overflow on the sticky header at < 640px \u2014 long paths will truncate or overflow.",
+        "Review nav sidebar items (NavItem, TargetAreasDropdown) \u2014 are touch targets sufficiently sized and spaced?",
+        "Review the mobile footer in sidebar (DemoBadge, History, Settings icons) \u2014 spacing and tap targets.",
+        "Document all touch target violations (< 44px height) per Apple HIG / WCAG guidelines."
+      ]
+    },
+    {
+      "id": "UX-028",
+      "priority": "Medium",
+      "effort": "Low",
+      "section": "new_approved",
+      "title": "Mobile Typography & Spacing Audit: Minimum font sizes, line heights, and responsive spacing on narrow viewports",
+      "status": "Todo",
+      "responsible": "UI/UX QA",
+      "dependencies": [],
+      "date": "2026-04-04",
+      "notes": [
+        "Review text-[9px] and text-[8px] font sizes \u2014 check legibility at 320px viewport width.",
+        "Review ultra-tight tracking (tracking-[0.3em]) on small screens \u2014 can cause letter overlap.",
+        "Review padding/margin values (p-6, px-4, py-3) on mobile \u2014 check for excessive whitespace vs. cramped cards.",
+        "Review alpha badge sizing (text-[8px]) in compact mobile views.",
+        "Document where font sizes fall below WCAG 1.4.3 minimum (generally 12px for body text at standard zoom)."
+      ]
+    },
+    {
+      "id": "FE-217",
+      "priority": "High",
+      "effort": "High",
+      "section": "new_approved",
+      "title": "Implement mobile-responsive layout fixes: sidebar, header pipeline bar, and ComparisonPage matrix",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [
+        "UX-026"
+      ],
+      "date": "2026-04-04",
+      "notes": [
+        "DEPENDENCY: Complete implementation after UX-026 audit is Done.",
+        "Sidebar: Ensure mobile drawer (w-72) scrolls well. Add proper overflow-y-auto. Test at 320px\u20131024px.",
+        "Pipeline bar: Fix overflow-x-auto on the sticky header \u2014 review px-4 lg:px-6 wrapping. Use flex-wrap.",
+        "ComparisonPage matrix: Replace fixed gridTemplateColumns: \"200px repeat(N, 1fr)\" with a responsive layout \u2014 consider horizontal scroll on mobile or collapse to card-stack view.",
+        "Run npm run test:smoke after each component change.",
+        "Ensure no Playwright tests regress during mobile refactors."
+      ]
+    },
+    {
+      "id": "FE-218",
+      "priority": "Medium",
+      "effort": "Medium",
+      "section": "new_approved",
+      "title": "Implement mobile-responsive typography and spacing: font size floor, touch targets, and padding adjustments",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [
+        "UX-027",
+        "UX-028"
+      ],
+      "date": "2026-04-04",
+      "notes": [
+        "DEPENDENCY: Complete implementation after UX-027 and UX-028 audits are Done.",
+        "Enforce minimum font size of 10px for any readable UI element (no text-[8px] for body-copy).",
+        "Ensure all interactive elements have min-height: 44px touch target per WCAG 2.1 SC 2.5.5.",
+        "Review and fix breadcrumb truncation at < 640px viewport.",
+        "Review all p-6 card padding \u2014 consider reducing to p-4 on mobile (sm: breakpoints).",
+        "Run accessibility checks (npm run test:accessibility) after changes."
+      ]
+    },
+    {
+      "id": "FE-219",
+      "priority": "High",
+      "effort": "Low",
+      "section": "new_approved",
+      "title": "Fix React Rules of Hooks violations in CapitalAppreciationChart.tsx and FloorplanViewer.tsx",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-04",
+      "notes": [
+        "CapitalAppreciationChart.tsx: Moved histogramBins (useMemo) and useTooltip hooks BEFORE early returns (Rules of Hooks violation fixed).",
+        "FloorplanViewer.tsx: Moved useRef (containerRef, viewportRef, imgRef) and useCallback hooks BEFORE early return (Rules of Hooks violation fixed).",
+        "These were real bugs that could cause unpredictable behavior.",
+        "Verified: npm run build succeeds, lint errors for hooks/exhaustive-deps are resolved."
+      ],
+      "completed_date": "2026-04-04"
+    },
+    {
+      "id": "DE-214",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "new_approved",
+      "title": "Consolidate market data JSON files into SQLite \u2014 remove redundant data files",
+      "status": "Todo",
+      "responsible": "Data Engineer",
+      "dependencies": [],
+      "date": "2026-04-04",
+      "notes": [
+        "Consolidate the following data files into SQLite tables in data/propSearch.db, then remove the JSON files from the data/ root:",
+        "  - data/macro_trend.json \u2192 new table: market_indicators (fields: indicator_key TEXT, value REAL, date TEXT, source TEXT)",
+        "  - data/appreciation_model.json \u2192 new table: appreciation_model (fields: area TEXT, percentile TEXT, p10 REAL, p50 REAL, p90 REAL, updated_at TEXT)",
+        "  - data/financial_context.json \u2192 new table: financial_context (fields: metric_key TEXT, value REAL, date TEXT)",
+        "  - data/off_market_research_required.json \u2192 archive this file once contents are reviewed",
+        "  - data/enrichment_required.json \u2192 archive this file once contents are reviewed",
+        "  - data/DAT-175_*.json through data/DAT-186_*.json \u2192 migrate useful data to SQLite, archive the JSON files",
+        "Create a new server endpoint GET /api/market-data that reads from SQLite instead of the JSON files. This unifies all data access through the DB.",
+        "Update data/sources/ and data/london_metro.geojson to remain as-is (non-redundant, structural files).",
+        "Update DATA_GUARDRAILS.md to reflect the new consolidated storage pattern.",
+        "Before deleting any JSON file, create a backup tar.gz in data/backups/.",
+        "Run sync_data.js after migration to ensure no data is lost. Verify API responses are identical to previous JSON-served responses."
+      ]
+    },
+    {
+      "id": "DE-215",
+      "priority": "Low",
+      "effort": "Low",
+      "section": "new_approved",
+      "title": "Data Engineer directory cleanup: review and remove obsolete scripts or documentation",
+      "status": "Todo",
+      "responsible": "Data Engineer",
+      "dependencies": [],
+      "date": "2026-04-04",
+      "notes": [
+        "Review agents/data_engineer/ directory for files that are:",
+        "  - Duplicate functionality (e.g. multiple scripts doing the same sync operation)",
+        "  - Fully superseded by newer pipeline steps",
+        "  - Documentation for workflows that no longer exist",
+        "  - Test files that belong in tests/ not in agent directories",
+        "Archive rather than delete any files that retain historical value.",
+        "Do NOT delete scripts that are still referenced by Makefile or run.sh.",
+        "Document any deletions or archive moves in a CLEANUP.md file within the agent directory.",
+        "Run make tasks-regen after updating task status."
+      ]
+    },
+    {
+      "id": "DA-191",
+      "priority": "Low",
+      "effort": "Low",
+      "section": "new_approved",
+      "title": "Data Analyst directory cleanup: review and remove obsolete research files or duplicate enrichment scripts",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-04-04",
+      "notes": [
+        "Review agents/data_analyst/ directory for files that are:",
+        "  - Research notes that have been fully acted upon and incorporated into the DB or pipeline",
+        "  - Duplicate enrichment scripts (e.g. scripts doing the same extraction in different locations)",
+        "  - Stale RESEARCH_*.md files where the research has been completed and the outcome stored in SQLite",
+        "  - One-off scripts that were used once and are now superseded by sync_data.js",
+        "Archive any research documents rather than deleting \u2014 they preserve institutional memory.",
+        "Keep enrich_leads.js and enrich_spatial.py only if they are still actively used in the pipeline.",
+        "Document any archive moves in a CLEANUP.md file within the agent directory.",
+        "Run make tasks-regen after updating task status."
+      ]
+    },
+    {
+      "id": "QA-194",
+      "priority": "Low",
+      "effort": "Low",
+      "section": "new_approved",
+      "title": "UI/UX QA directory cleanup: review and archive obsolete audit reports and research documents",
+      "status": "Todo",
+      "responsible": "UI/UX QA",
+      "dependencies": [],
+      "date": "2026-04-04",
+      "notes": [
+        "Review agents/ui_ux_qa/ directory for files that are:",
+        "  - Audit reports that have been fully actioned (all findings addressed in frontend or closed as wont-fix)",
+        "  - Duplicate audit reports covering the same component/page",
+        "  - Old research files (UX_RESEARCH_2026.md, UX_STREAMLINE_ASSESSMENT_2026.md) that have been superseded by targeted audit reports",
+        "  - TEST files that belong in frontend/tests/ not in the agent directory",
+        "Move fully superseded reports to agents/ui_ux_qa/REPORTS_ARCHIVE/ (create the directory if it does not exist).",
+        "Keep only the most recent audit report per component/page (e.g. REPORT_2026_04_04_QA_AUDIT.md over older dated reports).",
+        "Keep METRIC_DEFINITIONS.md, DATA_AUDIT_TEMPLATE.md, MAP_USABILITY_GUIDE.md \u2014 these are reference documents.",
+        "Document archive moves in a CLEANUP.md file within the agent directory.",
+        "Run make tasks-regen after updating task status."
+      ]
     }
   ],
   "_meta": {

@@ -125,6 +125,12 @@ const PropertiesPage: React.FC = () => {
         case 'appreciation_potential': return (((b as any).appreciation_potential ?? 0) - ((a as any).appreciation_potential ?? 0)) * dir;
         case 'dom': return (((a as any).dom ?? 999) - ((b as any).dom ?? 999)) * dir;
         case 'sqft': return ((a.sqft ?? 0) - (b.sqft ?? 0)) * dir;
+        // FE-216: Date Added sort — uses metadata.first_seen ISO string, lex compare works for dates
+        case 'date_added': {
+          const aDate = (a.metadata?.first_seen ?? '');
+          const bDate = (b.metadata?.first_seen ?? '');
+          return (aDate < bDate ? -1 : aDate > bDate ? 1 : 0) * dir;
+        }
         default: return 0;
       }
     });

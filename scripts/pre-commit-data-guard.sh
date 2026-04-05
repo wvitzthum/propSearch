@@ -17,16 +17,22 @@ echo "🔒 propSearch Data Guard: Pre-commit validation running..."
 
 # ── 1. Block accidental data file commits ──────────────────────────────────────
 DATA_STAGED=$(git diff --cached --name-only | grep -E '^data/' || true)
+# Exception list — files with explicit PO approval for automated commits
+DATA_EXCEPTIONS="data/demo_master.json"
 if [ -n "$DATA_STAGED" ]; then
-    echo -e "${RED}✗ BLOCKED: Staged changes to data/ directory detected:${NC}"
-    echo "$DATA_STAGED" | while read -r f; do
-        echo "  - $f"
-    done
-    echo ""
-    echo -e "${RED}  Data files must not be committed without explicit PO approval.${NC}"
-    echo -e "${RED}  If this is intentional, bypass with: git commit --no-verify${NC}"
-    echo ""
-    BLOCKED=1
+    # Filter out exceptions
+    DATA_STAGED_FILTERED=$(echo "$DATA_STAGED" | grep -v -F -x -e "$DATA_EXCEPTIONS" || true)
+    if [ -n "$DATA_STAGED_FILTERED" ]; then
+        echo -e "${RED}✗ BLOCKED: Staged changes to data/ directory detected:${NC}"
+        echo "$DATA_STAGED_FILTERED" | while read -r f; do
+            echo "  - $f"
+        done
+        echo ""
+        echo -e "${RED}  Data files must not be committed without explicit PO approval.${NC}"
+        echo -e "${RED}  If this is intentional, bypass with: git commit --no-verify${NC}"
+        echo ""
+        BLOCKED=1
+    fi
 fi
 
 # ── 2. Block any file referencing hallucinated ID patterns ──────────────────────

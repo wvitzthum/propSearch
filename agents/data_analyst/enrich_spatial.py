@@ -26,7 +26,7 @@ import sqlite3, json, time, urllib.request, urllib.parse, math
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-DB   = ROOT / 'data' / 'propsearch.db'
+DB   = ROOT / 'data' / 'propSearch.db'
 
 # ── API helpers ────────────────────────────────────────────────────────────────
 

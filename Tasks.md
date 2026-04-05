@@ -13,6 +13,34 @@
 -->
 
 
+## 🆕 New Approved Features (2026-03-30)
+
+<table>
+<thead>
+<tr>
+  <th align="left">ID</th>
+  <th align="left">Priority</th>
+  <th align="left">Effort</th>
+  <th align="left" style="width:480px">Task</th>
+  <th align="left">Status</th>
+  <th align="left">Responsible</th>
+  <th align="left">Dependencies</th>
+  <th align="left">Block Reason / Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr><td><strong>UX-026</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Mobile Layout Audit: Sidebar, Header, and Pipeline Bar overflow on viewports &lt; 1024px'>Mobile Layout Audit: Sidebar, Header, and Pipeline Bar overflow on viewports &lt; 1024px</td><td>Todo</td><td>UI/UX QA</td><td>None</td><td></td></tr>
+<tr><td><strong>UX-027</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Mobile Navigation Audit: Touch targets, command palette usability, and breadcrumb truncation on small screens'>Mobile Navigation Audit: Touch targets, command palette usability, and breadcrumb truncation on small screens</td><td>Todo</td><td>UI/UX QA</td><td>None</td><td></td></tr>
+<tr><td><strong>UX-028</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Mobile Typography &amp; Spacing Audit: Minimum font sizes, line heights, and responsive spacing on narrow viewports'>Mobile Typography &amp; Spacing Audit: Minimum font sizes, line heights, and responsive spacing on narrow viewports</td><td>Todo</td><td>UI/UX QA</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-217</strong></td><td>High</td><td>High</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Implement mobile-responsive layout fixes: sidebar, header pipeline bar, and ComparisonPage matrix'>Implement mobile-responsive layout fixes: sidebar, header pipeline bar, and ComparisonPage matrix</td><td>Todo</td><td>Frontend Engineer</td><td>UX-026</td><td></td></tr>
+<tr><td><strong>FE-218</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Implement mobile-responsive typography and spacing: font size floor, touch targets, and padding adjustments'>Implement mobile-responsive typography and spacing: font size floor, touch targets, and padding adjustments</td><td>Todo</td><td>Frontend Engineer</td><td>UX-027, UX-028</td><td></td></tr>
+<tr><td><strong>DE-214</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Consolidate market data JSON files into SQLite — remove redundant data files'>Consolidate market data JSON files into SQLite — remove redundant data files</td><td>Todo</td><td>Data Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>DE-215</strong></td><td>Low</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Data Engineer directory cleanup: review and remove obsolete scripts or documentation'>Data Engineer directory cleanup: review and remove obsolete scripts or documentation</td><td>Todo</td><td>Data Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>DA-191</strong></td><td>Low</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Data Analyst directory cleanup: review and remove obsolete research files or duplicate enrichment scripts'>Data Analyst directory cleanup: review and remove obsolete research files or duplicate enrichment scripts</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>QA-194</strong></td><td>Low</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UI/UX QA directory cleanup: review and archive obsolete audit reports and research documents'>UI/UX QA directory cleanup: review and archive obsolete audit reports and research documents</td><td>Todo</td><td>UI/UX QA</td><td>None</td><td></td></tr>
+</tbody>
+</table>
+
 ## 📊 Data & Research (Unblocked First)
 
 <table>
@@ -223,7 +251,10 @@
 <tr><td><strong>FE-212</strong></td><td>FE (Improvement): handleQuickAdd should call fetchInbox() after successful submission to auto-refresh the UI</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>FE-214</strong></td><td>FE (Improvement): Server-side URL dedup check with structured feedback when a submitted URL already exists</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>FE-213</strong></td><td>FE (Improvement): Add duplicate-URL guard to handleQuickAdd — prevent same URL submitted twice</td><td>Done</td><td>2026-04-04</td></tr>
+<tr><td><strong>FE-215</strong></td><td>UI: MarketConditionsBar overflow on tablet/mobile — add compact mode trigger at &lt;1024px viewport.</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>DE-213</strong></td><td>Data Engineer (Bug): sync_data.js crash — 47 values for 45 columns in INSERT — DE-165/DE-164 schema regression</td><td>Done</td><td>2026-04-04</td></tr>
+<tr><td><strong>FE-216</strong></td><td>UI: Add &quot;Date Added&quot; sort option to /properties page — sort properties by most recently added (date_added DESC)</td><td>Done</td><td>2026-04-04</td></tr>
+<tr><td><strong>FE-219</strong></td><td>Fix React Rules of Hooks violations in CapitalAppreciationChart.tsx and FloorplanViewer.tsx</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>FE-162</strong></td><td>Runtime crash in Inbox.tsx — Cannot read properties of undefined (reading toLoca...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-187</strong></td><td>Responsive Layout Audit: Sidebar layout (pl-64 fixed) not mobile-optimised — res...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-172</strong></td><td>Runtime React error in MarketConditionsBar.tsx:141 — &#x27;Objects are not valid as a...</td><td>Done</td><td></td></tr>

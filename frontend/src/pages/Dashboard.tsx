@@ -36,6 +36,16 @@ const Dashboard: React.FC = () => {
   const { getAffordablePrice } = useAffordability();
   const comparison = useComparison();
 
+  // FE-215: Track viewport width to trigger MarketConditionsBar compact mode < 1024px
+  const [viewportWidth, setViewportWidth] = useState(
+    typeof window !== 'undefined' ? window.innerWidth : 1440
+  );
+  useEffect(() => {
+    const handleResize = () => setViewportWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize, { passive: true });
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Recent inbox leads count
   const [inboxCount, setInboxCount] = useState(0);
   useEffect(() => {
@@ -391,7 +401,8 @@ const Dashboard: React.FC = () => {
         </div>
         <div className="space-y-3">
           <MarketPulse />
-          <MarketConditionsBar />
+          {/* FE-215: compact mode < 1024px to prevent horizontal overflow on tablet/mobile */}
+          <MarketConditionsBar compact={viewportWidth < 1024} />
         </div>
       </div>
 

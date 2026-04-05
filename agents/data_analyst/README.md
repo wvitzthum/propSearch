@@ -361,6 +361,11 @@ The Properties page defaults to hiding `archived` records (user's deprioritised 
 
 ---
 
+## Development Ports — User Only
+The backend API runs on **port 3001** and the frontend dev server runs on **port 5173**. These are reserved exclusively for the **user's manual testing**. Agents must not start these servers — if you need to verify data or test API calls, use `node -e` with `better-sqlite3` directly or curl against a pre-started server.
+
+---
+
 ## Lead Import Policy (Revised — Effective 2026-04-02)
 
 ### Rule: Always Import as Active. User Decides.

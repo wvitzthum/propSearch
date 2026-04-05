@@ -300,6 +300,17 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
               <th rowSpan={2} className="px-2 py-3 text-center text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap">
                 Market
               </th>
+              {/* FE-216: Date Added column — sortable by metadata.first_seen */}
+              <TableHeader
+                label="Added"
+                columnKey="metadata.first_seen"
+                tooltip="Date the property was first discovered and added to the pipeline."
+                className="px-2"
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
+                rowSpan={2}
+              />
               {showThesisTags && (
                 <th rowSpan={2} className="px-2 py-3 text-center text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap min-w-[100px]">
                   Thesis
@@ -336,6 +347,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
               <th className="border-r border-linear-border/30"></th>
               <th className="border-r border-linear-border/30"></th>
               {showThesisTags && <th className="border-r border-linear-border/30"></th>}
+              {/* Empty cell for Added column (rowSpan=2 covers it) */}
               {/* Empty cell for Market column (rowSpan=2 covers it) */}
             </tr>
           </thead>
@@ -464,6 +476,12 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                   {/* ADR-017: Market status cell — analyst-owned axis */}
                   <td className="px-2 py-4" onClick={(e) => e.stopPropagation()}>
                     <MarketStatusBadge status={property.market_status} />
+                  </td>
+                  {/* FE-216: Date Added cell — formatted from metadata.first_seen */}
+                  <td className="px-2 py-4 text-[10px] text-linear-text-muted font-mono" onClick={(e) => e.stopPropagation()}>
+                    {property.metadata?.first_seen
+                      ? new Date(property.metadata.first_seen).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })
+                      : '—'}
                   </td>
                   <td className="px-2 py-4" onClick={(e) => e.stopPropagation()}>
                     <LTVMatchBadge score={getLTVMatchScore(property.realistic_price)} />

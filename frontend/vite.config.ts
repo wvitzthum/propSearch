@@ -10,6 +10,7 @@ export default defineConfig({
   ],
   server: {
     host: true,
+    allowedHosts: ['nas.home', '.nas.home'],
     port: 5173,
     strictPort: true,
     proxy: {

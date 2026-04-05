@@ -31,6 +31,11 @@ Core data architecture, storage solutions (SQLite), and automated ingestion pipe
 - **Spatial Assets:** Source and maintain `data/london_metro.geojson`.
 - **Coordinate Precision:** Ensure correct geocoding for markers.
 
+## Development Ports — User Only
+The backend API runs on **port 3001** and the frontend dev server runs on **port 5173**. These are reserved exclusively for the **user's manual testing** (browser, Postman, etc.). Agents must not start these servers — they should use `better-sqlite3` directly or `node -e` calls for SQLite access during data pipeline work. If you need a live API for testing, use the `http://localhost:3001` endpoint the user has already started.
+
+---
+
 ## Data Integrity, Approval & Guardrails
 
 **READ THIS FIRST:** Before modifying `data/propSearch.db`, running `sync_data.js`, or deleting any file in `data/`, consult `agents/DATA_GUARDRAILS.md`. It defines mandatory pre-operation backups, schema validation requirements, and the delete approval format. Pipeline writes MUST implement schema validation per Rule 4 of DATA_GUARDRAILS.md.
