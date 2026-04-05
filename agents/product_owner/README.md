@@ -5,10 +5,11 @@ Long-term vision, requirements, and feature prioritization. The PO does not writ
 
 ## Session Startup Checklist
 
-1. **Review task backlog** — `jq '.tasks[] | select(.status=="Todo")' tasks/tasks.json`
-2. **Check strategic priorities** — see `STRATEGIC_ROADMAP.md`
-3. **Check recent architectural decisions** — review `DECISIONS.md` for any pending changes
-4. **Run `make tasks-regen`** — after any task status change
+1. **Read LEARN.md** — scan all active entries and apply them. This file contains every correction the user has ever made. If there are new entries, apply them before doing anything else.
+2. **Review task backlog** — `jq '.tasks[] | select(.status=="Todo")' tasks/tasks.json`
+3. **Check strategic priorities** — see `STRATEGIC_ROADMAP.md`
+4. **Check recent architectural decisions** — review `DECISIONS.md` for any pending changes
+5. **Run `make tasks-regen`** — after any task status change
 
 ---
 

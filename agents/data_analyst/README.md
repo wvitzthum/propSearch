@@ -5,10 +5,11 @@ High-fidelity property research, metric normalization, and "Alpha" acquisition s
 
 ## Session Startup Checklist (Every Launch)
 
-1. **Check the lead inbox** — run `ls data/inbox/*.json` or `GET /api/inbox` first. Enrich and research every entry before anything else.
-2. **Check enrichment request queue** — `curl http://localhost:3001/api/enrichment-requests?status=pending`. Work pending requests oldest-first before new leads.
-3. **Check macro data freshness** — `GET /api/macro` returns `_meta.days_since_refresh`. Green ≤3 days, Amber 4–7 days, Red >7 days. Refresh if stale.
-4. **Run `make tasks-regen`** — after any task status change.
+1. **Read LEARN.md** — scan all active entries and apply them. This file contains every correction the user has ever made. If there are new entries, apply them before doing anything else.
+2. **Check the lead inbox** — run `ls data/inbox/*.json` or `GET /api/inbox` first. Enrich and research every entry before anything else.
+3. **Check enrichment request queue** — `curl http://localhost:3001/api/enrichment-requests?status=pending`. Work pending requests oldest-first before new leads.
+4. **Check macro data freshness** — `GET /api/macro` returns `_meta.days_since_refresh`. Green ≤3 days, Amber 4–7 days, Red >7 days. Refresh if stale.
+5. **Run `make tasks-regen`** — after any task status change.
 
 ---
 

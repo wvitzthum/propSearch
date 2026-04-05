@@ -5,9 +5,10 @@ Rigorous UI/UX testing, functional verification, aesthetic audit, and UX analysi
 
 ## Session Startup Checklist
 
-1. **Check task backlog** — `jq '.tasks[] | select(.responsible=="UI/UX QA" and .status=="Todo")' tasks/tasks.json`
-2. **Check recent FE completions** — run Playwright tests to verify
-3. **Run `make tasks-regen`** — after any task status change
+1. **Read LEARN.md** — scan all active entries and apply them. This file contains every correction the user has ever made. If there are new entries, apply them before doing anything else.
+2. **Check task backlog** — `jq '.tasks[] | select(.responsible=="UI/UX QA" and .status=="Todo")' tasks/tasks.json`
+3. **Check recent FE completions** — run Playwright tests to verify
+4. **Run `make tasks-regen`** — after any task status change
 
 ---
 

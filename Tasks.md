@@ -31,6 +31,7 @@
 <tbody>
 <tr><td><strong>DA-191</strong></td><td>Low</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Data Analyst directory cleanup: review and remove obsolete research files or duplicate enrichment scripts'>Data Analyst directory cleanup: review and remove obsolete research files or duplicate enrichment scripts</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
 <tr><td><strong>QA-194</strong></td><td>Low</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UI/UX QA directory cleanup: review and archive obsolete audit reports and research documents'>UI/UX QA directory cleanup: review and archive obsolete audit reports and research documents</td><td>Todo</td><td>UI/UX QA</td><td>None</td><td></td></tr>
+<tr><td><strong>PO-001</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Quarterly LEARN.md review and formalisation into PROTOCOLS/ or README.md'>Quarterly LEARN.md review and formalisation into PROTOCOLS/ or README.md</td><td>Todo</td><td>Product Owner</td><td>None</td><td></td></tr>
 </tbody>
 </table>
 
@@ -257,6 +258,10 @@
 <tr><td><strong>FE-219</strong></td><td>UI: Increase HPI Historical Trajectory chart size — full-width hero placement on /rates page.</td><td>Done</td><td>2026-04-05</td></tr>
 <tr><td><strong>FE-220</strong></td><td>Fix React Rules of Hooks violations in CapitalAppreciationChart.tsx and FloorplanViewer.tsx</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>UX-029</strong></td><td>UX: Area Performance — replace dense HTML table with ranked horizontal bar chart on /rates.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>UX-030</strong></td><td>UX: London Prime Premium — full-width placement + SVG viewBox 200×80 → 600×200 on /rates.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>UX-031</strong></td><td>UX: Property Type Performance — hero redesign + move to /rates as full-width section.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>UX-032</strong></td><td>UX: /rates page — add Market Verdict hero + affordability signal above all charts.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>UX-033</strong></td><td>UX: /market page — add Market Verdict strip + compact Property Type summary replacing full chart.</td><td>Done</td><td>2026-04-05</td></tr>
 <tr><td><strong>FE-162</strong></td><td>Runtime crash in Inbox.tsx — Cannot read properties of undefined (reading toLoca...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-187</strong></td><td>Responsive Layout Audit: Sidebar layout (pl-64 fixed) not mobile-optimised — res...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-172</strong></td><td>Runtime React error in MarketConditionsBar.tsx:141 — &#x27;Objects are not valid as a...</td><td>Done</td><td></td></tr>

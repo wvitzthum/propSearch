@@ -5,9 +5,10 @@ Responsive, high-fidelity research dashboard to visualize property leads.
 
 ## Session Startup Checklist
 
-1. **Check task backlog** — `jq '.tasks[] | select(.responsible=="Frontend Engineer" and .status=="Todo")' tasks/tasks.json`
-2. **Check active UX tickets** — `jq '.tasks[] | select(.responsible=="UI/UX QA" and .status=="Todo")' tasks/tasks.json`
-3. **Run `make tasks-regen`** — after any task status change
+1. **Read LEARN.md** — scan all active entries and apply them. This file contains every correction the user has ever made. If there are new entries, apply them before doing anything else.
+2. **Check task backlog** — `jq '.tasks[] | select(.responsible=="Frontend Engineer" and .status=="Todo")' tasks/tasks.json`
+3. **Check active UX tickets** — `jq '.tasks[] | select(.responsible=="UI/UX QA" and .status=="Todo")' tasks/tasks.json`
+4. **Run `make tasks-regen`** — after any task status change
 
 ---
 
