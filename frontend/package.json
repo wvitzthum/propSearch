@@ -64,7 +64,82 @@
     "vite": "^7.3.1"
   },
   "overrides": {
+    "@visx/annotation": {
+      "peerDependencies": {
+        "react": "^19.0.0"
+      }
+    },
     "@visx/axis": {
+      "peerDependencies": {
+        "react": "^19.0.0"
+      }
+    },
+    "@visx/brush": {
+      "peerDependencies": {
+        "react": "^19.0.0"
+      }
+    },
+    "@visx/event": {
+      "peerDependencies": {
+        "react": "^19.0.0"
+      }
+    },
+    "@visx/gradient": {
+      "peerDependencies": {
+        "react": "^19.0.0"
+      }
+    },
+    "@visx/grid": {
+      "peerDependencies": {
+        "react": "^19.0.0"
+      }
+    },
+    "@visx/group": {
+      "peerDependencies": {
+        "react": "^19.0.0"
+      }
+    },
+    "@visx/heatmap": {
+      "peerDependencies": {
+        "react": "^19.0.0"
+      }
+    },
+    "@visx/legend": {
+      "peerDependencies": {
+        "react": "^19.0.0"
+      }
+    },
+    "@visx/responsive": {
+      "peerDependencies": {
+        "react": "^19.0.0"
+      }
+    },
+    "@visx/scale": {
+      "peerDependencies": {
+        "react": "^19.0.0"
+      }
+    },
+    "@visx/shape": {
+      "peerDependencies": {
+        "react": "^19.0.0"
+      }
+    },
+    "@visx/stats": {
+      "peerDependencies": {
+        "react": "^19.0.0"
+      }
+    },
+    "@visx/threshold": {
+      "peerDependencies": {
+        "react": "^19.0.0"
+      }
+    },
+    "@visx/tooltip": {
+      "peerDependencies": {
+        "react": "^19.0.0"
+      }
+    },
+    "@visx/voronoi": {
       "peerDependencies": {
         "react": "^19.0.0"
       }
