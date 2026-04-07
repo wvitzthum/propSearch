@@ -6,7 +6,7 @@ import { Bar } from '@visx/shape';
 import { Group } from '@visx/group';
 import { useTooltip, TooltipWithBounds } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
-import ParentSize from '@visx/responsive/lib/components/ParentSize';
+import { ParentSize } from '@visx/responsive';
 import { ChartLegend } from './ChartGrid';
 
 interface FunnelStage {

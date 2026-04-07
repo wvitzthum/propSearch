@@ -8,7 +8,7 @@ import { LinePath } from '@visx/shape';
 import { Group } from '@visx/group';
 import { VoronoiPolygon } from '@visx/voronoi';
 import { useTooltip, TooltipWithBounds } from '@visx/tooltip';
-import ParentSize from '@visx/responsive/lib/components/ParentSize';
+import { ParentSize } from '@visx/responsive';
 
 // FE-188: London HPI Trajectory Chart — historical index with event annotations and 3-scenario fan overlay
 // FE-219: Increased viewBox to 800x300 for hero placement

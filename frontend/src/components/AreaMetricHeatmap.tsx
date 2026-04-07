@@ -4,7 +4,7 @@ import React, { useMemo, useState, useRef } from 'react';
 import { useMacroData } from '../hooks/useMacroData';
 import { scaleLinear } from '@visx/scale';
 import { Group } from '@visx/group';
-import ParentSize from '@visx/responsive/lib/components/ParentSize';
+import { ParentSize } from '@visx/responsive';
 
 interface HeatmapCell {
   area: string;
