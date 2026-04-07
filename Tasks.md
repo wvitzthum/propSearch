@@ -29,7 +29,6 @@
 </tr>
 </thead>
 <tbody>
-<tr><td><strong>DA-191</strong></td><td>Low</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Data Analyst directory cleanup: review and remove obsolete research files or duplicate enrichment scripts'>Data Analyst directory cleanup: review and remove obsolete research files or duplicate enrichment scripts</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
 <tr><td><strong>QA-194</strong></td><td>Low</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UI/UX QA directory cleanup: review and archive obsolete audit reports and research documents'>UI/UX QA directory cleanup: review and archive obsolete audit reports and research documents</td><td>Todo</td><td>UI/UX QA</td><td>None</td><td></td></tr>
 <tr><td><strong>PO-001</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Quarterly LEARN.md review and formalisation into PROTOCOLS/ or README.md'>Quarterly LEARN.md review and formalisation into PROTOCOLS/ or README.md</td><td>Todo</td><td>Product Owner</td><td>None</td><td></td></tr>
 </tbody>
@@ -52,6 +51,9 @@
 </thead>
 <tbody>
 <tr><td><strong>DAT-187</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Data Analyst: Check lead inbox on every launch — enrich all pending leads before any other work'>Data Analyst: Check lead inbox on every launch — enrich all pending leads before any other work</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>DE-216</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Normalize mortgage_history in macro_trend to flat array'>Normalize mortgage_history in macro_trend to flat array</td><td>Todo</td><td>Data Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>DE-217</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Add missing area_heat_index and london_benchmark to macro_trend'>Add missing area_heat_index and london_benchmark to macro_trend</td><td>Todo</td><td>Data Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>VISX-022</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DE: Surface seasonal supply/demand indices in macro_trend.json'>DE: Surface seasonal supply/demand indices in macro_trend.json</td><td>Todo</td><td>Data Engineer</td><td>None</td><td></td></tr>
 </tbody>
 </table>
 
@@ -246,6 +248,7 @@
 <tr><td><strong>FE-214</strong></td><td>FE (Improvement): Server-side URL dedup check with structured feedback when a submitted URL already exists</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>FE-213</strong></td><td>FE (Improvement): Add duplicate-URL guard to handleQuickAdd — prevent same URL submitted twice</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>DAT-189</strong></td><td>Data: Fix market_status=&#x27;unknown&#x27; for 10 active properties. Update to &#x27;active&#x27; per Requirement 23.</td><td>Done</td><td>2026-04-04</td></tr>
+<tr><td><strong>DAT-190</strong></td><td>Data: Refresh SDLT countdown in macro_trend.json — Q2 2026 milestone passed on 2026-04-01.</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>DE-213</strong></td><td>Data Engineer (Bug): sync_data.js crash — 47 values for 45 columns in INSERT — DE-165/DE-164 schema regression</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>UX-026</strong></td><td>Mobile Layout Audit: Sidebar, Header, and Pipeline Bar overflow on viewports &lt; 1024px</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>UX-027</strong></td><td>Mobile Navigation Audit: Touch targets, command palette usability, and breadcrumb truncation on small screens</td><td>Done</td><td>2026-04-04</td></tr>
@@ -253,6 +256,8 @@
 <tr><td><strong>FE-218</strong></td><td>Implement mobile-responsive typography and spacing: font size floor, touch targets, and padding adjustments</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>DE-214</strong></td><td>Consolidate market data JSON files into SQLite — remove redundant data files</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>DE-215</strong></td><td>Data Engineer directory cleanup: review and remove obsolete scripts or documentation</td><td>Done</td><td>2026-04-04</td></tr>
+<tr><td><strong>DA-191</strong></td><td>Data Analyst directory cleanup: review and remove obsolete research files or duplicate enrichment scripts</td><td>Done</td><td>2026-04-04</td></tr>
+<tr><td><strong>FE-215</strong></td><td>UI: MarketConditionsBar overflow on tablet/mobile — add compact mode at &lt;1024px.</td><td>Done</td><td>2026-04-05</td></tr>
 <tr><td><strong>FE-216</strong></td><td>UI: Add Purchasing Power Index chart to AffordabilitySettings page (Requirement R12).</td><td>Done</td><td>2026-04-05</td></tr>
 <tr><td><strong>FE-217</strong></td><td>UI: Add LTV Advantage node to PropertyDetail page (Requirement R12).</td><td>Done</td><td>2026-04-05</td></tr>
 <tr><td><strong>FE-219</strong></td><td>UI: Increase HPI Historical Trajectory chart size — full-width hero placement on /rates page.</td><td>Done</td><td>2026-04-05</td></tr>
@@ -262,6 +267,28 @@
 <tr><td><strong>UX-031</strong></td><td>UX: Property Type Performance — hero redesign + move to /rates as full-width section.</td><td>Done</td><td>2026-04-05</td></tr>
 <tr><td><strong>UX-032</strong></td><td>UX: /rates page — add Market Verdict hero + affordability signal above all charts.</td><td>Done</td><td>2026-04-05</td></tr>
 <tr><td><strong>UX-033</strong></td><td>UX: /market page — add Market Verdict strip + compact Property Type summary replacing full chart.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-001</strong></td><td>UX: Upgrade Monte Carlo histogram in CapitalAppreciationChart with @visx/stats + @visx/threshold.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-002</strong></td><td>UX: Replace all hand-written axis/grid rendering with @visx/axis and @visx/grid across all charts.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-003</strong></td><td>UX: AreaPerformanceTable — replace CSS dot-bar with @visx/shape horizontal bar chart + @visx/gradient.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-004</strong></td><td>UX: Install @visx/annotation and add event markers to HPIHistoryChart.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-005</strong></td><td>UX: Install @visx/heatmap and build Area × Metric heatmap matrix on /market page.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-006</strong></td><td>UX: Install @visx/threshold and add P10-P90 confidence band to CapitalAppreciationChart fan chart.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-007</strong></td><td>UX: Install @visx/brush and add interactive zoom/selection to HPIHistoryChart.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-008</strong></td><td>UX: Install @visx/voronoi and add pixel-precise hover to all line charts.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-009</strong></td><td>UX: Install @visx/legend and replace all hand-written chart legends with LegendLinear/LegendOrdinal.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-010</strong></td><td>UX: Create PipelineFunnelChart component using @visx/shape Bar + ParentSize for Dashboard.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-011</strong></td><td>UX: Create PurchasingPowerIndex chart using @visx/threshold + dual-axis time series.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-012</strong></td><td>UX: Create LTV Band Comparison grouped bar chart using @visx/shape BarGroup on /affordability.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-013</strong></td><td>UX: Create Radar/Spider chart component using @visx/shape LinePath for /comparison page.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-014</strong></td><td>UX: Create shared ChartGrid + gradient library using @visx/gradient and @visx/grid.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-015</strong></td><td>UX: Upgrade all chart fills to use @visx/gradient — richer, more distinctive chart aesthetics.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-016</strong></td><td>Remove LTV Band Eligibility chart from Affordability Settings page</td><td>Done</td><td></td></tr>
+<tr><td><strong>VISX-017</strong></td><td>Fix Purchasing Power Index tooltip positioning</td><td>Done</td><td></td></tr>
+<tr><td><strong>VISX-018</strong></td><td>Fix London HPI Historical Trajectory tooltip positioning</td><td>Done</td><td></td></tr>
+<tr><td><strong>VISX-019</strong></td><td>Fix London HPI Historical Trajectory axis label font sizes</td><td>Done</td><td></td></tr>
+<tr><td><strong>VISX-020</strong></td><td>Improve Area × Metric Heatmap UX clarity and fix tooltip positioning</td><td>Done</td><td></td></tr>
+<tr><td><strong>FE-220</strong></td><td>UI: Fix Properties page mobile usability</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>FE-221</strong></td><td>Fix deposit calculation in AffordabilityNode sidebar — getBudgetProfile ignored depositMode/depositPct</td><td>Done</td><td>2026-04-05</td></tr>
 <tr><td><strong>FE-162</strong></td><td>Runtime crash in Inbox.tsx — Cannot read properties of undefined (reading toLoca...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-187</strong></td><td>Responsive Layout Audit: Sidebar layout (pl-64 fixed) not mobile-optimised — res...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-172</strong></td><td>Runtime React error in MarketConditionsBar.tsx:141 — &#x27;Objects are not valid as a...</td><td>Done</td><td></td></tr>

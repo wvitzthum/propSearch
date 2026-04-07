@@ -7,6 +7,26 @@
 
 ---
 
+## 2026-04-05
+
+**Trigger:** Deposit shown in AffordabilityNode sidebar (£222K) didn't match user's configured fixed deposit (£75K)
+**Was:** `getBudgetProfile` in useAffordability.ts always derived deposit from monthly budget (auto-mode logic), completely ignoring `depositMode` and `depositPct` state — so the sidebar always showed affordability-based deposit regardless of settings
+**Now:** `getBudgetProfile` checks `depositMode` first: fixed mode uses `depositPct`, auto mode uses monthly-budget derivation. Also fixes monthly payment and stress test to be consistent with the selected mode.
+**Scope:** `useAffordability.ts` — getBudgetProfile; any component that shows deposit in the context of the user's configured settings
+**Status:** Active
+
+---
+
+## 2026-04-05
+
+**Trigger:** AreaPerformanceChart.tsx had `useTooltip` hook called AFTER a conditional `return null` — violated Rules of Hooks
+**Was:** Hooks called after an early return guard (`if (!data || areas.length === 0) return null`)
+**Now:** `useTooltip` (and ALL hooks) are called unconditionally before ANY conditional returns
+**Scope:** All React components — any hook called after an early return is a bug
+**Status:** Active
+
+---
+
 ## 2026-04-04
 
 **Trigger:** Ports 3001 and 5173 are the user's own dev servers — agents must not start them

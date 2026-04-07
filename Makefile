@@ -1,4 +1,4 @@
-.PHONY: install start build lint clean agent agent-po agent-analyst agent-data agent-fe agent-qa agent-de tasks help guard-install agent-windows agent-tmux-all agent-po-tmux agent-analyst-tmux agent-de-tmux agent-fe-tmux agent-qa-tmux sync price-monitor enrich
+.PHONY: install start start-tmux build lint clean agent agent-po agent-analyst agent-data agent-fe agent-qa agent-de tasks help guard-install agent-windows agent-tmux-all agent-po-tmux agent-analyst-tmux agent-de-tmux agent-fe-tmux agent-qa-tmux sync price-monitor enrich
 
 # Default target
 all: install start
@@ -18,6 +18,22 @@ install:
 start:
 	@echo "Starting propSearch Full Stack..."
 	node server/index.js & cd frontend && npm run dev
+
+# Start propSearch in a persistent tmux session (reattach with: tmux attach -t propsearch-dev)
+# If the session already exists and the server is running, skips start and attaches directly.
+start-tmux:
+	@SESSION=propsearch-dev; \
+	if tmux has-session -t "$$SESSION" 2>/dev/null; then \
+		echo "Session '$$SESSION' already exists — attaching."; \
+	else \
+		echo "Creating new tmux session '$$SESSION'..."; \
+		tmux new-session -d -s "$$SESSION"; \
+		tmux send-keys -t "$$SESSION" "echo '=== propSearch Dev Session ===' && echo 'Starting server + frontend...'" Enter; \
+		tmux send-keys -t "$$SESSION" "node server/index.js &" Enter; \
+		tmux send-keys -t "$$SESSION" "cd frontend && npm run dev" Enter; \
+		sleep 2; \
+	fi; \
+	tmux attach -t "$$SESSION"
 
 # Start the Data API server
 api:
@@ -77,52 +93,63 @@ agent-po:
 # ====================
 
 # Open all agents in a single window with 5 panes (grid view)
+# If the session already exists, just attaches — does NOT restart agents.
 agent-tmux-grid:
-	@tmux kill-session -t propSearch 2>/dev/null || true
-	@tmux new-session -d -s propSearch -n "Agents"
-	
-	# Use a custom variable (@agent) so applications can't overwrite it
-	@tmux set-window-option -t propSearch:Agents automatic-rename off
-	@tmux set-window-option -t propSearch:Agents allow-rename off
-	@tmux set-option -t propSearch:Agents pane-border-status top
-	@tmux set-option -t propSearch:Agents pane-border-format "── #P: #[fg=cyan,bold]#{@agent}#[default] ──"
-	
-	# Pane 0: PO
-	@tmux set-option -p -t propSearch:Agents.0 @agent "PRODUCT OWNER"
-	@tmux send-keys -t propSearch:Agents.0 "./agents/run.sh po" Enter
-	
-	# Pane 1: Analyst (Split H from 0)
-	@tmux split-window -h -t propSearch:Agents
-	@tmux set-option -p -t propSearch:Agents.1 @agent "DATA ANALYST"
-	@tmux send-keys -t propSearch:Agents.1 "./agents/run.sh analyst" Enter
-	
-	@tmux select-pane -t 0
-	@tmux split-window -v -t propSearch:Agents
-	@tmux set-option -p -t propSearch:Agents.1 @agent "DATA ENGINEER"
-	@tmux send-keys -t propSearch:Agents.1 "./agents/run.sh de" Enter
-	
-	@tmux select-pane -t 2
-	@tmux split-window -v -t propSearch:Agents
-	@tmux set-option -p -t propSearch:Agents.3 @agent "FRONTEND ENGINEER"
-	@tmux send-keys -t propSearch:Agents.3 "./agents/run.sh fe" Enter
-	
-	@tmux split-window -v -t propSearch:Agents
-	@tmux set-option -p -t propSearch:Agents.4 @agent "UI/UX QA"
-	@tmux send-keys -t propSearch:Agents.4 "./agents/run.sh qa" Enter
-	
-	@tmux select-layout -t propSearch:Agents tiled
-	@tmux attach-session -t propSearch
+	@SESSION=propSearch; \
+	if tmux has-session -t "$$SESSION" 2>/dev/null; then \
+		echo "Session '$$SESSION' already exists — attaching."; \
+		tmux attach-session -t "$$SESSION"; \
+	else \
+		echo "Creating new tmux session '$$SESSION' with 5 agent panes..."; \
+		tmux new-session -d -s "$$SESSION" -n "Agents"; \
+		\
+		tmux set-window-option -t "$$SESSION:Agents" automatic-rename off; \
+		tmux set-window-option -t "$$SESSION:Agents" allow-rename off; \
+		tmux set-option -t "$$SESSION:Agents" pane-border-status top; \
+		tmux set-option -t "$$SESSION:Agents" pane-border-format "── #P: #[fg=cyan,bold]#{@agent}#[default] ──"; \
+		\
+		tmux set-option -p -t "$$SESSION:Agents.0" @agent "PRODUCT OWNER"; \
+		tmux send-keys -t "$$SESSION:Agents.0" "./agents/run.sh po" Enter; \
+		\
+		tmux split-window -h -t "$$SESSION:Agents"; \
+		tmux set-option -p -t "$$SESSION:Agents.1" @agent "DATA ANALYST"; \
+		tmux send-keys -t "$$SESSION:Agents.1" "./agents/run.sh analyst" Enter; \
+		\
+		tmux select-pane -t "$$SESSION:0"; \
+		tmux split-window -v -t "$$SESSION:Agents"; \
+		tmux set-option -p -t "$$SESSION:Agents.1" @agent "DATA ENGINEER"; \
+		tmux send-keys -t "$$SESSION:Agents.1" "./agents/run.sh de" Enter; \
+		\
+		tmux select-pane -t "$$SESSION:2"; \
+		tmux split-window -v -t "$$SESSION:Agents"; \
+		tmux set-option -p -t "$$SESSION:Agents.3" @agent "FRONTEND ENGINEER"; \
+		tmux send-keys -t "$$SESSION:Agents.3" "./agents/run.sh fe" Enter; \
+		\
+		tmux split-window -v -t "$$SESSION:Agents"; \
+		tmux set-option -p -t "$$SESSION:Agents.4" @agent "UI/UX QA"; \
+		tmux send-keys -t "$$SESSION:Agents.4" "./agents/run.sh qa" Enter; \
+		\
+		tmux select-layout -t "$$SESSION:Agents" tiled; \
+		tmux attach-session -t "$$SESSION"; \
+	fi
 
 # Open all agents in separate tmux windows (parallel)
+# If the session already exists, just attaches — does NOT restart agents.
 agent-tmux-all:
-	@tmux kill-session -t propSearch 2>/dev/null || true
-	@tmux new-session -d -s propSearch -n "PO" "./agents/run.sh po"
-	@tmux new-window -t propSearch -n "ANALYST" "./agents/run.sh analyst"
-	@tmux new-window -t propSearch -n "DE" "./agents/run.sh de"
-	@tmux new-window -t propSearch -n "FE" "./agents/run.sh fe"
-	@tmux new-window -t propSearch -n "QA" "./agents/run.sh qa"
-	@tmux select-window -t propSearch:PO
-	@tmux attach-session -t propSearch
+	@SESSION=propSearch; \
+	if tmux has-session -t "$$SESSION" 2>/dev/null; then \
+		echo "Session '$$SESSION' already exists — attaching."; \
+		tmux attach-session -t "$$SESSION"; \
+	else \
+		echo "Creating new tmux session '$$SESSION' with agent windows..."; \
+		tmux new-session -d -s "$$SESSION" -n "PO" "./agents/run.sh po"; \
+		tmux new-window -t "$$SESSION" -n "ANALYST" "./agents/run.sh analyst"; \
+		tmux new-window -t "$$SESSION" -n "DE" "./agents/run.sh de"; \
+		tmux new-window -t "$$SESSION" -n "FE" "./agents/run.sh fe"; \
+		tmux new-window -t "$$SESSION" -n "QA" "./agents/run.sh qa"; \
+		tmux select-window -t "$$SESSION:PO"; \
+		tmux attach-session -t "$$SESSION"; \
+	fi
 
 # Invoke the Data Analyst agent
 agent-analyst:
@@ -177,7 +204,8 @@ help:
 	@echo ""
 	@echo "Development:"
 	@echo "  make install    - Install frontend dependencies"
-	@echo "  make start      - Start API server + frontend dev"
+	@echo "  make start      - Start API server + frontend dev (background)"
+	@echo "  make start-tmux - Start in persistent tmux session (reattach: tmux attach -t propsearch-dev)"
 	@echo "  make api        - Start API server only"
 	@echo "  make sync       - Run data sync pipeline"
 	@echo "  make build      - Build frontend for production"
@@ -196,8 +224,8 @@ help:
 	@echo "  make agent agent=fe \"custom context\"   - With extra context"
 	@echo ""
 	@echo "New Windows (tmux - recommended):"
-	@echo "  make agent-tmux-grid       - Open all 5 agents in 1 window (grid layout)"
-	@echo "  make agent-tmux-all        - Open all 5 agents in separate windows (tabs)"
+	@echo "  make agent-tmux-grid       - Open all 5 agents in 1 window (grid layout; reuses session)"
+	@echo "  make agent-tmux-all        - Open all 5 agents in separate windows (tabs; reuses session)"
 	@echo ""
 	@echo "New Windows (VSCode - type commands manually):"
 	@echo "  make agent-windows         - Open 5 VSCode windows"

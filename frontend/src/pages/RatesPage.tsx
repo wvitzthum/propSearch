@@ -6,10 +6,11 @@ import {
 } from 'lucide-react';
 import SwapRateSignal from '../components/SwapRateSignal';
 import BoERatePathChart from '../components/BoERatePathChart';
-import AreaPerformanceTable from '../components/AreaPerformanceTable';
+import AreaPerformanceChart from '../components/AreaPerformanceChart';
 import HPIHistoryChart from '../components/HPIHistoryChart';
 import LondonPrimePremiumChart from '../components/LondonPrimePremiumChart';
 import DataFreshnessIndicator from '../components/DataFreshnessIndicator';
+import MarketVerdict from '../components/MarketVerdict';
 
 const RatesPage: React.FC = () => {
   return (
@@ -35,6 +36,9 @@ const RatesPage: React.FC = () => {
         </div>
       </div>
 
+      {/* UX-032: Market Verdict hero */}
+      <MarketVerdict />
+
       {/* Swap Rate Signal — top banner */}
       <div className="bg-linear-card border border-linear-border rounded-2xl p-6 shadow-xl">
         <div className="flex items-center gap-2 mb-4">
@@ -44,8 +48,17 @@ const RatesPage: React.FC = () => {
         <SwapRateSignal />
       </div>
 
-      {/* BoE Rate Path + HPI Trajectory + Area Performance — main grid */}
-      <div className="grid lg:grid-cols-3 gap-8">
+      {/* FE-219: HPI Historical Trajectory — full-width hero section */}
+      <div className="bg-linear-card border border-linear-border rounded-2xl p-6 shadow-xl">
+        <div className="flex items-center gap-2 mb-4">
+          <Activity size={14} className="text-retro-green" />
+          <h2 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">London HPI Historical Trajectory</h2>
+        </div>
+        <HPIHistoryChart height={360} />
+      </div>
+
+      {/* BoE Rate Path + Area Performance — 2-column grid */}
+      <div className="grid lg:grid-cols-2 gap-8">
         {/* BoE Rate Path */}
         <div className="bg-linear-card border border-linear-border rounded-2xl p-6 shadow-xl">
           <div className="flex items-center gap-2 mb-4">
@@ -55,22 +68,13 @@ const RatesPage: React.FC = () => {
           <BoERatePathChart />
         </div>
 
-        {/* HPI Trajectory Chart */}
-        <div className="bg-linear-card border border-linear-border rounded-2xl p-6 shadow-xl">
-          <div className="flex items-center gap-2 mb-4">
-            <Activity size={14} className="text-retro-green" />
-            <h2 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">HPI Historical Trajectory</h2>
-          </div>
-          <HPIHistoryChart />
-        </div>
-
         {/* Area Performance Table */}
         <div className="bg-linear-card border border-linear-border rounded-2xl p-6 shadow-xl">
           <div className="flex items-center gap-2 mb-4">
             <Activity size={14} className="text-purple-400" />
             <h2 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">Area Performance</h2>
           </div>
-          <AreaPerformanceTable />
+          <AreaPerformanceChart maxRows={6} />
         </div>
       </div>
 

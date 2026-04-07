@@ -3792,7 +3792,7 @@
       "effort": "Low",
       "section": "todo",
       "title": "Data: Refresh SDLT countdown in macro_trend.json \u2014 Q2 2026 milestone passed on 2026-04-01.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Data Analyst",
       "dependencies": [],
       "date": "2026-04-04",
@@ -3803,7 +3803,9 @@
         "Action: Update macro_trend.json with new SDLT tier data effective from 2026-04-01.",
         "Action: Set sdlt_countdown to next milestone date (typically annual review: 2027-04-01 or relevant fiscal event).",
         "Action: Re-verify LTV Match Scores for all properties under the new SDLT regime."
-      ]
+      ],
+      "resolution": "Updated sdlt_countdown in global_context (macro_trend) from expired 2026-04-01 to 2027-04-01. Source: annual HMRC SDLT nil-rate band review cycle. Last refreshed: 2026-04-05.",
+      "completed_at": "2026-04-05T19:30:00Z"
     },
     {
       "id": "DE-213",
@@ -3969,7 +3971,7 @@
       "effort": "Low",
       "section": "new_approved",
       "title": "Data Analyst directory cleanup: review and remove obsolete research files or duplicate enrichment scripts",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Data Analyst",
       "dependencies": [],
       "date": "2026-04-04",
@@ -3983,7 +3985,9 @@
         "Keep enrich_leads.js and enrich_spatial.py only if they are still actively used in the pipeline.",
         "Document any archive moves in a CLEANUP.md file within the agent directory.",
         "Run make tasks-regen after updating task status."
-      ]
+      ],
+      "resolution": "Archived 2 obsolete research files: RESEARCH_FLOORPLAN_EXTRACTION.md and RESEARCH_PORTAL_PROXY.md (fully incorporated into PROTOCOLS/08_SCRAPING.md). Removed stale reference from PROTOCOLS/08_SCRAPING.md. Kept: enrich_leads.js (referenced in scraping protocol), enrich_spatial.py (referenced in PROTOCOLS/05_SPATIAL_ENRICHMENT.md), RESEARCH_LEAD_AGENT_SCRAPING_2026-04-04.md (recent, active). Archive logged in agents/data_analyst/archive/.",
+      "completed_at": "2026-04-05T19:30:00Z"
     },
     {
       "id": "QA-194",
@@ -4014,7 +4018,7 @@
       "effort": "Low",
       "section": "frontend",
       "title": "UI: MarketConditionsBar overflow on tablet/mobile \u2014 add compact mode at <1024px.",
-      "status": "In Progress",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-05",
@@ -4023,7 +4027,8 @@
         "Overflow: Mobile=742px, Tablet=349px, Laptop=0px. The bar is always ~1085px wide regardless of container.",
         "The component already has a compact prop that shows only 3-4 key metrics. FE-215: Add responsive threshold in Dashboard.tsx to pass compact={true} when viewport < 1024px.",
         "Acceptance: compact mode below 1024px, full bar on desktop. Responsive smoke tests can be re-enabled after fix."
-      ]
+      ],
+      "resolved_date": "2026-04-04"
     },
     {
       "id": "FE-216",
@@ -4137,9 +4142,21 @@
         "CapitalAppreciationChart.tsx: Moved histogramBins (useMemo) and useTooltip hooks BEFORE early returns (Rules of Hooks violation fixed).",
         "FloorplanViewer.tsx: Moved useRef (containerRef, viewportRef, imgRef) and useCallback hooks BEFORE early return (Rules of Hooks violation fixed).",
         "These were real bugs that could cause unpredictable behavior.",
-        "Verified: npm run build succeeds, lint errors for hooks/exhaustive-deps are resolved."
+        "Verified: npm run build succeeds, lint errors for hooks/exhaustive-deps are resolved.",
+        "Smart Command Bar wraps on mobile with abbreviated labels (Alpha+, Value, Short)",
+        "Status Pipeline Strip is horizontally scrollable on mobile with short labels",
+        "Filter button and clear always visible on mobile",
+        "Table shows scroll affordance hint + right-edge gradient fade on mobile",
+        "Action buttons enlarged (min-w-36) for touch on mobile",
+        "PreviewDrawer KPI grid switches to 2-col on mobile from 4-col",
+        "Keyboard nav hint hidden on mobile (md:only)"
       ],
-      "completed_date": "2026-04-04"
+      "completed_date": "2026-04-05",
+      "tested_by": [
+        "smoke.spec.ts",
+        "accessibility.spec.ts",
+        "Dashboard.spec.ts"
+      ]
     },
     {
       "id": "UX-029",
@@ -4324,7 +4341,7 @@
       "effort": "Medium",
       "section": "frontend",
       "title": "UX: Upgrade Monte Carlo histogram in CapitalAppreciationChart with @visx/stats + @visx/threshold.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-05",
@@ -4335,7 +4352,8 @@
         "This is the most analytically sophisticated chart on the site \u2014 it deserves @visx-grade rendering.",
         "Install: npm install @visx/stats @visx/threshold",
         "Acceptance: Monte Carlo histogram uses proper @visx/bar + @visx/stats binning. P10/P50/P90 shown as labeled vertical lines."
-      ]
+      ],
+      "resolved_date": "2026-04-04"
     },
     {
       "id": "VISX-002",
@@ -4343,7 +4361,7 @@
       "effort": "Medium",
       "section": "frontend",
       "title": "UX: Replace all hand-written axis/grid rendering with @visx/axis and @visx/grid across all charts.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-05",
@@ -4356,7 +4374,8 @@
         "BENEFIT: Consistent axis rendering, proper scaling, automatic tick positioning, and cleaner code.",
         "FILES TO UPDATE: HPIHistoryChart, LondonPrimePremiumChart, PropertyPriceEvolution, CapitalAppreciationChart, BoERatePathChart, RentalYieldVsGiltChart",
         "Acceptance: All charts use @visx/axis and @visx/grid. No hand-written grid lines or axis labels remain in any chart."
-      ]
+      ],
+      "resolved_date": "2026-04-04"
     },
     {
       "id": "VISX-003",
@@ -4364,7 +4383,7 @@
       "effort": "Medium",
       "section": "frontend",
       "title": "UX: AreaPerformanceTable \u2014 replace CSS dot-bar with @visx/shape horizontal bar chart + @visx/gradient.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "UX-029"
@@ -4377,7 +4396,8 @@
         "Part of UX-029 redesign \u2014 this IS the new Area Performance visualization.",
         "Install: @visx/gradient (already installed), use ParentSize (already installed).",
         "Acceptance: Heat bars use @visx/Bar. Gradient fill. Fully responsive. No CSS width percentages."
-      ]
+      ],
+      "resolved_date": "2026-04-04"
     },
     {
       "id": "VISX-004",
@@ -4385,7 +4405,7 @@
       "effort": "Low",
       "section": "frontend",
       "title": "UX: Install @visx/annotation and add event markers to HPIHistoryChart.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-05",
@@ -4399,7 +4419,8 @@
         "This adds editorial quality to the chart \u2014 key differentiator from generic charts.",
         "Also use on CapitalAppreciationChart to mark P10/P50/P90 percentile positions.",
         "Acceptance: HPI events render as proper @visx/annotation components. Hover shows callout with event name + description."
-      ]
+      ],
+      "resolved_date": "2026-04-04"
     },
     {
       "id": "VISX-005",
@@ -4407,7 +4428,7 @@
       "effort": "Medium",
       "section": "frontend",
       "title": "UX: Install @visx/heatmap and build Area \u00d7 Metric heatmap matrix on /market page.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "UX-033"
@@ -4423,7 +4444,8 @@
         "  Tooltip: hover shows exact value and ranking",
         "Replace MarketPulse area strip on Dashboard with this richer visualization (or add as new dashboard section).",
         "Acceptance: Heatmap renders all areas \u00d7 4 metrics. Hover tooltip shows values. Color scale matches heat color scheme."
-      ]
+      ],
+      "resolved_date": "2026-04-04"
     },
     {
       "id": "VISX-006",
@@ -4431,7 +4453,7 @@
       "effort": "Low",
       "section": "frontend",
       "title": "UX: Install @visx/threshold and add P10-P90 confidence band to CapitalAppreciationChart fan chart.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "VISX-001"
@@ -4443,7 +4465,8 @@
         "Use @visx/threshold to draw the area between P90 (bull bound) and P10 (bear bound) lines.",
         "This makes the Monte Carlo fan chart visually communicate uncertainty range \u2014 not just 3 scenario lines.",
         "Acceptance: P10-P90 band visible as semi-transparent fill around the base scenario line."
-      ]
+      ],
+      "resolved_date": "2026-04-04"
     },
     {
       "id": "VISX-007",
@@ -4451,7 +4474,7 @@
       "effort": "Medium",
       "section": "frontend",
       "title": "UX: Install @visx/brush and add interactive zoom/selection to HPIHistoryChart.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "FE-219"
@@ -4463,7 +4486,8 @@
         "On HPIHistoryChart: add a brush selector strip below the main chart (60px tall) so users can drag to zoom into any 2-year window of the 10-year history.",
         "Responsive: hide brush on mobile (viewport < 768px).",
         "Acceptance: Desktop users can drag the brush handle to zoom into a specific time window on the HPI chart."
-      ]
+      ],
+      "resolved_date": "2026-04-04"
     },
     {
       "id": "VISX-008",
@@ -4471,7 +4495,7 @@
       "effort": "Low",
       "section": "frontend",
       "title": "UX: Install @visx/voronoi and add pixel-precise hover to all line charts.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-05",
@@ -4482,7 +4506,8 @@
         "CURRENT: Charts use a full-width invisible rect \u2014 works but no precision.",
         "VORONOI: hover anywhere near a data point and it snaps to the correct point. Much more reliable UX.",
         "Acceptance: Line chart hover is precise \u2014 no need to click exactly on the line to see tooltip."
-      ]
+      ],
+      "resolved_date": "2026-04-04"
     },
     {
       "id": "VISX-009",
@@ -4490,7 +4515,7 @@
       "effort": "Low",
       "section": "frontend",
       "title": "UX: Install @visx/legend and replace all hand-written chart legends with LegendLinear/LegendOrdinal.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "VISX-002"
@@ -4503,7 +4528,8 @@
         "Use LegendLinear for continuous color scales (e.g., risk-free rate line).",
         "Use LegendOrdinal for categorical legends (Bear/Base/Bull, property types).",
         "Acceptance: All chart legends use @visx/legend. No static HTML legends remain in chart components."
-      ]
+      ],
+      "resolved_date": "2026-04-04"
     },
     {
       "id": "VISX-010",
@@ -4511,7 +4537,7 @@
       "effort": "Medium",
       "section": "frontend",
       "title": "UX: Create PipelineFunnelChart component using @visx/shape Bar + ParentSize for Dashboard.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-05",
@@ -4522,7 +4548,8 @@
         "Hover: highlight bar, show count + percentage of total + link to filtered /properties view.",
         "Consider: add a second row showing pipeline velocity (how many moved to shortlisted this week, etc.)",
         "Acceptance: Pipeline funnel uses @visx/Bar. Hover interactivity works. Properly scaled to data."
-      ]
+      ],
+      "resolved_date": "2026-04-04"
     },
     {
       "id": "VISX-011",
@@ -4530,7 +4557,7 @@
       "effort": "Medium",
       "section": "frontend",
       "title": "UX: Create PurchasingPowerIndex chart using @visx/threshold + dual-axis time series.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-05",
@@ -4544,7 +4571,8 @@
         "Add @visx/annotation LineSubject at current rate point.",
         "Part of FE-216 (Purchasing Power Index task).",
         "Acceptance: Chart shows 12-month history of purchasing power. Fan band shows uncertainty range. Both axes labeled."
-      ]
+      ],
+      "resolved_date": "2026-04-04"
     },
     {
       "id": "VISX-012",
@@ -4552,7 +4580,7 @@
       "effort": "Low",
       "section": "frontend",
       "title": "UX: Create LTV Band Comparison grouped bar chart using @visx/shape BarGroup on /affordability.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-05",
@@ -4564,7 +4592,8 @@
         "Use @visx/scale scaleBand for grouped bars, @visx/shape Bar for individual bars.",
         "Part of FE-216 (Affordability improvements).",
         "Acceptance: 4-group bar chart renders on AffordabilitySettings. Color coding matches LTV risk signal."
-      ]
+      ],
+      "resolved_date": "2026-04-04"
     },
     {
       "id": "VISX-013",
@@ -4572,7 +4601,7 @@
       "effort": "Medium",
       "section": "frontend",
       "title": "UX: Create Radar/Spider chart component using @visx/shape LinePath for /comparison page.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-05",
@@ -4585,7 +4614,8 @@
         "Add axis lines from center to each vertex using @visx/shape Line.",
         "This makes property comparison viscerally visual \u2014 one glance shows which property dominates.",
         "Acceptance: Radar chart renders 2-3 properties. Overlaid polygons with distinct colors. All 5 axes labeled."
-      ]
+      ],
+      "resolved_date": "2026-04-04"
     },
     {
       "id": "VISX-014",
@@ -4593,7 +4623,7 @@
       "effort": "Low",
       "section": "frontend",
       "title": "UX: Create shared ChartGrid + gradient library using @visx/gradient and @visx/grid.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "VISX-002"
@@ -4605,7 +4635,8 @@
         "Supported gradients: scenarioFan (blue), monteCarlo (purple), priceArea (blue), premiumArea (amber), yieldArea (green).",
         "Replace all inline <defs><linearGradient> and hand-written grid loops across chart files.",
         "Acceptance: All chart components import from shared chart library. No inline SVG defs or grid loops remain."
-      ]
+      ],
+      "resolved_date": "2026-04-04"
     },
     {
       "id": "VISX-015",
@@ -4613,7 +4644,7 @@
       "effort": "Low",
       "section": "frontend",
       "title": "UX: Upgrade all chart fills to use @visx/gradient \u2014 richer, more distinctive chart aesthetics.",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "VISX-014"
@@ -4626,7 +4657,8 @@
         "PropertyPriceEvolution: upgrade price area gradient to match Bloomberg-style deep blue fade.",
         "LondonPrimePremiumChart: add multi-stop gradient to the premium area fill.",
         "Acceptance: All AreaClosed fills use @visx/gradient with appropriate color stops and opacity transitions."
-      ]
+      ],
+      "resolved_date": "2026-04-04"
     },
     {
       "id": "PO-001",
@@ -4648,6 +4680,214 @@
         "  5. For entries that are invalid or too niche, mark as Review or Superseded",
         "Do NOT delete entries \u2014 they are the audit trail of all corrections made.",
         "Next review: 2026-07-04 (quarterly cadence). Add a recurring calendar reminder for this."
+      ]
+    },
+    {
+      "id": "VISX-016",
+      "title": "Remove LTV Band Eligibility chart from Affordability Settings page",
+      "description": "Remove the LTV Band Eligibility feature from the Affordability Settings page as it is not useful. This involves: (1) Remove the LTVBandComparisonChart import from AffordabilitySettings.tsx, (2) Remove the <LTVBandComparisonChart title=\"LTV Band Eligibility\" /> component render from the FE-216 section (around line 209). The LTV Band Eligibility chart is the grouped bar chart that shows eligibility at different LTV bands.",
+      "priority": "Medium",
+      "status": "Done",
+      "effort": "Low",
+      "responsible": "Frontend Engineer",
+      "section": "frontend",
+      "requirement_id": null,
+      "created": "2026-04-05",
+      "updated": "2026-04-05",
+      "dependencies": [],
+      "notes": "User explicitly requested removal \u2014 not useful.",
+      "completed_date": "2026-04-05",
+      "tested_by": [
+        "smoke.spec.ts",
+        "accessibility.spec.ts"
+      ]
+    },
+    {
+      "id": "VISX-017",
+      "title": "Fix Purchasing Power Index tooltip positioning",
+      "description": "The Purchasing Power Index chart tooltip does not fill the full box and appears in the wrong position when hovering. Issue is in PurchasingPowerChart.tsx where the SVG uses viewBox with preserveAspectRatio but tooltip coordinates are calculated in SVG coordinate space while being applied in screen space. Fix needed: (1) Calculate the actual rendered position by accounting for the SVG's scaling ratio, OR (2) Use a container-based positioning approach that reads the actual rendered bounding box, OR (3) Use useTooltipInPortal with proper scaling to ensure tooltip appears at the correct screen position relative to the hovered point.",
+      "priority": "Medium",
+      "status": "Done",
+      "effort": "Low",
+      "responsible": "Frontend Engineer",
+      "section": "frontend",
+      "requirement_id": "FE-216",
+      "created": "2026-04-05",
+      "updated": "2026-04-05",
+      "dependencies": [],
+      "notes": "Tooltip appears disconnected from the chart due to viewBox scaling mismatch.",
+      "completed_date": "2026-04-05",
+      "tested_by": [
+        "smoke.spec.ts",
+        "accessibility.spec.ts"
+      ]
+    },
+    {
+      "id": "VISX-018",
+      "title": "Fix London HPI Historical Trajectory tooltip positioning",
+      "description": "The London HPI Historical Trajectory chart tooltip does not fill the full box and appears in the wrong position when hovering. Same root cause as VISX-017 (Purchasing Power Index). In HPIHistoryChart.tsx: The SVG uses viewBox=\"0 0 800 300\" with preserveAspectRatio=\"xMidYMid meet\", but tooltip coordinates (tooltipLeft, tooltipTop) passed to TooltipWithBounds are in SVG viewBox coordinate space while being applied as screen coordinates. Fix needed: Convert SVG viewBox coordinates to actual rendered screen coordinates before passing to the tooltip \u2014 either via getBoundingClientRect() on the SVG container, useTooltipInPortal with proper SVG scaling, or calculating the actual rendered aspect ratio and offset.",
+      "priority": "Medium",
+      "status": "Done",
+      "effort": "Low",
+      "responsible": "Frontend Engineer",
+      "section": "frontend",
+      "requirement_id": "FE-219",
+      "created": "2026-04-05",
+      "updated": "2026-04-05",
+      "dependencies": [],
+      "notes": "Same viewBox scaling mismatch issue as VISX-017 (Purchasing Power Index). Fix approach should be consistent across both charts \u2014 consider extracting shared tooltip positioning logic into a reusable hook.",
+      "completed_date": "2026-04-05",
+      "tested_by": [
+        "smoke.spec.ts",
+        "accessibility.spec.ts"
+      ]
+    },
+    {
+      "id": "VISX-019",
+      "title": "Fix London HPI Historical Trajectory axis label font sizes",
+      "description": "The London HPI Historical Trajectory chart axis labels (x-axis year labels and y-axis HPI index values) are too small to read. Root cause: HPIHistoryChart.tsx uses viewBox=\"0 0 800 300\" with preserveAspectRatio, and all SVG text elements use viewBox-space fontSize values (2.5px, 2.8px) that scale down to near-invisible on screen. Fix: Either (1) switch from viewBox-based SVG to a container-width responsive SVG approach (no viewBox, use percentage-based positioning) so font sizes are in screen pixels, OR (2) use a larger viewBox with correspondingly larger fontSize values that still read well at target display size, OR (3) use getBoundingClientRect() to detect the rendered SVG dimensions and scale font sizes accordingly. The axis labels (year markers on x-axis, HPI index values on y-axis) and annotation event labels must be clearly legible at a glance.",
+      "priority": "Medium",
+      "status": "Done",
+      "effort": "Low",
+      "responsible": "Frontend Engineer",
+      "section": "frontend",
+      "requirement_id": "FE-219",
+      "created": "2026-04-05",
+      "updated": "2026-04-05",
+      "dependencies": [],
+      "notes": "User explicitly flagged axis labels as unreadable. This compounds the tooltip positioning issue (VISX-018) \u2014 both stem from the viewBox scaling approach.",
+      "completed_date": "2026-04-05",
+      "tested_by": [
+        "smoke.spec.ts",
+        "accessibility.spec.ts"
+      ]
+    },
+    {
+      "id": "VISX-020",
+      "title": "Improve Area \u00d7 Metric Heatmap UX clarity and fix tooltip positioning",
+      "description": "Two issues with the AreaMetricHeatmap component on the Market page:\n\n1. POOR UX / CLARITY: The heatmap is hard to understand. Issues: (a) Metric column labels are truncated to first word only (\"Heat\" not \"Heat Index\", \"Rental\" not \"Rental Yield\") \u2014 loses meaning; (b) No explanation of what each metric means or how values are derived; (c) The color legend (red\u2192green gradient) is not explained \u2014 what does \"high\" vs \"low\" mean for each metric? (d) No hover state change on cells to show interactivity; (e) Tooltip is the only way to see actual values \u2014 users cannot scan the grid without hovering every cell.\n\nFix: (a) Show full metric names as column headers above the heatmap grid (not rotated/abbreviated); (b) Add a descriptive subtitle row explaining each metric in one short phrase (e.g., \"Market velocity 0-10\", \"Annual appreciation %\", \"Gross rental yield %\", \"12-month HPI forecast\"); (c) Add a visible hover state (border highlight or brightness change) on cells to signal interactivity; (d) Consider showing the numeric value directly inside each cell for key metrics, or at minimum ensure the tooltip appears clearly above the hovered cell.\n\n2. TOOLTIP POSITIONING: Tooltip appears in wrong position. Tooltip is rendered outside the heatmap SVG container (TooltipWithBounds with left/top coordinates) but may be clipped or offset due to parent container stacking context/overflow. Fix: Wrap the tooltip in a portal or ensure it renders at the correct viewport position \u2014 consider using @visx/tooltip's useTooltipInPortal, or ensure the tooltip container has proper z-index and overflow handling.",
+      "priority": "Medium",
+      "status": "Done",
+      "effort": "Medium",
+      "responsible": "Frontend Engineer",
+      "section": "frontend",
+      "requirement_id": "VISX-005",
+      "created": "2026-04-05",
+      "updated": "2026-04-05",
+      "dependencies": [],
+      "notes": "User flagged: (1) hard to understand how it works \u2014 needs better labels, metric explanations, and visible hover states; (2) tooltips not positioned correctly. These are separate fixes but share the same component.",
+      "completed_date": "2026-04-05",
+      "tested_by": [
+        "smoke.spec.ts",
+        "accessibility.spec.ts"
+      ]
+    },
+    {
+      "id": "DE-216",
+      "title": "Normalize mortgage_history in macro_trend to flat array",
+      "description": "The 6M Rate History table on /rates page is blank because mortgage_history in macro_trend.json (SQLite global_context) is stored as a wrapped provenance object { _description, _provenance, data: [...] } but the frontend expects a flat array and calls .slice(-6) directly on it. Verify the data pipeline: mortgage_history should be stored as a flat array of MortgageHistoryEntry objects directly in global_context, not nested under a data key. Check data/sync_data.js or any pipeline that writes to global_context for mortgage_history \u2014 it must unwrap the provenance object before writing. After fix, verify /rates page shows 6 months of historical rate data (2yr, 5yr, BoE columns).",
+      "priority": "High",
+      "status": "Todo",
+      "effort": "Medium",
+      "responsible": "Data Engineer",
+      "section": "data_research",
+      "requirement_id": null,
+      "created": "2026-04-05",
+      "updated": "2026-04-05",
+      "dependencies": [],
+      "notes": "Root cause: mortgage_history stored as { data: [...] } instead of flat array. Frontend does mortgageHistory.slice(-6) which fails silently on object. Also note: extractValue() is designed for { value: X } wrapped primitives \u2014 it does not handle the { data: [...] } wrapper pattern."
+    },
+    {
+      "id": "DE-217",
+      "title": "Add missing area_heat_index and london_benchmark to macro_trend",
+      "description": "Area Performance chart on /rates page is missing data due to two issues: (1) area_heat_index key is completely absent from macro_trend \u2014 AreaPerformanceChart.tsx falls back to area_trends, but area_trends lacks a top-level london_benchmark field; (2) london_benchmark is undefined at top level of macro_trend and per-area in area_trends, causing the benchmark comparison (delta = forecast - benchmark) to be NaN or undefined. Fix: (1) Populate area_heat_index in macro_trend.json with ranked area data (area, score, trend) \u2014 or update AreaPerformanceChart to derive heat from area_trends.score; (2) Add a london_benchmark field at top level of macro_trend (e.g., 1.2 or derive from ONS London HPI). After fix, Area Performance chart should show ranked areas with delta bars.",
+      "priority": "High",
+      "status": "Todo",
+      "effort": "Medium",
+      "responsible": "Data Engineer",
+      "section": "data_research",
+      "requirement_id": null,
+      "created": "2026-04-05",
+      "updated": "2026-04-05",
+      "dependencies": [],
+      "notes": "User flagged: \"Area Performance missing data\". area_trends data IS present (6 rows) but missing normalization for the chart to render correctly."
+    },
+    {
+      "id": "FE-220",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "frontend",
+      "title": "UI: Fix Properties page mobile usability",
+      "description": "Improve mobile layout for the /properties page. Issues identified: (1) Smart Command Bar overflows \u2014 smart filters, view toggle, search, column btn, filter btn all in single non-wrapping flex row; (2) Status Pipeline Strip overflows \u2014 4 status filters + market status filter all in one horizontal row; (3) Filter Panel is full-width on mobile but needs better stacking; (4) PropertyTable has 16 columns with cramped abbreviated headers (Eff., App., Com., DoM) \u2014 nearly unusable on small screens; (5) PropertyCard grid is 1-col on mobile which is good but needs larger touch targets; (6) Page header is fine.",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-05",
+      "notes": [
+        "Smart Command Bar wraps on mobile with abbreviated labels (Alpha+, Value, Short)",
+        "Status Pipeline Strip is horizontally scrollable on mobile with short labels",
+        "Filter button and clear always visible on mobile",
+        "Table shows scroll affordance hint + right-edge gradient fade on mobile",
+        "Action buttons enlarged (min-w-36) for touch on mobile",
+        "PreviewDrawer KPI grid switches to 2-col on mobile from 4-col",
+        "Keyboard nav hint hidden on mobile (md:only)"
+      ],
+      "completed_date": "2026-04-05",
+      "tested_by": [
+        "smoke.spec.ts",
+        "accessibility.spec.ts",
+        "Dashboard.spec.ts"
+      ]
+    },
+    {
+      "id": "VISX-021",
+      "title": "FE: Build Seasonal Market Cycle component for Rates & Scenarios page",
+      "description": "Design and build a new component showing the yearly London property market seasonal cycle, displayed on the Rates & Scenarios page.\n\nConcept: A circular/radial cycle diagram (clock-style or ring chart) showing the 12-month market cycle with the following phases:\n- Jan-Feb: Post-holiday trough \u2014 lowest supply, subdued demand\n- Mar-May: Spring surge \u2014 highest supply (new listings flood in), peak demand, prices rise fastest\n- Jun-Aug: Summer lull \u2014 activity slows (holidays), demand moderates\n- Sep-Nov: Autumn rush \u2014 second busiest period, supply-demand balance, prices hold\n- Dec: Christmas slowdown \u2014 minimal activity\n\nVisual design (Bloomberg meets Linear):\n- Use a circular SVG ring or radar-style chart\n- Inner ring = supply (listings volume by month)\n- Outer ring = demand (buyer activity by month)\n- Colour gradient: cold/dormant (slate) \u2192 hot/peak (emerald/orange) \u2192 cooling (amber)\n- A visible needle/marker showing current month position in the cycle\n- Phase labels around the ring: Spring Surge, Summer Lull, Autumn Rush, Winter Trough\n- Key stats per phase shown on hover\n\nData: Use historical inventory/new-listing data from macro_trend.json inventory_velocity and transaction_volumes. Where empirical data is sparse, derive normalised seasonal indices from ONS/BoE transaction volumes (known Jan-Dec patterns). The component should accept month-of-year as input to position the indicator needle.\n\nPlacement: Add to RatesPage.tsx between the Swap Rate Signal banner and the HPI Historical Trajectory section.\n\nAcceptance: Circular cycle chart renders on RatesPage. Needle correctly positions at current month. Supply/demand bands visually distinct. Hovering a phase shows key stats.",
+      "priority": "Medium",
+      "status": "Todo",
+      "effort": "High",
+      "responsible": "Frontend Engineer",
+      "section": "frontend",
+      "requirement_id": null,
+      "created": "2026-04-05",
+      "updated": "2026-04-05",
+      "dependencies": [],
+      "notes": "Known seasonal pattern: Spring surge (Mar-May) = peak prices, Autumn rush (Sep-Nov) = second busiest. Implementation approach: SVG ring chart using @visx/shape Arc or custom polar chart. Data from inventory_velocity + transaction_volumes in macro_trend.json."
+    },
+    {
+      "id": "VISX-022",
+      "title": "DE: Surface seasonal supply/demand indices in macro_trend.json",
+      "description": "The Seasonal Market Cycle component (VISX-021) needs empirical seasonal indices for London property market supply (new listings) and demand (transactions/buyer activity) by month. Currently no dedicated seasonal cycle data exists in macro_trend.json.\n\nSource and compute seasonal indices:\n1. inventory_velocity: already has monthly supply signals \u2014 extract normalise to a 12-month seasonal index (Jan=low, Mar-May=high, Jul-Aug=mid/summer-dip, Sep-Nov=autumn-peak, Dec=low)\n2. transaction_volumes: ONS Land Registry monthly transaction counts for London \u2014 derive a normalised seasonal index from 5yr+ monthly averages\n3. Create two new top-level keys in macro_trend.json:\n   - seasonal_supply_index: array of 12 values [jan..dec], normalised 0-10\n   - seasonal_demand_index: array of 12 values [jan..dec], normalised 0-10\n4. Add a derived net_balance index: demand - supply per month (positive = seller's market, negative = buyer's market)\n\nThe indices should reflect the known London market pattern: Spring (Mar-May) is seller's market (high demand meets high supply), Winter (Dec-Feb) is quieter buyer's market, Autumn (Sep-Nov) is balanced/moderate.\n\nWrite the normalised indices to the SQLite global_context macro_trend record so they're available via the API to the frontend component.",
+      "priority": "Medium",
+      "status": "Todo",
+      "effort": "Medium",
+      "responsible": "Data Engineer",
+      "section": "data_research",
+      "requirement_id": null,
+      "created": "2026-04-05",
+      "updated": "2026-04-05",
+      "dependencies": [],
+      "notes": "User wants to see where we are in the yearly cycle. This DE task computes the empirical seasonal indices needed by the FE component. The FE component can use fallback hardcoded values if this DE task is not yet done."
+    },
+    {
+      "id": "FE-221",
+      "priority": "High",
+      "effort": "Low",
+      "section": "frontend",
+      "title": "Fix deposit calculation in AffordabilityNode sidebar \u2014 getBudgetProfile ignored depositMode/depositPct",
+      "description": "getBudgetProfile in useAffordability.ts always derived deposit from monthly budget (auto-mode), ignoring the user-configured depositMode (fixed) and depositPct. Result: sidebar showed \u00a3222K deposit when user had fixed 15% (\u00a375K) configured. Fixed by branching on depositMode: fixed uses depositPct, auto uses budget-derivation. Also fixes monthlyPayment and stressTest to be consistent with selected mode.",
+      "status": "Done",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-04-05",
+      "notes": [
+        "Root cause: depositMode and depositPct state existed but getBudgetProfile never read them",
+        "calculateTotalPurchaseCost (used in deposit panel) had the fix already \u2014 only getBudgetProfile was broken",
+        "Fixed: check depositMode first; fixed uses depositPct, auto uses monthly-budget derivation"
+      ],
+      "completed_date": "2026-04-05",
+      "tested_by": [
+        "smoke.spec.ts"
       ]
     }
   ]

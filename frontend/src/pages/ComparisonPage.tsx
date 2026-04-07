@@ -219,8 +219,11 @@ const ComparisonPage: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-1">
+          {/* FE-217: Mobile-responsive matrix — horizontal scroll on mobile, full grid on desktop */}
+          <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0 lg:overflow-visible">
+          <div className="min-w-[600px] lg:min-w-0">
           {/* FE-179: Header Row with image-sync on hover */}
-          <div className="grid gap-px bg-linear-border border border-linear-border rounded-t-3xl overflow-hidden shadow-2xl" style={{ gridTemplateColumns: `200px repeat(${selectedProperties.length}, minmax(0, 1fr))` }}>
+          <div className="grid gap-px bg-linear-border border border-linear-border rounded-t-3xl overflow-hidden shadow-2xl lg:rounded-t-3xl" style={{ gridTemplateColumns: `200px repeat(${selectedProperties.length}, minmax(0, 1fr))` }}>
             <div className="bg-linear-card/80 p-6 flex flex-col justify-end">
               <span className="text-[9px] font-black text-linear-text-muted uppercase tracking-[0.3em]">Institutional</span>
               <span className="text-xs font-bold text-white uppercase">Analytics Matrix</span>
@@ -373,6 +376,8 @@ const ComparisonPage: React.FC = () => {
               </div>
             ))}
           </div>
+          </div>
+          </div>
         </div>
       )}
 
@@ -405,11 +410,11 @@ const ComparisonPage: React.FC = () => {
                 <div>
                   <div className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest mb-2 flex items-center justify-between">
                     In Basket ({count})
-                    <button onClick={clearComparison} className="text-rose-400 hover:text-rose-300 font-black uppercase">Clear all</button>
+                    <button onClick={clearComparison} className="text-rose-400 hover:text-rose-300 font-black uppercase min-h-[44px] px-2">Clear all</button>
                   </div>
                   <div className="space-y-1">
                     {selectedProperties.map(p => (
-                      <div key={p.id} className="flex items-center gap-2 p-2 bg-linear-bg rounded-lg border border-blue-500/20">
+                      <div key={p.id} className="flex items-center gap-2 p-2 bg-linear-bg rounded-lg border border-blue-500/20 min-h-[44px]">
                         <div className="h-8 w-8 rounded overflow-hidden flex-shrink-0">
                           <PropertyImage src={p.image_url} alt="" className="h-full w-full object-cover" />
                         </div>
@@ -417,7 +422,8 @@ const ComparisonPage: React.FC = () => {
                           <p className="text-[9px] font-bold text-white truncate">{p.address.split(',')[0]}</p>
                           <p className="text-[8px] text-linear-text-muted truncate">£{(p.realistic_price / 1000).toFixed(0)}K · {(p.area || '').split(' (')[0]}</p>
                         </div>
-                        <button onClick={() => toggleComparison(p.id)} className="text-rose-400 hover:text-rose-300">
+                        {/* FE-218: 44px touch target for remove button */}
+                        <button onClick={() => toggleComparison(p.id)} className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rose-400 hover:text-rose-300">
                           <X size={12} />
                         </button>
                       </div>
@@ -441,7 +447,7 @@ const ComparisonPage: React.FC = () => {
                     <button
                       key={p.id}
                       onClick={() => toggleComparison(p.id)}
-                      className="w-full flex items-center gap-2 p-2 bg-linear-bg rounded-lg border border-linear-border hover:border-blue-500/30 hover:bg-blue-500/5 transition-all group text-left"
+                      className="w-full flex items-center gap-2 p-2 bg-linear-bg rounded-lg border border-linear-border hover:border-blue-500/30 hover:bg-blue-500/5 transition-all group text-left min-h-[44px]"
                     >
                       <div className="h-8 w-8 rounded overflow-hidden flex-shrink-0">
                         <PropertyImage src={p.image_url} alt="" className="h-full w-full object-cover" />

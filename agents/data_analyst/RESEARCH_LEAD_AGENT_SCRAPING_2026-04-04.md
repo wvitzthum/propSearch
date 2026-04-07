@@ -339,3 +339,169 @@ page.on('request', req => {
 2. **Dalston Square, E8 3GP** - £600,000 (Alpha: 9.0)
 3. **Tufnell Park Road, N7** - £575,000 (Alpha: 9.0)
 4. **Riffel Road, NW2** - £515,000 (Alpha: 9.0)
+
+---
+
+## ✅ G&H Scraping Solution Found!
+
+**Date:** 2026-04-04 (Update)  
+**Discovery:** Playwright with `networkidle` wait and proper `page.evaluate()` scoping
+
+### Solution
+
+G&H pages load listings via JavaScript after page load. Use Playwright with:
+
+1. **`waitUntil: 'networkidle'`** - Wait for all network requests to complete
+2. **`waitForTimeout(2000)`** - Additional buffer for JavaScript execution
+3. **Pass variables to `page.evaluate()`** - Use closure parameter to access outer scope
+
+### Working Code
+
+```javascript
+const { chromium } = require('playwright');
+
+async function scrapeGH() {
+  const browser = await chromium.launch({ 
+    headless: true,
+    args: ['--disable-blink-features=AutomationControlled']
+  });
+  
+  const context = await browser.newContext({
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...',
+    viewport: { width: 1280, height: 720 }
+  });
+  
+  await context.addInitScript(() => {
+    Object.defineProperty(navigator, 'webdriver', { get: () => false });
+  });
+  
+  const page = await context.newPage();
+  
+  // CRITICAL: Use networkidle, not domcontentloaded
+  await page.goto(url, { waitUntil: 'networkidle', timeout: 90000 });
+  await page.waitForTimeout(2000);
+  
+  // Extract using page.evaluate with parameter passing
+  const listings = await page.evaluate(function(area) {
+    const items = document.querySelectorAll('.propertyListItem');
+    const results = [];
+    for (const item of items) {
+      // Extract URL - look for href starting with 'sales/'
+      const links = item.querySelectorAll('a');
+      let url = null;
+      for (const link of links) {
+        const href = link.getAttribute('href');
+        if (href && href.indexOf('sales/') === 0) {
+          url = 'https://g-h.co.uk/' + href;
+          break;
+        }
+      }
+      
+      // Extract other fields...
+      const h3 = item.querySelector('h3');
+      const address = h3 ? h3.textContent.trim() : null;
+      
+      // etc...
+    }
+    return results;
+  }, areaName); // Pass outer variable as parameter
+  
+  await browser.close();
+}
+```
+
+### G&H HTML Structure
+
+```html
+<div class="propertyListItem propListViewItem">
+  <a href="sales/maida-vale-london-w9/lve090201">
+    <img src="/assets/image-cache/...">
+    <div class="propertyCaption">
+      <h3>Maida Vale, W9</h3>
+      <p>£1,000,000</p>
+      <div class="details">
+        <li>2</li><li>2</li><li>1</li>  <!-- beds, baths, receptions -->
+      </div>
+    </div>
+  </a>
+</div>
+```
+
+### Selector Reference
+- Listing container: `.propertyListItem`
+- URL: `a[href^="sales/"]`
+- Image: `img`
+- Address: `h3`
+- Price: `.propertyCaption p`
+- Beds: `.details li:first-child`
+
+### G&H Search URL Patterns
+
+```
+https://g-h.co.uk/sales/2-bedroom-properties-between-500000-and-1000000-for-sale-in-{area}?layout=list&page={n}
+
+Areas:
+- west-hampstead
+- islington
+- bayswater
+- chelsea
+- kensington
+- hampstead-belsize-park
+```
+
+### Results
+
+**44 total listings scraped**  
+**18 qualified leads** (≤2 beds, £500k-£800k)
+
+### Files Created
+- `extract_gh_simple.js` - Working G&H scraper
+- `data/leads_goldschmidt_howland.json` - Scraped leads (44 total, 18 qualified)
+
+---
+
+## Final Results Summary
+
+### Leads Generated
+
+| Source | Leads Imported | Qualified | High Alpha |
+|--------|---------------|-----------|------------|
+| Purplebricks | 17 | 17 | 15 |
+| Goldschmidt & Howland | 16 | 16 | 14 |
+| **Total** | **33** | **33** | **29** |
+
+### Database Growth
+
+- Before: 36 records
+- After: 69 records  
+- Net new: 33 records (all high quality)
+
+### Script Locations
+
+- `scripts/scrape_goldschmidt_howland.js` - G&H scraper
+- `scripts/enrich_property_images.py` - Image enrichment
+- `agents/data_analyst/enrich_spatial.py` - Spatial enrichment
+
+### Usage
+
+```bash
+# Scrape G&H leads
+node scripts/scrape_goldschmidt_howland.js
+
+# Scrape Purplebricks (uses FlareSolverr)
+node scripts/scrape_visuals.js <url>
+
+# Enrich with spatial data
+python3 agents/data_analyst/enrich_spatial.py
+
+# Export to frontend
+python3 -c "import sqlite3, json; ..."
+```
+
+### Key Findings
+
+1. **G&H requires Playwright** - Static scraping doesn't work
+2. **Use `networkidle` wait** - DOM content loaded isn't sufficient
+3. **Pass variables to evaluate()** - Can't access outer scope in evaluate
+4. **Purplebricks uses SSR** - `__NEXT_DATA__` contains all listing data
+5. **FlareSolverr works for both** - Bypasses Cloudflare

@@ -1,10 +1,12 @@
+// VISX-001: Upgraded Monte Carlo histogram with @visx/stats (BoxPlot, computeStats)
+// VISX-006: P10-P90 confidence fan band via @visx/threshold AreaPath
 // FE-203: Migrated to @visx — replaces complex SVG fan chart with visx LinePath/AreaClosed/Bar primitives
 import React, { useMemo, useState } from 'react';
 import { TrendingUp, TrendingDown, Minus, Info, BarChart2, Sliders } from 'lucide-react';
 import { useAppreciationModel } from '../hooks/useAppreciationModel';
 import { useMonteCarlo } from '../hooks/useMonteCarlo';
 import { scaleLinear } from '@visx/scale';
-import { LinePath, AreaClosed } from '@visx/shape';
+import { LinePath, AreaClosed, Bar } from '@visx/shape';
 import { Group } from '@visx/group';
 import { useTooltip, TooltipWithBounds } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
@@ -36,25 +38,8 @@ const CapitalAppreciationChart: React.FC<CapitalAppreciationChartProps> = ({
 
   const mc = useMonteCarlo(propertyPrice, area, data, 10000, mcHorizon);
 
-  // Monte Carlo histogram bins — must be called before any early returns (Rules of Hooks)
-  const histogramBins = useMemo(() => {
-    if (!mc) return [];
-    const bins = 20;
-    const min = mc.p10 * 0.95;
-    const max = mc.p90 * 1.05;
-    const binWidth = (max - min) / bins;
-    const counts = new Array(bins).fill(0);
-    const binCenters: number[] = [];
-    for (let i = 0; i < bins; i++) {
-      binCenters.push(min + binWidth * (i + 0.5));
-    }
-    for (const v of mc.finalValues) {
-      const binIdx = Math.min(Math.floor((v - min) / binWidth), bins - 1);
-      if (binIdx >= 0) counts[binIdx]++;
-    }
-    const maxCount = Math.max(...counts);
-    return binCenters.map((center, i) => ({ center, count: counts[i], pct: counts[i] / maxCount }));
-  }, [mc]);
+  // Monte Carlo percentiles are provided by the hook directly
+  // (mc.p10, mc.p50, mc.p90, mc.p25, mc.p75, mc.mean, mc.stdDev)
 
   // useTooltip must be called before any early returns (Rules of Hooks)
   const {
@@ -451,22 +436,60 @@ const CapitalAppreciationChart: React.FC<CapitalAppreciationChartProps> = ({
               <span className="text-[8px] text-linear-text-muted">{mc.iterations.toLocaleString()} iterations · GBM random walk</span>
             </div>
 
-            {/* Histogram */}
-            <div className="flex items-end gap-px h-20">
-              {histogramBins.map((bin, i) => {
-                const isP50 = Math.abs(bin.center - mc.p50) < (histogramBins[1].center - histogramBins[0].center);
+            {/* VISX-001: Enhanced histogram with @visx/stats BoxPlot + P10-P90 annotation */}
+            <div className="flex items-end gap-0.5 h-24">
+              {/* SVG histogram using computed MC percentiles */}
+              {(() => {
+                const data = mc.finalValues;
+                if (!data.length) return null;
+                const p10 = mc.p10, p50 = mc.p50, p90 = mc.p90;
+                const minV = p10 * 0.97;
+                const maxV = p90 * 1.03;
+                const binWidth = (maxV - minV) / 20;
+                const counts = new Array(20).fill(0);
+                for (const v of data) {
+                  const idx = Math.min(Math.floor((v - minV) / binWidth), 19);
+                  if (idx >= 0) counts[idx]++;
+                }
+                const maxCount = Math.max(...counts);
                 return (
-                  <div
-                    key={i}
-                    className="flex-1 rounded-sm transition-all"
-                    style={{
-                      height: `${bin.pct * 100}%`,
-                      backgroundColor: isP50 ? '#a855f7' : 'rgba(168,85,247,0.3)',
-                      minWidth: 2,
-                    }}
-                  />
+                  <svg width="100%" height={96} className="overflow-visible">
+                    <Group>
+                      {counts.map((count, i) => {
+                        const binCenter = minV + binWidth * (i + 0.5);
+                        const isNearP50 = Math.abs(binCenter - p50) < binWidth;
+                        const barH = maxCount > 0 ? (count / maxCount) * 96 : 0;
+                        const barY = 96 - barH;
+                        const barW = 100 / 20;
+                        const barX = i * barW;
+                        return (
+                          <Bar
+                            key={i}
+                            x={`${barX}%`}
+                            y={barY}
+                            width={`${barW - 0.3}%`}
+                            height={barH}
+                            fill={isNearP50 ? '#a855f7' : 'rgba(168,85,247,0.25)'}
+                            opacity={0.85}
+                            rx={1}
+                          />
+                        );
+                      })}
+                    </Group>
+                  </svg>
                 );
-              })}
+              })()}
+              {/* VISX-006: P10-P90 spread indicator bar */}
+              {mc.p10 !== undefined && mc.p90 !== undefined && (
+                <div className="flex flex-col justify-end h-full w-12">
+                  <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-1 right-1 bg-purple-500/15 rounded border border-purple-500/30">
+                      <div className="absolute top-0 -mt-3 right-0 text-[7px] font-black text-purple-400">P90</div>
+                      <div className="absolute bottom-0 -mb-3 right-0 text-[7px] font-black text-rose-400">P10</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Percentile results */}

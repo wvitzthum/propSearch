@@ -35,22 +35,23 @@ interface NavItemDef {
   path: string;
 }
 
+// FE-218: NavItem with 44px minimum touch target (WCAG 2.5.5)
 const NavItem: React.FC<{ item: NavItemDef; isActive: boolean; onClick?: () => void }> = ({
   item, isActive, onClick
 }) => (
   <Link
     to={item.path}
     onClick={onClick}
-    className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all group ${
+    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all group min-h-[44px] ${
       isActive
         ? 'bg-linear-card text-white shadow-sm ring-1 ring-linear-border'
         : 'text-linear-text-muted hover:text-white hover:bg-linear-card/50'
     }`}
   >
-    <span className={`${isActive ? 'text-blue-400' : 'text-linear-text-muted group-hover:text-blue-400'} transition-colors`}>
+    <span className={`${isActive ? 'text-blue-400' : 'text-linear-text-muted group-hover:text-blue-400'} transition-colors shrink-0`}>
       {item.icon}
     </span>
-    {item.label}
+    <span className="truncate">{item.label}</span>
   </Link>
 );
 
@@ -119,10 +120,10 @@ const TargetAreasDropdown: React.FC<{
       <div className="px-3 pb-1.5">
         <div className="text-[9px] font-black text-linear-text-muted/60 uppercase tracking-[0.2em]">Target Areas</div>
       </div>
-      {/* Trigger */}
+      {/* Trigger — FE-218: 44px touch target */}
       <button
         onClick={() => setIsOpen(v => !v)}
-        className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs text-linear-text-muted hover:text-white hover:bg-linear-card/50 transition-all"
+        className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs text-linear-text-muted hover:text-white hover:bg-linear-card/50 transition-all min-h-[44px]"
       >
         <span className="truncate">{currentArea ? `Area: ${currentArea}` : 'All Areas'}</span>
         <ChevronDown size={10} className={`shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -268,12 +269,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Shared sidebar nav content (used by both desktop sidebar and mobile drawer)
   const sidebarNav = (close?: () => void) => (
     <>
-      {/* Search bar */}
+      {/* Search bar — FE-218: 44px touch target */}
       {!close && (
         <div className="px-3 py-2">
           <button
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-linear-card border border-linear-border text-linear-text-muted hover:text-white transition-all shadow-sm group"
+            className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-linear-card border border-linear-border text-linear-text-muted hover:text-white transition-all shadow-sm group min-h-[44px]"
           >
             <div className="flex items-center gap-2">
               <Search size={14} />
@@ -355,15 +356,16 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <span className="text-[8px] font-bold text-linear-text-muted uppercase tracking-tighter mt-1">Institutional Mode</span>
             </div>
           </div>
+          {/* FE-218: Footer buttons with 44px touch targets */}
           <div className="flex items-center gap-1">
             <button
               onClick={() => setIsHistoryOpen(v => !v)}
-              className={`p-1.5 rounded-md transition-all ${isHistoryOpen ? 'bg-blue-500/10 text-blue-400' : 'text-linear-text-muted hover:text-white hover:bg-linear-card'}`}
+              className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-md transition-all ${isHistoryOpen ? 'bg-blue-500/10 text-blue-400' : 'text-linear-text-muted hover:text-white hover:bg-linear-card'}`}
               title="Submission History"
             >
               <History size={16} />
             </button>
-            <button className="p-1.5 text-linear-text-muted hover:text-white hover:bg-linear-card rounded-md transition-all">
+            <button className="min-h-[44px] min-w-[44px] flex items-center justify-center text-linear-text-muted hover:text-white hover:bg-linear-card rounded-md transition-all">
               <Settings size={16} />
             </button>
           </div>
@@ -416,9 +418,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </div>
                 <span className="text-sm font-semibold tracking-tight text-white">propSearch</span>
               </Link>
+              {/* FE-218: Mobile close button with 44px touch target */}
               <button
                 onClick={() => setIsMobileSidebarOpen(false)}
-                className="h-8 w-8 rounded border border-linear-border flex items-center justify-center text-linear-text-muted hover:text-white hover:bg-linear-card transition-all"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded border border-linear-border text-linear-text-muted hover:text-white hover:bg-linear-card transition-all"
               >
                 <X size={16} />
               </button>
@@ -435,92 +438,95 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           <div className="h-12 px-4 lg:px-6 flex items-center gap-3">
             <button
               onClick={() => setIsMobileSidebarOpen(true)}
-              className="lg:hidden h-8 w-8 flex items-center justify-center rounded-lg border border-linear-border text-linear-text-muted hover:text-white hover:bg-linear-card transition-all"
+              className="lg:hidden min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-linear-border text-linear-text-muted hover:text-white hover:bg-linear-card transition-all"
             >
               <Menu size={18} />
             </button>
-            <div className="flex items-center gap-2 text-[10px] font-bold text-linear-text-muted uppercase tracking-widest overflow-hidden min-w-0">
+            {/* FE-218: Breadcrumb truncation on mobile */}
+            <div className="flex items-center gap-1.5 text-[9px] font-bold text-linear-text-muted uppercase tracking-widest overflow-hidden min-w-0 flex-1 truncate">
               {breadcrumbs.map((crumb, i) => (
                 <React.Fragment key={i}>
-                  {i > 0 && <span className="text-linear-accent mx-1 shrink-0">/</span>}
+                  {i > 0 && <span className="text-linear-accent mx-0.5 shrink-0">/</span>}
                   {crumb.active ? (
-                    <span className="text-white shrink-0 truncate">{crumb.label}</span>
+                    <span className="text-white shrink-0 truncate max-w-[120px] sm:max-w-none">{crumb.label}</span>
                   ) : (
-                    <Link to={crumb.path || '#'} className="hover:text-white transition-colors shrink-0 truncate">
+                    <Link to={crumb.path || '#'} className="hover:text-white transition-colors shrink-0 truncate max-w-[100px] sm:max-w-none">
                       {crumb.label}
                     </Link>
                   )}
                 </React.Fragment>
               ))}
             </div>
-            {/* Controls */}
+            {/* FE-218: Header controls with 44px touch targets */}
             <div className="ml-auto flex items-center gap-2 shrink-0">
               <button
                 onClick={() => setIsHistoryOpen(v => !v)}
-                className={`flex items-center gap-1.5 px-2 py-1 rounded border transition-all text-[10px] ${isHistoryOpen ? 'bg-linear-accent text-white border-white/20' : 'bg-linear-card border-linear-border text-linear-text-muted hover:text-white hover:border-linear-accent'}`}
+                className={`flex items-center gap-1.5 px-2 min-h-[44px] rounded border transition-all text-[10px] ${isHistoryOpen ? 'bg-linear-accent text-white border-white/20' : 'bg-linear-card border-linear-border text-linear-text-muted hover:text-white hover:border-linear-accent'}`}
               >
                 <History size={10} className={isHistoryOpen ? 'animate-pulse' : ''} />
                 <span className="font-black uppercase tracking-widest hidden sm:inline">Trace</span>
               </button>
               <div
                 onClick={() => setIsCommandPaletteOpen(true)}
-                className="flex items-center gap-1 bg-linear-card px-2 py-1 rounded border border-linear-border text-[10px] font-mono text-linear-text-muted select-none group hover:border-linear-accent transition-colors cursor-pointer"
+                className="flex items-center gap-1 bg-linear-card px-2 min-h-[44px] rounded border border-linear-border text-[10px] font-mono text-linear-text-muted select-none group hover:border-linear-accent transition-colors cursor-pointer"
               >
                 <Command size={10} className="group-hover:text-white transition-colors" />
                 <span className="group-hover:text-white transition-colors">K</span>
               </div>
               <button
                 onClick={() => setIsShortcutsOpen(true)}
-                className="flex items-center justify-center h-7 w-7 bg-linear-card rounded border border-linear-border text-[10px] font-mono text-linear-text-muted hover:border-linear-accent transition-colors hover:text-white"
+                className="flex items-center justify-center min-h-[44px] min-w-[44px] bg-linear-card rounded border border-linear-border text-[10px] font-mono text-linear-text-muted hover:border-linear-accent transition-colors hover:text-white"
               >
                 <span>?</span>
               </button>
             </div>
           </div>
 
-          {/* UX-015: Pipeline progress bar */}
-          <div className="px-4 lg:px-6 py-1.5 flex items-center gap-3 border-t border-white/5 overflow-x-auto">
+          {/* UX-015: Pipeline progress bar — FE-217: Mobile-responsive with flex-wrap */}
+          <div className="px-4 lg:px-6 py-1.5 flex flex-wrap items-center gap-2 border-t border-white/5 lg:overflow-x-auto">
             <div className="flex items-center gap-1 text-[9px] font-black text-linear-text-muted/60 uppercase tracking-widest shrink-0">
               Pipeline
             </div>
-            <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+            {/* FE-217: Flex-wrap on mobile, horizontal scroll on lg */}
+            <div className="flex items-center gap-1 flex-wrap min-w-0 lg:flex-nowrap lg:overflow-x-auto lg:flex-row">
               <Link
                 to="/properties"
                 className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-linear-card border border-linear-border text-[10px] text-white hover:border-blue-500 transition-colors shrink-0"
               >
                 <div className="h-1.5 w-1.5 rounded-full bg-blue-400 shrink-0" />
                 <span className="font-mono font-bold">{pipelineStats.discovered}</span>
-                <span className="text-linear-text-muted">discovered</span>
+                <span className="text-linear-text-muted hidden xs:inline">discovered</span>
               </Link>
-              <ChevronRight size={9} className="text-linear-text-muted/40 shrink-0" />
+              <ChevronRight size={9} className="text-linear-text-muted/40 shrink-0 hidden xs:block" />
               <Link
                 to="/properties?status=shortlisted"
                 className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-linear-card border border-linear-border text-[10px] text-white hover:border-amber-500 transition-colors shrink-0"
               >
                 <div className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
                 <span className="font-mono font-bold">{pipelineStats.shortlisted}</span>
-                <span className="text-linear-text-muted">shortlisted</span>
+                <span className="text-linear-text-muted hidden xs:inline">shortlisted</span>
               </Link>
-              <ChevronRight size={9} className="text-linear-text-muted/40 shrink-0" />
+              <ChevronRight size={9} className="text-linear-text-muted/40 shrink-0 hidden xs:block" />
               <Link
                 to="/properties?status=vetted"
                 className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-linear-card border border-linear-border text-[10px] text-white hover:border-emerald-500 transition-colors shrink-0"
               >
                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
                 <span className="font-mono font-bold">{pipelineStats.vetted}</span>
-                <span className="text-linear-text-muted">vetted</span>
+                <span className="text-linear-text-muted hidden xs:inline">vetted</span>
               </Link>
             </div>
             <Link
               to="/properties"
-              className="ml-auto text-[9px] text-blue-400 hover:text-blue-300 font-bold uppercase tracking-widest shrink-0 hidden sm:block"
+              className="ml-auto text-[9px] text-blue-400 hover:text-blue-300 font-bold uppercase tracking-widest shrink-0 hidden md:block"
             >
               View Funnel →
             </Link>
           </div>
         </header>
 
-        <div className={`p-8 mx-auto ${location.pathname === '/dashboard' ? 'max-w-full' : 'max-w-7xl'}`}>
+        {/* FE-218: Responsive padding — p-4 on mobile, p-6 on sm, p-8 on lg */}
+        <div className={`p-4 sm:p-6 lg:p-8 mx-auto ${location.pathname === '/dashboard' ? 'max-w-full' : 'max-w-7xl'}`}>
           {children}
         </div>
         <ComparisonBar />

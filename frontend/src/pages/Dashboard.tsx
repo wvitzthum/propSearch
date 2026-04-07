@@ -21,6 +21,7 @@ import LoadingNode from '../components/LoadingNode';
 import MarketPulse from '../components/MarketPulse';
 import MarketConditionsBar from '../components/MarketConditionsBar';
 import PropertyImage from '../components/PropertyImage';
+import PipelineFunnelChart from '../components/PipelineFunnelChart';
 
 // UX-016: Command center Dashboard redesign
 // SECTION 1 — URGENT ACTIONS (always at top)
@@ -107,9 +108,6 @@ const Dashboard: React.FC = () => {
       avgAlpha: (properties.reduce((acc, p) => acc + (p.alpha_score ?? 0), 0) / properties.length).toFixed(1),
     };
   }, [properties, pipelineStats]);
-
-  // Pipeline funnel percentages (for funnel width visualization)
-  const funnelTotal = pipelineStats.discovered + pipelineStats.shortlisted + pipelineStats.vetted || 1;
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -207,67 +205,15 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {/* ============================================================
-          SECTION 2 — PIPELINE FUNNEL
-          ============================================================ */}
-      <div className="bg-linear-card border border-linear-border rounded-xl p-4">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-[9px] font-black text-linear-text-muted/60 uppercase tracking-widest">Pipeline Funnel</span>
-          <Link to="/properties" className="text-[9px] text-blue-400 hover:text-blue-300 font-bold uppercase tracking-widest">
-            View All →
-          </Link>
-        </div>
-
-        {/* Horizontal funnel */}
-        <div className="flex items-center gap-0 h-10 rounded-lg overflow-hidden">
-          {/* Discovered */}
-          <div
-            className="flex flex-col items-center justify-center bg-blue-500/20 border-r border-linear-border transition-all hover:bg-blue-500/30"
-            style={{ width: `${Math.max(10, (pipelineStats.discovered / funnelTotal) * 100)}%` }}
-          >
-            <Link to="/properties" className="flex flex-col items-center justify-center w-full h-full px-1">
-              <span className="text-[11px] font-black text-blue-400">{pipelineStats.discovered}</span>
-              <span className="text-[8px] text-blue-400/60 hidden sm:block">discovered</span>
-            </Link>
-          </div>
-          {/* Shortlisted */}
-          <div
-            className="flex flex-col items-center justify-center bg-amber-500/20 border-r border-linear-border transition-all hover:bg-amber-500/30"
-            style={{ width: `${Math.max(10, (pipelineStats.shortlisted / funnelTotal) * 100)}%` }}
-          >
-            <Link to="/properties?status=shortlisted" className="flex flex-col items-center justify-center w-full h-full px-1">
-              <span className="text-[11px] font-black text-amber-400">{pipelineStats.shortlisted}</span>
-              <span className="text-[8px] text-amber-400/60 hidden sm:block">shortlisted</span>
-            </Link>
-          </div>
-          {/* Vetted */}
-          <div
-            className="flex flex-col items-center justify-center bg-emerald-500/20 transition-all hover:bg-emerald-500/30"
-            style={{ width: `${Math.max(5, (pipelineStats.vetted / funnelTotal) * 100)}%` }}
-          >
-            <Link to="/properties?status=vetted" className="flex flex-col items-center justify-center w-full h-full px-1">
-              <span className="text-[11px] font-black text-emerald-400">{pipelineStats.vetted}</span>
-              <span className="text-[8px] text-emerald-400/60 hidden sm:block">vetted</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* Funnel labels */}
-        <div className="flex mt-1.5 text-[8px] text-linear-text-muted">
-          <div className="flex-1 text-center" style={{ maxWidth: '33%' }}>
-            <div className="h-0.5 bg-blue-500/30 rounded-full mb-1" />
-            {((pipelineStats.discovered / funnelTotal) * 100).toFixed(0)}% discovered
-          </div>
-          <div className="flex-1 text-center" style={{ maxWidth: '33%' }}>
-            <div className="h-0.5 bg-amber-500/30 rounded-full mb-1" />
-            {((pipelineStats.shortlisted / funnelTotal) * 100).toFixed(0)}% shortlisted
-          </div>
-          <div className="flex-1 text-center" style={{ maxWidth: '33%' }}>
-            <div className="h-0.5 bg-emerald-500/30 rounded-full mb-1" />
-            {((pipelineStats.vetted / funnelTotal) * 100).toFixed(0)}% vetted
-          </div>
-        </div>
-      </div>
+      {/* VISX-010: Pipeline Funnel Chart — @visx/shape Bar + ChartLegend */}
+      <PipelineFunnelChart
+        stages={[
+          { label: 'Discovered', count: pipelineStats.discovered, color: '#3b82f6' },
+          { label: 'Shortlisted', count: pipelineStats.shortlisted, color: '#f59e0b' },
+          { label: 'Vetted', count: pipelineStats.vetted, color: '#22c55e' },
+        ]}
+        title="Pipeline Funnel"
+      />
 
       {/* ============================================================
           SECTION 3 — KPI CARDS (retained)

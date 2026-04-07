@@ -1,0 +1,250 @@
+[
+  {
+    "id": "man-0402-40452",
+    "address": "166 Regents Park Road, Primrose Hill, London NW1 8XN",
+    "area": "NW1",
+    "price": 650000.0,
+    "alpha_score": 9.4,
+    "market_status": "active",
+    "priority": "HIGH",
+    "links": [
+      "https://jitty.com/properties/Sfp81MUuxILmdhUrNdWN",
+      "https://www.johndwood.co.uk/properties/21370435/sales/PRH240106"
+    ]
+  },
+  {
+    "id": "man-0402-01805",
+    "address": "Belsize Park Gardens, London NW3",
+    "area": "NW3",
+    "price": 745000.0,
+    "alpha_score": 8.8,
+    "market_status": "active",
+    "priority": "HIGH",
+    "links": [
+      "https://www.zoopla.co.uk/for-sale/details/72706165/"
+    ]
+  },
+  {
+    "id": "man-0402-03297",
+    "address": "St. Johns Wood Road, London NW8",
+    "area": "NW8",
+    "price": 684995.0,
+    "alpha_score": 8.8,
+    "market_status": "active",
+    "priority": "HIGH",
+    "links": [
+      "https://www.zoopla.co.uk/for-sale/details/72751790/"
+    ]
+  },
+  {
+    "id": "man-0404-e26af162",
+    "address": "Alexandra Mansions, 333 Kings Road, SW3",
+    "area": "Chelsea (SW3)",
+    "price": 625000.0,
+    "alpha_score": 8.8,
+    "market_status": "active",
+    "priority": "HIGH",
+    "links": [
+      "https://www.rightmove.co.uk/property-for-sale/property-171124565.html"
+    ]
+  },
+  {
+    "id": "man-0404-1d3c01c4",
+    "address": "Kings Road (Renovated), Chelsea, SW3",
+    "area": "Chelsea (SW3)",
+    "price": 600000.0,
+    "alpha_score": 8.8,
+    "market_status": "active",
+    "priority": "HIGH",
+    "links": [
+      "https://www.rightmove.co.uk/property-for-sale/property-173699852.html"
+    ]
+  },
+  {
+    "id": "man-0402-74958",
+    "address": "Belsize Lane, Belsize Park NW3",
+    "area": "NW3",
+    "price": 715000.0,
+    "alpha_score": 8.7,
+    "market_status": "active",
+    "priority": "HIGH",
+    "links": [
+      "https://www.zoopla.co.uk/for-sale/details/70635746/"
+    ]
+  },
+  {
+    "id": "man-0402-74119",
+    "address": "Gloucester Road, Knightsbridge, London",
+    "area": "SW7",
+    "price": 700000.0,
+    "alpha_score": 8.7,
+    "market_status": "active",
+    "priority": "HIGH",
+    "links": [
+      "https://jitty.com/properties/zDKbYC9ad4jbSeYMEv8Z"
+    ]
+  },
+  {
+    "id": "man-0402-29820",
+    "address": "Haverstock Hill, London NW3",
+    "area": "NW3",
+    "price": 669950.0,
+    "alpha_score": 8.6,
+    "market_status": "active",
+    "priority": "HIGH",
+    "links": [
+      "https://www.zoopla.co.uk/for-sale/details/72758695/"
+    ]
+  },
+  {
+    "id": "man-0404-82ad5dba",
+    "address": "Redcliffe Gardens, Earl's Court, SW10",
+    "area": "Chelsea (SW10)",
+    "price": 650000.0,
+    "alpha_score": 8.0,
+    "market_status": "active",
+    "priority": "HIGH",
+    "links": [
+      "https://www.rightmove.co.uk/properties/173100605"
+    ]
+  },
+  {
+    "id": "man-0402-38852",
+    "address": "Ralph Court, Queensway, London W2",
+    "area": "W2",
+    "price": 750000.0,
+    "alpha_score": 7.2,
+    "market_status": "active",
+    "priority": "HIGH",
+    "links": [
+      "https://www.zoopla.co.uk/for-sale/details/72823414/"
+    ]
+  },
+  {
+    "id": "man-0404-c031987d",
+    "address": "1 Albert Road, Queen's Park, NW6",
+    "area": "West Hampstead (NW6)",
+    "price": 675000.0,
+    "alpha_score": 7.2,
+    "market_status": "active",
+    "priority": "HIGH",
+    "links": [
+      "https://www.rightmove.co.uk/properties/172036208"
+    ]
+  },
+  {
+    "id": "ps-2cdf2f33",
+    "address": "Gloucester Terrace, Lancaster Gate, London W2",
+    "area": "Bayswater (W2)",
+    "price": 675000.0,
+    "alpha_score": 7.1,
+    "market_status": "withdrawn",
+    "priority": "LOW (withdrawn)",
+    "links": [
+      "https://www.zoopla.co.uk/for-sale/details/71383169/",
+      "https://www.zoopla.co.uk/for-sale/details/71776549/",
+      "https://www.zoopla.co.uk/for-sale/details/72123593/",
+      "https://www.zoopla.co.uk/for-sale/details/68207332/",
+      "https://www.zoopla.co.uk/for-sale/details/72349745/"
+    ]
+  },
+  {
+    "id": "man-0402-79113",
+    "address": "Crossfield Road, London NW3",
+    "area": "NW3",
+    "price": 750000.0,
+    "alpha_score": 6.8,
+    "market_status": "active",
+    "priority": "MEDIUM",
+    "links": [
+      "https://www.zoopla.co.uk/for-sale/details/71918591/"
+    ]
+  },
+  {
+    "id": "man-0404-f3ff9a51",
+    "address": "Downside Crescent, Belsize Park, NW3",
+    "area": "Belsize Park (NW3)",
+    "price": 750000.0,
+    "alpha_score": 6.8,
+    "market_status": "active",
+    "priority": "MEDIUM",
+    "links": [
+      "https://www.rightmove.co.uk/properties/171346292"
+    ]
+  },
+  {
+    "id": "man-0404-9ca80037",
+    "address": "Caledonian Road, Hillmarton Conservation Area, N7",
+    "area": "Islington (N7)",
+    "price": 525000.0,
+    "alpha_score": 6.5,
+    "market_status": "active",
+    "priority": "MEDIUM",
+    "links": [
+      "https://www.rightmove.co.uk/properties/173587871"
+    ]
+  },
+  {
+    "id": "man-0404-f5a85913",
+    "address": "Caledonian Road (Pub Conversion), Islington, N7",
+    "area": "Islington (N7)",
+    "price": 500000.0,
+    "alpha_score": 6.5,
+    "market_status": "active",
+    "priority": "MEDIUM",
+    "links": [
+      "https://www.rightmove.co.uk/property-for-sale/property-172154322.html"
+    ]
+  },
+  {
+    "id": "man-0404-069a1729",
+    "address": "Edgware Road, Little Venice, W2",
+    "area": "Bayswater (W2)",
+    "price": 500000.0,
+    "alpha_score": 6.5,
+    "market_status": "active",
+    "priority": "MEDIUM",
+    "links": [
+      "https://www.rightmove.co.uk/properties/173906120"
+    ]
+  },
+  {
+    "id": "man-0404-55ce09b2",
+    "address": "Cavendish Road, Kilburn, NW6",
+    "area": "West Hampstead (NW6)",
+    "price": 650000.0,
+    "alpha_score": 5.2,
+    "market_status": "active",
+    "priority": "MEDIUM",
+    "links": [
+      "https://www.rightmove.co.uk/properties/173903330"
+    ]
+  },
+  {
+    "id": "man-0404-adc64104",
+    "address": "Maitland Court, Lancaster Terrace, W2",
+    "area": "Bayswater (W2)",
+    "price": 750000.0,
+    "alpha_score": 5.0,
+    "market_status": "active",
+    "priority": "MEDIUM",
+    "links": [
+      "https://www.rightmove.co.uk/property-for-sale/property-173295842.html"
+    ]
+  },
+  {
+    "id": "ps-bb934eac",
+    "address": "Westbourne Crescent, Lancaster Gate, London W2",
+    "area": "Bayswater (W2)",
+    "price": 650000.0,
+    "alpha_score": 2.2,
+    "market_status": "withdrawn",
+    "priority": "LOW (withdrawn)",
+    "links": [
+      "https://www.zoopla.co.uk/for-sale/details/72712138/",
+      "https://www.zoopla.co.uk/for-sale/details/71214551/",
+      "https://www.zoopla.co.uk/for-sale/details/72837853/",
+      "https://www.zoopla.co.uk/for-sale/details/72712624/"
+    ]
+  }
+]

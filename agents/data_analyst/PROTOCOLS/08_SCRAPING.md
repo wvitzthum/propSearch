@@ -32,7 +32,6 @@ const postcode = clean.match(/"postalCode":\s*"([^"]+)"/)?.[1];
 
 ## Other Research Assets
 
-- **Portal Proxy Research:** See `agents/data_analyst/RESEARCH_PORTAL_PROXY.md` for iframe embedding feasibility.
 - **Metric Definitions:** See `agents/ui_ux_qa/METRIC_DEFINITIONS.md` for formal Alpha Score and market metric methodology.
 - **Lead Enrichment Script:** Run `agents/data_analyst/enrich_leads.js` to automatically enrich inbox leads with visuals via the scraper.
 

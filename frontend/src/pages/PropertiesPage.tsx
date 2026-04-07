@@ -285,10 +285,10 @@ const PropertiesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* UX-018: Smart Command Bar */}
-      <div className="flex items-center gap-3">
-        {/* Smart filter buttons */}
-        <div className="flex bg-linear-card border border-linear-border rounded-lg p-0.5 gap-0.5">
+      {/* UX-018: Smart Command Bar — FE-220: mobile-responsive with wrapping */}
+      <div className="flex flex-wrap md:flex-nowrap items-start md:items-center gap-2 md:gap-3">
+        {/* Smart filter buttons — wraps on mobile, single row on desktop */}
+        <div className="flex bg-linear-card border border-linear-border rounded-lg p-0.5 gap-0.5 flex-wrap sm:flex-nowrap">
           {/* Top Alpha */}
           <button
             onClick={() => {
@@ -302,7 +302,8 @@ const PropertiesPage: React.FC = () => {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold transition-all ${alphaThreshold >= 7.5 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-linear-text-muted hover:text-white hover:bg-linear-bg'}`}
           >
             <Star size={10} className={alphaThreshold >= 7.5 ? 'text-emerald-400 fill-current' : ''} />
-            Top Alpha
+            <span className="hidden sm:inline">Top Alpha</span>
+            <span className="sm:hidden">Alpha+</span>
           </button>
 
           {/* Value Buys */}
@@ -318,7 +319,8 @@ const PropertiesPage: React.FC = () => {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold transition-all ${isValueBuyFilter ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-linear-text-muted hover:text-white hover:bg-linear-bg'}`}
           >
             <TrendingUp size={10} className={isValueBuyFilter ? 'text-emerald-400' : ''} />
-            Value Buys
+            <span className="hidden sm:inline">Value Buys</span>
+            <span className="sm:hidden">Value</span>
           </button>
 
           {/* Shortlisted */}
@@ -333,7 +335,8 @@ const PropertiesPage: React.FC = () => {
             title="Shortlisted: Show shortlisted properties"
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold transition-all ${statusFilter === 'shortlisted' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-linear-text-muted hover:text-white hover:bg-linear-bg'}`}
           >
-            Shortlisted
+            <span className="hidden sm:inline">Shortlisted</span>
+            <span className="sm:hidden">Short</span>
           </button>
 
           {/* All */}
@@ -353,35 +356,36 @@ const PropertiesPage: React.FC = () => {
         <div className="flex bg-linear-card border border-linear-border rounded-lg p-0.5 gap-0.5">
           <button onClick={() => setViewMode('table')} title="Table view (T)"
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold transition-all ${viewMode === 'table' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-linear-text-muted hover:text-white'}`}>
-            <TableIcon size={12} />Table
+            <TableIcon size={12} /><span className="hidden sm:inline">Table</span>
           </button>
           <button onClick={() => setViewMode('grid')} title="Grid view (G)"
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold transition-all ${viewMode === 'grid' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-linear-text-muted hover:text-white'}`}>
-            <LayoutGrid size={12} />Grid
+            <LayoutGrid size={12} /><span className="hidden sm:inline">Grid</span>
           </button>
         </div>
 
-        <div className="relative flex-1 max-w-xs">
+        {/* Search — full width on mobile, fixed width on desktop */}
+        <div className="relative flex-1 w-full min-w-0">
           <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-linear-text-muted" />
           <input
             ref={searchInputRef}
             type="text"
             value={searchQuery}
             onChange={e => handleFilterChange(() => setSearchQuery(e.target.value))}
-            placeholder="Search... (/)"
+            placeholder="Search address, area... (/)"
             className="w-full pl-8 pr-3 py-1.5 bg-linear-card border border-linear-border rounded-lg text-xs text-white placeholder-linear-text-muted focus:outline-none focus:border-blue-500/50"
           />
         </div>
 
-        <div className="flex-1" />
-
-        {/* Column visibility (table only) */}
-        {viewMode === 'table' && (
-          <div className="relative">
-            <button onClick={() => setIsColumnMenuOpen(!isColumnMenuOpen)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-linear-card border border-linear-border rounded-lg text-[10px] font-bold text-linear-text-muted hover:text-white transition-colors">
-              <Eye size={12} />Columns
-            </button>
+        {/* Desktop-only right controls */}
+        <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+          {/* Column visibility (table only, desktop) */}
+          {viewMode === 'table' && (
+            <div className="relative">
+              <button onClick={() => setIsColumnMenuOpen(!isColumnMenuOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-linear-card border border-linear-border rounded-lg text-[10px] font-bold text-linear-text-muted hover:text-white transition-colors">
+                <Eye size={12} />Columns
+              </button>
             {isColumnMenuOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsColumnMenuOpen(false)} />
@@ -408,36 +412,38 @@ const PropertiesPage: React.FC = () => {
               </>
             )}
           </div>
-        )}
+          )}
+        </div>
 
+        {/* Filter button + clear — always visible on mobile */}
         <button onClick={() => setIsFilterOpen(!isFilterOpen)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${isFilterOpen || hasActiveFilters ? 'bg-blue-500/20 border-blue-500/30 text-blue-400' : 'bg-linear-card border-linear-border text-linear-text-muted hover:text-white'}`}>
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all flex-shrink-0 ${isFilterOpen || hasActiveFilters ? 'bg-blue-500/20 border-blue-500/30 text-blue-400' : 'bg-linear-card border-linear-border text-linear-text-muted hover:text-white'}`}>
           <Filter size={12} />
-          Filters
+          <span className="hidden sm:inline">Filters</span>
           {hasActiveFilters && <span className="h-4 w-4 bg-blue-500 text-white rounded-full text-[8px] font-bold flex items-center justify-center">{[statusFilter !== 'all', areaFilter !== 'All Areas', alphaThreshold > 0, maxPrice < 3000000, minSqft > 0].filter(Boolean).length}</span>}
         </button>
 
         {hasActiveFilters && (
-          <button onClick={clearFilters} className="flex items-center gap-1 px-2 py-1.5 text-[9px] font-bold text-linear-text-muted hover:text-white transition-colors">
+          <button onClick={clearFilters} className="flex items-center gap-1 px-2 py-1.5 text-[9px] font-bold text-linear-text-muted hover:text-white transition-colors flex-shrink-0">
             <X size={10} />Clear
           </button>
         )}
       </div>
 
-      {/* UX-018: Status Pipeline Strip */}
-      <div className="flex items-center gap-1">
+      {/* UX-018: Status Pipeline Strip — FE-220: scrollable on mobile */}
+      <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5 -mx-1 px-1">
         <span className="text-[9px] font-black text-linear-text-muted/60 uppercase tracking-widest mr-1">Status:</span>
         {[
           { key: 'discovered' as PropertyStatus, label: 'Discovered', color: 'blue' },
           { key: 'shortlisted' as PropertyStatus, label: 'Shortlisted', color: 'amber' },
           { key: 'vetted' as PropertyStatus, label: 'Vetted', color: 'emerald' },
           // FE-204.3: Label clarifies this is user's archived pipeline, not market withdrawal
-          { key: 'archived' as PropertyStatus, label: 'Archived (User)', color: 'rose' },
-        ].map(({ key, label, color }) => (
+          { key: 'archived' as PropertyStatus, label: 'Archived', shortLabel: 'Arch.', color: 'rose' },
+        ].map(({ key, label, shortLabel, color }) => (
           <button
             key={key}
             onClick={() => handleStatusFilter(statusFilter === key ? 'all' : key)}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all border ${
+            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all border flex-shrink-0 ${
               statusFilter === key
                 ? color === 'blue' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
                   color === 'amber' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
@@ -446,42 +452,44 @@ const PropertiesPage: React.FC = () => {
                 : 'bg-linear-card border-linear-border text-linear-text-muted hover:text-white hover:border-linear-accent/30'
             }`}
           >
-            <div className={`h-1.5 w-1.5 rounded-full ${
+            <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${
               color === 'blue' ? 'bg-blue-400' :
               color === 'amber' ? 'bg-amber-400' :
               color === 'emerald' ? 'bg-emerald-400' :
               'bg-rose-400'
             }`} />
-            {pipelineCounts[key]}
-            <span className="text-[9px] opacity-70">{label}</span>
+            <span className="font-black">{pipelineCounts[key]}</span>
+            <span className="hidden sm:inline text-[9px] opacity-70">{label}</span>
+            <span className="sm:hidden text-[8px] opacity-70">{shortLabel}</span>
           </button>
         ))}
-        {/* FE-204.1: Show/hide archived toggle */}
+        {/* FE-204.1: Show/hide archived toggle — compact on mobile */}
         <button
           onClick={() => setShowArchived(v => !v)}
           title={showArchived ? 'Hiding archived properties' : `Show ${pipelineCounts.archived} archived properties`}
-          className={`ml-2 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all border ${
+          className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all border flex-shrink-0 ${
             showArchived
               ? 'bg-rose-500/10 border-rose-500/30 text-rose-400'
               : 'bg-linear-card border-linear-border text-linear-text-muted hover:text-white hover:border-linear-accent/30'
           }`}
         >
-          <div className={`h-1.5 w-1.5 rounded-full ${showArchived ? 'bg-rose-400' : 'bg-linear-text-muted/30'}`} />
-          {showArchived ? 'Hide Archived' : `Archived (${pipelineCounts.archived})`}
+          <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${showArchived ? 'bg-rose-400' : 'bg-linear-text-muted/30'}`} />
+          <span className="hidden sm:inline">{showArchived ? 'Hide Arch.' : `Arch. (${pipelineCounts.archived})`}</span>
+          <span className="sm:hidden">{showArchived ? 'Hide' : pipelineCounts.archived}</span>
         </button>
-        {/* ADR-017: Market status filter — analyst-owned axis */}
-        <div className="ml-3 flex items-center gap-1 border-l border-linear-border/50 pl-3">
-          <span className="text-[9px] font-black text-linear-text-muted/50 uppercase tracking-widest mr-1">Market:</span>
+        {/* ADR-017: Market status filter — analyst-owned axis, compact on mobile */}
+        <div className="flex items-center gap-1 border-l border-linear-border/50 pl-2 md:pl-3 flex-shrink-0">
+          <span className="hidden md:inline text-[9px] font-black text-linear-text-muted/50 uppercase tracking-widest mr-1">Market:</span>
           {([
-            { key: 'all' as MarketStatus | 'all', label: 'All' },
-            { key: 'active' as MarketStatus, label: 'Active' },
-            { key: 'under_offer' as MarketStatus, label: 'Under Offer' },
-            { key: 'withdrawn' as MarketStatus, label: 'Withdrawn' },
-          ]).map(({ key, label }) => (
+            { key: 'all' as MarketStatus | 'all', label: 'All', shortLabel: 'All' },
+            { key: 'active' as MarketStatus, label: 'Active', shortLabel: 'Act.' },
+            { key: 'under_offer' as MarketStatus, label: 'Under Offer', shortLabel: 'U/O' },
+            { key: 'withdrawn' as MarketStatus, label: 'Withdrawn', shortLabel: 'W/d' },
+          ]).map(({ key, label, shortLabel }) => (
             <button
               key={key}
               onClick={() => { setMarketStatusFilter(key); syncAllFiltersToUrl(); }}
-              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all border ${
+              className={`px-1.5 md:px-2 py-1 rounded-lg text-[9px] md:text-[10px] font-bold transition-all border flex-shrink-0 ${
                 marketStatusFilter === key
                   ? key === 'active' ? 'bg-retro-green/10 text-retro-green border-retro-green/30' :
                     key === 'under_offer' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
@@ -490,7 +498,8 @@ const PropertiesPage: React.FC = () => {
                   : 'bg-linear-card border-linear-border text-linear-text-muted hover:text-white hover:border-linear-accent/30'
               }`}
             >
-              {label}
+              <span className="hidden sm:inline">{label}</span>
+              <span className="sm:hidden">{shortLabel}</span>
             </button>
           ))}
         </div>
@@ -626,9 +635,9 @@ const PropertiesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Keyboard nav hint */}
+      {/* Keyboard nav hint — desktop only (keyboard nav irrelevant on mobile) */}
       {filteredProperties.length > 0 && (
-        <div className="text-[9px] text-linear-text-muted/40 font-mono text-center py-2 tracking-widest">
+        <div className="hidden md:block text-[9px] text-linear-text-muted/40 font-mono text-center py-2 tracking-widest">
           J/K NAVIGATE · O OPEN · S SHORTLIST · A COMPARE · / SEARCH
         </div>
       )}

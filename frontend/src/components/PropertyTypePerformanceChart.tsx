@@ -1,4 +1,5 @@
 // FE-201: Migrated to @visx — replaces HTML/CSS bar chart with visx scale/shape primitives
+// UX-031: Redesigned for hero placement — larger bars, best alpha badge, key insight
 import React, { useMemo } from 'react';
 import { useMacroData } from '../hooks/useMacroData';
 import { extractValue } from '../types/macro';
@@ -69,9 +70,14 @@ const PropertyTypePerformanceChart: React.FC = () => {
   const maxReturn = Math.max(...segments.map(s => s.annualReturn)) * 1.1;
   const boeRate = extractValue((data as any)?.economic_indicators?.boe_base_rate) ?? 3.75;
 
-  const labelWidth = 60;
-  const valueWidth = 50;
-  const rightLabelWidth = 36;
+  // UX-031: Larger dimensions for hero placement (used inside ParentSize)
+  const labelWidth = 100;
+  const valueWidth = 60;
+  const rightLabelWidth = 48;
+
+  // UX-031: Best alpha segment — computed here so KEY INSIGHT can use it outside ParentSize
+  const bestAlphaSeg = segments.reduce((best, seg) =>
+    (seg.annualReturn - boeRate) > (best.annualReturn - boeRate) ? seg : best, segments[0]);
 
   return (
     <div className="bg-linear-card border border-linear-border rounded-xl overflow-hidden">
@@ -94,8 +100,9 @@ const PropertyTypePerformanceChart: React.FC = () => {
           {({ width: parentWidth }) => {
             if (parentWidth < 10) return null;
             const chartWidth = Math.max(parentWidth - labelWidth - valueWidth - rightLabelWidth - 16, 40);
-            const barHeight = 14;
-            const barPad = 6;
+            // UX-031: Bar height increased from 14 to 24 (nearly 2x)
+            const barHeight = 24;
+            const barPad = 10;
             const innerHeight = segments.length * (barHeight + barPad);
 
             const xScale = scaleLinear({
@@ -117,18 +124,31 @@ const PropertyTypePerformanceChart: React.FC = () => {
 
             return (
               <div className="flex items-start gap-0">
-                {/* Type labels column */}
+                {/* Type labels column — UX-031: added rank badges + volatility labels */}
                 <div className="shrink-0" style={{ width: labelWidth }}>
-                  {segments.map(seg => (
-                    <div
-                      key={seg.type}
-                      className="flex flex-col justify-center"
-                      style={{ height: barHeight + barPad, marginBottom: 0 }}
-                    >
-                      <div className="text-[9px] font-bold text-white truncate">{seg.label}</div>
-                      <div className="text-[7px] text-linear-text-muted/60">vol {seg.volatility.toFixed(2)}</div>
-                    </div>
-                  ))}
+                  {segments.map((seg, idx) => {
+                    const isTop = seg.type === bestAlphaSeg.type;
+                    return (
+                      <div
+                        key={seg.type}
+                        className="flex items-center gap-2"
+                        style={{ height: barHeight + barPad, marginBottom: 0 }}
+                      >
+                        {/* Rank badge */}
+                        <div className={`w-5 h-5 rounded flex items-center justify-center text-[8px] font-black shrink-0 ${
+                          isTop ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-linear-bg text-linear-text-muted border border-linear-border'
+                        }`}>
+                          {isTop ? '★' : idx + 1}
+                        </div>
+                        <div className="flex flex-col justify-center flex-1 min-w-0">
+                          <div className="text-[10px] font-bold text-white truncate">{seg.label}</div>
+                          <div className="text-[8px] text-linear-text-muted/60">
+                            {seg.volatility >= 0.8 ? 'High vol' : seg.volatility >= 0.5 ? 'Med vol' : 'Low vol'}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Chart SVG */}
@@ -137,16 +157,26 @@ const PropertyTypePerformanceChart: React.FC = () => {
                   height={innerHeight}
                   className="overflow-visible"
                 >
-                  {/* Risk-free threshold line */}
+                  {/* Risk-free threshold line — UX-031: more prominent 1.5px */}
                   <line
                     x1={xScale(boeRate)}
                     y1={0}
                     x2={xScale(boeRate)}
                     y2={innerHeight}
-                    stroke="rgba(255,255,255,0.3)"
-                    strokeWidth="0.5"
-                    strokeDasharray="2,1"
+                    stroke="rgba(255,255,255,0.5)"
+                    strokeWidth="1.5"
+                    strokeDasharray="4,2"
                   />
+                  {/* Risk-free label */}
+                  <text
+                    x={xScale(boeRate) + 2}
+                    y={8}
+                    className="fill-linear-text-muted/60"
+                    fontSize={7}
+                    fontStyle="italic"
+                  >
+                    RF {boeRate.toFixed(1)}%
+                  </text>
 
                   {/* Bars */}
                   {segments.map(seg => {
@@ -171,7 +201,7 @@ const PropertyTypePerformanceChart: React.FC = () => {
                   })}
                 </svg>
 
-                {/* Annual return column */}
+                {/* Annual return + alpha column — UX-031: added alpha vs risk-free */}
                 <div className="shrink-0 flex flex-col justify-start" style={{ width: valueWidth, paddingLeft: 8 }}>
                   {segments.map(seg => {
                     const alpha = seg.annualReturn - boeRate;
@@ -191,18 +221,24 @@ const PropertyTypePerformanceChart: React.FC = () => {
                   })}
                 </div>
 
-                {/* 5yr total + color dot column */}
+                {/* 5yr total + £ impact + color dot — UX-031: enriched with £ impact */}
                 <div className="shrink-0 flex flex-col items-end" style={{ width: rightLabelWidth }}>
-                  {segments.map(seg => (
-                    <div
-                      key={seg.type}
-                      className="flex items-center gap-1.5 justify-end"
-                      style={{ height: barHeight + barPad }}
-                    >
-                      <div className="text-[9px] font-bold text-white tabular-nums">+{seg.fiveYearTotal}%</div>
-                      <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
-                    </div>
-                  ))}
+                  {segments.map(seg => {
+                    const isTop = seg.type === bestAlphaSeg.type;
+                    return (
+                      <div
+                        key={seg.type}
+                        className="flex items-center gap-1.5 justify-end"
+                        style={{ height: barHeight + barPad }}
+                      >
+                        {isTop && (
+                          <span className="text-[7px] font-black text-amber-400 bg-amber-500/10 px-1 rounded border border-amber-500/20 shrink-0">BEST</span>
+                        )}
+                        <div className="text-[9px] font-bold text-white tabular-nums">+{seg.fiveYearTotal}%</div>
+                        <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -210,10 +246,26 @@ const PropertyTypePerformanceChart: React.FC = () => {
         </ParentSize>
       </div>
 
+      {/* UX-031: KEY INSIGHT callout */}
+      <div className="mx-4 mb-3 p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+        <div className="flex items-start gap-2">
+          <TrendingUp size={12} className="text-amber-400 mt-0.5 shrink-0" />
+          <div className="text-[10px] text-amber-300 leading-relaxed">
+            <span className="font-black uppercase tracking-widest">Key Insight: </span>
+            <span className="text-white">
+              {bestAlphaSeg.label} generates +{(bestAlphaSeg.annualReturn - boeRate).toFixed(1)}pp more annual return vs Detached.
+            </span>
+            <span className="text-linear-text-muted ml-1">
+              Best risk-adjusted opportunity in current market conditions.
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Risk-free reference line legend */}
       <div className="px-4 pb-3">
         <div className="flex items-center gap-2 text-[8px] text-linear-text-muted/60">
-          <div className="h-px w-4 bg-white/30" />
+          <div className="h-px w-4 bg-white/50" />
           <span>Risk-free threshold (BoE {boeRate.toFixed(2)}%)</span>
           <span className="ml-auto text-[7px] text-linear-text-muted/40">Alpha = return above BoE rate</span>
         </div>
@@ -225,7 +277,7 @@ const PropertyTypePerformanceChart: React.FC = () => {
         <span className="text-[8px] text-linear-text-muted/40 font-mono">London prime · 2026</span>
       </div>
 
-      {/* Tooltip */}
+      {/* UX-031: Enriched tooltip */}
       {tooltipOpen && tooltipData && (
         <TooltipWithBounds
           left={tooltipLeft}
@@ -234,8 +286,9 @@ const PropertyTypePerformanceChart: React.FC = () => {
         >
           <div className="text-[10px] font-black text-white">{tooltipData.label}</div>
           <div className="text-[9px] text-retro-green font-bold">+{tooltipData.annualReturn.toFixed(1)}% annual</div>
-          <div className="text-[9px] text-linear-text-muted">5yr: +{tooltipData.fiveYearTotal}%</div>
-          <div className="text-[9px] text-linear-text-muted">Vol: {tooltipData.volatility.toFixed(2)}</div>
+          <div className="text-[9px] text-white">{tooltipData.fiveYearTotal}% / 5yr</div>
+          <div className="text-[9px] text-linear-text-muted">Alpha vs RF: +{(tooltipData.annualReturn - boeRate).toFixed(1)}pp</div>
+          <div className="text-[9px] text-linear-text-muted">{tooltipData.volatility >= 0.8 ? 'High' : tooltipData.volatility >= 0.5 ? 'Med' : 'Low'} vol</div>
         </TooltipWithBounds>
       )}
     </div>

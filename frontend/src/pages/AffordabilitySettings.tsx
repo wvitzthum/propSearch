@@ -20,6 +20,8 @@ import BudgetSlider from '../components/BudgetSlider';
 import LoadingNode from '../components/LoadingNode';
 import AdditionalCostsCard from '../components/AdditionalCostsCard';
 import RentalYieldVsGiltChart from '../components/RentalYieldVsGiltChart';
+import PurchasingPowerChart from '../components/PurchasingPowerChart';
+// LTVBandComparisonChart removed — VISX-016
 
 const AffordabilitySettings: React.FC = () => {
   const { macroData, loading } = useFinancialData();
@@ -188,6 +190,22 @@ const AffordabilitySettings: React.FC = () => {
           </div>
           <div className="text-[10px] text-linear-text-muted mt-1">mortgage vs BoE</div>
         </div>
+      </div>
+
+      {/* FE-216: Purchasing Power Index */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+            <DollarSign size={16} className="text-blue-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white tracking-tight">Purchasing Power Index</h2>
+            <p className="text-[11px] text-linear-text-muted">Max loan achievable at your monthly budget over the past 24 months</p>
+          </div>
+        </div>
+        <PurchasingPowerChart monthlyBudget={monthlyBudget} termYears={termYears} height={280} />
+
+        {/* VISX-012: LTV Band Comparison — removed per VISX-016 */}
       </div>
 
       {/* Main Settings */}

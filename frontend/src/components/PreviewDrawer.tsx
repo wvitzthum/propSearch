@@ -239,27 +239,27 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
               onStatusChange={(newStatus) => onStatusChange(property.id, newStatus)} 
             />
 
-            {/* KPI Grid */}
-            <div className="grid grid-cols-4 gap-4 border-y border-linear-border/50 py-6">
+            {/* KPI Grid — FE-220: responsive — 2 cols on mobile, 4 on desktop */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 border-y border-linear-border/50 py-6">
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
                   <Maximize2 size={10} className="text-linear-accent" /> Space
                 </span>
                 <span className="text-sm font-bold text-white tracking-tight">{property.sqft || '—'} SQFT</span>
               </div>
-              <div className="flex flex-col gap-1 border-x border-linear-border px-4">
+              <div className="flex flex-col gap-1 border-l md:border-x border-linear-border md:px-4 pl-4 md:pl-0">
                 <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
                   <LayoutGrid size={10} className="text-linear-accent" /> Floor
                 </span>
                 <span className="text-sm font-bold text-white tracking-tight uppercase">{property.floor_level || '—'}</span>
               </div>
-              <div className="flex flex-col gap-1 border-r border-linear-border px-4">
+              <div className="flex flex-col gap-1 border-t md:border-t-0 border-linear-border/50 md:border-r md:border-linear-border pt-4 md:pt-0 md:pr-4 pl-0">
                 <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
                   <Scale size={10} className="text-linear-accent" /> Price/m²
                 </span>
                 <span className="text-sm font-bold text-white tracking-tight">£{(property.price_per_sqm || 0).toLocaleString()}</span>
               </div>
-              <div className="flex flex-col gap-1 pl-4">
+              <div className="flex flex-col gap-1 border-t md:border-t-0 border-linear-border/50 pt-4 md:pt-0 pl-4 md:pl-4">
                 <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
                   <Zap size={10} className="text-linear-accent" /> EPC
                 </span>

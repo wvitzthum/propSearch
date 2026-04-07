@@ -56,8 +56,8 @@ const AffordabilityNode: React.FC<AffordabilityNodeProps> = ({
           </Link>
         </div>
 
-        {/* Quick Metrics */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        {/* Quick Metrics — FE-218: Responsive grid, 1 col on mobile, 2 on sm+ */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <div className="text-[9px] text-linear-text-muted uppercase tracking-wider mb-1">Monthly Payment</div>
             <div className="text-lg font-bold text-white tracking-tight">£{budgetProfile.monthlyPayment.toLocaleString()}</div>

@@ -1,22 +1,36 @@
+// VISX-008: Voronoi pixel-precise hover via @visx/voronoi VoronoiPolygon
 // FE-205: Migrated to @visx — replaces hand-rolled SVG with visx scale/shape/axis primitives
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useMacroData } from '../hooks/useMacroData';
 import { extractValue } from '../types/macro';
 import { scaleLinear } from '@visx/scale';
-import { LinePath, AreaClosed } from '@visx/shape';
+import { LinePath } from '@visx/shape';
 import { Group } from '@visx/group';
-import { localPoint } from '@visx/event';
+import { VoronoiPolygon } from '@visx/voronoi';
+import { useTooltip, TooltipWithBounds } from '@visx/tooltip';
+import ParentSize from '@visx/responsive/lib/components/ParentSize';
 
 // FE-188: London HPI Trajectory Chart — historical index with event annotations and 3-scenario fan overlay
+// FE-219: Increased viewBox to 800x300 for hero placement
 // Accepts: 10+ year London/UK HPI time series, key event markers, bear/base/bull projections
 
 interface HPIHistoryChartProps {
   className?: string;
+  height?: number;
 }
 
-const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '' }) => {
+const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', height = 260 }) => {
   const { data } = useMacroData();
-  const [hoverDate, setHoverDate] = useState<string | null>(null);
+
+  // VISX-008: useTooltip must be called before any early returns (Rules of Hooks)
+  const {
+    showTooltip,
+    hideTooltip,
+    tooltipOpen,
+    tooltipData,
+    tooltipLeft,
+    tooltipTop,
+  } = useTooltip<{ date: string; index: number }>();
 
   const raw = data as any;
 
@@ -97,14 +111,11 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '' }) => 
     'Market Peak': '#f59e0b',
   };
 
-  // SVG layout (viewBox coords) — increased H from 100 to 200 for better readability (FE-205)
-  const W = 220, H = 200;
-  const PAD = 4;
 
   // Visible window: last 60 months of history + 36 months projection
   const displayHistory = history.slice(-60);
 
-  // Scales (viewBox coordinates)
+  // Scales (used by ParentSize SVG — coords are in screen pixels, not viewBox)
   const xMax = displayHistory.length + 36 - 1;
   const allValues = [
     ...displayHistory.map(h => h.index_uk),
@@ -188,19 +199,36 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '' }) => 
         )}
       </div>
 
-      {/* SVG Chart — @visx */}
+      {/* SVG Chart — @visx — FE-219: height increased to hero size */}
+      {/* VISX-018+VISX-019: Replaced viewBox approach with ParentSize responsive SVG.
+          viewBox + preserveAspectRatio caused two bugs:
+          1. tooltipLeft/Top were in viewBox space but TooltipWithBounds expects screen coords
+          2. SVG font sizes (2.5px, 2.8px) were in viewBox space and scaled to near-invisible
+          NEW: ParentSize provides actual pixel width; SVG has no viewBox, all coords are screen pixels.
+          FIX: SVG height = H + 32 to accommodate year labels that sit below the chart area. */}
       <div className="px-4 py-3 relative">
-        <div style={{ height: 260 }}>
-          <svg
-            viewBox={`0 0 ${W} ${H}`}
-            preserveAspectRatio="xMidYMid meet"
-            className="w-full h-full overflow-visible"
-          >
-            {/* @visx scales (viewBox coordinate space) */}
-            {(() => {
+        <div style={{ height: height + 32 }}>
+          <ParentSize>
+            {({ width: parentWidth }) => {
+              if (parentWidth < 10) return null;
+
+              // SVG uses explicit pixel dimensions (no viewBox → no coordinate mismatch)
+              const W = parentWidth;
+              const H = height;
+
+              // FIX (VISX-018+VISX-019): SVG height must exceed H to accommodate labels
+              // that sit BELOW the chart area (year labels at y=H+20).
+              // Grid lines still use H-PAD as their visual extent inside the chart.
+              const SVG_H = H + 32;
+
+              // Chart padding
+              const PAD = 18;
+              const LEFT_PAD = 40; // wider left to accommodate vertical y-axis labels
+
+              // @visx scales in screen pixel space
               const xScale = scaleLinear({
                 domain: [0, xMax],
-                range: [PAD, W - PAD],
+                range: [LEFT_PAD, W - PAD],
                 nice: false,
               });
               const yScale = scaleLinear({
@@ -220,22 +248,35 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '' }) => 
                 return acc;
               }, []).filter((_, i) => i % 2 === 0);
 
-              // Fan area data arrays
-              const fanBullData = scenarios
-                ? scenarios.bull.path.map((v, i) => ({
-                    x: displayHistory.length - 1 + i,
-                    y: v,
-                  }))
-                : [];
+              // Projection start x in domain units = displayHistory.length - 1
+              const projStartIdx = displayHistory.length - 1;
 
-              const fanBearData = scenarios
-                ? [...scenarios.bear.path]
-                    .reverse()
-                    .map((v, i) => ({
-                      x: displayHistory.length - 1 + scenarios.bear.path.length - 1 - i,
-                      y: v,
-                    }))
-                : [];
+              // FIX: Fan area as manual polygon — AreaClosed had a bug where x was passed as raw
+              // domain indices (60-63) without xScale, placing the fan off-screen to the right.
+              // Solution: build an explicit SVG polygon using getX/getY (screen pixel coords).
+              const fanPolygonPoints = scenarios
+                ? (() => {
+                    const bullPts = scenarios.bull.path.map((v, i) => ({
+                      x: getX(projStartIdx + i),
+                      y: getY(v),
+                    }));
+                    const bearPts = [...scenarios.bear.path]
+                      .reverse()
+                      .map((v, i) => ({
+                        x: getX(projStartIdx + scenarios.bear.path.length - 1 - i),
+                        y: getY(v),
+                      }));
+                    const lastHistoryPt = {
+                      x: getX(projStartIdx),
+                      y: getY(lastHpi?.index_uk ?? minV),
+                    };
+                    return [
+                      ...bullPts.map(p => `${p.x},${p.y}`),
+                      ...bearPts.map(p => `${p.x},${p.y}`),
+                      `${lastHistoryPt.x},${lastHistoryPt.y}`,
+                    ].join(' ');
+                  })()
+                : '';
 
               // Historical line data
               const historyData = displayHistory.map((h, i) => ({
@@ -245,191 +286,240 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '' }) => 
 
               // Projection lines data
               const projBase = scenarios
-                ? scenarios.base.path.map((v, i) => ({ x: displayHistory.length - 1 + i, y: v }))
+                ? scenarios.base.path.map((v, i) => ({ x: projStartIdx + i, y: v }))
                 : [];
               const projBear = scenarios
-                ? scenarios.bear.path.map((v, i) => ({ x: displayHistory.length - 1 + i, y: v }))
+                ? scenarios.bear.path.map((v, i) => ({ x: projStartIdx + i, y: v }))
                 : [];
               const projBull = scenarios
-                ? scenarios.bull.path.map((v, i) => ({ x: displayHistory.length - 1 + i, y: v }))
+                ? scenarios.bull.path.map((v, i) => ({ x: projStartIdx + i, y: v }))
                 : [];
 
+              // Voronoi hover data for pixel-precise interaction
+              const voronoiData = displayHistory.map((h, i) => ({
+                x: getX(i),
+                y: getY(h.index_uk),
+                date: h.date,
+                index: h.index_uk,
+              }));
+
+              // Projection area separator line (dashed vertical at last history point)
+              const projSepX = getX(projStartIdx);
+
               return (
-                <Group>
-                  {/* Horizontal grid lines */}
-                  {[0, 0.25, 0.5, 0.75, 1].map(pct => {
-                    const v = minV + (maxV - minV) * pct;
-                    return (
-                      <g key={pct}>
-                        <line
-                          x1={PAD} y1={getY(v)} x2={W - PAD} y2={getY(v)}
-                          stroke="rgba(255,255,255,0.05)" strokeWidth="0.08"
-                        />
-                        <text
-                          x={PAD - 0.8} y={getY(v) + 0.9}
-                          className="text-[2.5px] fill-linear-text-muted/60"
-                          textAnchor="end"
-                        >
-                          {v.toFixed(0)}
-                        </text>
-                      </g>
-                    );
-                  })}
+                <svg
+                  width={W}
+                  height={SVG_H}
+                  className="overflow-visible"
+                >
+                  <Group>
+                    {/* Horizontal grid lines */}
+                    {[0, 0.25, 0.5, 0.75, 1].map(pct => {
+                      const v = minV + (maxV - minV) * pct;
+                      return (
+                        <g key={pct}>
+                          <line
+                            x1={LEFT_PAD} y1={getY(v)} x2={W - PAD} y2={getY(v)}
+                            stroke="rgba(255,255,255,0.06)" strokeWidth={1}
+                          />
+                          {/* FIX (VISX-019): Vertical y-axis labels — rotated -90° for Bloomberg aesthetic */}
+                          <text
+                            x={LEFT_PAD - 6}
+                            y={getY(v)}
+                            fontSize={10}
+                            fill="rgba(161,161,170,0.6)"
+                            textAnchor="end"
+                            transform={`rotate(-90, ${LEFT_PAD - 6}, ${getY(v)})`}
+                          >
+                            {v.toFixed(0)}
+                          </text>
+                        </g>
+                      );
+                    })}
 
-                  {/* Scenario fan area (bull to bear band) */}
-                  {scenarios && (
-                    <AreaClosed
-                      data={fanBullData}
+                    {/* FIX (VISX-022): Scenario fan area — manual polygon with correct screen pixel coords.
+                        AreaClosed was passed raw domain indices as x (not screen coords), placing the
+                        fan far off-screen. Replaced with a raw <polygon> using getX/getY throughout. */}
+                    {scenarios && (
+                      <polygon
+                        points={fanPolygonPoints}
+                        fill="#3b82f6"
+                        opacity={0.06}
+                      />
+                    )}
+
+                    {/* Historical line — @visx LinePath */}
+                    <LinePath
+                      data={historyData}
                       x={d => getX(d.x)}
-                      y0={d => getY(fanBearData[fanBullData.indexOf(d)]?.y ?? d.y)}
-                      y1={d => getY(d.y)}
-                      yScale={yScale}
-                      fill="#3b82f6"
-                      opacity={0.06}
+                      y={d => getY(d.y)}
+                      stroke="#22c55e"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
-                  )}
 
-                  {/* Historical line — @visx LinePath */}
-                  <LinePath
-                    data={historyData}
-                    x={d => getX(d.x)}
-                    y={d => getY(d.y)}
-                    stroke="#22c55e"
-                    strokeWidth={0.9}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-
-                  {/* Projection lines */}
-                  {scenarios && (
-                    <>
-                      <LinePath
-                        data={projBear}
-                        x={d => getX(d.x)}
-                        y={d => getY(d.y)}
-                        stroke={scenarios.bear.color}
-                        strokeWidth={0.7}
-                        strokeDasharray="2,1"
-                        opacity={0.7}
-                      />
-                      <LinePath
-                        data={projBull}
-                        x={d => getX(d.x)}
-                        y={d => getY(d.y)}
-                        stroke={scenarios.bull.color}
-                        strokeWidth={0.7}
-                        strokeDasharray="2,1"
-                        opacity={0.7}
-                      />
-                      <LinePath
-                        data={projBase}
-                        x={d => getX(d.x)}
-                        y={d => getY(d.y)}
-                        stroke={scenarios.base.color}
-                        strokeWidth={1.1}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </>
-                  )}
-
-                  {/* Current index dot */}
-                  <circle
-                    cx={getX(displayHistory.length - 1)}
-                    cy={getY(lastHpi?.index_uk ?? 0)}
-                    r={1.5}
-                    fill="#22c55e"
-                    stroke="#000"
-                    strokeWidth={0.4}
-                  />
-
-                  {/* Annotation markers */}
-                  {annotations.map(ann => {
-                    const idx = annotationX[ann.date];
-                    if (idx === undefined) return null;
-                    const color = eventColors[ann.event] ?? '#a1a1aa';
-                    return (
-                      <g key={ann.date}>
+                    {/* Projection lines */}
+                    {scenarios && (
+                      <>
+                        {/* Separator: dashed vertical line at the "now" boundary */}
                         <line
-                          x1={getX(idx)} y1={PAD}
-                          x2={getX(idx)} y2={H - PAD}
-                          stroke={color} strokeWidth={0.15}
-                          opacity={0.4}
-                          strokeDasharray="1,1"
+                          x1={projSepX} y1={PAD}
+                          x2={projSepX} y2={H - PAD}
+                          stroke="rgba(255,255,255,0.15)"
+                          strokeWidth={1}
+                          strokeDasharray="3,3"
                         />
-                        <text
-                          x={getX(idx)} y={PAD - 0.5}
-                          className="text-[2.5px] font-black"
-                          fill={color}
-                          opacity={0.8}
-                          textAnchor="middle"
-                        >
-                          {ann.event}
-                        </text>
-                      </g>
-                    );
-                  })}
+                        <LinePath
+                          data={projBear}
+                          x={d => getX(d.x)}
+                          y={d => getY(d.y)}
+                          stroke={scenarios.bear.color}
+                          strokeWidth={1.5}
+                          strokeDasharray="4,2"
+                          opacity={0.7}
+                        />
+                        <LinePath
+                          data={projBull}
+                          x={d => getX(d.x)}
+                          y={d => getY(d.y)}
+                          stroke={scenarios.bull.color}
+                          strokeWidth={1.5}
+                          strokeDasharray="4,2"
+                          opacity={0.7}
+                        />
+                        <LinePath
+                          data={projBase}
+                          x={d => getX(d.x)}
+                          y={d => getY(d.y)}
+                          stroke={scenarios.base.color}
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </>
+                    )}
 
-                  {/* Year labels on x-axis */}
-                  {yearLabels.map(({ x, label }) => (
-                    <text
-                      key={label}
-                      x={getX(x)} y={H - PAD + 4}
-                      className="text-[2.5px] fill-linear-text-muted/60 font-bold"
-                      textAnchor="middle"
-                    >
-                      {label}
-                    </text>
-                  ))}
+                    {/* Current index dot */}
+                    <circle
+                      cx={getX(displayHistory.length - 1)}
+                      cy={getY(lastHpi?.index_uk ?? 0)}
+                      r={4}
+                      fill="#22c55e"
+                      stroke="#000"
+                      strokeWidth={1}
+                    />
 
-                  {/* Projection label */}
-                  {scenarios && (
-                    <text
-                      x={getX(displayHistory.length)} y={PAD - 0.5}
-                      className="text-[2.5px] fill-blue-400/60 font-bold"
-                      textAnchor="start"
-                    >
-                      +3yr projections
-                    </text>
-                  )}
+                    {/* Annotation markers — FIX (VISX-022): label rotated 90° to avoid overlap */}
+                    {annotations.map(ann => {
+                      const idx = annotationX[ann.date];
+                      if (idx === undefined) return null;
+                      const color = eventColors[ann.event] ?? '#a1a1aa';
+                      const x = getX(idx);
+                      const y = getY(displayHistory[idx]?.index_uk ?? minV);
+                      // Rotate 90° around label anchor — text runs vertically upward along the dashed line
+                      const labelX = x;
+                      const labelY = PAD - 4;
+                      return (
+                        <g key={ann.date}>
+                          {/* Vertical dashed line at annotation date */}
+                          <line
+                            x1={x} y1={PAD}
+                            x2={x} y2={H - PAD}
+                            stroke={color}
+                            strokeWidth={1}
+                            strokeDasharray="3,2"
+                            opacity={0.5}
+                          />
+                          {/* FIX: rotated 90° — text sits to the LEFT of the line, reads bottom-to-top.
+                              Using `start` anchor so right edge of text is at x, rotated around (labelX, labelY).
+                              After rotation: text runs vertically upward from the anchor point. */}
+                          <text
+                            x={labelX}
+                            y={labelY}
+                            fontSize={9}
+                            fontWeight="900"
+                            fill={color}
+                            opacity={0.85}
+                            textAnchor="end"
+                            transform={`rotate(-90, ${labelX}, ${labelY})`}
+                          >
+                            {ann.event}
+                          </text>
+                          {/* Dot at data intersection */}
+                          <circle
+                            cx={x} cy={y}
+                            r={3}
+                            fill={color}
+                            opacity={0.7}
+                          />
+                        </g>
+                      );
+                    })}
 
-                  {/* Hover interaction */}
-                  <rect
-                    x={PAD} y={PAD}
-                    width={W - 2 * PAD} height={H - 2 * PAD}
-                    fill="transparent"
-                    onMouseMove={(e) => {
-                      const coords = localPoint(e);
-                      if (!coords) return;
-                      // coords are in viewBox units since rect is positioned in viewBox space
-                      const ratio = (coords.x - PAD) / (W - 2 * PAD);
-                      const idx = Math.round(ratio * (displayHistory.length - 1));
-                      if (idx >= 0 && idx < displayHistory.length) {
-                        setHoverDate(displayHistory[idx].date);
-                      } else {
-                        setHoverDate(null);
-                      }
-                    }}
-                    onMouseLeave={() => setHoverDate(null)}
-                  />
-                </Group>
+                    {/* Year labels on x-axis — positioned below the chart area, inside SVG_H */}
+                    {yearLabels.map(({ x, label }) => (
+                      <text
+                        key={label}
+                        x={getX(x)} y={H + 20}
+                        fontSize={11}
+                        fontWeight="bold"
+                        fill="rgba(161,161,170,0.6)"
+                        textAnchor="middle"
+                      >
+                        {label}
+                      </text>
+                    ))}
+
+                    {/* Projection label — positioned just above the rightmost projection dot */}
+                    {scenarios && projBase.length > 0 && (
+                      <text
+                        x={getX(projBase[projBase.length - 1].x) + 4}
+                        y={getY(projBase[projBase.length - 1].y) - 6}
+                        fontSize={9}
+                        fontWeight="bold"
+                        fill="rgba(59,130,246,0.6)"
+                        textAnchor="start"
+                      >
+                        +3yr
+                      </text>
+                    )}
+
+                    {/* Voronoi pixel-precise hover — tooltip coords are screen pixels */}
+                    {voronoiData.map(d => (
+                      <VoronoiPolygon
+                        key={d.date}
+                        polygon={[[d.x - 200, d.y - 200], [d.x + 200, d.y - 200], [d.x + 200, d.y + 200], [d.x - 200, d.y + 200]] as [number, number][]}
+                        fill="transparent"
+                        stroke="transparent"
+                        onMouseMove={() => {
+                          showTooltip({ tooltipData: { date: d.date, index: d.index }, tooltipLeft: d.x, tooltipTop: d.y });
+                        }}
+                        onMouseLeave={hideTooltip}
+                        className="cursor-crosshair"
+                      />
+                    ))}
+                  </Group>
+                </svg>
               );
-            })()}
-          </svg>
+            }}
+          </ParentSize>
         </div>
 
-        {/* Hover tooltip */}
-        {hoverDate && (
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur border border-linear-border rounded-lg px-3 py-1.5 pointer-events-none z-10">
-            <span className="text-[10px] font-bold text-white">{hoverDate}</span>
-            <span className="text-[10px] text-retro-green ml-2">
-              {displayHistory.find(h => h.date === hoverDate)?.index_uk.toFixed(2) ?? ''}
-            </span>
-          </div>
+        {/* VISX-018: Voronoi hover tooltip — tooltipLeft/Top are now screen coords (matching SVG pixel coords) */}
+        {tooltipOpen && tooltipData && (
+          <TooltipWithBounds
+            left={tooltipLeft}
+            top={tooltipTop}
+            className="bg-black/90 backdrop-blur border border-linear-border rounded-lg px-3 py-2 pointer-events-none z-50"
+          >
+            <div className="text-[10px] font-bold text-white">{tooltipData.date}</div>
+            <div className="text-[9px] text-retro-green">Index: {tooltipData.index.toFixed(2)}</div>
+          </TooltipWithBounds>
         )}
 
-        {/* Event legend strip */}
-        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
+        {/* VISX-004: Event annotation legend strip */}
+        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
           {annotations.map(ann => {
             const color = eventColors[ann.event] ?? '#a1a1aa';
             return (

@@ -194,8 +194,19 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
         </div>
       )}
 
-      <div className="overflow-x-auto custom-scrollbar">
-        <table className="w-full border-collapse">
+      {/* Mobile scroll affordance — right-edge fade hint */}
+      <div className="relative">
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-linear-bg to-transparent z-20 pointer-events-none md:hidden" />
+        {/* Mobile scroll hint — shown on small screens */}
+        <div className="flex items-center gap-1 px-4 py-1.5 bg-linear-card/30 border-b border-linear-border/30 md:hidden">
+          <div className="h-1 w-1 rounded-full bg-linear-text-muted/40 animate-pulse" />
+          <span className="text-[8px] text-linear-text-muted/40 font-bold uppercase tracking-widest">
+            Scroll right for more columns
+          </span>
+        </div>
+
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full border-collapse">
           <thead>
             <tr className="bg-linear-card/50 border-b border-linear-border">
               {/* Batch Select Checkbox */}
@@ -512,48 +523,49 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                     </td>
                   )}
                   <td className="px-2 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end gap-2">
-                      <button 
+                    {/* FE-220: Mobile action buttons — larger touch targets on small screens */}
+                    <div className="flex items-center justify-end gap-1 md:gap-2">
+                      <button
                         onClick={() => toggleComparison(property.id)}
-                        className={`p-1 rounded transition-all ${
+                        className={`p-1.5 md:p-1 rounded transition-all min-w-[36px] md:min-w-0 flex items-center justify-center ${
                           isSelected ? 'text-linear-accent-blue bg-linear-accent-blue/10' : 'text-linear-accent hover:text-linear-text-primary'
                         }`}
                         title="Add to Comparison"
                       >
-                        <Zap size={14} fill={isSelected ? 'currentColor' : 'none'} />
+                        <Zap size={15} fill={isSelected ? 'currentColor' : 'none'} />
                       </button>
-                      <div className="w-px h-4 bg-linear-border mx-0.5"></div>
-                      <button 
+                      <div className="w-px h-4 bg-linear-border mx-0.5 hidden md:block"></div>
+                      <button
                         onClick={() => onStatusChange && onStatusChange(property.id, status === 'shortlisted' ? 'discovered' : 'shortlisted')}
-                        className={`p-1 rounded transition-all hover:scale-110 ${
+                        className={`p-1.5 md:p-1 rounded transition-all min-w-[36px] md:min-w-0 flex items-center justify-center ${
                           status === 'shortlisted' ? 'text-linear-accent-blue' : 'text-linear-accent hover:text-linear-text-primary'
                         }`}
                         title="Shortlist"
                       >
-                        <Bookmark size={14} fill={status === 'shortlisted' ? 'currentColor' : 'none'} />
+                        <Bookmark size={15} fill={status === 'shortlisted' ? 'currentColor' : 'none'} />
                       </button>
-                      <button 
+                      <button
                         onClick={() => onStatusChange && onStatusChange(property.id, status === 'vetted' ? 'shortlisted' : 'vetted')}
-                        className={`p-1 rounded transition-all hover:scale-110 ${
+                        className={`p-1.5 md:p-1 rounded transition-all min-w-[36px] md:min-w-0 flex items-center justify-center ${
                           status === 'vetted' ? 'text-linear-accent-emerald' : 'text-linear-accent hover:text-linear-text-primary'
                         }`}
                         title="Mark as Vetted"
                       >
-                        <ShieldCheck size={14} fill={status === 'vetted' ? 'currentColor' : 'none'} />
+                        <ShieldCheck size={15} fill={status === 'vetted' ? 'currentColor' : 'none'} />
                       </button>
-                      <button 
+                      <button
                         onClick={() => onStatusChange && onStatusChange(property.id, status === 'archived' ? 'discovered' : 'archived')}
-                        className={`p-1 rounded transition-all hover:scale-110 ${
+                        className={`p-1.5 md:p-1 rounded transition-all min-w-[36px] md:min-w-0 flex items-center justify-center ${
                           status === 'archived' ? 'text-linear-accent-rose' : 'text-linear-accent hover:text-linear-accent-rose'
                         }`}
                         title="Archive"
                       >
-                        {status === 'archived' ? <RotateCcw size={14} /> : <Archive size={14} />}
+                        {status === 'archived' ? <RotateCcw size={15} /> : <Archive size={15} />}
                       </button>
-                      <div className="w-px h-4 bg-linear-border mx-1"></div>
-                      <Link 
+                      <div className="w-px h-4 bg-linear-border mx-1 hidden md:block"></div>
+                      <Link
                         to={`/property/${property.id}`}
-                        className="p-1.5 text-linear-text-muted hover:text-linear-text-primary hover:bg-linear-accent rounded transition-all"
+                        className="p-1.5 md:p-1.5 text-linear-text-muted hover:text-linear-text-primary hover:bg-linear-accent rounded transition-all flex items-center justify-center min-w-[36px] md:min-w-0"
                       >
                         <ChevronRight size={16} />
                       </Link>
@@ -564,6 +576,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
             })}
           </tbody>
         </table>
+      </div>
       </div>
 
       {/* Batch Tag Panel */}

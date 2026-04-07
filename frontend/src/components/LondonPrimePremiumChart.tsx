@@ -72,8 +72,9 @@ const LondonPrimePremiumChart: React.FC = () => {
     premiumData[0] || { premiumPct: 0 } as PremiumPoint
   );
 
-  const W = 200, H = 80;
-  const PAD = 4;
+  // UX-030: London Prime Premium — viewBox increased to 600x200 for hero placement
+  const W = 600, H = 200;
+  const PAD = 12;
   if (!display.length) return null;
 
   const allValues = premiumData.flatMap(d => [d.uk, d.london]);
@@ -110,7 +111,8 @@ const LondonPrimePremiumChart: React.FC = () => {
             <div className="h-1 w-3 rounded-full bg-amber-400" />
             <span className="text-[8px] text-linear-text-muted">PCL Implied</span>
           </div>
-          <span className="text-[7px] text-linear-text-muted/40 ml-2">(18% premium proxy)</span>
+          {/* UX-030: Removed "(18% premium proxy)" — replaced with transparent label */}
+          <span className="text-[8px] text-linear-text-muted ml-1">vs UK</span>
         </div>
       </div>
 
@@ -133,8 +135,8 @@ const LondonPrimePremiumChart: React.FC = () => {
       </div>
 
       {/* Chart — @visx */}
-      <div className="p-4">
-        <div style={{ height: 120 }}>
+      <div className="p-4 space-y-3">
+        <div style={{ height: 280 }}>
           <svg
             viewBox={`0 0 ${W} ${H}`}
             preserveAspectRatio="xMidYMid meet"
@@ -227,13 +229,14 @@ const LondonPrimePremiumChart: React.FC = () => {
                     strokeLinecap="round"
                   />
 
-                  {/* Year labels */}
+                  {/* Year labels — UX-030: scaled up from 2.5px to 8px for readability */}
                   {yearLabels.map(({ i, yr }) => (
                     <text
                       key={yr}
-                      x={getX(i)} y={H - PAD + 4}
-                      className="text-[2.5px] fill-linear-text-muted/60 font-bold"
+                      x={getX(i)} y={H - PAD + 8}
+                      className="fill-linear-text-muted/70 font-bold"
                       textAnchor="middle"
+                      fontSize={8}
                     >
                       {yr}
                     </text>
@@ -255,11 +258,29 @@ const LondonPrimePremiumChart: React.FC = () => {
 
         {/* Premium delta bar */}
         {latest && yearAgo && (
-          <div className="mt-2 p-2 bg-amber-500/5 border border-amber-500/20 rounded-lg flex items-center justify-between">
+          <div className="p-2 bg-amber-500/5 border border-amber-500/20 rounded-lg flex items-center justify-between">
             <span className="text-[8px] text-linear-text-muted font-bold uppercase">YoY Premium Δ</span>
             <span className={`text-[10px] font-black ${(latest.premiumPct - yearAgo.premiumPct) >= 0 ? 'text-retro-green' : 'text-rose-400'}`}>
               {(latest.premiumPct - yearAgo.premiumPct) >= 0 ? '+' : ''}{(latest.premiumPct - yearAgo.premiumPct).toFixed(1)}pp
             </span>
+          </div>
+        )}
+
+        {/* UX-030: Key insight narrative */}
+        {latest && (
+          <div className="p-3 bg-linear-bg rounded-lg border border-linear-border">
+            <div className="text-[10px] text-linear-text-muted leading-relaxed">
+              <span className="text-amber-400 font-bold">PCL premium </span>
+              vs UK benchmark is currently
+              <span className="text-white font-bold ml-1">+{londonPremium}%</span>
+              {latest.premiumPct > 15 ? (
+                <span>. London prime continues to command a significant structural premium.</span>
+              ) : latest.premiumPct > 10 ? (
+                <span>. Premium compressing — value emerging vs historical peak.</span>
+              ) : (
+                <span>. Premium narrowing — London prime increasingly aligns with UK-wide trends.</span>
+              )}
+            </div>
           </div>
         )}
       </div>

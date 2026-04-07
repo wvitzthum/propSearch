@@ -381,8 +381,24 @@ export const useAffordability = () => {
   // Get budget profile for a specific property
   const getBudgetProfile = useCallback((propertyPrice: number): BudgetProfile => {
     const maxMortgage = calculateMortgageFromPayment(monthlyBudget);
-    const deposit = Math.max(0, propertyPrice - maxMortgage);
-    const ltvBand = calculateLTVBand(deposit, propertyPrice);
+
+    // FIX: Respect depositMode — in fixed mode use configured deposit pct;
+    // in auto mode derive deposit from monthly budget (affordability-based).
+    let deposit: number;
+    let mortgageAmount: number;
+    let ltvBand: BudgetProfile['ltvBand'];
+
+    if (depositMode === 'fixed') {
+      // Use the user's configured fixed deposit percentage
+      deposit = Math.round(propertyPrice * (depositPct / 100));
+      mortgageAmount = Math.max(0, propertyPrice - deposit);
+      ltvBand = calculateLTVBand(deposit, propertyPrice);
+    } else {
+      // Auto mode: derive deposit as whatever gap the monthly budget leaves
+      deposit = Math.max(0, propertyPrice - maxMortgage);
+      mortgageAmount = maxMortgage;
+      ltvBand = calculateLTVBand(deposit, propertyPrice);
+    }
 
     // Get the appropriate rate based on LTV band from live data
     const ltvRateMap: Record<string, number> = {
@@ -391,26 +407,33 @@ export const useAffordability = () => {
       '75%': mortgageRates.rate_75,
     };
     const adjustedRate = ltvRateMap[ltvBand] ?? mortgageRates.rate_90;
-    const actualMonthly = calculateMortgageFromPayment(monthlyBudget, adjustedRate);
+
+    // Monthly payment: in fixed mode, use the mortgage amount at the LTV rate;
+    // in auto mode, use the monthly budget directly (it was the input constraint).
+    const actualMonthly = depositMode === 'fixed'
+      ? calculateMortgageFromPayment(mortgageAmount, adjustedRate)
+      : monthlyBudget;
 
     // Stress test at +2% rate
     const stressRate = adjustedRate + 2;
-    const stressMonthly = calculateMortgageFromPayment(monthlyBudget, stressRate);
+    const stressMonthly = depositMode === 'fixed'
+      ? calculateMortgageFromPayment(mortgageAmount, stressRate)
+      : calculateMortgageFromPayment(maxMortgage, stressRate);
 
     return {
       monthlyBudget,
-      maxMortgage: Math.round(maxMortgage),
+      maxMortgage: Math.round(mortgageAmount),
       ltvBand,
       deposit: Math.round(deposit),
-      affordablePrice: Math.round(maxMortgage + deposit),
+      affordablePrice: Math.round(mortgageAmount + deposit),
       monthlyPayment: Math.round(actualMonthly),
       stressTest: {
         rateIncrease: 2,
         monthlyPayment: Math.round(stressMonthly),
-        affordable: stressMonthly <= monthlyBudget * 1.3 // 30% stress buffer
-      }
+        affordable: stressMonthly <= monthlyBudget * 1.3, // 30% stress buffer
+      },
     };
-  }, [monthlyBudget, mortgageRates, calculateMortgageFromPayment, calculateLTVBand]);
+  }, [monthlyBudget, depositMode, depositPct, mortgageRates, calculateMortgageFromPayment, calculateLTVBand]);
 
   // Update monthly budget
   const updateBudget = useCallback((newBudget: number) => {
