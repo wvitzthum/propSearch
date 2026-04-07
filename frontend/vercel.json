@@ -2,8 +2,10 @@
   "buildCommand": "VITE_DEMO_MODE=true npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "fallback": {
-    "source": "/(.*)",
-    "destination": "/index.html"
-  }
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
