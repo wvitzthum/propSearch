@@ -115,10 +115,18 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
         const areaName = p.area?.includes('Islington') ? 'Islington (N1)' : (p.area ?? '');
         const coords = AREA_COORDS[areaName] || AREA_COORDS['Islington (N1)'];
         const [lat, lng] = coords;
+        // FE-181: Ensure metadata exists with defaults so PropertyTable doesn't crash on is_new
+        const metadata = p.metadata ?? {
+          first_seen: new Date().toISOString(),
+          last_seen: new Date().toISOString(),
+          discovery_count: 1,
+          is_new: true, // newly-imported demo properties are "new" by default
+        };
         return {
           ...p,
           lat: lat + (Math.random() - 0.5) * 0.01,
           lng: lng + (Math.random() - 0.5) * 0.01,
+          metadata,
         } as PropertyWithCoords;
       });
 
