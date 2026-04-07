@@ -1,173 +1,246 @@
-# propSearch: Private Property Acquisition Dashboard
+# propSearch: Property Acquisition Research Dashboard
 
-## Project Mission
-**propSearch** is a bespoke, high-precision research platform designed for a single private buyer to identify and acquire a specific prime London property. Unlike consumer portals (Rightmove/Zoopla), this tool prioritizes data density, institutional-grade metrics, and rapid decision-making.
+**propSearch** is a high-density research dashboard for identifying and acquiring prime properties. It aggregates data from multiple sources, calculates institutional-grade metrics (Alpha Scores, appreciation potential, value gaps), and presents everything in a Bloomberg Terminal-style interface for rapid decision-making.
 
-**🔗 [Live Demo (Slim/Dummy Mode)](https://prop-search.vercel.app/)**
+**🔗 [Live Demo](https://prop-search.vercel.app/)** (demo mode with sample London data)
 
-> **Note:** This project is for internal research and personal use only. It is not intended for commercial distribution. No-Auth architecture is intentional.
+> This project is designed for personal/research use. No authentication required — all data stays local.
 
 ---
 
-## 🚀 Quick Start (Human User)
+## 🎯 What Does This Do?
 
-### 1. Prerequisites
-- **Node.js:** v20.x or higher.
-- **Make:** Standard Unix `make` (optional but recommended).
-- **RTK:** Rust Token Killer (installed via `curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh`)
+- **Property Discovery:** Scrape/import listings from Rightmove, Zoopla, and estate agent portals
+- **Institutional Metrics:** Calculate Alpha Scores, value gaps, appreciation potential, and total cost of ownership
+- **Comparison Engine:** Side-by-side analysis of multiple properties with winner highlighting
+- **Pipeline Workflow:** Track properties from Discovery → Shortlisted → Vetted → Archived
+- **Map View:** Interactive Leaflet map with London Tube/Overground lines and property markers
+- **Macro Context:** HPI history, rental yields, purchasing power, and gilt yield correlations
 
-### 2. Installation
-From the root directory, run:
+---
+
+## ⚡ Quick Start
+
+### Prerequisites
+- **Node.js:** v20.x or higher
+- **npm** (comes with Node.js)
+- **Make** (optional but recommended)
+
+### 1. Clone and Install
+
 ```bash
+git clone https://github.com/wvitzthum/propSearch.git
+cd propSearch
 make install
 ```
-*This installs dependencies for both the frontend dashboard and the backend API.*
 
-### 3. Launch the Platform
-Start the full stack (API + Dashboard):
+Or without Make:
+
+```bash
+cd frontend && npm install && cd ..
+```
+
+### 2. Start the Application
+
 ```bash
 make start
 ```
-- **Dashboard:** [http://localhost:5173](http://localhost:5173)
-- **Data API:** [http://localhost:3001](http://localhost:3001)
+
+This starts:
+- **Dashboard:** http://localhost:5173
+- **API Server:** http://localhost:3001
+
+### 3. Add Your First Property
+
+1. Open the dashboard at http://localhost:5173
+2. Click **"Add Property"** in the sidebar
+3. Paste a Rightmove, Zoopla, or estate agent URL
+4. The system will scrape and analyze it automatically
 
 ---
 
-## 📊 How to Use the Dashboard
+## 🏠 Adapting for Your Own Use Case
 
-### 1. Discovery & Filtering
-- **Table View (Default):** The dashboard defaults to a high-density table for rapid scanning of Alpha Scores, Price/SQFT, and Tenure.
-- **Sorting:** Click table headers to sort by `Alpha Score` (H-L), `Realistic Price` (L-H), or `Price/SQM` (L-H).
-- **Search (⌘K):** Use the Global Command Menu to jump to specific areas or properties.
-- **Area Filters:** Use the sidebar to toggle specific target boroughs (Islington, Bayswater, Belsize Park, etc.).
+This project is pre-configured for **prime London property acquisition**. To adapt it for your own market:
 
-### 2. The Comparison Engine (Compare 2.0)
-- **Selection:** Click the "Compare" icon (or use the keyboard shortcut) on any property card to add it to your **Comparison Basket**.
-- **Comparison Bar:** A persistent bar at the bottom tracks your selections.
-- **Analytics Matrix:** View a side-by-side breakdown with "Winner" highlighting for key metrics (Green = Value Leader, Blue = Quality Leader).
+### 1. Change the Target City
 
-### 3. Property Pipeline
-Move properties through their lifecycle:
-- `Discovered` (Inbox) -> `Shortlisted` (High Interest) -> `Vetted` (Inspected/Serious) -> `Archived` (Rejected).
+Edit `data/london_metro.geojson` with your city's transit geometry (or remove it for non-map use).
+
+### 2. Update Scoring Criteria
+
+Modify scoring weights in `agents/data_analyst/`:
+
+| File | Purpose |
+|------|---------|
+| `alpha_score.js` | Overall property score calculation |
+| `appreciation_potential.js` | 5-year growth rating |
+| `value_gap.js` | Price efficiency vs market |
+
+### 3. Configure Data Sources
+
+Update `data/sources/` with your target portals:
+
+```json
+{
+  "name": "Rightmove",
+  "base_url": "https://www.rightmove.co.uk",
+  "scraper": "scrape_rightmove.js"
+}
+```
+
+### 4. Adjust Commute Destinations
+
+Edit the commute targets in `agents/data_analyst/README.md` or update `REQUIREMENTS.md` to reflect your key destinations.
+
+### 5. Customize Property Types
+
+Filter by your target property types in `src/hooks/useProperties.ts`:
+
+```typescript
+const filters = {
+  propertyType: ['Flat', 'House', 'Penthouse'],
+  minBedrooms: 2,
+  maxPrice: 2000000
+};
+```
 
 ---
 
-## 📥 Adding Your Own Properties
+## 📊 Data Flow
 
-### A. Manual Injection (Dashboard)
-Use the "Add Property" button in the Sidebar to inject a direct URL from Rightmove, Zoopla, or an Estate Agent website. The system will automatically:
-1.  Add it to the `manual_queue.json`.
-2.  Trigger the Data Agent to perform a "Deep Scan" and calculate institutional metrics.
-3.  Promote it to your Master DB.
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  Property URLs  │ ──▶ │  Data Pipeline   │ ──▶ │  SQLite DB       │
+│  (Manual/Scape)  │     │  (Normalize)     │     │  (propSearch.db)│
+└─────────────────┘     └─────────────────┘     └────────┬────────┘
+                                                         │
+                        ┌─────────────────┐              │
+                        │  Dashboard UI   │ ◀─────────────┘
+                        │  (React + visx) │
+                        └────────┬────────┘
+                                 │
+                        ┌────────▼────────┐
+                        │   REST API      │
+                        │   /api/properties│
+                        └─────────────────┘
+```
 
-### B. Batch Import (File Drop)
-Drop raw JSON listings into `data/import/`. The next sync cycle (`make sync`) will normalize and ingest them.
+### Data Files
+- `data/propSearch.db` — SQLite database with all property records
+- `data/inbox/` — New leads pending analysis
+- `data/import/` — Drop raw JSON here for batch import
+- `data/demo_master.json` — Sample dataset for demo mode
 
 ---
 
-## 🤖 Agent System
-
-We utilize a specialized multi-agent workflow to ensure architectural purity. All agents run via Claude CLI with MiniMax 2.7 backend.
-
-### Agent Responsibilities
-1.  **[Product Owner](./agents/product_owner/README.md):** Vision, Roadmap, and Backlog management.
-2.  **[Data Analyst](./agents/data_analyst/README.md):** Property research, metric normalization, Alpha Scoring, and macro market trends.
-3.  **[Data Engineer](./agents/data_engineer/README.md):** Data architecture, storage (SQLite), ingestion pipelines, and backend API.
-4.  **[Frontend Engineer](./agents/frontend_engineer/README.md):** "Bloomberg meets Linear" UI implementation.
-5.  **[UI/UX QA](./agents/ui_ux_qa/README.md):** Aesthetic audits and functional validation.
-
-### Running Agents
-
-**Using Make:**
-```bash
-make agent-po              # Product Owner
-make agent-analyst         # Data Analyst
-make agent-de             # Data Engineer
-make agent-fe             # Frontend Engineer
-make agent-qa             # UI/UX QA
-```
-
-**With task context:**
-```bash
-make agent agent=analyst task=DE-140
-```
-
-**Direct script:**
-```bash
-./agents/run.sh analyst
-./agents/run.sh fe "refactor PropertyTable"
-```
-
-**Shell aliases** (source `agents/aliases.sh`):
-```bash
-source agents/aliases.sh
-po        # Product Owner
-analyst   # Data Analyst
-de        # Data Engineer
-fe        # Frontend Engineer
-qa        # UI/UX QA
-```
-
-See [agents/README.md](./agents/README.md) for full documentation.
-
-### Agent Behavioral Rules
-All agents must follow [AGENTS.md](./AGENTS.md) which defines:
-- Territorial boundaries (no cross-folder writes without approval)
-- RTK mandatory for high-volume operations
-- Grep-first discovery pattern
-- Data authenticity mandate (no synthetic/hallucinated data)
-
----
-
-## 🛠 Developer Commands
+## 🛠 Available Commands
 
 | Command | Description |
 |---------|-------------|
-| `make install` | Install frontend dependencies |
-| `make start` | Start API server + frontend dev |
+| `make start` | Start API + frontend dev server |
+| `make install` | Install all dependencies |
 | `make api` | Start API server only |
-| `make sync` | Run data sync pipeline |
+| `make sync` | Run data ingestion pipeline |
 | `make build` | Build frontend for production |
+| `make clean` | Remove build artifacts |
 | `make lint` | Run linter |
-| `make clean` | Clean build artifacts |
-| `make tasks` | View active backlog |
-| `make help` | Show all available commands |
+| `make tasks` | View active task backlog |
 
-### RTK Token Tracking
+---
+
+## 🔧 API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/properties` | GET | List all properties (supports `?status=shortlisted`) |
+| `/api/properties/:id` | GET | Get single property details |
+| `/api/properties/:id/status` | PATCH | Update pipeline status |
+| `/api/metrics` | GET | Aggregate market metrics |
+| `/api/macro` | GET | Macro indicators (HPI, yields, etc.) |
+
+---
+
+## 🗂 Project Structure
+
+```
+propSearch/
+├── agents/              # AI agent instructions and domain logic
+│   ├── data_analyst/    # Property research, Alpha scoring, metrics
+│   ├── data_engineer/   # SQLite, pipelines, API server
+│   └── frontend_engineer/ # React dashboard implementation
+├── data/                # Property database and datasets
+│   ├── propSearch.db    # SQLite database
+│   ├── london_metro.geojson # Transit map geometry
+│   └── import/          # Drop files here for batch import
+├── frontend/            # React 19 + Tailwind CSS dashboard
+│   └── src/
+│       ├── components/  # Chart components (visx), PropertyCard, etc.
+│       ├── hooks/       # useProperties, useMacroData, usePipeline
+│       └── pages/       # Dashboard, PropertyDetail, Compare
+├── server/              # Node.js REST API server
+└── scripts/             # Utility scripts
+```
+
+---
+
+## 📚 Key Documentation
+
+- [REQUIREMENTS.md](./REQUIREMENTS.md) — Project goals and detailed requirements
+- [DECISIONS.md](./DECISIONS.md) — Architectural decision records
+- [AGENTS.md](./AGENTS.md) — AI agent behavioral rules
+- [agents/README.md](./agents/README.md) — Agent system documentation
+
+---
+
+## 🤖 AI Agent System (Optional)
+
+This project includes Claude-powered AI agents for automated property research:
+
 ```bash
-rtk gain           # Show token savings
-rtk gain --history # Show usage history
+# Install RTK (required for agents)
+curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
+
+# Run specific agents
+make agent-analyst    # Property research and metrics
+make agent-de         # Data engineering
+make agent-fe         # Frontend development
 ```
+
+Agents can automatically:
+- Scrape new property listings
+- Calculate Alpha Scores and valuations
+- Update the database with enriched data
+- Identify data quality issues
 
 ---
 
-## 📁 Project Structure
+## 🐛 Troubleshooting
+
+### "npm error ERESOLVE" during install
+```bash
+cd frontend && npm install --legacy-peer-deps
 ```
-/agents              Role-specific instructions, domain logic, and utility scripts
-  /product_owner     Vision, roadmap, strategic decisions
-  /data_analyst      Property research, Alpha scoring, macro trends
-  /data_engineer     SQLite architecture, pipelines, backend API
-  /frontend_engineer React dashboard implementation
-  /ui_ux_qa         Audits, testing, metric validation
-  /docs/archive      Archived/superseded documents
-/data                Property datasets, SQLite DB, GeoJSON
-/frontend            React 19 + Tailwind CSS dashboard
-/server              Node.js HTTP API server
-/tasks               Task backlog and archives
-```
+
+### Dashboard shows "No properties found"
+1. Check API server is running: `curl http://localhost:3001/api/properties`
+2. Verify database exists: `ls -la data/propSearch.db`
+3. Run sync: `make sync`
+
+### Map not loading
+- Verify `data/london_metro.geojson` exists
+- Check browser console for Leaflet errors
+- Ensure you're not blocking map tiles in firewall
+
+### Demo mode (Vercel deployment)
+The demo at https://prop-search.vercel.app/ uses `demo_master.json` with sample data. To populate with your own data, use the "Add Property" button or drop JSON files into `data/import/`.
 
 ---
 
-## 📄 Key Documentation
-- [REQUIREMENTS.md](./REQUIREMENTS.md) - Project goals and requirements
-- [DECISIONS.md](./DECISIONS.md) - Architectural Decision Records (ADRs)
-- [Tasks.md](./Tasks.md) - Active task backlog
-- [AGENTS.md](./AGENTS.md) - Agent behavioral rules and territorial boundaries
-- [agents/README.md](./agents/README.md) - Agent system quick reference
+## 📄 License
+
+This project is for personal research and educational use. Property data sourced from public portals must be used in accordance with their terms of service.
 
 ---
 
-## 💬 Support & Feedback
-- **Bug Reports:** Log any visual or data issues in [Tasks.md](./Tasks.md) for the QA agent.
-- **Strategic Ideas:** Open a discussion in `agents/product_owner/README.md` for new feature requests.
-- **Data Suggestions:** If you find a new portal or agent website to scrape, add it to the `agents/data_engineer/README.md`.
+*Built with [React 19](https://react.dev/), [visx](https://airbnb.io/visx/), [Leaflet](https://leafletjs.com/), and [Tailwind CSS](https://tailwindcss.com/).*
