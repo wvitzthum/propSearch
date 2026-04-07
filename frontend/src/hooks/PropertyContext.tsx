@@ -122,11 +122,21 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
           discovery_count: 1,
           is_new: true, // newly-imported demo properties are "new" by default
         };
+        // FE-181: Normalize all optional fields to prevent .map() crashes on demo data
+        // Demo data often lacks gallery, image_url, link, streetview_url, floorplan_url
+        const links = Array.isArray(p.links) ? p.links : (p.link ? [p.link] : []);
         return {
           ...p,
+          // Normalize missing fields to safe defaults
+          metadata,
+          links,
+          gallery: Array.isArray(p.gallery) ? p.gallery : [],
+          image_url: p.image_url || '',
+          link: p.link || links[0] || '',
+          streetview_url: p.streetview_url || '',
+          floorplan_url: p.floorplan_url || '',
           lat: lat + (Math.random() - 0.5) * 0.01,
           lng: lng + (Math.random() - 0.5) * 0.01,
-          metadata,
         } as PropertyWithCoords;
       });
 
