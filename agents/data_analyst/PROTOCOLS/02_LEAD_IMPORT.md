@@ -23,7 +23,14 @@
 - Unknown: `analyst_flag = null` (clean import)
 - Document context in `analyst_notes` for any flagged record.
 
-### Step 4 — Frontend triage
+### Step 4 — Capture images locally (mandatory, every import)
+Portal CDN URLs (especially zoopla's `lid.zoocdn.com`) rotate frequently and go 404 within days. **Always run image capture immediately after import:**
+```bash
+node scripts/capture_images.js
+```
+This downloads all new remote image URLs to `data/images/{property_id}/` and updates `image_url` / `gallery` to local paths. See `PROTOCOLS/10_IMAGE_STORAGE.md`.
+
+### Step 5 — Frontend triage
 - All imported leads appear in the Properties page as active `discovered` records.
 - The user reviews flagged records and decides to shortlist, vet, or archive.
 - The analyst enriches records on request.

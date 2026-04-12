@@ -29,14 +29,10 @@
 </tr>
 </thead>
 <tbody>
-<tr><td><strong>FE-222</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Sync shortlist/other pipeline actions to backend — eliminate localStorage-only persistence'>Sync shortlist/other pipeline actions to backend — eliminate localStorage-only persistence</td><td>done</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
-<tr><td><strong>UX-034</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UX: Property ranking — enable users to assign custom priority order within shortlisted properties'>UX: Property ranking — enable users to assign custom priority order within shortlisted properties</td><td>done</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
-<tr><td><strong>BUG-001</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='BUG: Affordability calculator does not update budget-derived metrics in real-time when settings change'>BUG: Affordability calculator does not update budget-derived metrics in real-time when settings change</td><td>done</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
 <tr><td><strong>QA-012</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Verify Data Actions section — Recheck, Request Enrichment, and Edit Data buttons present on PropertyDetail page'>QA: Verify Data Actions section — Recheck, Request Enrichment, and Edit Data buttons present on PropertyDetail page</td><td>In Progress</td><td>UI/UX QA</td><td>FE-229, FE-231, FE-234</td><td></td></tr>
-<tr><td><strong>DAT-190</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DAT: Audit and populate price_history for all active properties — eliminate chart gaps on /property/:id'>DAT: Audit and populate price_history for all active properties — eliminate chart gaps on /property/:id</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>DAT-205</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DAT: price_history enrichment — populate for active properties [DAT-190]'>DAT: price_history enrichment — populate for active properties [DAT-190]</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
 <tr><td><strong>QA-013</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Review and audit Acquisition Strategy section — verify completeness and data accuracy'>QA: Review and audit Acquisition Strategy section — verify completeness and data accuracy</td><td>In Progress</td><td>UI/UX QA</td><td>FE-237</td><td></td></tr>
 <tr><td><strong>DAT-192</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DAT: Enrich all properties with real council tax band from UK Gov portal or agent listings'>DAT: Enrich all properties with real council tax band from UK Gov portal or agent listings</td><td>In Progress</td><td>Data Analyst</td><td>None</td><td></td></tr>
-<tr><td><strong>FE-242</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Fix HPI chart data schema mismatch — HPIHistoryChart and LondonPrimePremiumChart always fell back to synthetic data despite real data existing'>FE: Fix HPI chart data schema mismatch — HPIHistoryChart and LondonPrimePremiumChart always fell back to synthetic data despite real data existing</td><td>done</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
 <tr><td><strong>DAT-193</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Extract alpha score calculation into shared TypeScript module — scripts/alphaScore.ts'>Extract alpha score calculation into shared TypeScript module — scripts/alphaScore.ts</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
 <tr><td><strong>FE-243</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Frontend: wire alphaScore.ts to import from shared scripts/alphaScore.ts'>Frontend: wire alphaScore.ts to import from shared scripts/alphaScore.ts</td><td>Todo</td><td>Frontend Engineer</td><td>DAT-193</td><td></td></tr>
 <tr><td><strong>DAT-194</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Update scripts/calculate_alpha_score.js to import from shared scripts/alphaScore.ts'>Update scripts/calculate_alpha_score.js to import from shared scripts/alphaScore.ts</td><td>Todo</td><td>Data Analyst</td><td>DAT-193</td><td></td></tr>
@@ -72,7 +68,7 @@
 </tbody>
 </table>
 
-## 📊 Data & Research (Unblocked First)
+## 🔗 Blocked by Outstanding Data (Clear Dependencies)
 
 <table>
 <thead>
@@ -88,28 +84,7 @@
 </tr>
 </thead>
 <tbody>
-<tr><td><strong>DAT-187</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Data Analyst: Check lead inbox on every launch — enrich all pending leads before any other work'>Data Analyst: Check lead inbox on every launch — enrich all pending leads before any other work</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
-<tr><td><strong>DAT-196</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DAT-196: Audit all properties with local image_url paths and verify correct path format in DB'>DAT-196: Audit all properties with local image_url paths and verify correct path format in DB</td><td>Todo</td><td>Data Analyst</td><td>BUG-005</td><td></td></tr>
-</tbody>
-</table>
-
-## 🧪 Test Coverage
-
-<table>
-<thead>
-<tr>
-  <th align="left">ID</th>
-  <th align="left">Priority</th>
-  <th align="left">Effort</th>
-  <th align="left" style="width:480px">Task</th>
-  <th align="left">Status</th>
-  <th align="left">Responsible</th>
-  <th align="left">Dependencies</th>
-  <th align="left">Block Reason / Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr><td><strong>QA-030</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA-030: Test local image serving end-to-end after BUG-005 deployment'>QA-030: Test local image serving end-to-end after BUG-005 deployment</td><td>Todo</td><td>UI/UX QA</td><td>BUG-005, DAT-196</td><td></td></tr>
+<tr><td><strong>QA-030</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA-030: Test local image serving end-to-end after BUG-005 deployment'>QA-030: Test local image serving end-to-end after BUG-005 deployment</td><td><span style='color:#f59e0b;font-weight:bold'>⚠️ Blocked</span></td><td>UI/UX QA</td><td>BUG-005, DAT-196</td><td><span style='color:#ef4444;font-size:11px' title='Waiting for BUG-005 (server endpoint for local images) and DAT-196 (DB audit with local image paths) to be completed'>Waiting for BUG-005 (server endpoint for local images) and DAT-196 (DB audit with local image paths) to be completed</span></td></tr>
 </tbody>
 </table>
 
@@ -277,6 +252,7 @@
 <tr><td><strong>FE-206</strong></td><td>Migrate LondonPrimePremiumChart to @visx — replace hand-rolled SVG with visx scale/shape/axis primitives</td><td>Done</td><td></td></tr>
 <tr><td><strong>FE-207</strong></td><td>Migrate SwapRateSignal to @visx — replace hand-rolled SVG sparklines with visx LinePath</td><td>Done</td><td></td></tr>
 <tr><td><strong>DAT-186</strong></td><td>Data Analyst: Compute nearest_tube_distance and park_proximity for all 29 properties — fix spatial enrichment gap</td><td>Done</td><td>2026-04-04</td></tr>
+<tr><td><strong>DAT-187</strong></td><td>Data Analyst: Check lead inbox on every launch — enrich all pending leads before any other work</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>FE-208</strong></td><td>FE (Bug): Fix Vercel rewrites — /api/* routes return index.html in production, breaking all inbox submissions</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>FE-209</strong></td><td>FE (Bug): handleAction and handleBatchAction remove listings from UI before server confirms success</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>FE-210</strong></td><td>FE (Improvement): handleBatchAction should call /api/inbox/batch instead of N individual POSTs</td><td>Done</td><td>2026-04-04</td></tr>
@@ -284,6 +260,7 @@
 <tr><td><strong>FE-212</strong></td><td>FE (Improvement): handleQuickAdd should call fetchInbox() after successful submission to auto-refresh the UI</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>FE-214</strong></td><td>FE (Improvement): Server-side URL dedup check with structured feedback when a submitted URL already exists</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>FE-213</strong></td><td>FE (Improvement): Add duplicate-URL guard to handleQuickAdd — prevent same URL submitted twice</td><td>Done</td><td>2026-04-04</td></tr>
+<tr><td><strong>DAT-188</strong></td><td>Data: Fill missing ground_rent and lease_years for 10 top-scoring leasehold properties</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>DAT-189</strong></td><td>Data: Fix market_status=&#x27;unknown&#x27; for 10 active properties. Update to &#x27;active&#x27; per Requirement 23.</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>DAT-190</strong></td><td>Data: Refresh SDLT countdown in macro_trend.json — Q2 2026 milestone passed on 2026-04-01.</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>DE-213</strong></td><td>Data Engineer (Bug): sync_data.js crash — 47 values for 45 columns in INSERT — DE-165/DE-164 schema regression</td><td>Done</td><td>2026-04-04</td></tr>
@@ -328,9 +305,13 @@
 <tr><td><strong>VISX-020</strong></td><td>Improve Area × Metric Heatmap UX clarity and fix tooltip positioning</td><td>Done</td><td></td></tr>
 <tr><td><strong>DE-216</strong></td><td>Normalize mortgage_history in macro_trend to flat array</td><td>Done</td><td></td></tr>
 <tr><td><strong>DE-217</strong></td><td>Add missing area_heat_index and london_benchmark to macro_trend</td><td>Done</td><td></td></tr>
-<tr><td><strong>FE-220</strong></td><td>UI: Fix Properties page mobile usability</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>FE-245</strong></td><td>FE: Properties page mobile usability fix [FE-220]</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-021</strong></td><td>FE: Build Seasonal Market Cycle component for Rates &amp; Scenarios page</td><td>Done</td><td></td></tr>
 <tr><td><strong>VISX-022</strong></td><td>DE: Surface seasonal supply/demand indices in macro_trend.json</td><td>Done</td><td></td></tr>
 <tr><td><strong>FE-221</strong></td><td>Fix deposit calculation in AffordabilityNode sidebar — getBudgetProfile ignored depositMode/depositPct</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>FE-222</strong></td><td>Sync shortlist/other pipeline actions to backend — eliminate localStorage-only persistence</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>UX-034</strong></td><td>UX: Property ranking — enable users to assign custom priority order within shortlisted properties</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>BUG-001</strong></td><td>BUG: Affordability calculator does not update budget-derived metrics in real-time when settings change</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-223</strong></td><td>HPIHistoryChart: x-axis gap — historical line stops short of right chart edge</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-224</strong></td><td>HPIHistoryChart: tooltip appears offset from mouse cursor (misaligned horizontally and vertically)</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-225</strong></td><td>SeasonalMarketCycle: tooltip appears at wrong position (offset right/down from cursor)</td><td>Done</td><td>2026-04-07</td></tr>
@@ -340,20 +321,19 @@
 <tr><td><strong>FE-228</strong></td><td>AffordabilitySettings LTV Match Analysis: mortgage amount calculations apply LTV fraction twice</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-229</strong></td><td>Tooltip coordinate offset: systematic SVG-container padding mismatch across chart components</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-230</strong></td><td>AffordabilitySettings: &#x27;Your Affordable Range&#x27; card does not update when monthly budget or loan term changes</td><td>Done</td><td>2026-04-07</td></tr>
-<tr><td><strong>FE-229</strong></td><td>FE: Add &quot;Request Enrichment&quot; button and modal to property UI — user-initiated enrichment requests</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-246</strong></td><td>FE: Request Enrichment modal — follow-on work [FE-229]</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>DE-218</strong></td><td>DE: Create enrichment_requests table and API endpoints — server-side plumbing for ADR-018</td><td>Done</td><td>2026-04-07</td></tr>
-<tr><td><strong>DAT-189</strong></td><td>DAT: Adopt enrichment_requests polling workflow — process user-initiated requests at session start</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>DAT-204</strong></td><td>DAT: enrichment_requests polling workflow follow-on [DAT-189]</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-231</strong></td><td>Fix PropertyDetail monthly payment display — localStorage corruption guard and demo data defaults</td><td>Done</td><td>2026-04-07</td></tr>
-<tr><td><strong>FE-231</strong></td><td>FE: Add Recheck button to PropertyDetail page — update last_checked timestamp via POST /api/properties/:id/check</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-247</strong></td><td>FE: Recheck button on PropertyDetail [FE-231]</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-232</strong></td><td>FE: Async UX patterns for Recheck and Enrichment Request — optimistic updates, toasts, debounce</td><td>Done</td><td>2026-04-07</td></tr>
-<tr><td><strong>FE-232</strong></td><td>FE-227 Regression: Payment Scenarios showing ~£89M instead of ~£2K</td><td>Done</td><td></td></tr>
 <tr><td><strong>FE-233</strong></td><td>DE: Create PATCH /api/properties/:id — partial field update endpoint for manual property data editing</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-234</strong></td><td>FE: Manual property data editor — /property/:id/edit subpage for user data corrections</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>UX-051</strong></td><td>UX: Review and redesign Seasonal Market Cycle phase explanations — replace/augment box grid with a compact lookup table</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-235</strong></td><td>FE: Replace Seasonal Market Cycle phase card grid with compact lookup table (Option A from ADR-017)</td><td>Done</td><td>2026-04-09</td></tr>
 <tr><td><strong>UX-052</strong></td><td>UX: Design horizontal phase strip (Option B) for market page compact view — ADR-017 follow-on</td><td>Done</td><td>2026-04-09</td></tr>
 <tr><td><strong>FE-236</strong></td><td>FE: Add Seasonal Market Cycle phase strip to MarketPage.tsx (ADR-018)</td><td>Done</td><td>2026-04-09</td></tr>
-<tr><td><strong>FE-235</strong></td><td>FE: Add all property fields to the /property/:id/edit form — ensure no dataset fields are excluded from the manual editor</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-248</strong></td><td>FE: edit form all property fields [FE-235]</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-237</strong></td><td>FE: Add &quot;Request Enrichment&quot; button and modal to PropertyDetail sidebar (FE-229 not delivered)</td><td>Done</td><td>2026-04-09</td></tr>
 <tr><td><strong>FE-238</strong></td><td>FE: Add &quot;Edit Data&quot; button to PropertyDetail sidebar (FE-234 entry point missing — edit page itself is done)</td><td>Done</td><td>2026-04-09</td></tr>
 <tr><td><strong>QA-195</strong></td><td>QA: Write and run Playwright tests for PropertyDetail data action buttons (Recheck, Edit, Enrichment) — QA-012 follow-on</td><td>Done</td><td>2026-04-09</td></tr>
@@ -363,9 +343,10 @@
 <tr><td><strong>DE-219</strong></td><td>DE: Add bedrooms and bathrooms columns to SQLite properties table and PATCH whitelist</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-239</strong></td><td>FE: Add bedrooms and bathrooms to Property type, edit form, table, and detail page</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>DAT-191</strong></td><td>DAT: Enrich all active properties with real bedroom and bathroom counts from portal listings</td><td>Done</td><td>2026-04-07</td></tr>
-<tr><td><strong>UX-052</strong></td><td>UX: Research and design Acquisition Strategy section — transform into a full data-dense hero area on /property/:id</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>UX-055</strong></td><td>UX: Acquisition Strategy design — follow-on from UX-051 [UX-052]</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-240</strong></td><td>FE: Rebuild Acquisition Strategy section on PropertyDetail — full data overhaul per UX-052</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-241</strong></td><td>FE: Display council tax band badge on PropertyDetail page and in Total Monthly Outlay section</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-242</strong></td><td>FE: Fix HPI chart data schema mismatch — HPIHistoryChart and LondonPrimePremiumChart always fell back to synthetic data despite real data existing</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>UX-041</strong></td><td>FE: PropertyTable redesign — reduce to 8 default visible columns, decision data first</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>UX-042</strong></td><td>FE: Remove &#x27;Added Date&#x27; column from PropertyTable default view — metadata, not comparison metric</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>UX-043</strong></td><td>FE: Split &#x27;Com.&#x27; (Commute) column into &#x27;Pat.&#x27; and &#x27;Can.&#x27; — two separate hub-specific columns</td><td>Done</td><td>2026-04-12</td></tr>
@@ -375,9 +356,11 @@
 <tr><td><strong>UX-047</strong></td><td>FE: PropertyTable Value Gap — fix sign convention, show as &#x27;X% below list&#x27;</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>UX-048</strong></td><td>FE: MarketStatusBadge — reduce to dot indicator in PropertyTable, remove full badge column</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>UX-049</strong></td><td>FE: Shallow Data indicator — move from AlphaBadge cell to AlphaBadge tooltip</td><td>Done</td><td>2026-04-12</td></tr>
-<tr><td><strong>UX-050</strong></td><td>FE: Rank column — add #1 crown/star visual treatment to top-ranked property in PropertyTable</td><td>Done</td><td>2026-04-12</td></tr>
-<tr><td><strong>UX-051</strong></td><td>FE: Fix sort state desync — PropertyTable localSort and PropertiesPage URL params must stay in sync</td><td>Done</td><td>2026-04-12</td></tr>
-<tr><td><strong>UX-052</strong></td><td>FE: PropertyTable typography audit — enforce consistent type scale across table cells</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>UX-053</strong></td><td>FE: Rank column visual treatment [UX-050]</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>UX-054</strong></td><td>FE: sort state desync fix [UX-051]</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>FE-249</strong></td><td>FE: PropertyTable typography audit [UX-052]</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>BUG-005</strong></td><td>BUG-005: Serve local images via /api/images/ endpoint — resolve 304 on data/images/ paths</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>DAT-196</strong></td><td>DAT-196: Audit all properties with local image_url paths and verify correct path format in DB</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>FE-162</strong></td><td>Runtime crash in Inbox.tsx — Cannot read properties of undefined (reading toLoca...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-187</strong></td><td>Responsive Layout Audit: Sidebar layout (pl-64 fixed) not mobile-optimised — res...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-172</strong></td><td>Runtime React error in MarketConditionsBar.tsx:141 — &#x27;Objects are not valid as a...</td><td>Done</td><td></td></tr>

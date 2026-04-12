@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom';
 import {
   Building2, Search, Table as TableIcon, LayoutGrid, Filter,
-  X, Check, Eye, ChevronRight, Star, TrendingUp
+  X, Check, Eye, ChevronRight, Star, TrendingUp, CheckSquare
 } from 'lucide-react';
 import PropertyTable from '../components/PropertyTable';
 import LoadingNode from '../components/LoadingNode';
@@ -64,6 +64,9 @@ const PropertiesPage: React.FC = () => {
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
   const [isColumnMenuOpen, setIsColumnMenuOpen] = useState(false);
 
+  // UX-046: Batch selection — toggle multi-select mode to reveal batch checkboxes
+  const [isBatchMode, setIsBatchMode] = useState(false);
+
   // UX-018: Smart filter state
   const [isValueBuyFilter, setIsValueBuyFilter] = useState(false);
 
@@ -79,15 +82,20 @@ const PropertiesPage: React.FC = () => {
 
   const allColumns = [
     { key: 'alpha', label: 'Alpha Score' },
-    { key: 'price', label: 'Price' },
-    { key: 'pricePerSqm', label: 'Price/SQM' },
-    { key: 'appreciation', label: 'Appreciation' },
-    { key: 'dom', label: 'Days on Market' },
+    { key: 'realistic_price', label: 'Target Price' },
+    { key: 'value_gap', label: 'Value Gap' },
     { key: 'sqft', label: 'SQFT' },
+    { key: 'bedrooms', label: 'Bedrooms' },
     { key: 'epc', label: 'EPC' },
-    { key: 'tenure', label: 'Tenure' },
-    { key: 'commute', label: 'Commute' },
-    { key: 'ltv', label: 'LTV Match' },
+    { key: 'dom', label: 'Days on Market' },
+    // UX-043: Pat. (Paternoster Square) and Can. (Canada Square) — shown by default
+    { key: 'commute_paternoster', label: 'Pat. (Paternoster Sq)' },
+    { key: 'commute_canada_square', label: 'Can. (Canada Sq)' },
+    { key: 'appreciation_potential', label: 'Appreciation' },
+    { key: 'bathrooms', label: 'Bathrooms' },
+    { key: 'market_status', label: 'Market Status' },
+    { key: 'council_tax_band', label: 'Council Tax' },
+    { key: 'metadata.first_seen', label: 'Date Added' },
   ];
 
   // --- Computed values (declared before useEffects that depend on them) ---
@@ -454,6 +462,22 @@ const PropertiesPage: React.FC = () => {
             )}
           </div>
           )}
+
+          {/* UX-046: Batch multi-select toggle — reveals batch checkbox column */}
+          {viewMode === 'table' && (
+            <button
+              onClick={() => setIsBatchMode(!isBatchMode)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-colors flex-shrink-0 ${
+                isBatchMode
+                  ? 'bg-blue-500/20 border-blue-500/30 text-blue-400'
+                  : 'bg-linear-card border border-linear-border text-linear-text-muted hover:text-white'
+              }`}
+              title="Toggle multi-select mode for batch operations"
+            >
+              <CheckSquare size={12} />
+              <span>Multi-select</span>
+            </button>
+          )}
         </div>
 
         {/* Filter button + clear — always visible on mobile */}
@@ -636,7 +660,8 @@ const PropertiesPage: React.FC = () => {
           properties={filteredProperties}
           onSortChange={key => updateFilters({ sortBy: key as string })}
           currentSort={filters.sortBy}
-          showThesisTags
+          showBatchCheckbox={isBatchMode}
+          hiddenColumns={hiddenColumns}
           onPreview={p => { setPreviewProperty(p); setIsPreviewOpen(true); }}
           onStatusChange={(id, s) => setStatus(id, s)}
           getStatus={getStatus}

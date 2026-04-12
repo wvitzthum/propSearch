@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowUp,
@@ -13,6 +13,7 @@ import {
   CheckSquare,
   Square,
   Star,
+  Layers,
 } from 'lucide-react';
 import type { PropertyWithCoords } from '../types/property';
 import type { PropertyStatus } from '../hooks/usePipeline';
@@ -20,6 +21,7 @@ import AlphaBadge from './AlphaBadge';
 import Tooltip from './Tooltip';
 import { useComparison } from '../hooks/useComparison';
 import BatchTagPanel from './BatchTagPanel';
+import MarketStatusBadge from './MarketStatusBadge';
 
 interface PropertyTableProps {
   properties: PropertyWithCoords[];
@@ -31,8 +33,10 @@ interface PropertyTableProps {
   // UX-034: Rank — get/set user priority rank
   getRank?: (id: string) => number | undefined;
   onRankChange?: (id: string, rank: number | null) => void;
-  /** UX-046: Show batch selection checkbox column — hidden by default, toggled via toolbar */
+  /** UX-041: Show batch selection checkbox column — toggled via toolbar */
   showBatchCheckbox?: boolean;
+  /** UX-041: Set of hidden column keys — accessible via column toggle. Defaults empty (all visible). */
+  hiddenColumns?: Set<string>;
 }
 
 const SortIcon = ({ 
@@ -96,6 +100,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
   getRank,
   onRankChange,
   showBatchCheckbox = false,
+  hiddenColumns = new Set(),
 }) => {
   const { toggleComparison, isInComparison } = useComparison();
   const [batchSelected, setBatchSelected] = useState<Set<string>>(new Set());
@@ -137,17 +142,33 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
     if (onSortChange) onSortChange(key);
   };
 
+  // UX-034 rank sort — reads from usePropertyRank hook, not property object
+  const rankedSort = useCallback((a: PropertyWithCoords, b: PropertyWithCoords, dir: 'asc' | 'desc') => {
+    if (!getRank) return 0;
+    const rankA = getRank(a.id);
+    const rankB = getRank(b.id);
+    if (rankA === undefined && rankB === undefined) return 0;
+    if (rankA === undefined) return dir === 'asc' ? 1 : -1;
+    if (rankB === undefined) return dir === 'asc' ? -1 : 1;
+    return dir === 'asc' ? rankA - rankB : rankB - rankA;
+  }, [getRank]);
+
   const sortedProperties = [...properties].sort((a, b) => {
     const key = localSort.key;
     let aValue: any;
     let bValue: any;
 
-    if (key === 'value_gap') {
+    if (key === 'user_priority') {
+      return rankedSort(a, b, localSort.direction);
+    } else if (key === 'value_gap') {
       aValue = (a.list_price || 0) - (a.realistic_price || 0);
       bValue = (b.list_price || 0) - (b.realistic_price || 0);
-    } else if (key === 'commute_utility') {
-      aValue = (a.commute_paternoster || 0) + (a.commute_canada_square || 0);
-      bValue = (b.commute_paternoster || 0) + (b.commute_canada_square || 0);
+    } else if (key === 'commute_paternoster') {
+      aValue = a.commute_paternoster ?? 999;
+      bValue = b.commute_paternoster ?? 999;
+    } else if (key === 'commute_canada_square') {
+      aValue = a.commute_canada_square ?? 999;
+      bValue = b.commute_canada_square ?? 999;
     } else if (key.includes('.')) {
       const [main, sub] = key.split('.') as [keyof PropertyWithCoords, string];
       aValue = (a[main] as any)?.[sub];
@@ -208,6 +229,20 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
           {/* UX-041: Redesigned header — 8 default columns + Actions. Single header row, no sub-header groups. */}
           <thead>
             <tr className="bg-linear-card/50 border-b border-linear-border">
+              {/* UX-041/UX-046: Batch checkbox — hidden by default, toggled via showBatchCheckbox prop */}
+              <th className={`px-3 py-3 w-10 border-r border-linear-border/30 ${showBatchCheckbox ? '' : 'hidden'}`}>
+                <button
+                  onClick={selectAll}
+                  className="flex items-center justify-center text-linear-text-muted hover:text-white transition-colors"
+                  title={batchSelected.size === properties.length ? 'Deselect all' : 'Select all'}
+                >
+                  {batchSelected.size === properties.length && properties.length > 0 ? (
+                    <CheckSquare size={16} className="text-blue-400" />
+                  ) : (
+                    <Square size={16} />
+                  )}
+                </button>
+              </th>
               {/* UX-034: Rank column header — click to sort by user priority */}
               <th
                 className="px-2 py-3 text-center text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] cursor-pointer group hover:bg-linear-card transition-colors relative border-r border-linear-border/30 min-w-[44px]"
@@ -222,7 +257,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 label="Asset"
                 columnKey="address"
                 tooltip="Full address and acquisition area zone."
-                className="sticky left-0 bg-linear-bg/80 backdrop-blur-md z-10 min-w-[240px]"
+                className={`sticky bg-linear-bg/80 backdrop-blur-md z-10 min-w-[240px] ${showBatchCheckbox ? 'left-[52px]' : 'left-0'}`}
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
@@ -288,6 +323,27 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 currentSort={localSort.key}
                 direction={localSort.direction}
               />
+              {/* UX-043: Split Com. into Pat. (Paternoster Sq) and Can. (Canada Sq) */}
+              <TableHeader
+                label="Pat."
+                columnKey="commute_paternoster"
+                tooltip="Minutes to Paternoster Square — City of London hub."
+                methodology="Walk time at ~83m/s. ≤10 min green, ≤20 min amber, >20 min neutral."
+                className="px-2"
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
+              />
+              <TableHeader
+                label="Can."
+                columnKey="commute_canada_square"
+                tooltip="Minutes to Canada Square — Canary Wharf hub."
+                methodology="Walk time at ~83m/s. ≤10 min green, ≤20 min amber, >20 min neutral."
+                className="px-2"
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
+              />
               <th className="px-2 py-3 text-right text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap">
                 Action
               </th>
@@ -297,7 +353,6 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
             {sortedProperties.map((property) => {
               const status = getStatus ? getStatus(property.id) : 'discovered';
               const isSelected = isInComparison(property.id);
-              const propTags = getTags(property.id);
               const isBatchSelected = batchSelected.has(property.id);
 
               return (
@@ -309,9 +364,25 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                     status === 'archived' ? 'opacity-50 bg-linear-accent-rose/5' : ''
                   } ${isSelected ? 'bg-linear-accent-blue/10' : ''} ${isBatchSelected ? 'bg-blue-500/5' : ''}`}
                 >
+                  {/* UX-041/UX-046: Batch checkbox cell */}
+                  {showBatchCheckbox && (
+                    <td
+                      className="px-3 py-4 w-10 border-r border-linear-border/30"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        onClick={() => toggleBatchSelect(property.id)}
+                        className={`flex items-center justify-center transition-colors ${
+                          isBatchSelected ? 'text-blue-400' : 'text-linear-text-muted hover:text-white'
+                        }`}
+                      >
+                        {isBatchSelected ? <CheckSquare size={16} /> : <Square size={16} />}
+                      </button>
+                    </td>
+                  )}
                   {/* UX-034: Rank cell — click to assign/remove rank */}
                   <td
-                    className="px-2 py-4 text-center border-r border-linear-border/30"
+                    className={`px-2 py-4 text-center border-r border-linear-border/30 ${showBatchCheckbox ? '' : ''}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     {getRank ? (
@@ -350,7 +421,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                   </td>
                   {/* Asset / Area — sticky, with compact pipeline status dot */}
                   <td
-                    className="px-3 py-4 sticky left-0 bg-linear-bg/80 group-hover:bg-linear-card/40 z-10 min-w-[240px] border-r border-linear-border/30 cursor-pointer"
+                    className={`px-3 py-4 sticky bg-linear-bg/80 group-hover:bg-linear-card/40 z-10 min-w-[240px] border-r border-linear-border/30 cursor-pointer ${showBatchCheckbox ? 'left-[52px]' : 'left-0'}`}
                     onClick={() => onPreview && onPreview(property)}
                   >
                     <div className="flex items-start gap-2">
@@ -457,6 +528,62 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                   <td className="px-2 py-4 text-[11px] text-linear-text-muted font-bold">
                     {property.dom || 0}d
                   </td>
+                  {/* UX-043: Pat. — minutes to Paternoster Square */}
+                  <td className="px-2 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                    {property.commute_paternoster != null ? (
+                      <span className={`text-[10px] font-bold ${
+                        property.commute_paternoster <= 10 ? 'text-retro-green' :
+                        property.commute_paternoster <= 20 ? 'text-retro-amber' :
+                        'text-linear-text-muted'
+                      }`}>
+                        {property.commute_paternoster}
+                      </span>
+                    ) : '—'}
+                  </td>
+                  {/* UX-043: Can. — minutes to Canada Square */}
+                  <td className="px-2 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                    {property.commute_canada_square != null ? (
+                      <span className={`text-[10px] font-bold ${
+                        property.commute_canada_square <= 10 ? 'text-retro-green' :
+                        property.commute_canada_square <= 20 ? 'text-retro-amber' :
+                        'text-linear-text-muted'
+                      }`}>
+                        {property.commute_canada_square}
+                      </span>
+                    ) : '—'}
+                  </td>
+                  {/* UX-041: Appreciation — accessible via column toggle */}
+                  {!hiddenColumns.has('appreciation_potential') && (
+                    <td className="px-2 py-4 text-[11px] text-linear-text-muted font-bold">
+                      {(property.appreciation_potential ?? 0)}%
+                    </td>
+                  )}
+                  {/* UX-041: Bathrooms — accessible via column toggle */}
+                  {!hiddenColumns.has('bathrooms') && (
+                    <td className="px-2 py-4 text-[11px] text-linear-text-muted font-bold">
+                      {property.bathrooms != null ? property.bathrooms : '—'}
+                    </td>
+                  )}
+                  {/* UX-041: Market status dot — accessible via column toggle */}
+                  {!hiddenColumns.has('market_status') && (
+                    <td className="px-2 py-4" onClick={(e) => e.stopPropagation()}>
+                      <MarketStatusBadge status={property.market_status} compact />
+                    </td>
+                  )}
+                  {/* UX-041: Council Tax — accessible via column toggle */}
+                  {!hiddenColumns.has('council_tax_band') && (
+                    <td className="px-2 py-4 text-[11px] text-linear-text-muted font-bold">
+                      {property.council_tax_band || '—'}
+                    </td>
+                  )}
+                  {/* UX-041: Date Added — accessible via column toggle */}
+                  {!hiddenColumns.has('metadata.first_seen') && (
+                    <td className="px-2 py-4 text-[10px] text-linear-text-muted font-mono" onClick={(e) => e.stopPropagation()}>
+                      {property.metadata?.first_seen
+                        ? new Date(property.metadata.first_seen).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })
+                        : '—'}
+                    </td>
+                  )}
                   {/* UX-041: Compact action buttons — Compare + Pipeline advance + View */}
                   <td className="px-2 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">

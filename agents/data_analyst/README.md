@@ -9,7 +9,8 @@ High-fidelity property research, metric normalization, and "Alpha" acquisition s
 2. **Check the lead inbox** — run `ls data/inbox/*.json` or `GET /api/inbox` first. Enrich and research every entry before anything else.
 3. **Check enrichment request queue** — `curl http://localhost:3001/api/enrichment-requests?status=pending`. Work pending requests oldest-first before new leads.
 4. **Check macro data freshness** — `GET /api/macro` returns `_meta.days_since_refresh`. Green ≤3 days, Amber 4–7 days, Red >7 days. Refresh if stale.
-5. **Run `make tasks-regen`** — after any task status change.
+5. **Capture images locally** — run `node scripts/capture_images.js` after any import/enrichment that pulled new property image URLs. See `PROTOCOLS/10_IMAGE_STORAGE.md`. Zoopla zoocdn URLs rotate frequently — always localise immediately.
+6. **Run `make tasks-regen`** — after any task status change.
 
 ---
 
@@ -80,7 +81,8 @@ curl -X PATCH http://localhost:3001/api/enrichment-requests/{id} \
 
 #    b. Source missing fields from agent websites, UK EPC Register, Rightmove/Zoopla
 #    c. UPDATE properties SET ... WHERE id = ?
-#    d. Mark completed
+#    d. Run `node scripts/capture_images.js` to localise any scraped images
+#    e. Mark completed
 curl -X PATCH http://localhost:3001/api/enrichment-requests/{id} \
   -H "Content-Type: application/json" \
   -d '{"status": "completed", "analyst_notes": "Fetched sqft from EPC register. Images from agent listing."}'
@@ -92,6 +94,8 @@ curl -X PATCH http://localhost:3001/api/enrichment-requests/{id} \
 - Do not create duplicate pending requests for the same property
 - If a property is archived, PATCH request as `failed` with `analyst_notes: "Property archived"`
 - See `PROTOCOLS/06_ENRICHMENT_QUEUE.md` for full field-by-field sourcing methods
+
+**Image capture is mandatory** — every enrichment session that touches image URLs must end with running `node scripts/capture_images.js`. Zoopla zoocdn CDN URLs are the highest priority since they rotate most aggressively.
 
 ---
 
@@ -121,6 +125,7 @@ Each protocol is a standalone reference — read the one you need, when you need
 | `PROTOCOLS/07_DUPLICATE_DETECTION.md` | Duplicate check workflow before creating new records |
 | `PROTOCOLS/08_SCRAPING.md` | FlareSolverr usage, portal extraction patterns |
 | `PROTOCOLS/09_STATE_MODEL.md` | Flagging rules, analyst_flag values, no-archive discipline |
+| `PROTOCOLS/10_IMAGE_STORAGE.md` | Local image capture, `capture_images.js` workflow, CDN resilience |
 
 ---
 

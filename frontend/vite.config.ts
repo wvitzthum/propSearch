@@ -22,7 +22,14 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,
-      }
+      },
+      // BUG-005: Serve local property images from data/images/ via backend
+      // /data/images/{id}/{file} → proxied to /api/images/{id}/{file} (backend serves from data/images/)
+      '/data/images': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        rewrite: (path) => '/api' + path,  // /data/images/x/y → /api/data/images/x/y
+      },
     }
   }
 })

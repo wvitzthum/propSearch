@@ -388,15 +388,29 @@ const server = http.createServer((req, res) => {
       params.push(limit, offset);
 
       const rows = db.prepare(sql).all(...params);
-      const results = rows.map(row => ({
-        ...row,
-        gallery: safeParse(row.gallery, []),
-        links: safeParse(row.links, []),
-        metadata: safeParse(row.metadata, {}),
-        is_value_buy: Boolean(row.is_value_buy),
-        vetted: Boolean(row.vetted),
-        archived: Boolean(row.archived)
-      }));
+      const results = rows.map(row => {
+        const base = {
+          ...row,
+          gallery: safeParse(row.gallery, []),
+          links: safeParse(row.links, []),
+          metadata: safeParse(row.metadata, {}),
+          is_value_buy: Boolean(row.is_value_buy),
+          vetted: Boolean(row.vetted),
+          archived: Boolean(row.archived)
+        };
+        // BUG-005: Rewrite local image_url (data/images/) to server endpoint path
+        if (base.image_url && base.image_url.startsWith('data/')) {
+          // e.g. "data/images/{property_id}/{filename}" → "/api/images/{property_id}/{filename}"
+          base.image_url = '/' + base.image_url;
+        }
+        // Also rewrite gallery items that are local paths
+        if (Array.isArray(base.gallery)) {
+          base.gallery = base.gallery.map(g =>
+            (typeof g === 'string' && g.startsWith('data/')) ? '/' + g : g
+          );
+        }
+        return base;
+      });
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(results));
     }
@@ -625,6 +639,15 @@ const server = http.createServer((req, res) => {
           archived: Boolean(property.archived),
           price_history: history
         };
+        // BUG-005: Rewrite local image_url and gallery to server endpoint paths
+        if (result.image_url && result.image_url.startsWith('data/')) {
+          result.image_url = '/' + result.image_url;
+        }
+        if (Array.isArray(result.gallery)) {
+          result.gallery = result.gallery.map(g =>
+            (typeof g === 'string' && g.startsWith('data/')) ? '/' + g : g
+          );
+        }
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(result));
       }
@@ -1166,6 +1189,72 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ id, status: 'cancelled' }));
       }
+    }
+    // BUG-005: Serve local images via /api/images/{property_id}/{filename}
+    else if (url.pathname.startsWith('/api/images/') && req.method === 'GET') {
+      const imagePath = url.pathname.slice('/api/images/'.length); // e.g. "man-0402-79113/0000_8bc17bcca7d934b3.jpg"
+      const safePath = path.normalize(imagePath).replace(/^(\.\.(\/|\\|$))/, '');
+      const absolutePath = path.join(DATA_DIR, 'images', safePath);
+
+      // Guard: ensure resolved path is still under DATA_DIR/images/
+      if (!absolutePath.startsWith(path.join(DATA_DIR, 'images'))) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Forbidden' }));
+        return;
+      }
+
+      if (!fs.existsSync(absolutePath)) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Image not found' }));
+        return;
+      }
+
+      const ext = path.extname(absolutePath).toLowerCase();
+      const contentTypes = {
+        '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+        '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp'
+      };
+      const contentType = contentTypes[ext] || 'application/octet-stream';
+
+      fs.readFile(absolutePath, (err, data) => {
+        if (err) {
+          res.writeHead(500, { 'Content-Type': 'text/plain' });
+          res.end('Internal Server Error');
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=86400' });
+        res.end(data);
+      });
+    }
+    // BUG-005 alt route: /api/data/images/* (Vite dev proxy target: /data/images/*)
+    else if (url.pathname.startsWith('/api/data/images/') && req.method === 'GET') {
+      const imagePath = url.pathname.slice('/api/data/images/'.length);
+      const safePath = path.normalize(imagePath).replace(/^(\.\.(\/|\\|$))/, '');
+      const absolutePath = path.join(DATA_DIR, 'images', safePath);
+
+      if (!absolutePath.startsWith(path.join(DATA_DIR, 'images'))) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Forbidden' }));
+        return;
+      }
+      if (!fs.existsSync(absolutePath)) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Image not found' }));
+        return;
+      }
+      const ext = path.extname(absolutePath).toLowerCase();
+      const contentTypes = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp' };
+      const contentType = contentTypes[ext] || 'application/octet-stream';
+
+      fs.readFile(absolutePath, (err, data) => {
+        if (err) {
+          res.writeHead(500, { 'Content-Type': 'text/plain' });
+          res.end('Internal Server Error');
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=86400' });
+        res.end(data);
+      });
     }
     else {
       res.writeHead(404, { 'Content-Type': 'application/json' });

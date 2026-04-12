@@ -85,7 +85,7 @@ def clean(v):
     if v is None: return None
     if isinstance(v, float): return round(v, 6) if v == v else None
     return v
-conn = sqlite3.connect('data/propsearch.db')
+conn = sqlite3.connect('data/propSearch.db')
 cur = conn.cursor()
 cur.execute("SELECT ... FROM properties WHERE archived=0")
 rows = cur.fetchall()

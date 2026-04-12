@@ -10,7 +10,7 @@ const FSV_BASE = { hostname: 'nas.home', port: 8191 };
 const DB_UPDATE = `
 const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('/workspaces/propSearch/data/propsearch.db');
+const db = new sqlite3.Database('/workspaces/propSearch/data/propSearch.db');
 
 const rows = [];
 `;
@@ -93,7 +93,7 @@ function extract(html, sourceType) {
 async function main() {
   const fs = require('fs');
   const sqlite3 = require('sqlite3').verbose();
-  const db = new sqlite3.Database('/workspaces/propSearch/data/propsearch.db');
+  const db = new sqlite3.Database('/workspaces/propSearch/data/propSearch.db');
   
   // Get all properties with their links
   const props = await new Promise((res, rej) => {

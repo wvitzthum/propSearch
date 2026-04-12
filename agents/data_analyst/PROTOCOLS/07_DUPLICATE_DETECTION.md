@@ -18,12 +18,18 @@ Extract any `links` from the new lead that are **not already present** in the ex
 - Alternative portal URLs (Rightmove vs Zoopla)
 - Append new links to the existing `links` array. Do NOT replace — merge only new entries.
 
-## Step 3 — Visual Enrichment (If Better)
+## Step 3 — Visual Enrichment (If Better) + Local Image Capture
 
 If the new lead contains `gallery`, `floorplan_url`, or `streetview_url` that the existing record lacks or that are higher-resolution:
 - Update `image_url` if the new image is ≥1024px and the existing is lower-resolution
 - Add missing `floorplan_url` entries
 - Append missing gallery images (deduplicate by URL)
+
+**After merging any new image URLs, always run image capture:**
+```bash
+node scripts/capture_images.js
+```
+This downloads and localises all new remote CDN URLs (especially zoocdn) to `data/images/`. See `10_IMAGE_STORAGE.md`.
 
 ## Step 4 — Price and Status Re-verification
 
