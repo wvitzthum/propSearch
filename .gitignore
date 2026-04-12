@@ -42,3 +42,10 @@ __pycache__/
 # Playwright test reports
 frontend/playwright-report
 frontend/test-results
+test-results/
+
+# Scraped property images (URL-based model — images stored as URLs, not files)
+data/images/
+
+# Large sourced datasets (use data/sources/ README for provenance)
+# data/sources/*.json  # uncomment to ignore all sourced JSON

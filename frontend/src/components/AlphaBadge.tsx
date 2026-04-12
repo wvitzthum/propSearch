@@ -1,13 +1,23 @@
 import React from 'react';
+import { AlertCircle } from 'lucide-react';
 import Tooltip from './Tooltip';
 
 interface AlphaBadgeProps {
   score: number | null | undefined;
   className?: string;
   showLabel?: boolean;
+  /** Fields missing from this property — shown as a warning in the tooltip */
+  shallowFields?: string[];
 }
 
-const AlphaBadge: React.FC<AlphaBadgeProps> = ({ score, className = '', showLabel = false }) => {
+const AlphaBadge: React.FC<AlphaBadgeProps> = ({
+  score,
+  className = '',
+  showLabel = false,
+  shallowFields = [],
+}) => {
+  const isShallow = shallowFields.length > 0;
+
   if (score === null || score === undefined) {
     return (
       <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-linear-border bg-linear-card/50 text-linear-text-muted text-[10px] font-bold uppercase tracking-wider ${className}`}>
@@ -37,6 +47,14 @@ const AlphaBadge: React.FC<AlphaBadgeProps> = ({ score, className = '', showLabe
           {getLabel()}
         </span>
       </div>
+      {isShallow && (
+        <div className="flex items-start gap-1.5 px-2 py-1.5 bg-retro-amber/10 border border-retro-amber/20 rounded-lg">
+          <AlertCircle size={10} className="text-retro-amber flex-shrink-0 mt-0.5" />
+          <div className="text-[9px] text-retro-amber leading-relaxed">
+            Shallow data — missing: {shallowFields.join(', ')}
+          </div>
+        </div>
+      )}
       <div className="space-y-1.5">
         {[
           { label: 'Tenure Quality', weight: '40%' },
@@ -59,6 +77,7 @@ const AlphaBadge: React.FC<AlphaBadgeProps> = ({ score, className = '', showLabe
     <Tooltip renderContent={renderTooltipContent} width="w-48">
       <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider cursor-help transition-all hover:bg-linear-text-primary hover:text-linear-bg ${getColors()} ${className}`}>
         <span>{score.toFixed(1)}</span>
+        {isShallow && <AlertCircle size={9} className="text-retro-amber" />}
         {showLabel && <span className="opacity-70">Alpha</span>}
       </div>
     </Tooltip>

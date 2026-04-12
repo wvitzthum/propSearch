@@ -415,7 +415,6 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
             {sortedProperties.map((property) => {
               const status = getStatus ? getStatus(property.id) : 'discovered';
               const isSelected = isInComparison(property.id);
-              const isShallow = !property.sqft || !property.epc || property.service_charge === undefined;
               const propTags = getTags(property.id);
               const isBatchSelected = batchSelected.has(property.id);
 
@@ -514,14 +513,18 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                     ) : null}
                   </td>
                   <td className="px-2 py-4">
-                    <div className="flex flex-col items-center gap-1">
-                      <AlphaBadge score={property.alpha_score} />
-                      {isShallow && (
-                        <span className="text-[7px] font-black text-retro-amber bg-retro-amber/10 px-1 rounded border border-retro-amber/20 tracking-tighter uppercase">
-                          Shallow Data
-                        </span>
-                      )}
-                    </div>
+                    <AlphaBadge
+                      score={property.alpha_score}
+                      shallowFields={
+                        !property.sqft || !property.epc || property.service_charge === undefined
+                          ? [
+                              ...(!property.sqft ? ['sqft'] : []),
+                              ...(!property.epc ? ['EPC'] : []),
+                              ...(property.service_charge === undefined ? ['service charge'] : []),
+                            ]
+                          : []
+                      }
+                    />
                   </td>
                   <td className="px-2 py-4 bg-linear-accent/5 border-l border-linear-border/30">
                     <div className="text-[11px] font-bold text-linear-text-primary tracking-tighter text-center">
