@@ -1,4 +1,4 @@
-.PHONY: install start start-tmux build lint clean agent agent-po agent-analyst agent-data agent-fe agent-qa agent-de tasks help guard-install agent-windows agent-tmux-all agent-po-tmux agent-analyst-tmux agent-de-tmux agent-fe-tmux agent-qa-tmux sync price-monitor enrich
+.PHONY: install start start-tmux build lint clean agent agent-po agent-analyst agent-data agent-fe agent-qa agent-de tasks help guard-install agent-windows agent-tmux-all agent-po-tmux agent-analyst-tmux agent-de-tmux agent-fe-tmux agent-qa-tmux sync price-monitor enrich ports kill
 
 # Default target
 all: install start
@@ -14,8 +14,57 @@ install:
 	@echo "Installing frontend dependencies..."
 	@rtk cd frontend && npm install
 
+# Check which dev ports are in use
+ports:
+	@echo "Checking propSearch port status..."
+	@for PORT in 3001 5173; do \
+		PID=$$(lsof -ti :$$PORT 2>/dev/null); \
+		if [ -n "$$PID" ]; then \
+			PROC=$$(ps -p $$PID -o comm= 2>/dev/null | tr -d ' '); \
+			echo "  :$$PORT — PID $$PID ($$PROC)"; \
+		else \
+			echo "  :$$PORT — free"; \
+		fi; \
+	done
+
+# Gracefully kill any processes occupying the dev ports (3001 = API, 5173 = Vite)
+kill:
+	@echo "Killing processes on ports 3001 and 5173..."
+	@for PORT in 3001 5173; do \
+		PID=$$(lsof -ti :$$PORT 2>/dev/null); \
+		if [ -n "$$PID" ]; then \
+			echo "  Killing PID $$PID on :$$PORT..."; \
+			kill -TERM $$PID 2>/dev/null; \
+			sleep 1; \
+			if kill -0 $$PID 2>/dev/null; then \
+				echo "  Force-killing PID $$PID..."; \
+				kill -9 $$PID 2>/dev/null; \
+			fi; \
+		else \
+			echo "  :$$PORT — no process running"; \
+		fi; \
+	done
+	@echo "Done."
+
 # Start the propSearch Full Stack (API + Dashboard)
+# First checks and gracefully kills any lingering processes on ports 3001/5173
 start:
+	@echo "Checking for existing processes on dev ports..."
+	@for PORT in 3001 5173; do \
+		PID=$$(lsof -ti :$$PORT 2>/dev/null); \
+		if [ -n "$$PID" ]; then \
+			echo "  :$$PORT occupied by PID $$PID — sending SIGTERM..."; \
+			kill -TERM $$PID 2>/dev/null; \
+			sleep 1; \
+			if kill -0 $$PID 2>/dev/null; then \
+				echo "  Force-killing PID $$PID..."; \
+				kill -9 $$PID 2>/dev/null; \
+			fi; \
+			echo "  Process on :$$PORT cleared."; \
+		else \
+			echo "  :$$PORT — free"; \
+		fi; \
+	done
 	@echo "Starting propSearch Full Stack..."
 	node server/index.js & cd frontend && npm run dev
 
@@ -204,8 +253,10 @@ help:
 	@echo ""
 	@echo "Development:"
 	@echo "  make install    - Install frontend dependencies"
-	@echo "  make start      - Start API server + frontend dev (background)"
+	@echo "  make start      - Kill stale ports, then start API + frontend dev (background)"
 	@echo "  make start-tmux - Start in persistent tmux session (reattach: tmux attach -t propsearch-dev)"
+	@echo "  make kill       - Gracefully kill any processes on ports 3001/5173"
+	@echo "  make ports      - Show which processes are using ports 3001 and 5173"
 	@echo "  make api        - Start API server only"
 	@echo "  make sync       - Run data sync pipeline"
 	@echo "  make build      - Build frontend for production"

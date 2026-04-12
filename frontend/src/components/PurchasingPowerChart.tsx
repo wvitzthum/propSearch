@@ -143,6 +143,7 @@ const PurchasingPowerChart: React.FC<PurchasingPowerChartProps> = ({
                 width={W}
                 height={height}
                 className="overflow-visible"
+                data-testid="purchasing-power-svg"
               >
                 <Group>
                   {/* Grid lines */}
@@ -208,11 +209,12 @@ const PurchasingPowerChart: React.FC<PurchasingPowerChartProps> = ({
                       const ratio = (coords.x - pad.left) / innerW;
                       const idx = Math.max(0, Math.min(chartData.length - 1, Math.round(ratio * (chartData.length - 1))));
                       const d = chartData[idx];
-                      // VISX-017: tooltipLeft/top are now screen coords (SVG uses pixel coords, not viewBox)
+                      // FE-229 FIX: localPoint returns page-relative {x, y} from the mouse event.
+                      // TooltipWithBounds expects page-relative coords — pass coords directly.
                       showTooltip({
                         tooltipData: { date: d.date, maxLoan: d.maxLoan, rate: d.rate },
-                        tooltipLeft: xScale(idx),
-                        tooltipTop: yScale(d.maxLoan),
+                        tooltipLeft: coords.x,
+                        tooltipTop: coords.y,
                       });
                     }}
                     onMouseLeave={hideTooltip}
@@ -229,6 +231,9 @@ const PurchasingPowerChart: React.FC<PurchasingPowerChartProps> = ({
         <TooltipWithBounds
           left={tooltipLeft}
           top={tooltipTop}
+          applyPositionStyle
+          offsetLeft={0}
+          offsetTop={0}
           className="bg-black/90 backdrop-blur border border-linear-border rounded-lg px-3 py-2 pointer-events-none z-50"
         >
           <div className="text-[10px] font-black text-white mb-1">{tooltipData.date}</div>

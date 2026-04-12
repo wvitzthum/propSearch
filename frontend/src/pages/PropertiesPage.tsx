@@ -14,6 +14,7 @@ import { usePropertyContext } from '../hooks/PropertyContext';
 import { usePipeline } from '../hooks/usePipeline';
 import { useThesisTags } from '../hooks/useThesisTags';
 import { useComparison } from '../hooks/useComparison';
+import { usePropertyRank } from '../hooks/usePropertyRank';
 import type { PropertyWithCoords } from '../types/property';
 import type { PropertyStatus } from '../hooks/usePipeline';
 import type { MarketStatus } from '../types/property';
@@ -21,10 +22,11 @@ import MarketStatusBadge from '../components/MarketStatusBadge';
 
 /** UX-007: URL-persisted filters. UX-008: vim-style keyboard navigation. */
 const PropertiesPage: React.FC = () => {
-  const { properties, loading, updateFilters, filters, registerPipeline } = usePropertyContext();
-  const { setStatus, getStatus } = usePipeline();
+  const { properties, loading, updateFilters, filters, registerPipeline, registerHydrate } = usePropertyContext();
+  const { setStatus, getStatus, hydrateFromProperties } = usePipeline();
   const { getTags } = useThesisTags();
   const comparison = useComparison();
+  const { getRank, setRank, hydrateFromProperties: hydrateRanks } = usePropertyRank();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const filteredPropsRef = useRef<PropertyWithCoords[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -33,8 +35,11 @@ const PropertiesPage: React.FC = () => {
   const [previewProperty, setPreviewProperty] = useState<PropertyWithCoords | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-  // FE-181: Register pipeline getter
+  // FE-181: Register pipeline getter; FE-222: Register pipeline hydration function
   useEffect(() => { registerPipeline(getStatus); }, [registerPipeline, getStatus]);
+  useEffect(() => { registerHydrate(hydrateFromProperties); }, [registerHydrate, hydrateFromProperties]);
+  // UX-034: Register rank hydration from API response (runs after property fetch)
+  useEffect(() => { hydrateRanks(properties as Array<{ id: string; property_rank?: number | null }>); }, [properties, hydrateRanks]);
 
   // View mode
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
@@ -130,6 +135,15 @@ const PropertiesPage: React.FC = () => {
           const aDate = (a.metadata?.first_seen ?? '');
           const bDate = (b.metadata?.first_seen ?? '');
           return (aDate < bDate ? -1 : aDate > bDate ? 1 : 0) * dir;
+        }
+        // UX-034: User-defined priority — ranked properties sorted ascending (1 = highest)
+        case 'user_priority': {
+          const rankA = getRank(a.id);
+          const rankB = getRank(b.id);
+          if (rankA === undefined && rankB === undefined) return 0;
+          if (rankA === undefined) return dir; // unranked at bottom
+          if (rankB === undefined) return -dir;
+          return (rankA - rankB) * dir;
         }
         default: return 0;
       }
@@ -248,6 +262,16 @@ const PropertiesPage: React.FC = () => {
         comparison.toggleComparison(fp[selectedRowIndex].id);
         return;
       }
+      // UX-034: R key — toggle My Priority sort
+      if (key === 'r' && selectedRowIndex < 0) {
+        e.preventDefault();
+        if (filters.sortBy === 'user_priority') {
+          updateFilters({ sortBy: 'alpha_score', sortOrder: 'DESC' });
+        } else {
+          updateFilters({ sortBy: 'user_priority', sortOrder: 'ASC' });
+        }
+        return;
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -349,6 +373,23 @@ const PropertiesPage: React.FC = () => {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold transition-all ${hasActiveFilters ? 'text-linear-text-muted hover:text-white hover:bg-linear-bg' : 'text-white bg-linear-bg border border-linear-border'}`}
           >
             All
+          </button>
+
+          {/* UX-034: My Priority sort — show ranked properties first */}
+          <button
+            onClick={() => {
+              if (filters.sortBy === 'user_priority') {
+                updateFilters({ sortBy: 'alpha_score', sortOrder: 'DESC' });
+              } else {
+                updateFilters({ sortBy: 'user_priority', sortOrder: 'ASC' });
+              }
+            }}
+            title="My Priority: Sort by user-defined rank (R)"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold transition-all ${filters.sortBy === 'user_priority' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-linear-text-muted hover:text-white hover:bg-linear-bg'}`}
+          >
+            <Star size={10} className={filters.sortBy === 'user_priority' ? 'text-blue-400 fill-current' : ''} />
+            <span className="hidden sm:inline">My Priority</span>
+            <span className="sm:hidden">Priority</span>
           </button>
         </div>
 
@@ -599,6 +640,8 @@ const PropertiesPage: React.FC = () => {
           onPreview={p => { setPreviewProperty(p); setIsPreviewOpen(true); }}
           onStatusChange={(id, s) => setStatus(id, s)}
           getStatus={getStatus}
+          getRank={getRank}
+          onRankChange={setRank}
         />
       )}
 

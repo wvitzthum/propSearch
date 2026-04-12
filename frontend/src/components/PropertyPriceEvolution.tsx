@@ -1,5 +1,7 @@
 // FE-214: Migrated to @visx — replaces hand-rolled SVG with visx scale/shape/axis primitives
+// BUG-003: generateMockHistory removed — no synthetic data; shows no-data state when price_history absent
 import React, { useMemo, useCallback } from 'react';
+import { RefreshCw, AlertTriangle } from 'lucide-react';
 import type { Property, PriceHistoryEntry } from '../types/property';
 import { fmtNum } from '../utils/format';
 import { scaleLinear, scalePoint } from '@visx/scale';
@@ -19,44 +21,10 @@ const STATUS_COLORS: Record<string, string> = {
   withdrawn: '#6b7280',
 };
 
-// Generate mock history if none exists (FE-166)
-function generateMockHistory(property: Property): PriceHistoryEntry[] {
-  const entries: PriceHistoryEntry[] = [];
-  const now = new Date('2026-04-02');
-  let price = property.list_price;
-
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now);
-    d.setMonth(d.getMonth() - i);
-    const dateStr = d.toISOString().split('T')[0];
-    let status: PriceHistoryEntry['status'] = 'listed';
-
-    if (i === 3) {
-      price = Math.round(price * 0.97);
-      status = 'reduced';
-    } else if (i === 1) {
-      status = 'under_offer';
-    } else if (i === 0) {
-      status = 'under_offer';
-    }
-
-    const hpi = 100 + (5 - i) * 0.8 + (Math.sin(i) * 0.3);
-
-    entries.push({
-      date: dateStr,
-      price,
-      price_per_sqm: Math.round(price / property.sqft * 10.764),
-      status,
-      reduction_pct: i === 3 ? 3.0 : undefined,
-      days_on_market: (5 - i) * 30 + Math.floor(Math.random() * 10),
-      london_hpi: Math.round(hpi * 10) / 10,
-    });
-  }
-  return entries;
-}
-
 interface Props {
   property: Property;
+  /** Called when the no-data "Request Enrichment" button is clicked */
+  onRequestEnrichment?: () => void;
 }
 
 // Chart dimensions
@@ -356,6 +324,9 @@ const PriceEvolutionChart: React.FC<{ width: number; property: Property; history
         <TooltipWithBounds
           left={tooltipLeft}
           top={tooltipTop}
+          applyPositionStyle
+          offsetLeft={0}
+          offsetTop={0}
           className="!bg-linear-card !border !border-linear-border !text-white !rounded-xl !shadow-2xl !text-xs !font-mono !px-3 !py-2"
         >
           <div className="flex flex-col gap-1">
@@ -396,11 +367,12 @@ const PriceEvolutionChart: React.FC<{ width: number; property: Property; history
   );
 };
 
-const PropertyPriceEvolution: React.FC<Props> = ({ property }) => {
+const PropertyPriceEvolution: React.FC<Props> = ({ property, onRequestEnrichment }) => {
   const history = useMemo<PriceHistoryEntry[]>(() => {
     const raw = property.price_history;
-    if (raw && raw.length > 1) return raw;
-    return generateMockHistory(property);
+    // BUG-003: no synthetic fallback — real data or nothing
+    if (!raw || raw.length < 2) return [];
+    return raw;
   }, [property]);
 
   const initialPrice = history[0]?.price ?? 0;
@@ -413,13 +385,17 @@ const PropertyPriceEvolution: React.FC<Props> = ({ property }) => {
       {/* Header */}
       <div className="px-5 py-3 border-b border-linear-border flex items-center justify-between bg-linear-bg/40">
         <div className="flex items-center gap-2">
-          <div className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
+          {history.length >= 2 ? (
+            <div className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
+          ) : (
+            <AlertTriangle size={10} className="text-amber-400" />
+          )}
           <h3 className="text-[10px] font-black text-white uppercase tracking-widest">
             Price Evolution Analysis
           </h3>
-          {!property.price_history && (
-            <span className="text-[8px] text-yellow-500/60 font-bold uppercase tracking-wider ml-1">
-              — Synthetic
+          {history.length < 2 && (
+            <span className="text-[8px] text-amber-400/70 font-bold uppercase tracking-wider ml-1">
+              — No Data
             </span>
           )}
         </div>
@@ -463,76 +439,111 @@ const PropertyPriceEvolution: React.FC<Props> = ({ property }) => {
         </div>
       </div>
 
-      {/* Chart — responsive via ParentSize */}
-      <div className="px-4 pt-2 pb-4">
-        <ParentSize>
-          {({ width }) => (
-            width > 0 ? (
-              <PriceEvolutionChart
-                width={width}
-                property={property}
-                history={history}
-              />
-            ) : null
-          )}
-        </ParentSize>
-      </div>
+      {/* Chart / no-data state */}
+      {history.length >= 2 ? (
+        <>
+          {/* Chart — responsive via ParentSize */}
+          <div className="px-4 pt-2 pb-4">
+            <ParentSize>
+              {({ width }) => (
+                width > 0 ? (
+                  <PriceEvolutionChart
+                    width={width}
+                    property={property}
+                    history={history}
+                  />
+                ) : null
+              )}
+            </ParentSize>
+          </div>
 
-      {/* Bottom data table */}
-      <div className="px-4 pb-4">
-        <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-[8px] font-mono">
-            <thead>
-              <tr className="border-t border-b border-linear-border">
-                <th className="text-left py-1.5 pr-3 text-linear-text-muted/60 font-black uppercase tracking-widest">Date</th>
-                <th className="text-right py-1.5 px-2 text-linear-text-muted/60 font-black uppercase tracking-widest">Price</th>
-                <th className="text-center py-1.5 px-2 text-linear-text-muted/60 font-black uppercase tracking-widest">Status</th>
-                <th className="text-right py-1.5 px-2 text-linear-text-muted/60 font-black uppercase tracking-widest">Δ%</th>
-                <th className="text-right py-1.5 pl-2 text-linear-text-muted/60 font-black uppercase tracking-widest">DOM</th>
-                <th className="text-right py-1.5 pl-2 text-linear-text-muted/60 font-black uppercase tracking-widest">HPI</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((h, i) => (
-                <tr
-                  key={`r-${i}`}
-                  className="border-b border-linear-border/40 hover:bg-white/5 transition-colors"
-                >
-                  <td className="py-1.5 pr-3 text-white/70">{h.date}</td>
-                  <td className="text-right py-1.5 px-2 text-white font-bold">
-                    {fmt(h.price)}
-                  </td>
-                  <td className="text-center py-1.5 px-2">
-                    <span
-                      className="px-1.5 py-0.5 rounded-full text-[7px] font-black uppercase tracking-wider"
-                      style={{
-                        backgroundColor: STATUS_COLORS[h.status] + '20',
-                        color: STATUS_COLORS[h.status],
-                        border: `0.5px solid ${STATUS_COLORS[h.status]}40`,
-                      }}
+          {/* Bottom data table */}
+          <div className="px-4 pb-4">
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-[8px] font-mono">
+                <thead>
+                  <tr className="border-t border-b border-linear-border">
+                    <th className="text-left py-1.5 pr-3 text-linear-text-muted/60 font-black uppercase tracking-widest">Date</th>
+                    <th className="text-right py-1.5 px-2 text-linear-text-muted/60 font-black uppercase tracking-widest">Price</th>
+                    <th className="text-center py-1.5 px-2 text-linear-text-muted/60 font-black uppercase tracking-widest">Status</th>
+                    <th className="text-right py-1.5 px-2 text-linear-text-muted/60 font-black uppercase tracking-widest">Δ%</th>
+                    <th className="text-right py-1.5 pl-2 text-linear-text-muted/60 font-black uppercase tracking-widest">DOM</th>
+                    <th className="text-right py-1.5 pl-2 text-linear-text-muted/60 font-black uppercase tracking-widest">HPI</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((h, i) => (
+                    <tr
+                      key={`r-${i}`}
+                      className="border-b border-linear-border/40 hover:bg-white/5 transition-colors"
                     >
-                      {h.status.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="text-right py-1.5 pl-2">
-                    {h.reduction_pct != null ? (
-                      <span className="text-amber-400 font-bold">↓{h.reduction_pct.toFixed(1)}%</span>
-                    ) : (
-                      <span className="text-linear-text-muted/30">—</span>
-                    )}
-                  </td>
-                  <td className="text-right py-1.5 pl-2 text-white/50">
-                    {h.days_on_market}
-                  </td>
-                  <td className="text-right py-1.5 pl-2 text-gray-500/60">
-                    {h.london_hpi?.toFixed(1)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      <td className="py-1.5 pr-3 text-white/70">{h.date}</td>
+                      <td className="text-right py-1.5 px-2 text-white font-bold">
+                        {fmt(h.price)}
+                      </td>
+                      <td className="text-center py-1.5 px-2">
+                        <span
+                          className="px-1.5 py-0.5 rounded-full text-[7px] font-black uppercase tracking-wider"
+                          style={{
+                            backgroundColor: STATUS_COLORS[h.status] + '20',
+                            color: STATUS_COLORS[h.status],
+                            border: `0.5px solid ${STATUS_COLORS[h.status]}40`,
+                          }}
+                        >
+                          {h.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="text-right py-1.5 pl-2">
+                        {h.reduction_pct != null ? (
+                          <span className="text-amber-400 font-bold">↓{h.reduction_pct.toFixed(1)}%</span>
+                        ) : (
+                          <span className="text-linear-text-muted/30">—</span>
+                        )}
+                      </td>
+                      <td className="text-right py-1.5 pl-2 text-white/50">
+                        {h.days_on_market}
+                      </td>
+                      <td className="text-right py-1.5 pl-2 text-gray-500/60">
+                        {h.london_hpi?.toFixed(1)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      ) : (
+        /* BUG-003: No-data state — no synthetic data shown */
+        <div className="flex flex-col items-center justify-center gap-4 py-12 px-6">
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="h-10 w-10 rounded-full bg-amber-400/10 border border-amber-400/20 flex items-center justify-center">
+              <AlertTriangle size={18} className="text-amber-400" />
+            </div>
+            <h4 className="text-[11px] font-black text-white uppercase tracking-widest">
+              No Price History Available
+            </h4>
+            <p className="text-[10px] text-linear-text-muted leading-relaxed max-w-xs">
+              Price history is not available for this property. The analyst should source it from the listing portal or Land Registry.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-[9px] font-bold text-amber-400 uppercase tracking-widest">
+              Data Missing — Analyst Action Required
+            </span>
+          </div>
+          {onRequestEnrichment && (
+            <button
+              onClick={onRequestEnrichment}
+              className="flex items-center gap-2 px-4 py-2 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/25 text-amber-400 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95"
+            >
+              <RefreshCw size={11} />
+              Request Enrichment
+            </button>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 };

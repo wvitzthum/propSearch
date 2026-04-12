@@ -228,6 +228,9 @@ export const useMacroData = () => {
           hpi_forecasts: hpiForecastsNormalized,
           swap_rates: swapRatesNormalized,
           boe_rate_consensus: boeConsNormalized,
+          // Pass through hpi_history for HPIHistoryChart + LondonPrimePremiumChart
+          // Schema: { date, london_hpi, uk_hpi, london_vs_uk_pct } — HM Land Registry
+          hpi_history: raw.hpi_history,
         };
 
         setData(normalized);

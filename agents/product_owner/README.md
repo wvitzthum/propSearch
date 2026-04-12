@@ -53,6 +53,7 @@ When a user asks for a feature or fix:
 | `PROTOCOLS/01_TASK_MANAGEMENT.md` | Task schema, discovery, feature specs in DECISIONS.md |
 | `PROTOCOLS/02_STRATEGIC_ROADMAP.md` | 2026 phases, current priorities |
 | `PROTOCOLS/03_DECISIONS.md` | ADR-001 to ADR-020 summary, decision rationale |
+| `PROTOCOLS/04_SESSION_STARTUP.md` | Agent session rules (dev server ports, quarterly review cadence) |
 
 ---
 

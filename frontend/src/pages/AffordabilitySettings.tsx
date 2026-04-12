@@ -61,7 +61,10 @@ const AffordabilitySettings: React.FC = () => {
     const max = Math.round(maxMortgage / ltvFraction);
     const min = Math.round(max * 0.85);
     return { min, max };
-  }, [monthlyBudget, depositMode, depositPct, calculateMortgageFromPayment]);
+    // FE-230 BUG 2 fix: termYears must be a direct dependency — calculateMortgageFromPayment
+    // uses it internally but had it missing from its own dep array (BUG 1), causing a stale
+    // closure. Adding termYears here breaks the stale chain and forces re-compute.
+  }, [monthlyBudget, depositMode, depositPct, calculateMortgageFromPayment, termYears]);
 
   // Calculate estimated monthly payments at different property prices
   const priceScenarios = useMemo(() => {
@@ -600,15 +603,17 @@ const AffordabilitySettings: React.FC = () => {
             <div className="mt-4 space-y-2 text-[10px] text-linear-text-muted">
               <div className="flex justify-between">
                 <span>At 90% LTV:</span>
-                <span className="text-rose-400">£{(affordableRange.max * 0.85 / 1000).toFixed(0)}K</span>
+                {/* FE-228: Fix — affordableRange.max is already at 85% LTV. Multiply by 0.90 directly, not 0.85×0.90 */}
+                <span className="text-rose-400">£{(Math.round(affordableRange.max * 0.90 / 1000)).toFixed(0)}K</span>
               </div>
               <div className="flex justify-between">
                 <span>At 85% LTV:</span>
-                <span className="text-amber-400">£{(affordableRange.max * 0.85 / 0.85 / 1000).toFixed(0)}K</span>
+                <span className="text-amber-400">£{(Math.round(affordableRange.max * 0.85 / 1000)).toFixed(0)}K</span>
               </div>
               <div className="flex justify-between">
                 <span>At 75% LTV:</span>
-                <span className="text-emerald-400">£{(affordableRange.max * 0.85 / 0.75 / 1000).toFixed(0)}K</span>
+                {/* FE-228: Fix — multiply by 0.75 directly, not 0.85×0.75 */}
+                <span className="text-emerald-400">£{(Math.round(affordableRange.max * 0.75 / 1000)).toFixed(0)}K</span>
               </div>
             </div>
           </div>

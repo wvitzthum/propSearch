@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import PropertiesPage from './pages/PropertiesPage';
 import MapView from './pages/MapView';
 import PropertyDetail from './pages/PropertyDetail';
+import PropertyEdit from './pages/PropertyEdit';
 import RatesPage from './pages/RatesPage';
 import MarketPage from './pages/MarketPage';
 import ArchiveReview from './pages/ArchiveReview';
@@ -37,6 +38,7 @@ function App() {
 
             {/* Deep-dive routes */}
             <Route path="/property/:id" element={<PropertyDetail />} />
+            <Route path="/property/:id/edit" element={<PropertyEdit />} />
 
             {/* 404 */}
             <Route path="*" element={

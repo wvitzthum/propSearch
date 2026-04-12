@@ -173,6 +173,9 @@ const LTVBandComparisonChart: React.FC<LTVBandComparisonChartProps> = ({
         <TooltipWithBounds
           left={tooltipLeft}
           top={tooltipTop}
+          applyPositionStyle
+          offsetLeft={0}
+          offsetTop={0}
           className="bg-black/90 backdrop-blur border border-linear-border rounded-lg px-3 py-2 pointer-events-none z-50"
         >
           <div className="text-[10px] font-black text-white">LTV {tooltipData.band}</div>

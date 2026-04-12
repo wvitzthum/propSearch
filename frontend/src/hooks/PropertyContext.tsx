@@ -26,6 +26,10 @@ interface PropertyContextType {
   refreshProperties: () => Promise<void>;
   // FE-181: Bridge to usePipeline so archived filter works via client-side pipeline state
   registerPipeline: (getStatus: (id: string) => PropertyStatus) => void;
+  // FE-222: Bridge to usePipeline — hydrate pipeline state from API response after fetch
+  registerHydrate: (fn: (props: Array<{ id: string; pipeline_status?: string }>) => void) => void;
+  // FE-231: Trigger a re-check of a property — POST /api/properties/:id/check
+  recheckProperty: (id: string) => Promise<void>;
 }
 
 const PropertyContext = createContext<PropertyContextType | undefined>(undefined);
@@ -52,9 +56,16 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
   // FE-181: Bridge to usePipeline — stored as a ref so PropertyContext can filter
   // by pipeline status without creating a circular import dependency.
   const pipelineGetStatusRef = useRef<((id: string) => PropertyStatus) | null>(null);
+  // FE-222: Bridge to usePipeline — hydrate function to push API data into pipeline state
+  const pipelineHydrateRef = useRef<((props: Array<{ id: string; pipeline_status?: string }>) => void) | null>(null);
 
   const registerPipeline = useCallback((getStatus: (id: string) => PropertyStatus) => {
     pipelineGetStatusRef.current = getStatus;
+  }, []);
+
+  // FE-222: Register the hydrate function from usePipeline
+  const registerHydrate = useCallback((fn: (props: Array<{ id: string; pipeline_status?: string }>) => void) => {
+    pipelineHydrateRef.current = fn;
   }, []);
 
   const [filters, setFilters] = useState<PropertyFilters>({
@@ -125,6 +136,10 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
         // FE-181: Normalize all optional fields to prevent .map() crashes on demo data
         // Demo data often lacks gallery, image_url, link, streetview_url, floorplan_url
         const links = Array.isArray(p.links) ? p.links : (p.link ? [p.link] : []);
+        // FE-231: Normalize financial fields that demo_master.json often leaves undefined.
+        // Without defaults, undefined / 12 → NaN propagates into monthly outlay/payment displays.
+        const serviceCharge = typeof p.service_charge === 'number' && p.service_charge > 0 ? p.service_charge : 4000; // £4K/yr default
+        const groundRent = typeof p.ground_rent === 'number' && p.ground_rent >= 0 ? p.ground_rent : 250;       // £250/yr default
         return {
           ...p,
           // Normalize missing fields to safe defaults
@@ -135,10 +150,18 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
           link: p.link || links[0] || '',
           streetview_url: p.streetview_url || '',
           floorplan_url: p.floorplan_url || '',
+          service_charge: serviceCharge,
+          ground_rent: groundRent,
           lat: lat + (Math.random() - 0.5) * 0.01,
           lng: lng + (Math.random() - 0.5) * 0.01,
         } as PropertyWithCoords;
       });
+
+      // FE-222: Hydrate pipeline state from API response so server-side statuses
+      // are available to usePipeline before any user interaction occurs.
+      if (!IS_DEMO && pipelineHydrateRef.current) {
+        pipelineHydrateRef.current(data);
+      }
 
       setProperties(propertiesWithCoords);
       setError(null);
@@ -160,6 +183,23 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const refreshProperties = useCallback(() => fetchProperties(filters), [filters, fetchProperties]);
 
+  // FE-231: Re-check a property — POST /api/properties/:id/check updates last_checked in DB
+  const recheckProperty = useCallback(async (id: string) => {
+    if (IS_DEMO) return; // No API in demo mode
+    try {
+      const res = await fetch(`/api/properties/${id}/check`, { method: 'POST' });
+      if (!res.ok) throw new Error('Recheck failed');
+      const today = new Date().toISOString().split('T')[0];
+      // Optimistically update the property's last_checked in local state
+      setProperties(prev => prev.map(p =>
+        p.id === id ? { ...p, last_checked: today } : p
+      ));
+    } catch {
+      // Re-fetch on failure to get server truth
+      await fetchProperties(filters);
+    }
+  }, [filters, fetchProperties]);
+
   return (
     <PropertyContext.Provider value={{
       properties,
@@ -168,7 +208,9 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
       filters,
       updateFilters,
       refreshProperties,
-      registerPipeline
+      registerPipeline,
+      registerHydrate,
+      recheckProperty,
     }}>
       {children}
     </PropertyContext.Provider>

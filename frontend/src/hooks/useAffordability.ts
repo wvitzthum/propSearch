@@ -54,12 +54,18 @@ export const useAffordability = () => {
 
   const [monthlyBudget, setMonthlyBudget] = useState<number>(() => {
     const stored = localStorage.getItem(LTV_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : 6000; // Default £6,000/month
+    if (!stored) return 6000;
+    const parsed = JSON.parse(stored);
+    // FE-231: Clamp on init to prevent corrupted localStorage values (e.g. test artifacts)
+    // from producing astronomically large mortgage/payment displays on the property page.
+    return Math.max(500, Math.min(50000, parsed));
   });
 
   const [termYears, _setTermYears] = useState<number>(() => {
     const stored = localStorage.getItem(TERM_STORAGE_KEY);
-    const parsed = stored ? JSON.parse(stored) : 25;
+    if (!stored) return 25;
+    const parsed = JSON.parse(stored);
+    // Clamp on init: guard against corrupted stored values.
     return VALID_TERMS.includes(parsed as any) ? parsed : 25;
   });
 
@@ -82,7 +88,9 @@ export const useAffordability = () => {
 
   const [depositPct, setDepositPctState] = useState<number>(() => {
     const stored = localStorage.getItem(DEPOSIT_PCT_KEY);
-    const parsed = stored ? JSON.parse(stored) : DEFAULT_DEPOSIT_PCT;
+    if (!stored) return DEFAULT_DEPOSIT_PCT;
+    const parsed = JSON.parse(stored);
+    // Clamp on init: guard against corrupted stored values.
     return Math.max(5, Math.min(60, parsed));
   });
 
@@ -266,7 +274,30 @@ export const useAffordability = () => {
     // Reverse annuity formula: P = PMT * [(1 - (1 + r)^-n) / r]
     const presentValueFactor = (1 - Math.pow(1 + monthlyRate, -numPayments)) / monthlyRate;
     return monthlyPayment * presentValueFactor;
+    // FE-230 BUG 1 fix: termYears was used as a default param but missing from dep array.
+    // This caused stale-closure on term changes, making affordableRange stale even when
+    // monthlyBudget changed. Added termYears here to keep calculateMortgageFromPayment fresh.
   }, [mortgageRate, termYears]);
+
+  // Calculate monthly payment from mortgage amount (forward mortgage calculation)
+  // This is the INVERSE of calculateMortgageFromPayment.
+  const calculatePaymentFromMortgage = useCallback((
+    mortgageAmount: number,
+    annualRate: number,
+    years: number = termYears
+  ): number => {
+    const monthlyRate = annualRate / 100 / 12;
+    const numPayments = years * 12;
+
+    if (monthlyRate === 0) {
+      return mortgageAmount / numPayments;
+    }
+
+    // Standard annuity formula: PMT = P * [r(1+r)^n] / [(1+r)^n - 1]
+    // Equivalently: PMT = P / [(1 - (1+r)^-n) / r]
+    const presentValueFactor = (1 - Math.pow(1 + monthlyRate, -numPayments)) / monthlyRate;
+    return mortgageAmount / presentValueFactor;
+  }, [termYears]);
 
   // Calculate LTV band based on deposit and property price
   const calculateLTVBand = useCallback((deposit: number, propertyPrice: number): '90%' | '85%' | '75%' => {
@@ -371,12 +402,15 @@ export const useAffordability = () => {
   }, [monthlyBudget, calculateMortgageFromPayment]);
 
   // Calculate what property price is affordable on budget
+  // BUG-001 FIX: Respect depositMode and depositPct instead of hardcoded 15%
+  // In fixed mode: use configured depositPct (e.g., 25%) → max affordable = mortgage / (1 - depositPct/100)
+  // In auto mode: default to 15% deposit → max affordable = mortgage / 0.85
   const getAffordablePrice = useCallback((budget: number = monthlyBudget): number => {
     const maxMortgage = calculateMortgageFromPayment(budget);
-    // Assume buyer has 15% deposit (standard minimum for best rates)
-    // So max affordable = maxMortgage / 0.85
-    return Math.round(maxMortgage / 0.85);
-  }, [monthlyBudget, calculateMortgageFromPayment]);
+    const effectiveDepositPct = depositMode === 'fixed' ? depositPct : 15;
+    const ltvFraction = 1 - effectiveDepositPct / 100;
+    return Math.round(maxMortgage / ltvFraction);
+  }, [monthlyBudget, depositMode, depositPct, calculateMortgageFromPayment]);
 
   // Get budget profile for a specific property
   const getBudgetProfile = useCallback((propertyPrice: number): BudgetProfile => {
@@ -408,17 +442,16 @@ export const useAffordability = () => {
     };
     const adjustedRate = ltvRateMap[ltvBand] ?? mortgageRates.rate_90;
 
-    // Monthly payment: in fixed mode, use the mortgage amount at the LTV rate;
-    // in auto mode, use the monthly budget directly (it was the input constraint).
-    const actualMonthly = depositMode === 'fixed'
-      ? calculateMortgageFromPayment(mortgageAmount, adjustedRate)
-      : monthlyBudget;
+    // Monthly payment: in fixed mode use mortgage amount; in auto mode use the actual
+    // payment for this property's mortgage at the LTV band's rate (not monthlyBudget).
+    // BUG FIX: calculateMortgageFromPayment computes P from PMT — it cannot be reused as
+    // "PMT from P". Use calculatePaymentFromMortgage instead.
+    const principal = Math.min(mortgageAmount, propertyPrice);
+    const actualMonthly = calculatePaymentFromMortgage(principal, adjustedRate, termYears);
 
     // Stress test at +2% rate
     const stressRate = adjustedRate + 2;
-    const stressMonthly = depositMode === 'fixed'
-      ? calculateMortgageFromPayment(mortgageAmount, stressRate)
-      : calculateMortgageFromPayment(maxMortgage, stressRate);
+    const stressMonthly = calculatePaymentFromMortgage(principal, stressRate, termYears);
 
     return {
       monthlyBudget,
@@ -433,7 +466,7 @@ export const useAffordability = () => {
         affordable: stressMonthly <= monthlyBudget * 1.3, // 30% stress buffer
       },
     };
-  }, [monthlyBudget, depositMode, depositPct, mortgageRates, calculateMortgageFromPayment, calculateLTVBand]);
+  }, [monthlyBudget, depositMode, depositPct, mortgageRates, calculatePaymentFromMortgage, calculateLTVBand, termYears]);
 
   // Update monthly budget
   const updateBudget = useCallback((newBudget: number) => {

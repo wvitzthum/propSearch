@@ -1,17 +1,13 @@
 import React from 'react';
-import {
-  Map,
-  Activity,
-  BarChart2,
-  TrendingUp,
-  ExternalLink
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Map, Activity, RefreshCw } from 'lucide-react';
 import MicroMarketVelocityMap from '../components/MicroMarketVelocityMap';
 import LondonMicroMarketHeatMap from '../components/LondonMicroMarketHeatMap';
 import DataFreshnessIndicator from '../components/DataFreshnessIndicator';
 import MarketVerdict from '../components/MarketVerdict';
 import AreaMetricHeatmap from '../components/AreaMetricHeatmap';
+import PropertyTypePerformanceChart from '../components/PropertyTypePerformanceChart';
+import Tooltip from '../components/Tooltip';
+import { PHASES } from '../components/SeasonalMarketCycle';
 
 const MarketPage: React.FC = () => {
   return (
@@ -38,6 +34,99 @@ const MarketPage: React.FC = () => {
       </div>
 
       {/* UX-033: Market Verdict Strip */}
+
+      {/* FE-236: Seasonal Market Cycle phase strip — ambient context above MarketVerdict */}
+      {(() => {
+        const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const currentMonth = new Date().getMonth();
+        const currentPhaseIdx = PHASES.findIndex(p => p.months.includes(currentMonth));
+
+        const getSignal = (phaseName: string) => {
+          if (phaseName === 'Winter Trough' || phaseName === 'Year-End Dip') {
+            return { label: 'BUYER', color: '#22c55e', bg: 'bg-emerald-500/15', border: 'border-emerald-500/30' };
+          }
+          if (phaseName === 'Spring Surge' || phaseName === 'Autumn Rush') {
+            return { label: 'SELLER', color: '#ef4444', bg: 'bg-red-500/15', border: 'border-red-500/30' };
+          }
+          return { label: 'NEUTRAL', color: '#a1a1aa', bg: 'bg-zinc-500/15', border: 'border-zinc-500/30' };
+        };
+
+        const getMonthRange = (phase: typeof PHASES[number]) =>
+          phase.months.map(m => MONTH_NAMES[m]).join('–');
+
+        return (
+          <div className="bg-linear-card border border-linear-border rounded-2xl p-4 mb-6">
+            {/* Header */}
+            <div className="flex items-center gap-2 mb-3">
+              <RefreshCw size={12} className="text-amber-400" />
+              <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">
+                Seasonal Market Cycle
+              </span>
+              <span className="ml-auto hidden md:flex items-center gap-2 text-[8px] font-black text-linear-text-muted uppercase tracking-widest">
+                Current: {MONTH_NAMES[currentMonth]}
+              </span>
+            </div>
+
+            {/* Phase pills */}
+            <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar">
+              {PHASES.map((phase, idx) => {
+                const isCurrent = idx === currentPhaseIdx;
+                const signal = getSignal(phase.name);
+                const monthRange = getMonthRange(phase);
+
+                return (
+                  <Tooltip
+                    key={phase.name}
+                    content={phase.desc}
+                    methodology={`Seasonal index derived from ONS Land Registry 5-year rolling average. Phase spans ${monthRange}.`}
+                  >
+                    <div className="relative shrink-0">
+                      <div
+                        className={[
+                          'flex flex-col items-center gap-1 px-3 py-2 rounded-xl border transition-all cursor-help min-w-[80px]',
+                          isCurrent
+                            ? 'border-current bg-white/5'
+                            : 'border-white/10 bg-transparent hover:border-white/20 hover:bg-white/5',
+                        ].join(' ')}
+                        style={isCurrent ? { borderColor: phase.color + '80' } : {}}
+                      >
+                        {/* Phase name */}
+                        <span
+                          className={['text-[10px] font-bold uppercase tracking-tight leading-tight', isCurrent ? '' : 'text-white/60'].join(' ')}
+                          style={isCurrent ? { color: phase.color } : {}}
+                        >
+                          {phase.name}
+                        </span>
+
+                        {/* Month range — hidden on sm */}
+                        <span className="hidden sm:block text-[8px] text-white/30 font-medium">
+                          {monthRange}
+                        </span>
+
+                        {/* Signal badge — shown on md+ */}
+                        <span className={['hidden md:flex items-center gap-0.5 text-[8px] font-black px-1.5 py-0.5 rounded', signal.bg].join(' ')}
+                          style={{ color: signal.color }}>
+                          {signal.label}
+                        </span>
+                      </div>
+
+                      {/* Active indicator dot */}
+                      {isCurrent && (
+                        <div
+                          className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: phase.color, boxShadow: `0 0 6px ${phase.color}` }}
+                        />
+                      )}
+                    </div>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* UX-033: Market Verdict Strip */}
       <MarketVerdict />
 
       {/* VISX-005: Area × Metric Heatmap */}
@@ -60,84 +149,8 @@ const MarketPage: React.FC = () => {
         <MicroMarketVelocityMap />
       </div>
 
-      {/* UX-033: Property Type Performance — compact card summary */}
-      <div className="bg-linear-card border border-linear-border rounded-2xl overflow-hidden shadow-xl">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-linear-border bg-linear-card/50 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BarChart2 size={14} className="text-blue-400" />
-            <h2 className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">Property Type Summary</h2>
-          </div>
-          <Link
-            to="/rates"
-            className="flex items-center gap-1.5 text-[9px] font-bold text-blue-400 hover:text-blue-300 transition-colors uppercase tracking-widest"
-          >
-            Full analysis <ExternalLink size={10} />
-          </Link>
-        </div>
-
-        {/* Compact ranked list */}
-        <div className="p-4 space-y-2">
-          {/* Header row */}
-          <div className="grid grid-cols-4 gap-3 px-2 pb-2 border-b border-linear-border">
-            <div className="text-[8px] font-bold text-linear-text-muted uppercase tracking-widest col-span-2">Segment</div>
-            <div className="text-[8px] font-bold text-linear-text-muted uppercase tracking-widest text-right">Alpha</div>
-            <div className="text-[8px] font-bold text-linear-text-muted uppercase tracking-widest text-right">5yr</div>
-          </div>
-
-          {/* Studio/1-Bed */}
-          <div className="grid grid-cols-4 gap-3 px-2 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
-            <div className="col-span-2 flex items-center gap-2">
-              <span className="w-5 h-5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center text-[8px] font-black">★</span>
-              <span className="text-[10px] font-bold text-white">Studio/1-Bed</span>
-            </div>
-            <div className="text-right text-[10px] font-black text-retro-green">+3.1%</div>
-            <div className="text-right text-[10px] font-bold text-white">+16.5%</div>
-          </div>
-
-          {/* 2-Bed Flat */}
-          <div className="grid grid-cols-4 gap-3 px-2 py-2">
-            <div className="col-span-2 flex items-center gap-2">
-              <span className="w-5 h-5 rounded bg-linear-bg text-linear-text-muted border border-linear-border flex items-center justify-center text-[8px] font-black">2</span>
-              <span className="text-[10px] font-bold text-white">2-Bed Flat</span>
-            </div>
-            <div className="text-right text-[10px] font-black text-blue-400">+2.3%</div>
-            <div className="text-right text-[10px] font-bold text-white">+11.9%</div>
-          </div>
-
-          {/* 3-Bed/Terraced */}
-          <div className="grid grid-cols-4 gap-3 px-2 py-2">
-            <div className="col-span-2 flex items-center gap-2">
-              <span className="w-5 h-5 rounded bg-linear-bg text-linear-text-muted border border-linear-border flex items-center justify-center text-[8px] font-black">3</span>
-              <span className="text-[10px] font-bold text-white">3-Bed/Terraced</span>
-            </div>
-            <div className="text-right text-[10px] font-black text-amber-400">+1.8%</div>
-            <div className="text-right text-[10px] font-bold text-white">+9.2%</div>
-          </div>
-
-          {/* Detached */}
-          <div className="grid grid-cols-4 gap-3 px-2 py-2">
-            <div className="col-span-2 flex items-center gap-2">
-              <span className="w-5 h-5 rounded bg-linear-bg text-linear-text-muted border border-linear-border flex items-center justify-center text-[8px] font-black">4</span>
-              <span className="text-[10px] font-bold text-white">Detached</span>
-            </div>
-            <div className="text-right text-[10px] font-black text-rose-400">+1.2%</div>
-            <div className="text-right text-[10px] font-bold text-white">+6.1%</div>
-          </div>
-
-          {/* Insight */}
-          <div className="mt-3 p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg">
-            <div className="flex items-start gap-2">
-              <TrendingUp size={12} className="text-blue-400 mt-0.5 shrink-0" />
-              <p className="text-[10px] text-linear-text-muted leading-relaxed">
-                <span className="text-white font-bold">Studio/1-Bed leads alpha </span>
-                vs Detached. Best risk-adjusted opportunity in current market.
-                <Link to="/rates" className="text-blue-400 ml-1 hover:text-blue-300">View full analysis →</Link>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* UX-033: Property Type Performance Chart — QA-189 */}
+      <PropertyTypePerformanceChart />
     </div>
   );
 };

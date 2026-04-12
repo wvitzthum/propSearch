@@ -6,7 +6,12 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(),
+    tailwindcss({
+      // Keep SVGs inline to preserve interactivity (hover events on chart segments).
+      // Without this, Tailwind extracts SVG elements with currentColor fills into <img>
+      // tags, breaking Voronoi hover detection and tooltip functionality.
+      dangerouslyUseInlineSVG: true,
+    }),
   ],
   server: {
     host: true,

@@ -17,14 +17,6 @@ interface PremiumPoint {
   premiumPct: number;
 }
 
-interface PremiumPoint {
-  date: string;
-  uk: number;
-  london: number;
-  premium: number;
-  premiumPct: number;
-}
-
 const LondonPrimePremiumChart: React.FC = () => {
   const { data } = useMacroData();
   const raw = data as any;
@@ -38,29 +30,31 @@ const LondonPrimePremiumChart: React.FC = () => {
     tooltipTop,
   } = useTooltip<PremiumPoint>();
 
-  // Historical series from hpi_history
+  // Historical series from hpi_history.data
+  // Schema: { date, london_hpi, uk_hpi, london_vs_uk_pct } — 2015-01 to 2026-01
   const history = useMemo(() => {
-    const rawHpi = raw?.hpi_history?.london_wide ?? [];
+    const rawHpi: any[] = raw?.hpi_history?.data ?? [];
     if (!Array.isArray(rawHpi) || rawHpi.length === 0) return [];
     return rawHpi.map((h: any) => ({
       date: h.date,
-      ukIndex: h.index_uk ?? 100,
-      londonImplied: (h.index_uk ?? 100) * 1.18,
+      ukIndex: h.uk_hpi ?? 100,
+      londonIndex: h.london_hpi ?? h.uk_hpi ?? 100,
+      premiumPct: h.london_vs_uk_pct ?? 0,
     }));
   }, [raw]);
 
   // Show last 36 months for cleaner chart
   const display = history.slice(-36);
 
-  // Compute premium series
+  // Compute premium series — use pre-computed london_vs_uk_pct from data
   const premiumData: PremiumPoint[] = useMemo(() => {
     if (display.length < 2) return [];
     return display.map((h: any) => ({
       date: h.date,
       uk: h.ukIndex,
-      london: h.londonImplied,
-      premium: h.londonImplied - h.ukIndex,
-      premiumPct: ((h.londonImplied - h.ukIndex) / h.ukIndex * 100),
+      london: h.londonIndex,
+      premium: h.londonIndex - h.ukIndex,
+      premiumPct: h.premiumPct,
     }));
   }, [display]);
 
@@ -75,11 +69,10 @@ const LondonPrimePremiumChart: React.FC = () => {
   // UX-030: London Prime Premium — viewBox increased to 600x200 for hero placement
   const W = 600, H = 200;
   const PAD = 12;
-  if (!display.length) return null;
 
   const allValues = premiumData.flatMap(d => [d.uk, d.london]);
-  const minV = Math.min(...allValues) * 0.95;
-  const maxV = Math.max(...allValues) * 1.03;
+  const minV = allValues.length ? Math.min(...allValues) * 0.95 : 140 * 0.95;
+  const maxV = allValues.length ? Math.max(...allValues) * 1.03 : 180 * 1.03;
 
   const londonPremium = latest ? ((latest.london / latest.uk - 1) * 100).toFixed(1) : '18.0';
 
@@ -141,6 +134,7 @@ const LondonPrimePremiumChart: React.FC = () => {
             viewBox={`0 0 ${W} ${H}`}
             preserveAspectRatio="xMidYMid meet"
             className="w-full h-full overflow-visible"
+            data-testid="london-premium-svg"
           >
             {(() => {
               const xScale = scaleLinear({
@@ -166,9 +160,17 @@ const LondonPrimePremiumChart: React.FC = () => {
               const handleMouseMove = (event: React.MouseEvent<SVGRectElement>) => {
                 const coords = localPoint(event);
                 if (!coords) return;
-                const ratio = (coords.x - PAD) / (W - 2 * PAD);
+                // coords.x is viewport-relative. PAD is in viewBox units (12).
+                // SVG has viewBox [0,0,W,H] with width=W_px (actual rendered width).
+                // Scale coords.x from viewport coords to viewBox coords using the SVG's aspect ratio:
+                // W_px : W_viewBox = coords.x : x_vb  =>  x_vb = coords.x * W_viewBox / W_px
+                const svgEl = event.currentTarget.ownerSVGElement as SVGSVGElement;
+                const W_px = svgEl.clientWidth || W;
+                const ratio = (coords.x * W - PAD * W) / (W_px * (W - 2 * PAD));
                 const idx = Math.round(ratio * (premiumData.length - 1));
                 const clamped = Math.max(0, Math.min(premiumData.length - 1, idx));
+                // FE-229 FIX: localPoint returns viewport-relative coords — pass them directly.
+                // applyPositionStyle on TooltipWithBounds handles explicit left/top positioning.
                 showTooltip({
                   tooltipData: premiumData[clamped],
                   tooltipLeft: coords.x,
@@ -296,6 +298,9 @@ const LondonPrimePremiumChart: React.FC = () => {
         <TooltipWithBounds
           left={tooltipLeft}
           top={tooltipTop}
+          applyPositionStyle
+          offsetLeft={0}
+          offsetTop={0}
           className="bg-black/90 backdrop-blur border border-linear-border rounded-lg px-3 py-2 pointer-events-none z-50"
         >
           <div className="text-[10px] font-bold text-white">{tooltipData.date}</div>

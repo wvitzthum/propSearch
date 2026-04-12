@@ -12,7 +12,6 @@ import {
   Gem,
   TrendingDown,
   Clock,
-  Scale,
   FileText,
   Save,
   ArrowRight,
@@ -22,7 +21,10 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Tag
+  Tag,
+  RefreshCw,
+  Edit3,
+  Settings,
 } from 'lucide-react';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import { useFinancialData } from '../hooks/useFinancialData';
@@ -43,11 +45,35 @@ import PropertyPriceEvolution from '../components/PropertyPriceEvolution';
 import { useThesisTags } from '../hooks/useThesisTags';
 import { useMacroData } from '../hooks/useMacroData';
 import { fmtPrice, fmtNum } from '../utils/format';
+import { showToast } from '../utils/toast';
 import AlphaScoreBreakdown from '../components/AlphaScoreBreakdown';
+import AcquisitionStrategy from '../components/AcquisitionStrategy';
+import EnrichmentModal from '../components/EnrichmentModal';
+
+// FE-241: Council Tax Band badge — UK band colours
+const CT_COLORS: Record<string, string> = {
+  A: 'text-retro-green bg-retro-green/10 border-retro-green/20',
+  B: 'text-retro-green bg-retro-green/10 border-retro-green/20',
+  C: 'text-lime-400 bg-lime-400/10 border-lime-400/20',
+  D: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+  E: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
+  F: 'text-rose-400 bg-rose-400/10 border-rose-400/20',
+  G: 'text-red-400 bg-red-400/10 border-red-400/20',
+  H: 'text-red-500 bg-red-500/10 border-red-500/20',
+};
+
+const CouncilTaxBadge: React.FC<{ band: string }> = ({ band }) => {
+  const style = CT_COLORS[band.toUpperCase()] ?? 'text-linear-text-muted bg-linear-bg border-linear-border';
+  return (
+    <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-black border ${style}`}>
+      Band {band.toUpperCase()}
+    </span>
+  );
+};
 
 const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { properties, loading } = usePropertyContext();
+  const { properties, loading, recheckProperty } = usePropertyContext();
   const { calculateMonthlyOutlay } = useFinancialData();
   const { getStatus, setStatus } = usePipeline();
   const { getTags } = useThesisTags();
@@ -60,6 +86,8 @@ const PropertyDetail: React.FC = () => {
     return localStorage.getItem(`notes_${id}`) || '';
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isRechecking, setIsRechecking] = useState(false); // FE-231: recheck button loading state
+  const [showEnrichmentModal, setShowEnrichmentModal] = useState(false); // FE-237: enrichment modal
 
   const property = useMemo(() => {
     return properties.find(p => p.id === id) as PropertyWithCoords | undefined;
@@ -79,6 +107,22 @@ const PropertyDetail: React.FC = () => {
     setIsSaving(true);
     localStorage.setItem(`notes_${id}`, notes);
     setTimeout(() => setIsSaving(false), 600);
+  };
+
+  // FE-231+FE-232: Recheck property via context — async with toasts
+  // recheckProperty handles optimistic update internally and rolls back on error
+  const handleRecheck = async () => {
+    if (!id) return;
+    setIsRechecking(true);
+    try {
+      await recheckProperty(id);
+      const today = new Date().toISOString().split('T')[0];
+      showToast(`Property re-checked — verified ${today}`, 'success');
+    } catch {
+      showToast('Recheck failed — please try again', 'error');
+    } finally {
+      setIsRechecking(false);
+    }
   };
 
   if (loading) return (
@@ -187,6 +231,15 @@ const PropertyDetail: React.FC = () => {
                 status={status}
                 onStatusChange={(newStatus) => setStatus(property.id, newStatus)}
               />
+              {/* FE-231: Show last_checked timestamp if available */}
+              {property.last_checked && (
+                <div className="mt-4 pt-4 border-t border-white/5 flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-retro-green" />
+                  <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">
+                    Last re-checked: {property.last_checked}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Investment Thesis Tags */}
@@ -274,7 +327,10 @@ const PropertyDetail: React.FC = () => {
                 </div>
               ) : activeTab === 'price_history' ? (
                 <div className="animate-in fade-in duration-500">
-                  <PropertyPriceEvolution property={property} />
+                  <PropertyPriceEvolution
+                    property={property}
+                    onRequestEnrichment={() => setShowEnrichmentModal(true)}
+                  />
                 </div>
               ) : (
                 <div className="animate-in fade-in duration-500 h-[600px]">
@@ -298,12 +354,23 @@ const PropertyDetail: React.FC = () => {
               )}
             </div>
 
-            <div className="grid grid-cols-4 gap-4 mb-12 py-8 border-y border-linear-border">
+            {/* FE-241: Council tax band added as 5th column */}
+            <div className="grid grid-cols-5 gap-4 mb-12 py-8 border-y border-linear-border">
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
                   <Maximize2 size={12} className="text-linear-accent" /> Space
                 </span>
-                <span className="text-lg font-bold text-white tracking-tight">{property.sqft} SQFT</span>
+                <span className="text-lg font-bold text-white tracking-tight">
+                  {property.bedrooms != null ? `${property.bedrooms}` : '—'}
+                  <span className="text-linear-text-muted font-bold"> Bed</span>
+                  {property.bathrooms != null && (
+                    <span className="text-white font-bold"> · {property.bathrooms}</span>
+                  )}
+                  {property.bathrooms != null && (
+                    <span className="text-linear-text-muted font-bold"> Bath</span>
+                  )}
+                  <span className="text-linear-text-muted font-bold"> · {property.sqft} sqft</span>
+                </span>
               </div>
               <div className="flex flex-col gap-1 border-x border-linear-border px-4">
                 <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
@@ -317,11 +384,22 @@ const PropertyDetail: React.FC = () => {
                 </span>
                 <span className="text-lg font-bold text-white tracking-tight leading-tight">{property.tenure}</span>
               </div>
-              <div className="flex flex-col gap-1 pl-4">
+              <div className="flex flex-col gap-1 border-r border-linear-border px-4">
                 <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
                   <Zap size={12} className="text-linear-accent" /> EPC
                 </span>
                 <span className="text-lg font-bold text-white tracking-tight">{property.epc} Rating</span>
+              </div>
+              {/* FE-241: Council Tax Band badge */}
+              <div className="flex flex-col gap-1 pl-4">
+                <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
+                  <span className="text-linear-accent font-black">CT</span>
+                </span>
+                {property.council_tax_band ? (
+                  <CouncilTaxBadge band={property.council_tax_band} />
+                ) : (
+                  <span className="text-lg font-bold text-white/30 tracking-tight">—</span>
+                )}
               </div>
             </div>
 
@@ -384,9 +462,17 @@ const PropertyDetail: React.FC = () => {
                         <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-wider group-hover/item:text-white transition-colors">Mortgage (Principal & Interest)</span>
                         <span className="text-sm font-bold text-white tracking-tight">£{outlay.mortgage.toLocaleString()}</span>
                       </div>
+                      {/* FE-241: Council tax band shown in label */}
                       <div className="flex justify-between items-center group/item">
-                        <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-wider group-hover/item:text-white transition-colors">Estimated Council Tax</span>
-                        <span className="text-sm font-bold text-white tracking-tight">£{outlay.councilTax.toLocaleString()}</span>
+                        <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-wider group-hover/item:text-white transition-colors">
+                          Estimated Council Tax
+                          {property.council_tax_band && (
+                            <span className="ml-1.5 text-[9px] font-black opacity-60">
+                              (Band {property.council_tax_band})
+                            </span>
+                          )}
+                        </span>
+                        <span className="text-sm font-bold text-white tracking-tight">£{outlay.councilTax.toLocaleString()}/mo</span>
                       </div>
                       <div className="flex justify-between items-center group/item">
                         <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-wider group-hover/item:text-white transition-colors">Service Charge & Ground Rent</span>
@@ -447,77 +533,11 @@ const PropertyDetail: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <h2 className="text-xs font-bold text-linear-text-muted uppercase tracking-widest mb-4">Acquisition Strategy</h2>
-                <div className="grid sm:grid-cols-2 gap-6">
-                  <div className="p-6 bg-linear-card border border-linear-border rounded-2xl relative overflow-hidden group">
-                    <div className="relative z-10">
-                      <div className="flex items-center gap-3 text-white font-bold mb-3">
-                        <Scale size={20} className="text-blue-400" />
-                        {property.neg_strategy || 'Default Protocol'}
-                      </div>
-                      <p className="text-linear-text-muted text-sm leading-relaxed max-w-lg">
-                        Based on a market duration of {property.dom} days, we recommend an {(property.neg_strategy || '').toLowerCase().includes('aggressive') ? 'aggressive bidding posture' : 'entry at market value'}. 
-                        The Realistic Price of £{fmtPrice(property.realistic_price)} represents a target entry point for immediate equity capture.
-                      </p>
-                    </div>
-                    <TrendingDown className="absolute -right-8 -bottom-8 text-white/5 group-hover:text-blue-500/10 transition-colors" size={200} />
-                  </div>
-
-                  {/* Negotiation Buffer Visualization */}
-                  <div className="p-6 bg-linear-card border border-linear-border rounded-2xl flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
-                          <Zap size={14} className="text-retro-green" />
-                          Negotiation Buffer
-                        </h3>
-                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border ${
-                          property.dom > 90 ? 'text-retro-green border-retro-green/20 bg-retro-green/10' :
-                          property.dom > 30 ? 'text-blue-400 border-blue-400/20 bg-blue-400/10' :
-                          'text-linear-text-muted border-linear-border bg-linear-bg'
-                        }`}>
-                          {property.dom > 90 ? 'Aggressive' : property.dom > 30 ? 'Moderate' : 'Conservative'}
-                        </span>
-                      </div>
-
-                      <div className="space-y-6">
-                        <div className="relative pt-2">
-                          <div className="h-1.5 w-full bg-linear-bg rounded-full overflow-hidden flex">
-                            <div className="h-full bg-linear-accent opacity-20" style={{ width: '70%' }} />
-                            <div className="h-full bg-retro-green" style={{ width: '15%' }} />
-                            <div className="h-full bg-linear-bg" style={{ width: '15%' }} />
-                          </div>
-                          <div className="absolute top-0 left-[70%] h-5 w-px bg-white/20" />
-                          <div className="absolute top-0 left-[85%] h-5 w-px bg-white/20" />
-                          
-                          <div className="flex justify-between mt-3 text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">
-                            <span>Target Bid</span>
-                            <span>Realistic</span>
-                            <span>List Price</span>
-                          </div>
-                          <div className="flex justify-between mt-1 font-mono text-[10px]">
-                            <span className="text-retro-green font-black">£{fmtNum(Math.round((property.realistic_price ?? 0) * 0.95))}</span>
-                            <span className="text-white">£{fmtPrice(property.realistic_price)}</span>
-                            <span className="text-linear-text-muted opacity-60">£{fmtPrice(property.list_price)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 pt-4 border-t border-linear-border flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">Max Capture</span>
-                        <span className="text-xs font-bold text-retro-green tracking-tight">£{fmtNum(Math.round((property.list_price ?? 0) - ((property.realistic_price ?? 0) * 0.95)))}</span>
-                      </div>
-                      <div className="text-right flex flex-col">
-                        <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">Post-90d Delta</span>
-                        <span className="text-xs font-bold text-white tracking-tight">-5.0%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {/* FE-240 / ADR-019: Redesigned Acquisition Strategy section */}
+              <AcquisitionStrategy
+                property={property as PropertyWithCoords}
+                onRequestEnrichment={() => setShowEnrichmentModal(true)}
+              />
 
               <div>
                 <AlphaScoreBreakdown property={property} />
@@ -680,7 +700,49 @@ const PropertyDetail: React.FC = () => {
                 <button className="w-full py-3.5 bg-linear-card text-white border border-linear-border rounded-xl font-bold hover:bg-linear-accent transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest">
                   Generate PDF Report
                 </button>
+
+                {/* FE-238: DATA ACTIONS — section header */}
+                <div className="pt-4 pb-1 flex items-center gap-2">
+                  <Settings size={10} className="text-linear-text-muted" />
+                  <span className="text-[9px] font-black text-linear-text-muted uppercase tracking-widest">
+                    Data Actions
+                  </span>
+                </div>
+
+                {/* FE-234 entry point: Edit Data */}
+                <Link to={`/property/${property.id}/edit`}>
+                  <button className="w-full py-3 bg-linear-card text-white border border-linear-border rounded-xl font-bold hover:bg-linear-accent/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest">
+                    <Edit3 size={12} />
+                    Edit Data
+                  </button>
+                </Link>
+
+                {/* FE-231: Recheck button — updates last_checked via POST /api/properties/:id/check */}
+                <button
+                  onClick={handleRecheck}
+                  disabled={isRechecking}
+                  className="w-full py-3 bg-retro-green/10 text-retro-green border border-retro-green/20 rounded-xl font-bold hover:bg-retro-green/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest disabled:opacity-50"
+                >
+                  <RefreshCw size={12} className={isRechecking ? 'animate-spin' : ''} />
+                  {isRechecking ? 'Verifying Live...' : 'Recheck Property'}
+                </button>
+
+                {/* FE-237: Request Enrichment button */}
+                <button
+                  onClick={() => setShowEnrichmentModal(true)}
+                  className="w-full py-3 bg-amber-400/10 text-amber-400 border border-amber-400/20 rounded-xl font-bold hover:bg-amber-400/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+                >
+                  <RefreshCw size={12} />
+                  Request Enrichment
+                </button>
               </div>
+
+              <EnrichmentModal
+                propertyId={property.id}
+                propertyAddress={property.address}
+                isOpen={showEnrichmentModal}
+                onClose={() => setShowEnrichmentModal(false)}
+              />
 
               {/* Analyst Annotations */}
               <div className="mt-8 pt-8 border-t border-linear-border space-y-4">

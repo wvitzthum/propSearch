@@ -316,6 +316,9 @@ function BoEChart({ width }: { width: number }) {
         <TooltipWithBounds
           left={tooltipLeft}
           top={tooltipTop}
+          applyPositionStyle
+          offsetLeft={0}
+          offsetTop={0}
           style={{
             background: 'rgba(0,0,0,0.85)',
             backdropFilter: 'blur(8px)',

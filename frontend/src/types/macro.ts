@@ -118,10 +118,19 @@ export interface MacroTrend {
   swap_rates?: SwapRates;
   hpi_forecasts?: HPIForecast[];
   area_trends?: AreaTrend[];
+  // FE-242: Pass-through for HPIHistoryChart + LondonPrimePremiumChart
+  // Shape: { data: Array<{ date: string; london_hpi: number; uk_hpi: number; london_vs_uk_pct: number }> }
+  hpi_history?: {
+    data?: Array<{ date: string; london_hpi: number; uk_hpi: number; london_vs_uk_pct: number }>;
+    [key: string]: unknown;
+  };
   // UX-004: Single canonical London benchmark — use data.london_benchmark instead of reading london_hpi.annual_change/yoy_pct
   london_benchmark?: number;
   // UX-009: Data freshness timestamp
   last_refreshed?: string;
+  // VISX-021 / VISX-022: Seasonal market cycle indices (0–10, Jan–Dec)
+  seasonal_supply_index?: number[];
+  seasonal_demand_index?: number[];
   // FE-155: Data Provenance
   _source_citations?: Record<string, {
     name: string;

@@ -35,6 +35,9 @@ interface PropertyTableProps {
   onStatusChange?: (id: string, status: PropertyStatus) => void;
   getStatus?: (id: string) => PropertyStatus;
   showThesisTags?: boolean;
+  // UX-034: Rank — get/set user priority rank
+  getRank?: (id: string) => number | undefined;
+  onRankChange?: (id: string, rank: number | null) => void;
 }
 
 const SortIcon = ({ 
@@ -95,7 +98,9 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
   onPreview,
   onStatusChange,
   getStatus,
-  showThesisTags = true
+  showThesisTags = true,
+  getRank,
+  onRankChange,
 }) => {
   const { toggleComparison, isInComparison } = useComparison();
   const { getTags } = useThesisTags();
@@ -223,6 +228,16 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                   )}
                 </button>
               </th>
+              {/* UX-034: Rank column header — click to sort by user priority */}
+              <th
+                className="px-2 py-3 text-center text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] cursor-pointer group hover:bg-linear-card transition-colors relative border-r border-linear-border/30"
+                onClick={() => onSortChange?.('user_priority')}
+              >
+                <div className="flex flex-col items-center gap-0.5">
+                  <span>Rk</span>
+                  <SortIcon columnKey="user_priority" currentSort={localSort.key} direction={localSort.direction} />
+                </div>
+              </th>
               <TableHeader
                 label="Asset / Area"
                 columnKey="address"
@@ -277,19 +292,50 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 direction={localSort.direction}
                 rowSpan={2}
               />
-              <TableHeader 
-                label="SQFT" 
-                columnKey="sqft" 
-                className="px-2" 
+              <TableHeader
+                label="Bed"
+                columnKey="bedrooms"
+                tooltip="Number of bedrooms (decimal for en-suite/double rooms)."
+                className="px-2"
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
                 rowSpan={2}
               />
-              <TableHeader 
-                label="EPC" 
-                columnKey="epc" 
-                className="px-2" 
+              <TableHeader
+                label="Bath"
+                columnKey="bathrooms"
+                tooltip="Number of bathrooms (decimal for en-suite facilities)."
+                className="px-2"
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
+                rowSpan={2}
+              />
+              <TableHeader
+                label="SQFT"
+                columnKey="sqft"
+                className="px-2"
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
+                rowSpan={2}
+              />
+              <TableHeader
+                label="EPC"
+                columnKey="epc"
+                className="px-2"
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
+                rowSpan={2}
+              />
+              {/* FE-241: Council Tax band column */}
+              <TableHeader
+                label="CT"
+                columnKey="council_tax_band"
+                tooltip="Council Tax band"
+                className="px-2"
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
@@ -351,6 +397,9 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 direction={localSort.direction}
               />
               {/* Empty cells for remaining columns */}
+              <th className="border-r border-linear-border/30"></th>
+              <th className="border-r border-linear-border/30"></th>
+              <th className="border-r border-linear-border/30"></th>
               <th className="border-r border-linear-border/30"></th>
               <th className="border-r border-linear-border/30"></th>
               <th className="border-r border-linear-border/30"></th>
@@ -432,6 +481,38 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                       </div>
                     </div>
                   </td>
+                  {/* UX-034: Rank cell — drag handle + rank badge, click to set/remove rank */}
+                  <td
+                    className="px-2 py-4 text-center border-r border-linear-border/30"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {getRank ? (
+                      <button
+                        onClick={() => {
+                          const currentRank = getRank(property.id);
+                          if (currentRank !== undefined) {
+                            onRankChange?.(property.id, null); // remove rank
+                          } else {
+                            // Count how many properties in this table already have ranks
+                            // to assign the next sequential rank
+                            let count = 0;
+                            for (const p of properties) {
+                              if (getRank(p.id) !== undefined) count++;
+                            }
+                            onRankChange?.(property.id, count + 1);
+                          }
+                        }}
+                        className={`w-8 h-8 rounded flex items-center justify-center text-[10px] font-black transition-all ${
+                          getRank(property.id) !== undefined
+                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                            : 'text-linear-text-muted/40 hover:text-blue-400 hover:bg-blue-500/10 border border-transparent hover:border-blue-500/20'
+                        }`}
+                        title={getRank(property.id) !== undefined ? `Rank ${getRank(property.id)} — click to remove` : 'Assign rank'}
+                      >
+                        {getRank(property.id) !== undefined ? getRank(property.id) : '—'}
+                      </button>
+                    ) : null}
+                  </td>
                   <td className="px-2 py-4">
                     <div className="flex flex-col items-center gap-1">
                       <AlphaBadge score={property.alpha_score} />
@@ -470,6 +551,12 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                     </div>
                   </td>
                   <td className="px-2 py-4 text-[11px] text-linear-text-muted font-bold">
+                    {property.bedrooms != null ? property.bedrooms : '—'}
+                  </td>
+                  <td className="px-2 py-4 text-[11px] text-linear-text-muted font-bold">
+                    {property.bathrooms != null ? property.bathrooms : '—'}
+                  </td>
+                  <td className="px-2 py-4 text-[11px] text-linear-text-muted font-bold">
                     {property.sqft || '—'}
                   </td>
                   <td className="px-2 py-4">
@@ -480,6 +567,10 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                     }`}>
                       {property.epc || 'N/A'}
                     </span>
+                  </td>
+                  {/* FE-241: Council Tax band cell */}
+                  <td className="px-2 py-4 text-[11px] text-linear-text-muted font-bold">
+                    {property.council_tax_band || '—'}
                   </td>
                   <td className="px-2 py-4 text-[11px] text-zinc-500 font-bold italic">
                     {property.dom || 0}d

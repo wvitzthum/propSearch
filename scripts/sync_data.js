@@ -238,6 +238,7 @@ async function sync() {
       price_reduction_amount, price_reduction_percent, days_since_reduction,
       epc_improvement_potential, est_capex_requirement,
       waitrose_distance, whole_foods_distance, wellness_hub_distance,
+      bedrooms, bathrooms,
       archived, archive_reason, market_status, last_checked, pipeline_status
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
@@ -375,6 +376,7 @@ async function sync() {
           newItem.price_reduction_amount || null, newItem.price_reduction_percent || null, newItem.days_since_reduction || null,
           newItem.epc_improvement_potential || null, newItem.est_capex_requirement || null,
           newItem.waitrose_distance || null, newItem.whole_foods_distance || null, newItem.wellness_hub_distance || null,
+          newItem.bedrooms || null, newItem.bathrooms || null,
           // DE-162 fix: preserve archived/archive_reason on new pipeline inserts (default active)
           newItem.archived !== undefined ? newItem.archived : 0,
           newItem.archive_reason || null,

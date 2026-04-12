@@ -7,10 +7,20 @@
 
 ---
 
-## 2026-04-04
+## 2026-04-05
 
-**Trigger:** Ports 3001 and 5173 are the user's own dev servers — agents must not start them
-**Was:** Agent started `npm run dev` or `node server/index.js` during tasks
-**Now:** Uses `node -e` with `better-sqlite3` or curls against a pre-started server. Never starts servers.
-**Scope:** All agents
+**Trigger:** Deposit shown in AffordabilityNode sidebar (£222K) didn't match user's configured fixed deposit (£75K)
+**Was:** `getBudgetProfile` in useAffordability.ts always derived deposit from monthly budget, ignoring `depositMode` and `depositPct`
+**Now:** `getBudgetProfile` checks `depositMode` first: fixed uses `depositPct`, auto uses budget derivation
+**Scope:** `useAffordability.ts` — getBudgetProfile
 **Status:** Active
+
+---
+
+## 2026-04-07
+
+**Trigger:** User-initiated enrichment requests — users can now request property data refresh via frontend
+**Was:** No formal queue; no server-side infrastructure for enrichment requests
+**Now:** New `enrichment_requests` SQLite table + API endpoints per ADR-018. Tasks: DE-218 (server), FE-229 (UI), DAT-189 (analyst workflow)
+**Scope:** Data Engineer — implement `enrichment_requests` table and REST endpoints per DECISIONS.md ADR-018
+**Status:** Resolved (DE-218 Done) — table created, all endpoints live in server/index.js: GET/POST/PATCH/DELETE /api/enrichment-requests + GET /api/properties/:id/enrichment-request

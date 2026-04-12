@@ -137,6 +137,7 @@ const RentalYieldVsGiltChart: React.FC = () => {
 
             const handleMouseMove = (event: React.MouseEvent<SVGRectElement>, row: YieldRow) => {
               const coords = localPoint(event);
+              console.log('[CHART] handleMouseMove coords:', coords, 'row:', row?.area);
               if (!coords) return;
               showTooltip({ tooltipData: row, tooltipLeft: coords.x, tooltipTop: coords.y });
             };
@@ -157,7 +158,7 @@ const RentalYieldVsGiltChart: React.FC = () => {
                 </div>
 
                 {/* SVG Chart */}
-                <svg width={chartWidth} height={innerHeight} className="overflow-visible">
+                <svg width={chartWidth} height={innerHeight} className="overflow-visible" data-testid="yield-vs-gilt-svg">
                   {/* Background track */}
                   {sorted.map(row => (
                     <rect
@@ -264,6 +265,9 @@ const RentalYieldVsGiltChart: React.FC = () => {
         <TooltipWithBounds
           left={tooltipLeft}
           top={tooltipTop}
+          applyPositionStyle
+          offsetLeft={0}
+          offsetTop={0}
           className="bg-black/90 backdrop-blur border border-linear-border rounded-lg px-3 py-2 pointer-events-none z-50"
         >
           <div className="text-[10px] font-black text-white">{tooltipData.area.split(' (')[0]}</div>

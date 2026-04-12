@@ -18,6 +18,9 @@ High-fidelity property research, metric normalization, and "Alpha" acquisition s
 ### Acquisition Criteria
 - **Locations:** Islington (N1/N7), Bayswater (W2), Belsize Park (NW3), West Hampstead (NW6), Chelsea (SW3/SW10).
 - **List Price:** £500,000 to £775,000. | **Size:** 1.5 to 2 Bedrooms, min 600 sq ft.
+- **Bedrooms & Bathrooms:** Every active property must have a real bedroom and bathroom count sourced from the portal listing. Decimal values allowed: 1.5 (double/ensuite room), 1.5 bathrooms (bath + ens). Null is acceptable if the listing does not disclose — do not fabricate.
+- **Price Prediction Notes:** For every shortlisted property, the analyst must write a short (2-3 sentence) prediction rationale in `analyst_notes` — explain the thesis: why this property, what market condition are you betting on, what is the expected hold period. This feeds the Acquisition Strategy section on /property/:id. Notes must be specific — not generic ("Good location" is not sufficient; "Zone 2 flat with Crossrail access, expected 8% CAGR driven by Canary Wharf employment growth, 5-year hold" is).
+- **Council Tax Band:** Every active property must have a real council tax band. Used in the Total Monthly Outlay calculation on /property/:id. Sources: UK Gov council tax lookup by postcode (public), or Rightmove/Zoopla listing spec. Values: A–H. If unverifiable, leave NULL — the affordability model falls back to Band E for prime London. Do not fabricate.
 - **Hard No's:** No student accommodation, retirement living, or auctions.
 - **Tenure:** Share of Freehold (Priority 1) or Leasehold strictly >90 years (Priority 2).
 
@@ -58,6 +61,37 @@ When `source = 'MANUAL_INJECTION'` or `source = 'USER_SUBMISSION'`:
 - Enrich opportunistically; leave active regardless of enrichment outcome
 - Still merge duplicate links/gallery, but do not flag or archive
 - Document: "User-submitted lead — guardrails suspended. [notes]"
+
+---
+
+## Enrichment Request Workflow (Session Startup — Mandatory)
+
+At the **start of every analyst session**, before any other work:
+
+```bash
+# 1. Check queue
+curl http://localhost:3001/api/enrichment-requests?status=pending
+
+# 2. For each pending request (oldest first, max 3 in parallel):
+#    a. Claim it
+curl -X PATCH http://localhost:3001/api/enrichment-requests/{id} \
+  -H "Content-Type: application/json" \
+  -d '{"status": "in_progress"}'
+
+#    b. Source missing fields from agent websites, UK EPC Register, Rightmove/Zoopla
+#    c. UPDATE properties SET ... WHERE id = ?
+#    d. Mark completed
+curl -X PATCH http://localhost:3001/api/enrichment-requests/{id} \
+  -H "Content-Type: application/json" \
+  -d '{"status": "completed", "analyst_notes": "Fetched sqft from EPC register. Images from agent listing."}'
+
+# 3. If enrichment fails after 3 attempts, mark failed with descriptive analyst_notes
+```
+
+**Conflict rules:**
+- Do not create duplicate pending requests for the same property
+- If a property is archived, PATCH request as `failed` with `analyst_notes: "Property archived"`
+- See `PROTOCOLS/06_ENRICHMENT_QUEUE.md` for full field-by-field sourcing methods
 
 ---
 

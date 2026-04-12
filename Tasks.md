@@ -29,8 +29,14 @@
 </tr>
 </thead>
 <tbody>
-<tr><td><strong>QA-194</strong></td><td>Low</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UI/UX QA directory cleanup: review and archive obsolete audit reports and research documents'>UI/UX QA directory cleanup: review and archive obsolete audit reports and research documents</td><td>Todo</td><td>UI/UX QA</td><td>None</td><td></td></tr>
-<tr><td><strong>PO-001</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Quarterly LEARN.md review and formalisation into PROTOCOLS/ or README.md'>Quarterly LEARN.md review and formalisation into PROTOCOLS/ or README.md</td><td>Todo</td><td>Product Owner</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-222</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Sync shortlist/other pipeline actions to backend — eliminate localStorage-only persistence'>Sync shortlist/other pipeline actions to backend — eliminate localStorage-only persistence</td><td>done</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>UX-034</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UX: Property ranking — enable users to assign custom priority order within shortlisted properties'>UX: Property ranking — enable users to assign custom priority order within shortlisted properties</td><td>done</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>BUG-001</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='BUG: Affordability calculator does not update budget-derived metrics in real-time when settings change'>BUG: Affordability calculator does not update budget-derived metrics in real-time when settings change</td><td>done</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>QA-012</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Verify Data Actions section — Recheck, Request Enrichment, and Edit Data buttons present on PropertyDetail page'>QA: Verify Data Actions section — Recheck, Request Enrichment, and Edit Data buttons present on PropertyDetail page</td><td>In Progress</td><td>UI/UX QA</td><td>FE-229, FE-231, FE-234</td><td></td></tr>
+<tr><td><strong>DAT-190</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DAT: Audit and populate price_history for all active properties — eliminate chart gaps on /property/:id'>DAT: Audit and populate price_history for all active properties — eliminate chart gaps on /property/:id</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>QA-013</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Review and audit Acquisition Strategy section — verify completeness and data accuracy'>QA: Review and audit Acquisition Strategy section — verify completeness and data accuracy</td><td>In Progress</td><td>UI/UX QA</td><td>FE-237</td><td></td></tr>
+<tr><td><strong>DAT-192</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DAT: Enrich all properties with real council tax band from UK Gov portal or agent listings'>DAT: Enrich all properties with real council tax band from UK Gov portal or agent listings</td><td>In Progress</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-242</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Fix HPI chart data schema mismatch — HPIHistoryChart and LondonPrimePremiumChart always fell back to synthetic data despite real data existing'>FE: Fix HPI chart data schema mismatch — HPIHistoryChart and LondonPrimePremiumChart always fell back to synthetic data despite real data existing</td><td>done</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
 </tbody>
 </table>
 
@@ -51,13 +57,10 @@
 </thead>
 <tbody>
 <tr><td><strong>DAT-187</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Data Analyst: Check lead inbox on every launch — enrich all pending leads before any other work'>Data Analyst: Check lead inbox on every launch — enrich all pending leads before any other work</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
-<tr><td><strong>DE-216</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Normalize mortgage_history in macro_trend to flat array'>Normalize mortgage_history in macro_trend to flat array</td><td>Todo</td><td>Data Engineer</td><td>None</td><td></td></tr>
-<tr><td><strong>DE-217</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Add missing area_heat_index and london_benchmark to macro_trend'>Add missing area_heat_index and london_benchmark to macro_trend</td><td>Todo</td><td>Data Engineer</td><td>None</td><td></td></tr>
-<tr><td><strong>VISX-022</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DE: Surface seasonal supply/demand indices in macro_trend.json'>DE: Surface seasonal supply/demand indices in macro_trend.json</td><td>Todo</td><td>Data Engineer</td><td>None</td><td></td></tr>
 </tbody>
 </table>
 
-## 🔗 Blocked by Outstanding Data (Clear Dependencies)
+## 🎨 UX Improvements
 
 <table>
 <thead>
@@ -73,7 +76,18 @@
 </tr>
 </thead>
 <tbody>
-<tr><td><strong>DAT-177</strong></td><td>High</td><td>High</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source London property price indexed by bedroom type — 1-bed, 2-bed, 3-bed, detached premiums and trends'>Source London property price indexed by bedroom type — 1-bed, 2-bed, 3-bed, detached premiums and trends</td><td><span style='color:#f59e0b;font-weight:bold'>⚠️ Blocked</span></td><td>Data Analyst</td><td>DAT-176</td><td></td></tr>
+<tr><td><strong>UX-041</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: PropertyTable redesign — reduce to 8 default visible columns, decision data first'>FE: PropertyTable redesign — reduce to 8 default visible columns, decision data first</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>UX-042</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Remove &#x27;Added Date&#x27; column from PropertyTable default view — metadata, not comparison metric'>FE: Remove &#x27;Added Date&#x27; column from PropertyTable default view — metadata, not comparison metric</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
+<tr><td><strong>UX-043</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Split &#x27;Com.&#x27; (Commute) column into &#x27;Pat.&#x27; and &#x27;Can.&#x27; — two separate hub-specific columns'>FE: Split &#x27;Com.&#x27; (Commute) column into &#x27;Pat.&#x27; and &#x27;Can.&#x27; — two separate hub-specific columns</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
+<tr><td><strong>UX-044</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Move LTV Match score from PropertyTable column to PreviewDrawer — not a comparison metric'>FE: Move LTV Match score from PropertyTable column to PreviewDrawer — not a comparison metric</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
+<tr><td><strong>UX-045</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Remove thesis tags from PropertyTable — move tag management to PreviewDrawer'>FE: Remove thesis tags from PropertyTable — move tag management to PreviewDrawer</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
+<tr><td><strong>UX-046</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Batch selection redesign — remove checkbox column, make batch ops a toggled secondary mode'>FE: Batch selection redesign — remove checkbox column, make batch ops a toggled secondary mode</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
+<tr><td><strong>UX-047</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: PropertyTable Value Gap — fix sign convention, show as &#x27;X% below list&#x27;'>FE: PropertyTable Value Gap — fix sign convention, show as &#x27;X% below list&#x27;</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
+<tr><td><strong>UX-048</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: MarketStatusBadge — reduce to dot indicator in PropertyTable, remove full badge column'>FE: MarketStatusBadge — reduce to dot indicator in PropertyTable, remove full badge column</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
+<tr><td><strong>UX-049</strong></td><td>Low</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Shallow Data indicator — move from AlphaBadge cell to AlphaBadge tooltip'>FE: Shallow Data indicator — move from AlphaBadge cell to AlphaBadge tooltip</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
+<tr><td><strong>UX-050</strong></td><td>Low</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Rank column — add #1 crown/star visual treatment to top-ranked property in PropertyTable'>FE: Rank column — add #1 crown/star visual treatment to top-ranked property in PropertyTable</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
+<tr><td><strong>UX-051</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Fix sort state desync — PropertyTable localSort and PropertiesPage URL params must stay in sync'>FE: Fix sort state desync — PropertyTable localSort and PropertiesPage URL params must stay in sync</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
+<tr><td><strong>UX-052</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: PropertyTable typography audit — enforce consistent type scale across table cells'>FE: PropertyTable typography audit — enforce consistent type scale across table cells</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
 </tbody>
 </table>
 
@@ -209,6 +223,7 @@
 <tr><td><strong>UX-025</strong></td><td>UX: Inbox — replace &#x27;Live Portal&#x27; tab with &#x27;Portal Intelligence&#x27; panel</td><td>Done</td><td>2026-04-03</td></tr>
 <tr><td><strong>FE-187</strong></td><td>UX: Redesign Area Heat Map visualization — replace SVG map with compact ranked bar chart</td><td>Done</td><td>2026-04-03</td></tr>
 <tr><td><strong>DAT-176</strong></td><td>CRITICAL: Source 10-year London HPI historical time series — all areas, monthly data for trajectory charts</td><td>Done</td><td>2026-04-03</td></tr>
+<tr><td><strong>DAT-177</strong></td><td>Source London property price indexed by bedroom type — 1-bed, 2-bed, 3-bed, detached premiums and trends</td><td>Done</td><td>2026-04-03</td></tr>
 <tr><td><strong>DAT-178</strong></td><td>Source 10-year mortgage rate history by LTV band — for long-range affordability context</td><td>Done</td><td>2026-04-03</td></tr>
 <tr><td><strong>DAT-179</strong></td><td>Source quarterly London transaction volume and new listing volume data — market cycle visualization</td><td>Done</td><td>2026-04-03</td></tr>
 <tr><td><strong>DAT-180</strong></td><td>Source rental yield history by London area — critical for investment thesis validation</td><td>Done</td><td>2026-04-03</td></tr>
@@ -257,6 +272,7 @@
 <tr><td><strong>DE-214</strong></td><td>Consolidate market data JSON files into SQLite — remove redundant data files</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>DE-215</strong></td><td>Data Engineer directory cleanup: review and remove obsolete scripts or documentation</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>DA-191</strong></td><td>Data Analyst directory cleanup: review and remove obsolete research files or duplicate enrichment scripts</td><td>Done</td><td>2026-04-04</td></tr>
+<tr><td><strong>QA-194</strong></td><td>UI/UX QA directory cleanup: review and archive obsolete audit reports and research documents</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>FE-215</strong></td><td>UI: MarketConditionsBar overflow on tablet/mobile — add compact mode at &lt;1024px.</td><td>Done</td><td>2026-04-05</td></tr>
 <tr><td><strong>FE-216</strong></td><td>UI: Add Purchasing Power Index chart to AffordabilitySettings page (Requirement R12).</td><td>Done</td><td>2026-04-05</td></tr>
 <tr><td><strong>FE-217</strong></td><td>UI: Add LTV Advantage node to PropertyDetail page (Requirement R12).</td><td>Done</td><td>2026-04-05</td></tr>
@@ -282,13 +298,52 @@
 <tr><td><strong>VISX-013</strong></td><td>UX: Create Radar/Spider chart component using @visx/shape LinePath for /comparison page.</td><td>Done</td><td>2026-04-05</td></tr>
 <tr><td><strong>VISX-014</strong></td><td>UX: Create shared ChartGrid + gradient library using @visx/gradient and @visx/grid.</td><td>Done</td><td>2026-04-05</td></tr>
 <tr><td><strong>VISX-015</strong></td><td>UX: Upgrade all chart fills to use @visx/gradient — richer, more distinctive chart aesthetics.</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>PO-001</strong></td><td>Quarterly LEARN.md review and formalisation into PROTOCOLS/ or README.md</td><td>Done</td><td>2026-04-04</td></tr>
 <tr><td><strong>VISX-016</strong></td><td>Remove LTV Band Eligibility chart from Affordability Settings page</td><td>Done</td><td></td></tr>
 <tr><td><strong>VISX-017</strong></td><td>Fix Purchasing Power Index tooltip positioning</td><td>Done</td><td></td></tr>
 <tr><td><strong>VISX-018</strong></td><td>Fix London HPI Historical Trajectory tooltip positioning</td><td>Done</td><td></td></tr>
 <tr><td><strong>VISX-019</strong></td><td>Fix London HPI Historical Trajectory axis label font sizes</td><td>Done</td><td></td></tr>
 <tr><td><strong>VISX-020</strong></td><td>Improve Area × Metric Heatmap UX clarity and fix tooltip positioning</td><td>Done</td><td></td></tr>
+<tr><td><strong>DE-216</strong></td><td>Normalize mortgage_history in macro_trend to flat array</td><td>Done</td><td></td></tr>
+<tr><td><strong>DE-217</strong></td><td>Add missing area_heat_index and london_benchmark to macro_trend</td><td>Done</td><td></td></tr>
 <tr><td><strong>FE-220</strong></td><td>UI: Fix Properties page mobile usability</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>VISX-022</strong></td><td>DE: Surface seasonal supply/demand indices in macro_trend.json</td><td>Done</td><td></td></tr>
 <tr><td><strong>FE-221</strong></td><td>Fix deposit calculation in AffordabilityNode sidebar — getBudgetProfile ignored depositMode/depositPct</td><td>Done</td><td>2026-04-05</td></tr>
+<tr><td><strong>FE-223</strong></td><td>HPIHistoryChart: x-axis gap — historical line stops short of right chart edge</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-224</strong></td><td>HPIHistoryChart: tooltip appears offset from mouse cursor (misaligned horizontally and vertically)</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-225</strong></td><td>SeasonalMarketCycle: tooltip appears at wrong position (offset right/down from cursor)</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-226</strong></td><td>SeasonalMarketCycle: chart is too small — use ParentSize for responsive pixel-accurate sizing</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>UX-050</strong></td><td>SeasonalMarketCycle: phase description sidebar — show all 5 phases, improve hierarchy and readability</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-227</strong></td><td>Affordability: monthly payment display does not match configured budget — getBudgetProfile auto-mode logic is incorrect</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-228</strong></td><td>AffordabilitySettings LTV Match Analysis: mortgage amount calculations apply LTV fraction twice</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-229</strong></td><td>Tooltip coordinate offset: systematic SVG-container padding mismatch across chart components</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-230</strong></td><td>AffordabilitySettings: &#x27;Your Affordable Range&#x27; card does not update when monthly budget or loan term changes</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-229</strong></td><td>FE: Add &quot;Request Enrichment&quot; button and modal to property UI — user-initiated enrichment requests</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>DE-218</strong></td><td>DE: Create enrichment_requests table and API endpoints — server-side plumbing for ADR-018</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>DAT-189</strong></td><td>DAT: Adopt enrichment_requests polling workflow — process user-initiated requests at session start</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-231</strong></td><td>Fix PropertyDetail monthly payment display — localStorage corruption guard and demo data defaults</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-231</strong></td><td>FE: Add Recheck button to PropertyDetail page — update last_checked timestamp via POST /api/properties/:id/check</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-232</strong></td><td>FE: Async UX patterns for Recheck and Enrichment Request — optimistic updates, toasts, debounce</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-232</strong></td><td>FE-227 Regression: Payment Scenarios showing ~£89M instead of ~£2K</td><td>Done</td><td></td></tr>
+<tr><td><strong>FE-233</strong></td><td>DE: Create PATCH /api/properties/:id — partial field update endpoint for manual property data editing</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-234</strong></td><td>FE: Manual property data editor — /property/:id/edit subpage for user data corrections</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>UX-051</strong></td><td>UX: Review and redesign Seasonal Market Cycle phase explanations — replace/augment box grid with a compact lookup table</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-235</strong></td><td>FE: Replace Seasonal Market Cycle phase card grid with compact lookup table (Option A from ADR-017)</td><td>Done</td><td>2026-04-09</td></tr>
+<tr><td><strong>UX-052</strong></td><td>UX: Design horizontal phase strip (Option B) for market page compact view — ADR-017 follow-on</td><td>Done</td><td>2026-04-09</td></tr>
+<tr><td><strong>FE-236</strong></td><td>FE: Add Seasonal Market Cycle phase strip to MarketPage.tsx (ADR-018)</td><td>Done</td><td>2026-04-09</td></tr>
+<tr><td><strong>FE-235</strong></td><td>FE: Add all property fields to the /property/:id/edit form — ensure no dataset fields are excluded from the manual editor</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-237</strong></td><td>FE: Add &quot;Request Enrichment&quot; button and modal to PropertyDetail sidebar (FE-229 not delivered)</td><td>Done</td><td>2026-04-09</td></tr>
+<tr><td><strong>FE-238</strong></td><td>FE: Add &quot;Edit Data&quot; button to PropertyDetail sidebar (FE-234 entry point missing — edit page itself is done)</td><td>Done</td><td>2026-04-09</td></tr>
+<tr><td><strong>QA-195</strong></td><td>QA: Write and run Playwright tests for PropertyDetail data action buttons (Recheck, Edit, Enrichment) — QA-012 follow-on</td><td>Done</td><td>2026-04-09</td></tr>
+<tr><td><strong>BUG-002</strong></td><td>BUG: image_url and floorplan_url blocked in PATCH /api/properties/:id — protected list too restrictive</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>BUG-003</strong></td><td>BUG: PriceEvolutionChart — remove generateMockHistory, show no-data state when price_history is absent</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>BUG-4</strong></td><td>CRASH: SourceHub — url.includes is not a function when links contains non-string values</td><td>Done</td><td>2026-04-11</td></tr>
+<tr><td><strong>DE-219</strong></td><td>DE: Add bedrooms and bathrooms columns to SQLite properties table and PATCH whitelist</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-239</strong></td><td>FE: Add bedrooms and bathrooms to Property type, edit form, table, and detail page</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>DAT-191</strong></td><td>DAT: Enrich all active properties with real bedroom and bathroom counts from portal listings</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>UX-052</strong></td><td>UX: Research and design Acquisition Strategy section — transform into a full data-dense hero area on /property/:id</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-240</strong></td><td>FE: Rebuild Acquisition Strategy section on PropertyDetail — full data overhaul per UX-052</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>FE-241</strong></td><td>FE: Display council tax band badge on PropertyDetail page and in Total Monthly Outlay section</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-162</strong></td><td>Runtime crash in Inbox.tsx — Cannot read properties of undefined (reading toLoca...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-187</strong></td><td>Responsive Layout Audit: Sidebar layout (pl-64 fixed) not mobile-optimised — res...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-172</strong></td><td>Runtime React error in MarketConditionsBar.tsx:141 — &#x27;Objects are not valid as a...</td><td>Done</td><td></td></tr>

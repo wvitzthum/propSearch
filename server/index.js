@@ -82,7 +82,9 @@ function initializeDB() {
     // ADR-014: market_status — market reality (active/under_offer/sold_stc/sold_completed/withdrawn/unknown)
     { name: 'market_status', type: "TEXT DEFAULT 'unknown' CHECK(market_status IN ('active','under_offer','sold_stc','sold_completed','withdrawn','unknown'))" },
     // ADR-014: last_checked — last date property was verified against live portal
-    { name: 'last_checked', type: 'TEXT' }
+    { name: 'last_checked', type: 'TEXT' },
+    // UX-034: property_rank — user-defined priority order within pipeline status
+    { name: 'property_rank', type: 'INTEGER DEFAULT NULL' }
   ];
 
   for (const col of missingColumns) {
@@ -377,8 +379,9 @@ const server = http.createServer((req, res) => {
         sql += ' AND vetted = 1';
       }
 
-      const validSortColumns = ['alpha_score', 'list_price', 'realistic_price', 'price_per_sqm', 'dom', 'appreciation_potential'];
-      const finalSortBy = validSortColumns.includes(sortBy) ? sortBy : 'alpha_score';
+      const validSortColumns = ['alpha_score', 'list_price', 'realistic_price', 'price_per_sqm', 'dom', 'appreciation_potential', 'property_rank'];
+      // UX-034: user_priority maps to property_rank for custom ordering
+      let finalSortBy = sortBy === 'user_priority' ? 'property_rank' : (validSortColumns.includes(sortBy) ? sortBy : 'alpha_score');
       const finalSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
       sql += ` ORDER BY ${finalSortBy} ${finalSortOrder} LIMIT ? OFFSET ?`;
@@ -451,6 +454,138 @@ const server = http.createServer((req, res) => {
             return;
           }
           db.prepare('UPDATE properties SET pipeline_status = ? WHERE id = ?').run(data.pipeline_status, id);
+          const updated = db.prepare('SELECT * FROM properties WHERE id = ?').get(id);
+          const history = db.prepare('SELECT price, date FROM price_history WHERE property_id = ? ORDER BY date ASC').all(id);
+          const result = {
+            ...updated,
+            gallery: safeParse(updated.gallery, []),
+            links: safeParse(updated.links, []),
+            metadata: safeParse(updated.metadata, {}),
+            is_value_buy: Boolean(updated.is_value_buy),
+            vetted: Boolean(updated.vetted),
+            archived: Boolean(updated.archived),
+            price_history: history
+          };
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(result));
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON: ' + e.message }));
+        }
+      });
+    }
+    // UX-034: PATCH /api/properties/:id/rank — update user-defined priority rank
+    // property_rank is an integer where 1 = highest priority within a pipeline status
+    // rank=null removes the rank (sets to NULL in SQLite)
+    else if (url.pathname.match(/^\/api\/properties\/[^/]+\/rank$/) && req.method === 'PATCH') {
+      const parts = url.pathname.split('/');
+      const id = parts[parts.length - 2];
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          const rawRank = data.rank;
+          // null/undefined removes the rank
+          if (rawRank === null || rawRank === undefined || rawRank === '') {
+            db.prepare('UPDATE properties SET property_rank = NULL WHERE id = ?').run(id);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ id, property_rank: null }));
+            return;
+          }
+          const rank = parseInt(String(rawRank), 10);
+          if (isNaN(rank) || rank < 1) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'rank must be a positive integer (1 = highest priority)' }));
+            return;
+          }
+          const existing = db.prepare('SELECT id FROM properties WHERE id = ?').get(id);
+          if (!existing) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Property not found' }));
+            return;
+          }
+          db.prepare('UPDATE properties SET property_rank = ? WHERE id = ?').run(rank, id);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ id, property_rank: rank }));
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON: ' + e.message }));
+        }
+      });
+    }
+    // FE-233: PATCH /api/properties/:id — partial field update for manual data editing
+    // Only allows listed fields to be updated. archive_reason, archived, pipeline_status
+    // are protected — analyst flags and pipeline decisions are never overwritten.
+    else if (url.pathname.match(/^\/api\/properties\/[^/]+\/?$/) && req.method === 'PATCH') {
+      const id = url.pathname.split('/').pop();
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          const existing = db.prepare('SELECT * FROM properties WHERE id = ?').get(id);
+          if (!existing) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Property not found' }));
+            return;
+          }
+
+          // Allowed fields — explicit whitelist.
+          // image_url and floorplan_url are plain URL strings — user can correct bad scrapes.
+          // Complex JSON fields (gallery, links, metadata) and analyst flags are protected.
+          const allowed = [
+            'address', 'area', 'list_price', 'realistic_price', 'sqft',
+            'price_per_sqm', 'nearest_tube_distance', 'park_proximity',
+            'commute_paternoster', 'commute_canada_square', 'epc', 'tenure',
+            'service_charge', 'ground_rent', 'lease_years_remaining',
+            'dom', 'neg_strategy', 'alpha_score', 'appreciation_potential',
+            'floor_level', 'source', 'source_name', 'analyst_notes',
+            'epc_improvement_potential', 'est_capex_requirement',
+            'waitrose_distance', 'whole_foods_distance', 'wellness_hub_distance',
+            'price_reduction_amount', 'price_reduction_percent', 'days_since_reduction',
+            'market_status', 'last_checked',
+            'image_url', 'floorplan_url', 'streetview_url', 'links',
+            'bedrooms', 'bathrooms', 'council_tax_band'
+          ];
+
+          const protected_ = ['archived', 'archive_reason', 'pipeline_status', 'property_rank',
+                               'vetted', 'metadata', 'gallery'];
+          // BUG-002 fix: image_url, floorplan_url, and links are plain URL / URL-struct fields
+          // that users should be able to correct. gallery is a complex multi-image JSON array —
+          // keep protected. Analyst flags always remain protected.
+          const attemptedProtected = protected_.filter(f => f in data);
+          if (attemptedProtected.length > 0) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+              error: 'Protected fields cannot be updated via this endpoint',
+              attempted_protected_fields: attemptedProtected,
+              hint: 'Use /api/properties/{id}/status for pipeline_status, /api/properties/{id}/rank for property_rank'
+            }));
+            return;
+          }
+
+          const updates = [];
+          const params = [];
+          for (const field of allowed) {
+            if (field in data) {
+              updates.push(`${field} = ?`);
+              params.push(data[field]);
+            }
+          }
+
+          if (updates.length === 0) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'No allowed fields provided' }));
+            return;
+          }
+
+          // Append last_checked to now
+          updates.push('last_checked = ?');
+          params.push(new Date().toISOString().split('T')[0]);
+          params.push(id);
+
+          db.prepare(`UPDATE properties SET ${updates.join(', ')} WHERE id = ?`).run(...params);
           const updated = db.prepare('SELECT * FROM properties WHERE id = ?').get(id);
           const history = db.prepare('SELECT price, date FROM price_history WHERE property_id = ? ORDER BY date ASC').all(id);
           const result = {
@@ -873,6 +1008,163 @@ const server = http.createServer((req, res) => {
       } catch (e) {
         res.writeHead(503, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'error', error: e.message }));
+      }
+    }
+    // 6.5 DE-218: Enrichment Requests
+    // GET /api/enrichment-requests — list all requests (filter by property_id, status)
+    else if (url.pathname === '/api/enrichment-requests' && req.method === 'GET') {
+      const propertyId = url.searchParams.get('property_id');
+      const status = url.searchParams.get('status');
+      const limit = parseInt(url.searchParams.get('limit') || '100');
+      const offset = parseInt(url.searchParams.get('offset') || '0');
+
+      let sql = 'SELECT * FROM enrichment_requests WHERE 1=1';
+      const params = [];
+      if (propertyId) { sql += ' AND property_id = ?'; params.push(propertyId); }
+      if (status) { sql += ' AND status = ?'; params.push(status); }
+      sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+      params.push(limit, offset);
+
+      try {
+        const rows = db.prepare(sql).all(...params);
+        const results = rows.map(row => ({
+          ...row,
+          result_data: safeParse(row.result_data, null)
+        }));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(results));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to load enrichment requests: ' + e.message }));
+      }
+    }
+    // POST /api/enrichment-requests — create a new enrichment request
+    else if (url.pathname === '/api/enrichment-requests' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          const { property_id, request_type, field, value, notes, requested_by, priority } = data;
+
+          if (!property_id || !request_type) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'property_id and request_type are required' }));
+            return;
+          }
+
+          // Verify property exists
+          const prop = db.prepare('SELECT id FROM properties WHERE id = ?').get(property_id);
+          if (!prop) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Property not found: ' + property_id }));
+            return;
+          }
+
+          const validTypes = ['sqft_verify', 'lease_verify', 'epc_lookup', 'price_confirm', 'tenure_confirm', 'general'];
+          if (!validTypes.includes(request_type)) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: `request_type must be one of: ${validTypes.join('|')}` }));
+            return;
+          }
+
+          const id = `er-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+          const now = new Date().toISOString();
+          const validPriorities = ['low', 'normal', 'high', 'urgent'];
+          const p = validPriorities.includes(priority) ? priority : 'normal';
+
+          db.prepare(`
+            INSERT INTO enrichment_requests
+              (id, property_id, request_type, field, value, notes, requested_by, priority, status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+          `).run(id, property_id, request_type, field || null, value || null, notes || null,
+                 requested_by || 'user', p, now, now);
+
+          const created = db.prepare('SELECT * FROM enrichment_requests WHERE id = ?').get(id);
+          res.writeHead(201, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ...created, result_data: null }));
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON: ' + e.message }));
+        }
+      });
+    }
+    // GET /api/enrichment-requests/:id — get single request
+    else if (url.pathname.match(/^\/api\/enrichment-requests\/[^/]+$/) && req.method === 'GET') {
+      const id = url.pathname.split('/').pop();
+      const row = db.prepare('SELECT * FROM enrichment_requests WHERE id = ?').get(id);
+      if (!row) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Enrichment request not found' }));
+      } else {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ...row, result_data: safeParse(row.result_data, null) }));
+      }
+    }
+    // PATCH /api/enrichment-requests/:id — update status / result_data
+    else if (url.pathname.match(/^\/api\/enrichment-requests\/[^/]+$/) && req.method === 'PATCH') {
+      const id = url.pathname.split('/').pop();
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          const existing = db.prepare('SELECT * FROM enrichment_requests WHERE id = ?').get(id);
+          if (!existing) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Enrichment request not found' }));
+            return;
+          }
+
+          const validStatuses = ['pending', 'processing', 'completed', 'failed', 'cancelled'];
+          const updates = [];
+          const params = [];
+
+          if (data.status && validStatuses.includes(data.status)) {
+            updates.push('status = ?');
+            params.push(data.status);
+            if (data.status === 'completed' || data.status === 'failed') {
+              updates.push('processed_at = ?');
+              params.push(new Date().toISOString());
+            }
+          }
+
+          if (data.result_data !== undefined) {
+            updates.push('result_data = ?');
+            params.push(JSON.stringify(data.result_data));
+          }
+
+          if (data.notes !== undefined) {
+            updates.push('notes = ?');
+            params.push(data.notes);
+          }
+
+          updates.push('updated_at = ?');
+          params.push(new Date().toISOString());
+          params.push(id);
+
+          db.prepare(`UPDATE enrichment_requests SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+          const updated = db.prepare('SELECT * FROM enrichment_requests WHERE id = ?').get(id);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ...updated, result_data: safeParse(updated.result_data, null) }));
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON: ' + e.message }));
+        }
+      });
+    }
+    // DELETE /api/enrichment-requests/:id — cancel a request
+    else if (url.pathname.match(/^\/api\/enrichment-requests\/[^/]+$/) && req.method === 'DELETE') {
+      const id = url.pathname.split('/').pop();
+      const existing = db.prepare('SELECT * FROM enrichment_requests WHERE id = ?').get(id);
+      if (!existing) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Enrichment request not found' }));
+      } else {
+        db.prepare("UPDATE enrichment_requests SET status = 'cancelled', updated_at = ? WHERE id = ?")
+          .run(new Date().toISOString(), id);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ id, status: 'cancelled' }));
       }
     }
     else {

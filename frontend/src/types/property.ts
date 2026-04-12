@@ -25,6 +25,7 @@ export interface PropertyMetadata {
 export interface Property {
   id: string;
   metadata: PropertyMetadata;
+  last_checked?: string; // ISO date string — FE-231: last time user manually re-checked this property
   address: string;
   area: Area;
   image_url: string;
@@ -34,6 +35,8 @@ export interface Property {
   list_price: number;
   realistic_price: number;
   sqft: number;
+  bedrooms?: number;    // FE-239: decimal allowed (1.5, 2.0, 3.0) for en-suite/double rooms
+  bathrooms?: number;   // FE-239: decimal allowed (1.0, 1.5, 2.0)
   price_per_sqm: number;
   nearest_tube_distance: number;
   park_proximity: number;
@@ -65,8 +68,14 @@ export interface Property {
   link: string;
   // ADR-017: Analyst-owned market status axis (independent of user pipeline_status)
   market_status?: MarketStatus;
+  // FE-186: Server-persisted pipeline status (synced from usePipeline)
+  pipeline_status?: 'discovered' | 'shortlisted' | 'vetted' | 'archived';
+  // UX-034: User-defined priority rank (1 = highest priority within pipeline group)
+  property_rank?: number | null;
   // FE-166: Price history entries for Property Price Evolution chart
   price_history?: PriceHistoryEntry[];
+  // FE-234/FE-235: User analyst notes — private observations and strategic notes per property
+  analyst_notes?: string;
 }
 
 // FE-166: Price history data for Property Price Evolution component

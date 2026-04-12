@@ -27,6 +27,16 @@
 
 ---
 
+## 2026-04-07
+
+**Trigger:** User-initiated enrichment requests + Recheck feature added
+**Was:** No formal queue for property data refresh; no recheck on PropertyDetail page
+**Now:** Two new features per ADR-018: (1) "Request Enrichment" button on PropertyDetail — POST to enrichment_requests table (FE-229); (2) "Re-check" button on PropertyDetail — POST /api/properties/:id/check updates last_checked (FE-231). Reference ArchiveReview.tsx for handleRecheck pattern.
+**Scope:** Frontend Engineer — FE-229 (enrichment modal), FE-231 (recheck button), both on PropertyDetail.tsx
+**Status:** Active — tasks FE-229, FE-231 filed
+
+---
+
 ## 2026-04-04
 
 **Trigger:** Ports 3001 and 5173 are the user's own dev servers — agents must not start them

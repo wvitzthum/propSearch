@@ -28,18 +28,18 @@ const SourceHub: React.FC<SourceHubProps> = ({ links, variant = 'full' }) => {
             <div className="px-3 py-2 text-[9px] font-black text-linear-text-muted uppercase tracking-[0.2em] border-b border-linear-border mb-1">
               Select Verification Portal
             </div>
-            {links.map((url, i) => (
-              <a 
+            {links.filter(l => typeof l === 'string').map((url, i) => (
+              <a
                 key={i}
-                href={url} 
-                target="_blank" 
+                href={url}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="p-3 text-[10px] font-bold text-linear-text-muted hover:text-white hover:bg-linear-bg rounded-xl transition-all flex items-center justify-between group/link uppercase tracking-wider border border-transparent hover:border-linear-border"
               >
                 <div className="flex flex-col gap-0.5 text-left truncate">
                   <span className="text-white truncate">
-                    {url.includes('rightmove') ? 'Rightmove Institutional' : 
-                     url.includes('zoopla') ? 'Zoopla Analytics' : 
+                    {url.includes('rightmove') ? 'Rightmove Institutional' :
+                     url.includes('zoopla') ? 'Zoopla Analytics' :
                      'Direct Agent Portal'}
                   </span>
                   <span className="text-[8px] opacity-50 lowercase truncate max-w-[180px]">{url}</span>

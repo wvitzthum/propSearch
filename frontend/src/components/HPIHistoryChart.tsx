@@ -1,13 +1,13 @@
 // VISX-008: Voronoi pixel-precise hover via @visx/voronoi VoronoiPolygon
 // FE-205: Migrated to @visx — replaces hand-rolled SVG with visx scale/shape/axis primitives
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { useMacroData } from '../hooks/useMacroData';
 import { extractValue } from '../types/macro';
 import { scaleLinear } from '@visx/scale';
 import { LinePath } from '@visx/shape';
 import { Group } from '@visx/group';
 import { VoronoiPolygon } from '@visx/voronoi';
-import { useTooltip, TooltipWithBounds } from '@visx/tooltip';
+import { useTooltip } from '@visx/tooltip';
 import { ParentSize } from '@visx/responsive';
 
 // FE-188: London HPI Trajectory Chart — historical index with event annotations and 3-scenario fan overlay
@@ -32,33 +32,34 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
     tooltipTop,
   } = useTooltip<{ date: string; index: number }>();
 
+  // Store SVG ref for bounding rect — needed to convert SVG-local pixel coords to viewport coords
+  const svgRef = useRef<SVGSVGElement>(null);
+  // Track SVG bounding box for tooltip positioning
+  const [svgBox, setSvgBox] = useState({ x: 0, y: 0 });
+  // Ref kept in sync with state for use inside event handlers (avoids stale closures)
+  const svgBoxRef = useRef(svgBox);
+  // Track parent element (the .px-4.py-3.relative div) for tooltip offset calculation
+  const parentRef = useRef<HTMLElement | null>(null);
+  // Keep svgBoxRef in sync whenever state changes
+  const _setSvgBox = (val: { x: number; y: number }) => {
+    svgBoxRef.current = val;
+    setSvgBox(val);
+  };
+
   const raw = data as any;
 
-  // Historical HPI series from macro_trend.json → hpi_history.london_wide
+  // Historical HPI series from macro_trend.json → hpi_history.data
+  // Schema: { date, london_hpi, uk_hpi, london_vs_uk_pct } — 2015-01 to 2026-01
   const history = useMemo(() => {
-    const rawHpi = raw?.hpi_history?.london_wide ?? [];
-    if (!Array.isArray(rawHpi) || rawHpi.length === 0) {
-      // Fallback: 60 months of synthetic data seeded from last known value
-      const base = 153;
-      return Array.from({ length: 60 }, (_, i) => {
-        const d = new Date(2021, 0, 1);
-        d.setMonth(d.getMonth() + i);
-        const m = d.toISOString().slice(0, 7);
-        const noise = (Math.sin(i * 0.7) * 2 + Math.sin(i * 1.3) * 1.5 + (Math.random() - 0.5) * 0.5);
-        return {
-          date: m,
-          index_uk: parseFloat((base + i * 0.45 + noise).toFixed(2)),
-          annual_change_pct: i >= 12 ? parseFloat(((base + i * 0.45 + noise - (base + (i - 12) * 0.45)) / (base + (i - 12) * 0.45) * 100).toFixed(2)) : null,
-        };
-      });
-    }
-    // Compute annual_change_pct where missing
+    const rawHpi: any[] = raw?.hpi_history?.data ?? [];
+    if (!Array.isArray(rawHpi) || rawHpi.length === 0) return [];
+    // Use uk_hpi as the UK index; london_hpi as the London-specific index
     const indexed = rawHpi.map((h: any, i: number) => ({
       date: h.date,
-      index_uk: h.index_uk ?? h.index_england ?? 100,
-      index_england: h.index_england ?? 100,
+      index_uk: h.uk_hpi ?? 100,
+      index_london: h.london_hpi ?? h.uk_hpi ?? 100,
       annual_change_pct: h.annual_change_pct ?? (i >= 12
-        ? parseFloat(((rawHpi[i].index_uk - rawHpi[i - 12].index_uk) / rawHpi[i - 12].index_uk * 100).toFixed(2))
+        ? parseFloat(((rawHpi[i].uk_hpi - rawHpi[i - 12].uk_hpi) / rawHpi[i - 12].uk_hpi * 100).toFixed(2))
         : null),
     }));
     return indexed;
@@ -206,7 +207,7 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
           2. SVG font sizes (2.5px, 2.8px) were in viewBox space and scaled to near-invisible
           NEW: ParentSize provides actual pixel width; SVG has no viewBox, all coords are screen pixels.
           FIX: SVG height = H + 32 to accommodate year labels that sit below the chart area. */}
-      <div className="px-4 py-3 relative">
+      <div className="px-4 py-3 relative" ref={el => { parentRef.current = el; }}>
         <div style={{ height: height + 32 }}>
           <ParentSize>
             {({ width: parentWidth }) => {
@@ -308,11 +309,25 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
 
               return (
                 <svg
+                  ref={svgRef}
                   width={W}
                   height={SVG_H}
+                  viewBox={`0 0 ${W} ${SVG_H}`}
                   className="overflow-visible"
+                  onMouseMove={() => {
+                    if (svgRef.current) {
+                      const rect = svgRef.current.getBoundingClientRect();
+                      _setSvgBox({ x: rect.left, y: rect.top });
+                    }
+                  }}
                 >
-                  <Group>
+                  <defs>
+                    {/* FE-223: Clips all chart content to the chart boundary so lines reach the right edge */}
+                    <clipPath id="chart-area">
+                      <rect x={LEFT_PAD} y={PAD} width={W - PAD - LEFT_PAD} height={H - PAD - PAD} />
+                    </clipPath>
+                  </defs>
+                  <Group clipPath="url(#chart-area)">
                     {/* Horizontal grid lines */}
                     {[0, 0.25, 0.5, 0.75, 1].map(pct => {
                       const v = minV + (maxV - minV) * pct;
@@ -485,7 +500,7 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
                       </text>
                     )}
 
-                    {/* Voronoi pixel-precise hover — tooltip coords are screen pixels */}
+                    {/* Voronoi pixel-precise hover — tooltip coords are viewport-relative, we'll offset by parent rect in the render */}
                     {voronoiData.map(d => (
                       <VoronoiPolygon
                         key={d.date}
@@ -493,7 +508,12 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
                         fill="transparent"
                         stroke="transparent"
                         onMouseMove={() => {
-                          showTooltip({ tooltipData: { date: d.date, index: d.index }, tooltipLeft: d.x, tooltipTop: d.y });
+                          // Update bounding rect cache on every mouse move (page may have scrolled since last hover)
+                          if (svgRef.current) {
+                            const rect = svgRef.current.getBoundingClientRect();
+                            _setSvgBox({ x: rect.left, y: rect.top });
+                          }
+                          showTooltip({ tooltipData: { date: d.date, index: d.index }, tooltipLeft: d.x + (svgBoxRef.current?.x ?? 0), tooltipTop: d.y + (svgBoxRef.current?.y ?? 0) });
                         }}
                         onMouseLeave={hideTooltip}
                         className="cursor-crosshair"
@@ -506,16 +526,30 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
           </ParentSize>
         </div>
 
-        {/* VISX-018: Voronoi hover tooltip — tooltipLeft/Top are now screen coords (matching SVG pixel coords) */}
+        {/* VISX-018: Voronoi hover tooltip — tooltipLeft/Top are viewport-relative (SVG-local + svgBox offset).
+            SVG is inside parentRef (position:relative). Transform must offset by parent rect to
+            get parent-relative coordinates. Formula: (viewport - parent.left, viewport - parent.top) */}
         {tooltipOpen && tooltipData && (
-          <TooltipWithBounds
-            left={tooltipLeft}
-            top={tooltipTop}
-            className="bg-black/90 backdrop-blur border border-linear-border rounded-lg px-3 py-2 pointer-events-none z-50"
+          <div
+            className="visx-tooltip"
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              transform: `translate(${(tooltipLeft ?? 0) - (parentRef.current?.getBoundingClientRect().left ?? 0) - 16}px, ${(tooltipTop ?? 0) - (parentRef.current?.getBoundingClientRect().top ?? 0) - 12}px)`,
+              background: '#0f172a',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 8,
+              padding: '8px 12px',
+              fontSize: 11,
+              color: '#fff',
+              pointerEvents: 'none',
+              zIndex: 9999,
+            }}
           >
             <div className="text-[10px] font-bold text-white">{tooltipData.date}</div>
-            <div className="text-[9px] text-retro-green">Index: {tooltipData.index.toFixed(2)}</div>
-          </TooltipWithBounds>
+            <div className="text-[9px] text-green-400">Index: {tooltipData.index.toFixed(2)}</div>
+          </div>
         )}
 
         {/* VISX-004: Event annotation legend strip */}
