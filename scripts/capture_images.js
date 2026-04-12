@@ -10,6 +10,12 @@
  *
  * Storage layout: data/images/{property_id}/{index:04d}_{hash}.{ext}
  * Hash = first 16 chars of SHA256 of original URL (stable across re-runs)
+ *
+ * Key features:
+ * - Idempotent: re-running won't re-download already-captured images
+ * - Remote URLs only: skips properties already pointing to local files
+ * - Original URL preserved in DB for audit trail
+ * - Image MIME types auto-detected
  */
 
 const fs = require('fs');
@@ -35,6 +41,10 @@ function urlToExt(url) {
   return '.jpg';
 }
 
+function isLocalPath(val) {
+  return val && (val.startsWith('data/') || val.startsWith('/'));
+}
+
 function fetchBuffer(url) {
   return new Promise((resolve, reject) => {
     const lib = url.startsWith('https') ? https : http;
@@ -58,10 +68,17 @@ function fetchBuffer(url) {
 
 async function capturePropertyImages(prop, db) {
   const urls = [];
-  if (prop.image_url) urls.push({ idx: 0, url: prop.image_url });
+
+  // Only process remote URLs (not already-local file paths)
+  if (prop.image_url && !isLocalPath(prop.image_url)) {
+    urls.push({ idx: 0, url: prop.image_url });
+  }
+
   try {
     const gallery = JSON.parse(prop.gallery || '[]');
-    gallery.forEach((url, i) => urls.push({ idx: i + 1, url }));
+    gallery.forEach((url, i) => {
+      if (url && !isLocalPath(url)) urls.push({ idx: i + 1, url });
+    });
   } catch(e) {}
 
   if (urls.length === 0) return { captured: 0, failed: 0, skipped: 0 };
@@ -145,6 +162,8 @@ async function main() {
 
   console.log('\nDone — captured: ' + totalCap + ', failed: ' + totalFail + ', skipped: ' + totalSkip);
 
+  // Update image_url to local paths for any newly captured properties
+  // Only update if image_url is still a remote URL (don't overwrite already-migrated)
   if (!DRY_RUN && totalCap > 0) {
     const updated = db.prepare(`
       UPDATE properties
@@ -153,12 +172,21 @@ async function main() {
         WHERE property_id = properties.id AND image_index = 0
         LIMIT 1
       )
-      WHERE EXISTS (
-        SELECT 1 FROM images WHERE property_id = properties.id AND image_index = 0
-      )
+      WHERE archived = 0
+        AND image_url IS NOT NULL
+        AND image_url != ''
+        AND image_url NOT LIKE 'data/%'
+        AND image_url NOT LIKE '/%'
+        AND EXISTS (
+          SELECT 1 FROM images
+          WHERE property_id = properties.id AND image_index = 0
+        )
     `).run();
-    console.log('Updated image_url for ' + updated.changes + ' properties');
+    console.log('Updated image_url for ' + updated.changes + ' additional properties');
   }
+
+  const stats = db.prepare('SELECT COUNT(*) as total, SUM(file_size) as bytes FROM images').get();
+  console.log('Total images in store: ' + stats.total + ' (' + Math.round(stats.bytes/1024/1024*10)/10 + ' MB)');
 
   db.close();
 }

@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   CheckSquare,
   Square,
-  Layers,
   Star,
 } from 'lucide-react';
 import type { PropertyWithCoords } from '../types/property';
@@ -20,13 +19,7 @@ import type { PropertyStatus } from '../hooks/usePipeline';
 import AlphaBadge from './AlphaBadge';
 import Tooltip from './Tooltip';
 import { useComparison } from '../hooks/useComparison';
-import { useThesisTags } from '../hooks/useThesisTags';
-import ThesisTagBadge from './ThesisTagBadge';
-import ThesisTagSelector from './ThesisTagSelector';
 import BatchTagPanel from './BatchTagPanel';
-import LTVMatchBadge from './LTVMatchBadge';
-import MarketStatusBadge from './MarketStatusBadge';
-import { useAffordability } from '../hooks/useAffordability';
 
 interface PropertyTableProps {
   properties: PropertyWithCoords[];
@@ -35,10 +28,11 @@ interface PropertyTableProps {
   onPreview?: (property: PropertyWithCoords) => void;
   onStatusChange?: (id: string, status: PropertyStatus) => void;
   getStatus?: (id: string) => PropertyStatus;
-  showThesisTags?: boolean;
   // UX-034: Rank — get/set user priority rank
   getRank?: (id: string) => number | undefined;
   onRankChange?: (id: string, rank: number | null) => void;
+  /** UX-046: Show batch selection checkbox column — hidden by default, toggled via toolbar */
+  showBatchCheckbox?: boolean;
 }
 
 const SortIcon = ({ 
@@ -99,13 +93,11 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
   onPreview,
   onStatusChange,
   getStatus,
-  showThesisTags = true,
   getRank,
   onRankChange,
+  showBatchCheckbox = false,
 }) => {
   const { toggleComparison, isInComparison } = useComparison();
-  const { getTags } = useThesisTags();
-  const { getLTVMatchScore } = useAffordability();
   const [batchSelected, setBatchSelected] = useState<Set<string>>(new Set());
   const [localSort, setLocalSort] = useState<{ key: string, direction: 'asc' | 'desc' }>({
     key: currentSort || 'alpha_score',
@@ -213,25 +205,12 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
 
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full border-collapse">
+          {/* UX-041: Redesigned header — 8 default columns + Actions. Single header row, no sub-header groups. */}
           <thead>
             <tr className="bg-linear-card/50 border-b border-linear-border">
-              {/* Batch Select Checkbox */}
-              <th className="px-3 py-3 w-10 border-r border-linear-border/30">
-                <button
-                  onClick={selectAll}
-                  className="flex items-center justify-center text-linear-text-muted hover:text-white transition-colors"
-                  title={batchSelected.size === properties.length ? 'Deselect all' : 'Select all'}
-                >
-                  {batchSelected.size === properties.length && properties.length > 0 ? (
-                    <CheckSquare size={16} className="text-blue-400" />
-                  ) : (
-                    <Square size={16} />
-                  )}
-                </button>
-              </th>
               {/* UX-034: Rank column header — click to sort by user priority */}
               <th
-                className="px-2 py-3 text-center text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] cursor-pointer group hover:bg-linear-card transition-colors relative border-r border-linear-border/30"
+                className="px-2 py-3 text-center text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] cursor-pointer group hover:bg-linear-card transition-colors relative border-r border-linear-border/30 min-w-[44px]"
                 onClick={() => onSortChange?.('user_priority')}
               >
                 <div className="flex flex-col items-center gap-0.5">
@@ -240,14 +219,13 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 </div>
               </th>
               <TableHeader
-                label="Asset / Area"
+                label="Asset"
                 columnKey="address"
                 tooltip="Full address and acquisition area zone."
-                className="sticky left-10 bg-linear-bg/80 backdrop-blur-md z-10"
+                className="sticky left-0 bg-linear-bg/80 backdrop-blur-md z-10 min-w-[240px]"
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
-                rowSpan={2}
               />
               <TableHeader
                 label="Alpha"
@@ -258,40 +236,32 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
-                rowSpan={2}
               />
-              <th colSpan={2} className="px-2 py-2 bg-linear-accent/5 border-x border-linear-border/30 text-center text-[8px] font-bold text-linear-text-muted uppercase tracking-widest border-b border-linear-border/30">
-                Acquisition Model
-              </th>
               <TableHeader
-                label="Eff."
-                columnKey="price_per_sqm"
-                tooltip="Pricing efficiency in GBP per square meter relative to micro-location benchmarks."
+                label="Target"
+                columnKey="realistic_price"
+                tooltip="Calculated bid target based on market conditions, DoM, and area liquidity."
                 className="px-2"
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
-                rowSpan={2}
               />
               <TableHeader
-                label="App."
-                columnKey="appreciation_potential"
-                tooltip="Institutional forecast for 5-year capital appreciation."
+                label="Gap"
+                columnKey="value_gap"
+                tooltip="Delta between list price and realistic acquisition target."
                 className="px-2"
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
-                rowSpan={2}
               />
               <TableHeader
-                label="Com."
-                columnKey="commute_utility"
-                tooltip="Aggregated commute utility score to City/Wharf hubs (lower is better)."
+                label="SQFT"
+                columnKey="sqft"
                 className="px-2"
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
-                rowSpan={2}
               />
               <TableHeader
                 label="Bed"
@@ -301,26 +271,6 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
-                rowSpan={2}
-              />
-              <TableHeader
-                label="Bath"
-                columnKey="bathrooms"
-                tooltip="Number of bathrooms (decimal for en-suite facilities)."
-                className="px-2"
-                onSort={handleSort}
-                currentSort={localSort.key}
-                direction={localSort.direction}
-                rowSpan={2}
-              />
-              <TableHeader
-                label="SQFT"
-                columnKey="sqft"
-                className="px-2"
-                onSort={handleSort}
-                currentSort={localSort.key}
-                direction={localSort.direction}
-                rowSpan={2}
               />
               <TableHeader
                 label="EPC"
@@ -329,18 +279,6 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
-                rowSpan={2}
-              />
-              {/* FE-241: Council Tax band column */}
-              <TableHeader
-                label="CT"
-                columnKey="council_tax_band"
-                tooltip="Council Tax band"
-                className="px-2"
-                onSort={handleSort}
-                currentSort={localSort.key}
-                direction={localSort.direction}
-                rowSpan={2}
               />
               <TableHeader
                 label="DoM"
@@ -349,67 +287,10 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 onSort={handleSort}
                 currentSort={localSort.key}
                 direction={localSort.direction}
-                rowSpan={2}
               />
-              <th rowSpan={2} className="px-2 py-3 text-center text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap min-w-[80px]">
-                LTV
+              <th className="px-2 py-3 text-right text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap">
+                Action
               </th>
-              {/* ADR-017: Market status column — analyst axis, independent of pipeline */}
-              <th rowSpan={2} className="px-2 py-3 text-center text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap">
-                Market
-              </th>
-              {/* FE-216: Date Added column — sortable by metadata.first_seen */}
-              <TableHeader
-                label="Added"
-                columnKey="metadata.first_seen"
-                tooltip="Date the property was first discovered and added to the pipeline."
-                className="px-2"
-                onSort={handleSort}
-                currentSort={localSort.key}
-                direction={localSort.direction}
-                rowSpan={2}
-              />
-              {showThesisTags && (
-                <th rowSpan={2} className="px-2 py-3 text-center text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap min-w-[100px]">
-                  Thesis
-                </th>
-              )}
-              <th rowSpan={2} className="px-2 py-3 text-right text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap">Action</th>
-            </tr>
-            <tr className="bg-linear-card/30 border-b border-linear-border">
-              {/* Empty cell for batch checkbox */}
-              <th className="border-r border-linear-border/30"></th>
-              <TableHeader
-                label="Target"
-                columnKey="realistic_price"
-                tooltip="Calculated bid target based on market conditions, DoM, and area liquidity."
-                className="border-l border-linear-border/30"
-                onSort={handleSort}
-                currentSort={localSort.key}
-                direction={localSort.direction}
-              />
-              <TableHeader
-                label="Gap"
-                columnKey="value_gap"
-                tooltip="Delta between list price and realistic acquisition target."
-                className="border-r border-linear-border/30"
-                onSort={handleSort}
-                currentSort={localSort.key}
-                direction={localSort.direction}
-              />
-              {/* Empty cells for remaining columns */}
-              <th className="border-r border-linear-border/30"></th>
-              <th className="border-r border-linear-border/30"></th>
-              <th className="border-r border-linear-border/30"></th>
-              <th className="border-r border-linear-border/30"></th>
-              <th className="border-r border-linear-border/30"></th>
-              <th className="border-r border-linear-border/30"></th>
-              <th className="border-r border-linear-border/30"></th>
-              <th className="border-r border-linear-border/30"></th>
-              <th className="border-r border-linear-border/30"></th>
-              {showThesisTags && <th className="border-r border-linear-border/30"></th>}
-              {/* Empty cell for Added column (rowSpan=2 covers it) */}
-              {/* Empty cell for Market column (rowSpan=2 covers it) */}
             </tr>
           </thead>
           <tbody className="divide-y divide-linear-border/50">
@@ -428,60 +309,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                     status === 'archived' ? 'opacity-50 bg-linear-accent-rose/5' : ''
                   } ${isSelected ? 'bg-linear-accent-blue/10' : ''} ${isBatchSelected ? 'bg-blue-500/5' : ''}`}
                 >
-                  {/* Batch Select Checkbox */}
-                  <td
-                    className="px-3 py-4 w-10 border-r border-linear-border/30"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      onClick={() => toggleBatchSelect(property.id)}
-                      className={`flex items-center justify-center transition-colors ${
-                        isBatchSelected ? 'text-blue-400' : 'text-linear-text-muted hover:text-white'
-                      }`}
-                    >
-                      {isBatchSelected ? <CheckSquare size={16} /> : <Square size={16} />}
-                    </button>
-                  </td>
-                  {/* Address Column */}
-                  <td
-                    className="px-4 py-4 sticky left-10 bg-linear-bg/80 group-hover:bg-linear-card/40 z-10 min-w-[280px] border-r border-linear-border/30 cursor-pointer"
-                    onClick={() => onPreview && onPreview(property)}
-                  >
-                    <div className="flex flex-col">
-                      <div className="text-[11px] font-bold text-linear-text-primary group-hover:text-linear-accent-blue truncate tracking-tight transition-colors">
-                        {property.address}
-                      </div>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-wider">{(property.area || 'Unknown').split(' (')[0]}</span>
-                        {status === 'vetted' && (
-                          <span className="flex items-center gap-0.5 text-[8px] font-black text-linear-accent-emerald bg-linear-accent-emerald/10 px-1 rounded border border-linear-accent-emerald/20">
-                            <ShieldCheck size={8} /> VETTED
-                          </span>
-                        )}
-                        {property.metadata.is_new && (
-                          <span className="flex items-center gap-0.5 text-[8px] font-black text-linear-accent-blue bg-linear-accent-blue/10 px-1 rounded border border-linear-accent-blue/20">
-                            NEW
-                          </span>
-                        )}
-                        {/* FE-181: Archived badge */}
-                        {status === 'archived' && (
-                          <span className="flex items-center gap-0.5 text-[8px] font-black text-linear-accent-rose bg-linear-accent-rose/10 px-1 rounded border border-linear-accent-rose/20">
-                            <Archive size={8} /> ARCHIVED
-                          </span>
-                        )}
-                        {/* ADR-017: market_status badge — analyst axis, shown for archived rows to clarify dual state */}
-                        {status === 'archived' && property.market_status && (
-                          <MarketStatusBadge status={property.market_status} />
-                        )}
-                        {property.is_value_buy && (
-                          <span className="flex items-center gap-0.5 text-[8px] font-black text-retro-green bg-retro-green/10 px-1 rounded border border-retro-green/20">
-                            VALUE
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  {/* UX-034: Rank cell — drag handle + rank badge, click to set/remove rank */}
+                  {/* UX-034: Rank cell — click to assign/remove rank */}
                   <td
                     className="px-2 py-4 text-center border-r border-linear-border/30"
                     onClick={(e) => e.stopPropagation()}
@@ -491,10 +319,8 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                         onClick={() => {
                           const currentRank = getRank(property.id);
                           if (currentRank !== undefined) {
-                            onRankChange?.(property.id, null); // remove rank
+                            onRankChange?.(property.id, null);
                           } else {
-                            // Count how many properties in this table already have ranks
-                            // to assign the next sequential rank
                             let count = 0;
                             for (const p of properties) {
                               if (getRank(p.id) !== undefined) count++;
@@ -511,7 +337,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                       >
                         {getRank(property.id) !== undefined ? (
                           getRank(property.id) === 1 ? (
-                            <div className="flex items-center gap-0.5">
+                            <div className="flex items-center justify-center gap-0.5">
                               <Star size={9} className="text-amber-400 fill-amber-400" />
                               <span>{getRank(property.id)}</span>
                             </div>
@@ -522,6 +348,55 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                       </button>
                     ) : null}
                   </td>
+                  {/* Asset / Area — sticky, with compact pipeline status dot */}
+                  <td
+                    className="px-3 py-4 sticky left-0 bg-linear-bg/80 group-hover:bg-linear-card/40 z-10 min-w-[240px] border-r border-linear-border/30 cursor-pointer"
+                    onClick={() => onPreview && onPreview(property)}
+                  >
+                    <div className="flex items-start gap-2">
+                      {/* UX-041: Compact pipeline status dot — next to address */}
+                      <div className="flex-shrink-0 mt-1">
+                        <div
+                          className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                            status === 'shortlisted' ? 'bg-blue-400' :
+                            status === 'vetted' ? 'bg-emerald-400' :
+                            status === 'archived' ? 'bg-rose-400' :
+                            'bg-zinc-500'
+                          }`}
+                          title={`Pipeline: ${status}`}
+                        />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <div className="text-[11px] font-bold text-linear-text-primary group-hover:text-linear-accent-blue truncate tracking-tight transition-colors">
+                          {property.address}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-wider">{(property.area || 'Unknown').split(' (')[0]}</span>
+                          {status === 'vetted' && (
+                            <span className="flex items-center gap-0.5 text-[8px] font-black text-linear-accent-emerald bg-linear-accent-emerald/10 px-1 rounded border border-linear-accent-emerald/20">
+                              <ShieldCheck size={8} /> VETTED
+                            </span>
+                          )}
+                          {property.metadata?.is_new && (
+                            <span className="flex items-center gap-0.5 text-[8px] font-black text-linear-accent-blue bg-linear-accent-blue/10 px-1 rounded border border-linear-accent-blue/20">
+                              NEW
+                            </span>
+                          )}
+                          {status === 'archived' && (
+                            <span className="flex items-center gap-0.5 text-[8px] font-black text-linear-accent-rose bg-linear-accent-rose/10 px-1 rounded border border-linear-accent-rose/20">
+                              <Archive size={8} /> ARCHIVED
+                            </span>
+                          )}
+                          {property.is_value_buy && (
+                            <span className="flex items-center gap-0.5 text-[8px] font-black text-retro-green bg-retro-green/10 px-1 rounded border border-retro-green/20">
+                              VALUE
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  {/* Alpha score */}
                   <td className="px-2 py-4">
                     <AlphaBadge
                       score={property.alpha_score}
@@ -536,42 +411,39 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                       }
                     />
                   </td>
-                  <td className="px-2 py-4 bg-linear-accent/5 border-l border-linear-border/30">
-                    <div className="text-[11px] font-bold text-linear-text-primary tracking-tighter text-center">
+                  {/* Target — realistic price */}
+                  <td className="px-2 py-4">
+                    <div className="text-[11px] font-bold text-linear-text-primary tracking-tighter">
                       £{(property.realistic_price || 0).toLocaleString()}
                     </div>
                   </td>
-                  <td className="px-2 py-4 bg-linear-accent/5 border-r border-linear-border/30">
-                    <div className={`text-[10px] font-bold text-center ${ (property.list_price - property.realistic_price) > 0 ? 'text-linear-accent-rose' : 'text-linear-accent-emerald'}`}>
-                      { (property.list_price - property.realistic_price) > 0 ? '-' : '+' }£{Math.abs( (property.list_price || 0) - (property.realistic_price || 0) ).toLocaleString()}
-                    </div>
-                  </td>
+                  {/* Value Gap — percentage below/above list */}
                   <td className="px-2 py-4">
-                    <div className={`text-[11px] font-bold ${property.is_value_buy ? 'text-retro-green' : 'text-linear-text-muted'}`}>
-                      £{(property.price_per_sqm || 0).toLocaleString()}
-                    </div>
+                    {(() => {
+                      const list = property.list_price || 0;
+                      const realistic = property.realistic_price || 0;
+                      const delta = list - realistic;
+                      const pct = list > 0 ? (delta / list) * 100 : 0;
+                      const isOpportunity = delta > 0;
+                      return (
+                        <div className="flex flex-col items-center">
+                          <div className={`text-[10px] font-bold tracking-tight ${isOpportunity ? 'text-retro-green' : 'text-rose-400'}`}>
+                            {isOpportunity ? '-' : '+'}{Math.abs(pct).toFixed(1)}%
+                          </div>
+                          <div className="text-[7px] text-linear-text-muted">{isOpportunity ? 'below' : 'above'}</div>
+                        </div>
+                      );
+                    })()}
                   </td>
-                  <td className="px-2 py-4">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] font-bold text-linear-text-primary">{(property.appreciation_potential || 0)}%</span>
-                    </div>
-                  </td>
-                  <td className="px-2 py-4">
-                    <div className="flex items-center gap-1.5">
-                      <span className={`text-[11px] font-bold ${( (property.commute_paternoster || 0) + (property.commute_canada_square || 0) ) <= 50 ? 'text-linear-accent-emerald' : 'text-linear-text-muted'}`}>
-                        {( (property.commute_paternoster || 0) + (property.commute_canada_square || 0) )}m
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-2 py-4 text-[11px] text-linear-text-muted font-bold">
-                    {property.bedrooms != null ? property.bedrooms : '—'}
-                  </td>
-                  <td className="px-2 py-4 text-[11px] text-linear-text-muted font-bold">
-                    {property.bathrooms != null ? property.bathrooms : '—'}
-                  </td>
+                  {/* SQFT */}
                   <td className="px-2 py-4 text-[11px] text-linear-text-muted font-bold">
                     {property.sqft || '—'}
                   </td>
+                  {/* Bedrooms */}
+                  <td className="px-2 py-4 text-[11px] text-linear-text-muted font-bold">
+                    {property.bedrooms != null ? property.bedrooms : '—'}
+                  </td>
+                  {/* EPC */}
                   <td className="px-2 py-4">
                     <span className={`px-1.5 py-0.5 rounded text-[9px] font-black border ${
                       ['A', 'B'].includes(property.epc || '') ? 'text-retro-green border-retro-green/20 bg-retro-green/10' :
@@ -581,97 +453,50 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                       {property.epc || 'N/A'}
                     </span>
                   </td>
-                  {/* FE-241: Council Tax band cell */}
+                  {/* Days on Market */}
                   <td className="px-2 py-4 text-[11px] text-linear-text-muted font-bold">
-                    {property.council_tax_band || '—'}
-                  </td>
-                  <td className="px-2 py-4 text-[11px] text-zinc-500 font-bold italic">
                     {property.dom || 0}d
                   </td>
-                  {/* ADR-017: Market status cell — analyst-owned axis */}
-                  <td className="px-2 py-4" onClick={(e) => e.stopPropagation()}>
-                    <MarketStatusBadge status={property.market_status} />
-                  </td>
-                  {/* FE-216: Date Added cell — formatted from metadata.first_seen */}
-                  <td className="px-2 py-4 text-[10px] text-linear-text-muted font-mono" onClick={(e) => e.stopPropagation()}>
-                    {property.metadata?.first_seen
-                      ? new Date(property.metadata.first_seen).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })
-                      : '—'}
-                  </td>
-                  <td className="px-2 py-4" onClick={(e) => e.stopPropagation()}>
-                    <LTVMatchBadge score={getLTVMatchScore(property.realistic_price)} />
-                  </td>
-                  {showThesisTags && (
-                    <td className="px-2 py-4" onClick={(e) => e.stopPropagation()}>
-                      {propTags.length > 0 ? (
-                        <div className="flex flex-wrap gap-1 max-w-[120px]">
-                          {propTags.slice(0, 2).map(tag => (
-                            <ThesisTagBadge key={tag} tag={tag} size="sm" />
-                          ))}
-                          {propTags.length > 2 && (
-                            <span className="text-[8px] text-linear-text-muted">+{propTags.length - 2}</span>
-                          )}
-                          <ThesisTagSelector
-                            propertyId={property.id}
-                            currentTags={propTags}
-                            size="sm"
-                          />
-                        </div>
-                      ) : (
-                        <ThesisTagSelector
-                          propertyId={property.id}
-                          currentTags={[]}
-                          size="sm"
-                        />
-                      )}
-                    </td>
-                  )}
+                  {/* UX-041: Compact action buttons — Compare + Pipeline advance + View */}
                   <td className="px-2 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                    {/* FE-220: Mobile action buttons — larger touch targets on small screens */}
-                    <div className="flex items-center justify-end gap-1 md:gap-2">
+                    <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => toggleComparison(property.id)}
-                        className={`p-1.5 md:p-1 rounded transition-all min-w-[36px] md:min-w-0 flex items-center justify-center ${
-                          isSelected ? 'text-linear-accent-blue bg-linear-accent-blue/10' : 'text-linear-accent hover:text-linear-text-primary'
+                        className={`p-1.5 rounded transition-all ${
+                          isSelected ? 'text-linear-accent-blue bg-linear-accent-blue/10' : 'text-linear-accent hover:text-white'
                         }`}
-                        title="Add to Comparison"
+                        title={isSelected ? 'Remove from Comparison' : 'Add to Comparison'}
                       >
-                        <Zap size={15} fill={isSelected ? 'currentColor' : 'none'} />
+                        <Zap size={14} fill={isSelected ? 'currentColor' : 'none'} />
                       </button>
-                      <div className="w-px h-4 bg-linear-border mx-0.5 hidden md:block"></div>
+                      {/* UX-041: Single context-aware pipeline advance button */}
                       <button
-                        onClick={() => onStatusChange && onStatusChange(property.id, status === 'shortlisted' ? 'discovered' : 'shortlisted')}
-                        className={`p-1.5 md:p-1 rounded transition-all min-w-[36px] md:min-w-0 flex items-center justify-center ${
-                          status === 'shortlisted' ? 'text-linear-accent-blue' : 'text-linear-accent hover:text-linear-text-primary'
+                        onClick={() => {
+                          if (!onStatusChange) return;
+                          const next = status === 'discovered' ? 'shortlisted'
+                            : status === 'shortlisted' ? 'vetted'
+                            : status === 'archived' ? 'discovered'
+                            : 'archived';
+                          onStatusChange(property.id, next);
+                        }}
+                        className={`p-1.5 rounded transition-all ${
+                          status === 'shortlisted' ? 'text-blue-400 hover:text-white' :
+                          status === 'vetted' ? 'text-emerald-400 hover:text-white' :
+                          status === 'archived' ? 'text-rose-400 hover:text-white' :
+                          'text-linear-accent hover:text-white'
                         }`}
-                        title="Shortlist"
+                        title={`Pipeline: ${status} → click to advance`}
                       >
-                        <Bookmark size={15} fill={status === 'shortlisted' ? 'currentColor' : 'none'} />
+                        {status === 'discovered' ? <Bookmark size={14} /> :
+                         status === 'shortlisted' ? <ShieldCheck size={14} /> :
+                         status === 'archived' ? <RotateCcw size={14} /> :
+                         <ShieldCheck size={14} />}
                       </button>
-                      <button
-                        onClick={() => onStatusChange && onStatusChange(property.id, status === 'vetted' ? 'shortlisted' : 'vetted')}
-                        className={`p-1.5 md:p-1 rounded transition-all min-w-[36px] md:min-w-0 flex items-center justify-center ${
-                          status === 'vetted' ? 'text-linear-accent-emerald' : 'text-linear-accent hover:text-linear-text-primary'
-                        }`}
-                        title="Mark as Vetted"
-                      >
-                        <ShieldCheck size={15} fill={status === 'vetted' ? 'currentColor' : 'none'} />
-                      </button>
-                      <button
-                        onClick={() => onStatusChange && onStatusChange(property.id, status === 'archived' ? 'discovered' : 'archived')}
-                        className={`p-1.5 md:p-1 rounded transition-all min-w-[36px] md:min-w-0 flex items-center justify-center ${
-                          status === 'archived' ? 'text-linear-accent-rose' : 'text-linear-accent hover:text-linear-accent-rose'
-                        }`}
-                        title="Archive"
-                      >
-                        {status === 'archived' ? <RotateCcw size={15} /> : <Archive size={15} />}
-                      </button>
-                      <div className="w-px h-4 bg-linear-border mx-1 hidden md:block"></div>
                       <Link
                         to={`/property/${property.id}`}
-                        className="p-1.5 md:p-1.5 text-linear-text-muted hover:text-linear-text-primary hover:bg-linear-accent rounded transition-all flex items-center justify-center min-w-[36px] md:min-w-0"
+                        className="p-1.5 text-linear-text-muted hover:text-white hover:bg-linear-accent rounded transition-all"
                       >
-                        <ChevronRight size={16} />
+                        <ChevronRight size={14} />
                       </Link>
                     </div>
                   </td>

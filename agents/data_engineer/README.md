@@ -44,7 +44,8 @@ Ports **3001** (backend) and **5173** (frontend) are reserved for the user's man
 |------|-------------|
 | `PROTOCOLS/01_SQLITE_ARCHITECTURE.md` | Schema design, indexing, WAL mode, API server |
 | `PROTOCOLS/02_SYNC_PIPELINE.md` | `sync_data.js`, inbox promotion, JSON schema validation |
-| `PROTOCOLS/03_DATA_GUARDRAILS.md` | Pre-operation checklist, backup discipline, approval protocol |
+| `agents/DATA_GUARDRAILS.md` | **Primary** — full data guardrails rules (mandatory before any data write) |
+| `PROTOCOLS/03_DATA_GUARDRAILS.md` | Summary — pre-operation checklist and approval protocol |
 
 ---
 

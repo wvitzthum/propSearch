@@ -72,12 +72,15 @@ interface MarketStatusBadgeProps {
   status: MarketStatus | undefined;
   className?: string;
   showLabel?: boolean;
+  /** Compact dot-only mode for PropertyTable cells — no text label */
+  compact?: boolean;
 }
 
 const MarketStatusBadge: React.FC<MarketStatusBadgeProps> = ({
   status,
   className = '',
   showLabel = false,
+  compact = false,
 }) => {
   // ADR-017: Guard against unexpected market_status values from API
   const validStatuses: MarketStatus[] = ['active', 'under_offer', 'sold_stc', 'sold_completed', 'withdrawn', 'unknown'];
@@ -101,6 +104,25 @@ const MarketStatusBadge: React.FC<MarketStatusBadgeProps> = ({
       </div>
     </div>
   );
+
+  // UX-048: Compact dot-only mode for PropertyTable cells
+  if (compact) {
+    return (
+      <Tooltip renderContent={renderTooltipContent} width="w-48">
+        <span
+          className={`inline-block h-2 w-2 rounded-full cursor-help ${className} ${
+            status === 'active' ? 'bg-retro-green' :
+            status === 'under_offer' ? 'bg-amber-400' :
+            status === 'sold_stc' ? 'bg-blue-400' :
+            status === 'sold_completed' ? 'bg-linear-text-muted' :
+            status === 'withdrawn' ? 'bg-rose-400' :
+            'bg-linear-text-muted/40'
+          }`}
+          title={cfg.label}
+        />
+      </Tooltip>
+    );
+  }
 
   return (
     <Tooltip renderContent={renderTooltipContent} width="w-48">

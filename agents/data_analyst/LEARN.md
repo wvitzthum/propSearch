@@ -13,7 +13,7 @@
 **Was:** Agent started `npm run dev` or `node server/index.js` during tasks
 **Now:** Uses `node -e` with `better-sqlite3` or curls against a pre-started server. Never starts servers.
 **Scope:** All agents
-**Status:** Active
+**Status:** Formalised — see PROTOCOLS/04_SESSION_STARTUP.md
 
 ---
 

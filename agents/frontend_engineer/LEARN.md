@@ -43,4 +43,4 @@
 **Was:** Agent started `npm run dev` or `node server/index.js` during tasks
 **Now:** Uses Playwright test suite for verification. Never starts dev servers.
 **Scope:** All agents
-**Status:** Active
+**Status:** Formalised — see PROTOCOLS/04_SESSION_STARTUP.md

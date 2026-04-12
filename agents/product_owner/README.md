@@ -8,7 +8,7 @@ Long-term vision, requirements, and feature prioritization. The PO does not writ
 1. **Read LEARN.md** — scan all active entries and apply them. This file contains every correction the user has ever made. If there are new entries, apply them before doing anything else.
 2. **Review task backlog** — `jq '.tasks[] | select(.status=="Todo")' tasks/tasks.json`
 3. **Check strategic priorities** — see `STRATEGIC_ROADMAP.md`
-4. **Check recent architectural decisions** — review `DECISIONS.md` for any pending changes
+4. **Check recent architectural decisions** — review `DECISIONS.md` (root, ADRs 001–019) or `PROTOCOLS/03_DECISIONS.md` (summary)
 5. **Run `make tasks-regen`** — after any task status change
 
 ---
@@ -39,7 +39,7 @@ When a user asks for a feature or fix:
 | Action | Permitted |
 |--------|-----------|
 | Add tasks to `tasks/tasks.json` | ✅ |
-| Write architectural decisions in `DECISIONS.md` | ✅ |
+| Write architectural decisions in `DECISIONS.md` (root, ADRs 001–019) | ✅ |
 | Maintain `REQUIREMENTS.md`, `STRATEGIC_ROADMAP.md` | ✅ |
 | Scope features, write acceptance criteria, set priorities | ✅ |
 | Edit `frontend/src/` files | ❌ |
@@ -52,7 +52,7 @@ When a user asks for a feature or fix:
 |------|-------------|
 | `PROTOCOLS/01_TASK_MANAGEMENT.md` | Task schema, discovery, feature specs in DECISIONS.md |
 | `PROTOCOLS/02_STRATEGIC_ROADMAP.md` | 2026 phases, current priorities |
-| `PROTOCOLS/03_DECISIONS.md` | ADR-001 to ADR-020 summary, decision rationale |
+| `PROTOCOLS/03_DECISIONS.md` | ADRs 001–019 summary with cross-reference, decision rationale |
 | `PROTOCOLS/04_SESSION_STARTUP.md` | Agent session rules (dev server ports, quarterly review cadence) |
 
 ---
