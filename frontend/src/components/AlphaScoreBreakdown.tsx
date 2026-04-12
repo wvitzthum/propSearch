@@ -193,7 +193,7 @@ const SpatialCard: React.FC<{ breakdown: ReturnType<typeof calculateAlphaBreakdo
 // ---------------------------------------------------------------------------
 const PriceCard: React.FC<{ breakdown: ReturnType<typeof calculateAlphaBreakdown> }> = ({ breakdown }) => {
   const { price } = breakdown;
-  const color = alphaColor(price.score);
+  const color = alphaColor(price.score ?? 5); // fallback 5 if null
   const colorClass = DOT_COLORS[color];
   const isDiscount = price.discountPercent >= 0;
 
@@ -231,7 +231,11 @@ const PriceCard: React.FC<{ breakdown: ReturnType<typeof calculateAlphaBreakdown
 
       {/* Score bar */}
       <div className="mt-auto pt-1">
-        <ScoreBar score={price.score} />
+        {price.score !== null ? (
+          <ScoreBar score={price.score} />
+        ) : (
+          <div className="text-[9px] text-linear-text-muted italic">sqft unknown</div>
+        )}
       </div>
 
       {/* Warning */}
@@ -282,7 +286,7 @@ const WhatIsAlpha: React.FC<{ breakdown: ReturnType<typeof calculateAlphaBreakdo
             ))}
           </div>
           <div className="text-[8px] text-linear-text-muted/50">
-            Formula: <span className="font-mono text-white/40">({breakdown.tenure.score.toFixed(1)} &times; 0.4) + ({breakdown.spatial.score.toFixed(1)} &times; 0.3) + ({breakdown.price.score.toFixed(1)} &times; 0.3) = {breakdown.overall.toFixed(1)}</span>
+            Formula: <span className="font-mono text-white/40">({breakdown.tenure.score.toFixed(1)} &times; 0.4) + ({breakdown.spatial.score.toFixed(1)} &times; 0.3) + ({breakdown.price.score !== null ? breakdown.price.score.toFixed(1) : '?'} &times; 0.3) = {breakdown.overall.toFixed(1)}</span>
           </div>
         </div>
       )}

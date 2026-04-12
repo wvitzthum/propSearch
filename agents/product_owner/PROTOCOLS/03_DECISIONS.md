@@ -24,6 +24,10 @@
 | ADR-017 | Seasonal phase table | Compact lookup table replacing card grid |
 | ADR-018 | Seasonal phase strip | Compact /market page view of seasonal market cycle |
 | ADR-019 | Acquisition strategy section | Bid ladder, thesis tagging, negotiation strategy |
+| ADR-020 | *(reserved)* | — |
+| ADR-021 | Alpha Score v2 | Multi-axis framework: deal quality + market dynamics + TCO + appreciation |
+
+## Full Decision Log
 
 ## Canonical Source
 **Always reference `DECISIONS.md` (root) for the full text of any ADR.**

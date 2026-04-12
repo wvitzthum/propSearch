@@ -579,3 +579,195 @@ lg+:   Full 3-col grid + timing strip + notes
 
 ## Status
 Accepted
+
+---
+
+## ADR-021: Alpha Score v2 — Multi-Axis Acquisition Quality Framework
+
+**Date**: 2026-04-12
+**Status**: Approved
+**Deciders**: Product Owner, User
+
+---
+
+### Context
+
+The alpha score (v1) used a simple 3-component model:
+- Tenure Quality (40%)
+- Spatial Alpha (30%)
+- Price Efficiency (30%)
+
+This was a useful starting point but ignored several high-signal data fields already enriched in the dataset:
+- Negotiation leverage (Days on Market, price reductions)
+- Energy efficiency (EPC rating — institutional standard risk)
+- User-specific commute relevance (Paternoster / Canada Square)
+- Lifestyle amenity proximity (Waitrose, Whole Foods, wellness hubs)
+- Market scarcity signals (market_status)
+- Long-term appreciation outlook (appreciation_potential)
+- Property physical quality (floor level, service charge density)
+
+ADR-016 addressed score transparency. This ADR addresses score **completeness**.
+
+---
+
+### Decision
+
+The alpha score evolves to a **multi-axis acquisition quality framework** with the following architecture:
+
+```
+Overall Alpha Score (0–10) — capped at 10.0
+├── Core Deal Quality (rescaled to 0–8)
+│   ├── Tenure Quality      [57%]  ← weight 40% → 40%/70% of base
+│   └── Price Efficiency    [43%]  ← weight 30% → 30%/70% of base
+│                                (only if sqft known; null = redistribute)
+│
+├── Spatial Intelligence   [embedded in core]
+│   ├── Transit Access     [primary]
+│   ├── Park Proximity    [primary]
+│   ├── Elizabeth Line    [+2 bonus pts] — DAT-197
+│   ├── Lifestyle         [+0–1.0 bonus] — Waitrose/Wellness — DAT-200
+│   └── Commute Dest.     [+0–3.0 bonus] — Paternoster/Canada Sq — DAT-197
+│
+└── Modifiers (±applied after base, all capped at 10.0 overall)
+    ├── Negotiation Leverage    [DOM]           — DAT-198
+    ├── Institutional Standard   [EPC]           — DAT-199
+    ├── Appreciation Outlook     [app_potential] — DAT-201
+    ├── Market Scarcity         [market_status] — DAT-197
+    ├── Physical Quality         [floor_level]   — DAT-202
+    └── Running Cost Risk        [SC density]    — DAT-202
+```
+
+**Score = (tenureScore×0.4 + spatialScore×0.3 + priceScore×0.3) + Σ(modifiers)**
+**Capped at 10.0**
+
+---
+
+### Component Specifications
+
+| Component | Source Field | Coverage | Score Range |
+|-----------|-------------|----------|-------------|
+| Tenure Quality | `tenure` string | ~80% | 0–10 |
+| Spatial Alpha | `nearest_tube_distance`, `park_proximity` | 65–77% | 0–10 |
+| Price Efficiency | `price_per_sqm` vs area benchmark | ~60% (sqft req.) | 0–10 |
+| Elizabeth Line Bonus | `nearest_tube_distance` | 77% | 0 or +2 pts |
+| Lifestyle Bonus | `waitrose/whole_foods/wellness_hub_distance` | 62% | 0–1.0 |
+| Commute Bonus | `commute_paternoster`, `commute_canada_square` | 66% | 0–3.0 |
+| DOM Modifier | `dom` | 40% | 0–+1.5 |
+| EPC Modifier | `epc` | 31% | −1.5 to +1.0 |
+| Appreciation Modifier | `appreciation_potential` | ~60% | −0.5 to +0.5 |
+| Market Status | `market_status` | 82% | −1.0 to 0 |
+| Floor Level | `floor_level` | 59% | −0.3 to +0.3 |
+| SC Density | `service_charge / sqft` | 42% | 0 or −0.5 |
+
+---
+
+### Scoring Tables
+
+**Days on Market (Negotiation Leverage)**
+| DOM | Score | Signal |
+|-----|-------|--------|
+| 0–14 | 0 | Fresh listing |
+| 15–30 | +0.2 | Normal |
+| 31–60 | +0.5 | Cooling — negotiate |
+| 61–120 | +1.0 | Stale — leverage |
+| 120+ | +1.5 | Distressed vendor |
+| Unknown | 0 | Assume normal |
+
+**EPC Rating (Institutional Standard)**
+| EPC | Score | Rationale |
+|-----|-------|-----------|
+| A/B | +1.0 | Institutional standard |
+| C | +0.5 | Acceptable |
+| D | 0 | Needs improvement |
+| E/F/G | −1.5 | Regulatory risk (2025+ EPC reform) |
+
+**Appreciation Potential**
+| Potential | Score | Scenario |
+|-----------|-------|---------|
+| ≥8 | +0.5 | Strong growth outlook |
+| 6–7.9 | 0 | Baseline |
+| 4–5.9 | −0.3 | Subdued growth |
+| <4 | −0.5 | Weak / high volatility |
+
+**Market Status**
+| Status | Score | Rationale |
+|--------|-------|-----------|
+| active | 0 | Baseline |
+| under_offer | −0.3 | Competitive pressure |
+| withdrawn | −0.5 | Investigate re-list price |
+| sold_stc / sold_completed | −1.0 | Lost — flag for removal |
+
+---
+
+### Null Handling
+
+Price efficiency requires `sqft`. If `sqft` is null:
+- `priceScore = null` (not 5.0 — silent null)
+- Base score rescaled: tenure gets 57%, spatial gets 43% (of the 8-point base)
+- Warning flagged: "sqft unknown — price efficiency not scored"
+
+All other components: unknown values score 0 (conservative baseline).
+
+---
+
+### Warning Flags
+
+These are surfaced in the AlphaScoreBreakdown component and do NOT cap the score but flag risk:
+
+| Warning | Trigger | Message |
+|---------|---------|---------|
+| Short lease | tenure <90 years | Below acquisition threshold |
+| Poor transit | tube >800m | Poor transit connectivity |
+| Limited green | park >800m | Limited green space access |
+| Above market | price_per_sqm > benchmark | Above market rate for this area |
+| Small floorplate | sqft <600 | Below 600 sqft acquisition minimum |
+| EPC risk | epc ∈ {E,F,G} | EPC below institutional minimum |
+| Stale listing | dom >90 | Stale — investigate vendor motivation |
+| Above SC density | SC/sqft > £8/yr | Excessive service charge |
+
+---
+
+### Canonical Source
+
+`scripts/alphaScore.ts` is the single source of truth.
+- `frontend/src/utils/alphaScore.ts` re-exports from shared module + adds display helpers
+- All components defined in one file — formula drift eliminated
+- Shared module is typed with `AlphaBreakdown` interface
+
+---
+
+### Consequences
+
+**Positive**:
+- Alpha score now reflects full acquisition thesis: deal quality + market dynamics + long-term hold
+- Negotiation leverage signal (DOM) rewards patience and identifies distressed sellers
+- EPC integration surfaces CAPEX risk before acquisition
+- Appreciation integration resolves the split-score problem (alpha vs appreciation were parallel)
+- User commute data personalises the spatial score to actual lifestyle needs
+
+**Trade-offs**:
+- Components with low coverage (EPC 31%, SC 42%) introduce noise until enrichment improves
+- More complex scoring table — harder to audit without the breakdown UI
+- Weights remain somewhat arbitrary — empirical calibration via Monte Carlo is a future task (see Monte Carlo weight calibration research project)
+
+---
+
+### Implementation
+
+| Task | Owner | Scope |
+|------|-------|-------|
+| DAT-193 | Data Analyst | Extract shared alphaScore.ts module |
+| DAT-197 | Data Analyst | Null-safe sqft, Elizabeth line, commute, market status |
+| DAT-198 | Data Analyst | DOM → Negotiation Leverage |
+| DAT-199 | Data Analyst | EPC → Institutional Standard Risk |
+| DAT-200 | Data Analyst | Lifestyle / Urban Village proximity |
+| DAT-201 | Data Analyst | Appreciation potential integration |
+| DAT-202 | Data Analyst | Floor level + SC density |
+| FE-244 | Frontend Engineer | Wire new components into alphaScore.ts + breakdown UI |
+| DAT-203 | Data Analyst | Update methodology docs + alphaScore.ts header |
+
+---
+
+### Status
+
+Accepted

@@ -124,7 +124,7 @@ const AcquisitionStrategy: React.FC<Props> = ({ property, onRequestEnrichment })
     if (breakdown.spatial.park.distance > 0 && breakdown.spatial.park.distance <= 300) {
       drivers.push(`Near green space: ${breakdown.spatial.park.metresFromThreshold}`);
     }
-    if (breakdown.price.score >= 8) {
+    if (breakdown.price.score !== null && breakdown.price.score >= 8) {
       drivers.push(`Below area benchmark by ${Math.abs(breakdown.price.discountPercent).toFixed(1)}%`);
     }
     return drivers.slice(0, 3);
