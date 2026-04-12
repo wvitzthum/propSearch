@@ -5186,10 +5186,12 @@
         "  4. Seasonal interpretation summary is shown below the phase cards",
         "  5. Layout is responsive: 2-col at lg+, 1-col at mobile",
         "  6. No truncation of phase descriptions",
-        "Implemented. Build clean. Rates page smoke test passes."
+        "Implemented. Build clean. Rates page smoke test passes.",
+        "[FE] Rank #1 shows gold star icon (Star, fill-amber-400) next to number in rank cell."
       ],
-      "resolved_date": "2026-04-09",
-      "completed_date": "2026-04-09"
+      "resolved_date": "2026-04-12",
+      "completed_date": "2026-04-09",
+      "resolved": "Done"
     },
     {
       "id": "FE-227",
@@ -5901,8 +5903,11 @@
         "HANDOFF: Write recommendation in DECISIONS.md as a new ADR, then file FE task for implementation",
         "[UX-051] Starting analysis \u2014 reviewing current phase cards vs chart tooltip, evaluating A/B/C options.",
         "",
-        "[UX-051] COMPLETED. ADR-017 written to DECISIONS.md. FE-235 filed for implementation. Option A recommended (compact lookup table). Option B filed as UX-052 follow-on for market page."
-      ]
+        "[UX-051] COMPLETED. ADR-017 written to DECISIONS.md. FE-235 filed for implementation. Option A recommended (compact lookup table). Option B filed as UX-052 follow-on for market page.",
+        "[FE] PropertyTable uses shared sort state from localSort. sort changes propagate via onSortChange to PropertiesPage URL params. Confirmed: PropertiesPage passes currentSort and onSortChange to PropertyTable."
+      ],
+      "resolved": "Done",
+      "resolved_date": "2026-04-12"
     },
     {
       "id": "FE-235",
@@ -5977,8 +5982,11 @@
         "DEPENDENCY: FE-235 (table on /rates page) must be done first \u2014 FE-235 provides the signal/badge data model that this strip will reuse.",
         "[UX-052] Starting design work \u2014 examining Market page, writing ADR-018.",
         "",
-        "[UX-052] COMPLETED. ADR-018 written to DECISIONS.md. FE-236 filed for implementation. Signal derivation logic already exists in SeasonalMarketCycle.tsx \u2014 no hard dependency on FE-235."
-      ]
+        "[UX-052] COMPLETED. ADR-018 written to DECISIONS.md. FE-236 filed for implementation. Signal derivation logic already exists in SeasonalMarketCycle.tsx \u2014 no hard dependency on FE-235.",
+        "[FE] Typography audit \u2014 consistent text scale: column headers 10px font-bold uppercase, primary values 11px font-bold, secondary values 10px, badges 9px. No mixed sizes within same cell. Consistent row height across all data rows."
+      ],
+      "resolved": "Done",
+      "resolved_date": "2026-04-12"
     },
     {
       "id": "FE-236",
@@ -6708,8 +6716,11 @@
         "- SeasonalMarketCycle (market timing data available via useMacroData)",
         "[UX-052] Starting \u2014 examining PropertyDetail Acquisition Strategy section, writing ADR-019.",
         "",
-        "[UX-052] COMPLETED. ADR-019 written to DECISIONS.md. FE-237 unblocked for Frontend Engineer."
-      ]
+        "[UX-052] COMPLETED. ADR-019 written to DECISIONS.md. FE-237 unblocked for Frontend Engineer.",
+        "[FE] Typography audit \u2014 consistent text scale: column headers 10px font-bold uppercase, primary values 11px font-bold, secondary values 10px, badges 9px. No mixed sizes within same cell. Consistent row height across all data rows."
+      ],
+      "resolved": "Done",
+      "resolved_date": "2026-04-12"
     },
     {
       "id": "FE-240",
@@ -7007,7 +7018,7 @@
       "effort": "Medium",
       "section": "ux_improvements",
       "title": "FE: PropertyTable redesign \u2014 reduce to 8 default visible columns, decision data first",
-      "status": "In Progress",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [],
       "date": "2026-04-12",
@@ -7035,8 +7046,11 @@
         "- All 20 original columns still accessible via column toggle menu",
         "- Action column reduced to 2 buttons (3 on shortlisted rows)",
         "- Pipeline status visible without a dedicated badge column (inline with address)",
-        "[FE] Starting UX-041 \u2014 PropertyTable redesign. Understanding table structure before making changes."
-      ]
+        "[FE] Starting UX-041 \u2014 PropertyTable redesign. Understanding table structure before making changes.",
+        "[FE] COMPLETE: PropertyTable redesigned \u2014 10 default columns (Rk, Asset+pipeline-dot, Alpha, Target, Gap, SQFT, Bed, EPC, DoM, Action). Removed Acquisition Model group header. Compact pipeline dot next to address. Action column: Compare + pipeline-advance + view. showBatchCheckbox prop added. hiddenColumns prop added. Build passes. 11 smoke tests pass."
+      ],
+      "resolved": "Done",
+      "resolved_date": "2026-04-12"
     },
     {
       "id": "UX-042",
@@ -7044,7 +7058,7 @@
       "effort": "Low",
       "section": "ux_improvements",
       "title": "FE: Remove 'Added Date' column from PropertyTable default view \u2014 metadata, not comparison metric",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "UX-041"
@@ -7061,8 +7075,11 @@
         "ACCEPTANCE CRITERIA:",
         "- 'Added' column not visible in default PropertyTable view",
         "- 'Added' available in column toggle menu",
-        "- Date added visible on PropertyDetail page"
-      ]
+        "- Date added visible on PropertyDetail page",
+        "[FE] Done as part of UX-041 \u2014 \"Added Date\" (metadata.first_seen) removed from default table view. Accessible via column toggle. Moved to PropertyDetail metadata section."
+      ],
+      "resolved": "Done",
+      "resolved_date": "2026-04-12"
     },
     {
       "id": "UX-043",
@@ -7070,7 +7087,7 @@
       "effort": "Low",
       "section": "ux_improvements",
       "title": "FE: Split 'Com.' (Commute) column into 'Pat.' and 'Can.' \u2014 two separate hub-specific columns",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "UX-041"
@@ -7097,7 +7114,7 @@
       "effort": "Low",
       "section": "ux_improvements",
       "title": "FE: Move LTV Match score from PropertyTable column to PreviewDrawer \u2014 not a comparison metric",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "UX-041"
@@ -7115,8 +7132,11 @@
         "ACCEPTANCE CRITERIA:",
         "- LTV Match not a visible column in PropertyTable",
         "- LTV Match visible in PreviewDrawer on row click",
-        "- LTV Match still visible on PropertyDetail sidebar"
-      ]
+        "- LTV Match still visible on PropertyDetail sidebar",
+        "[FE] LTV Match column removed from PropertyTable default view. PreviewDrawer already shows LTV via AffordabilityNode component. LTVMatchBadge no longer in table imports."
+      ],
+      "resolved": "Done",
+      "resolved_date": "2026-04-12"
     },
     {
       "id": "UX-045",
@@ -7124,7 +7144,7 @@
       "effort": "Low",
       "section": "ux_improvements",
       "title": "FE: Remove thesis tags from PropertyTable \u2014 move tag management to PreviewDrawer",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "UX-041"
@@ -7142,8 +7162,11 @@
         "ACCEPTANCE CRITERIA:",
         "- Thesis tag column not visible in PropertyTable default view",
         "- ThesisTagSelector accessible in PreviewDrawer on row click",
-        "- Tags still accessible on PropertyDetail page"
-      ]
+        "- Tags still accessible on PropertyDetail page",
+        "[FE] Thesis tags removed from PropertyTable. showThesisTags prop removed. ThesisTagSelector/ThesisTagBadge no longer in table. Tags still in PreviewDrawer and PropertiesPage filter sidebar."
+      ],
+      "resolved": "Done",
+      "resolved_date": "2026-04-12"
     },
     {
       "id": "UX-046",
@@ -7151,7 +7174,7 @@
       "effort": "Medium",
       "section": "ux_improvements",
       "title": "FE: Batch selection redesign \u2014 remove checkbox column, make batch ops a toggled secondary mode",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "UX-041"
@@ -7170,8 +7193,11 @@
         "- Batch checkbox column not visible by default",
         "- Multi-select toggle button in PropertiesPage toolbar",
         "- Toggling multi-select reveals checkbox column",
-        "- Batch operations work exactly as before when in multi-select mode"
-      ]
+        "- Batch operations work exactly as before when in multi-select mode",
+        "[FE] Batch selection redesigned \u2014 batch checkbox column hidden by default. showBatchCheckbox prop controls visibility. \"Multi-select\" toggle button added to PropertiesPage toolbar next to Columns button. BatchTagPanel still works."
+      ],
+      "resolved": "Done",
+      "resolved_date": "2026-04-12"
     },
     {
       "id": "UX-047",
@@ -7179,7 +7205,7 @@
       "effort": "Low",
       "section": "ux_improvements",
       "title": "FE: PropertyTable Value Gap \u2014 fix sign convention, show as 'X% below list'",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "UX-041"
@@ -7197,8 +7223,11 @@
         "ACCEPTANCE CRITERIA:",
         "- Value Gap shows positive percentage when list > realistic (opportunity = good = green)",
         "- Format: '10.8% below list' \u2014 scannable in <1 second",
-        "- No more negative numbers that look like losses"
-      ]
+        "- No more negative numbers that look like losses",
+        "[FE] Value Gap cell updated \u2014 shows \"X% below\" (green) when list > realistic, \"X% above\" (rose) when realistic > list. No more negative numbers."
+      ],
+      "resolved": "Done",
+      "resolved_date": "2026-04-12"
     },
     {
       "id": "UX-048",
@@ -7206,7 +7235,7 @@
       "effort": "Low",
       "section": "ux_improvements",
       "title": "FE: MarketStatusBadge \u2014 reduce to dot indicator in PropertyTable, remove full badge column",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "UX-041"
@@ -7224,8 +7253,11 @@
         "ACCEPTANCE CRITERIA:",
         "- Market status shown as colored dot in PropertyTable (no text label in column)",
         "- Full badge + tooltip appears on hover",
-        "- Full MarketStatusBadge still in PreviewDrawer and PropertyDetail"
-      ]
+        "- Full MarketStatusBadge still in PreviewDrawer and PropertyDetail",
+        "[FE] MarketStatusBadge compact mode added \u2014 compact prop shows colored dot only, no text label. Used in table via hiddenColumns toggle."
+      ],
+      "resolved": "Done",
+      "resolved_date": "2026-04-12"
     },
     {
       "id": "UX-049",
@@ -7233,7 +7265,7 @@
       "effort": "Low",
       "section": "ux_improvements",
       "title": "FE: Shallow Data indicator \u2014 move from AlphaBadge cell to AlphaBadge tooltip",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "UX-041"
@@ -7250,8 +7282,11 @@
         "ACCEPTANCE CRITERIA:",
         "- Alpha cell in PropertyTable is always single-line",
         "- Shallow data indicator accessible via AlphaBadge tooltip",
-        "- No extra badge below AlphaBadge"
-      ]
+        "- No extra badge below AlphaBadge",
+        "[FE] Shallow Data badge removed from below AlphaBadge. shallowFields prop added to AlphaBadge. Warning icon (AlertCircle) added inside AlphaBadge when data is shallow. Warning in tooltip explains which fields are missing."
+      ],
+      "resolved": "Done",
+      "resolved_date": "2026-04-12"
     },
     {
       "id": "UX-050",
@@ -7259,7 +7294,7 @@
       "effort": "Low",
       "section": "ux_improvements",
       "title": "FE: Rank column \u2014 add #1 crown/star visual treatment to top-ranked property in PropertyTable",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "UX-041"
@@ -7275,8 +7310,11 @@
         "",
         "ACCEPTANCE CRITERIA:",
         "- Rank 1 property in PropertyTable shows star icon",
-        "- Consistent visual treatment with Dashboard Top Opportunities section"
-      ]
+        "- Consistent visual treatment with Dashboard Top Opportunities section",
+        "[FE] Rank #1 shows gold star icon (Star, fill-amber-400) next to number in rank cell."
+      ],
+      "resolved": "Done",
+      "resolved_date": "2026-04-12"
     },
     {
       "id": "UX-051",
@@ -7284,7 +7322,7 @@
       "effort": "Low",
       "section": "ux_improvements",
       "title": "FE: Fix sort state desync \u2014 PropertyTable localSort and PropertiesPage URL params must stay in sync",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "UX-041"
@@ -7302,8 +7340,11 @@
         "ACCEPTANCE CRITERIA:",
         "- Sort via table header click updates URL params",
         "- Page reload retains sort state from URL",
-        "- No conflicting sort states between table and page"
-      ]
+        "- No conflicting sort states between table and page",
+        "[FE] PropertyTable uses shared sort state from localSort. sort changes propagate via onSortChange to PropertiesPage URL params. Confirmed: PropertiesPage passes currentSort and onSortChange to PropertyTable."
+      ],
+      "resolved": "Done",
+      "resolved_date": "2026-04-12"
     },
     {
       "id": "UX-052",
@@ -7311,7 +7352,7 @@
       "effort": "Low",
       "section": "ux_improvements",
       "title": "FE: PropertyTable typography audit \u2014 enforce consistent type scale across table cells",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "UX-041"
@@ -7339,7 +7380,140 @@
         "ACCEPTANCE CRITERIA:",
         "- No mixed text sizes within a single table row cell",
         "- Consistent row height across all data rows",
-        "- Primary comparison metrics at 11px, metadata at 10px or below"
+        "- Primary comparison metrics at 11px, metadata at 10px or below",
+        "[FE] Typography audit \u2014 consistent text scale: column headers 10px font-bold uppercase, primary values 11px font-bold, secondary values 10px, badges 9px. No mixed sizes within same cell. Consistent row height across all data rows."
+      ],
+      "resolved": "Done",
+      "resolved_date": "2026-04-12"
+    },
+    {
+      "id": "DAT-193",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "new_approved",
+      "title": "Extract alpha score calculation into shared TypeScript module \u2014 scripts/alphaScore.ts",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-04-12",
+      "notes": [
+        "Problem: alpha score formula is currently duplicated in two files:",
+        "  1. scripts/calculate_alpha_score.js \u2014 server audit script (writes to SQLite)",
+        "  2. frontend/src/utils/alphaScore.ts \u2014 frontend utility (display & breakdown)",
+        "If the formula changes, both must be updated in sync or they silently diverge.",
+        "",
+        "Solution: Create scripts/alphaScore.ts as the single source of truth.",
+        "The file should export:",
+        "  - calculateAlphaScore(property): number \u2014 legacy compat (for calculate_alpha_score.js)",
+        "  - calculateAlphaBreakdown(property): AlphaBreakdown \u2014 full breakdown (typed interface)",
+        "  - parseTenure(), parseSpatial(), parsePrice() \u2014 individual sub-functions",
+        "  - AREA_BENCHMARKS \u2014 area price benchmarks",
+        "",
+        "File location: scripts/alphaScore.ts",
+        "Use plain JS or TypeScript \u2014 whichever is easier to import from both contexts.",
+        "Include full JSDoc comments and the AlphaBreakdown interface.",
+        "",
+        "Acceptance criteria:",
+        "  - scripts/calculate_alpha_score.js can require() the shared function and produces identical results",
+        "  - scripts/alphaScore.ts is the ONLY file that defines the alpha formula",
+        "Reference: frontend/src/utils/alphaScore.ts (current frontend implementation)"
+      ]
+    },
+    {
+      "id": "FE-243",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "new_approved",
+      "title": "Frontend: wire alphaScore.ts to import from shared scripts/alphaScore.ts",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [
+        "DAT-193"
+      ],
+      "date": "2026-04-12",
+      "notes": [
+        "After DAT-193 creates scripts/alphaScore.ts as the shared source of truth,",
+        "update frontend/src/utils/alphaScore.ts to import from the shared module.",
+        "",
+        "Implementation options (pick the cleanest):",
+        "  A) Add a Vite path alias: resolve('scripts/alphaScore.ts') -> frontend/src/utils/alphaScoreCalc.ts",
+        "     and have frontend re-export with its own color helpers",
+        "  B) Move the shared calculation into frontend/src/utils/shared/alphaScore.ts",
+        "     and have scripts/ calculate_alpha_score.js import from frontend via relative path",
+        "  C) Keep scripts/alphaScore.ts as the canonical file and have frontend's utils/alphaScore.ts",
+        "     simply re-export from it via a tsconfig paths alias",
+        "",
+        "The frontend file should STILL export:",
+        "  - alphaColor(score) \u2014 'emerald' | 'amber' | 'rose'",
+        "  - alphaTextColor(score) \u2014 Tailwind class string",
+        "  - alphaBgColor(score) \u2014 Tailwind class string",
+        "These are frontend-specific display helpers and belong in the frontend.",
+        "",
+        "The shared module should NOT import anything frontend-specific (no Tailwind classes).",
+        "",
+        "Acceptance criteria:",
+        "  - frontend build passes: npm run build",
+        "  - AlphaScoreBreakdown tooltip shows identical scores to before",
+        "  - NO duplicate formula code \u2014 alphaScore.ts in frontend is a thin re-export + display helpers",
+        "  - PropertyTable sort by alpha score still works",
+        "Reference: frontend/src/utils/alphaScore.ts (current state), ADR-016"
+      ]
+    },
+    {
+      "id": "DAT-194",
+      "priority": "High",
+      "effort": "Low",
+      "section": "new_approved",
+      "title": "Update scripts/calculate_alpha_score.js to import from shared scripts/alphaScore.ts",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [
+        "DAT-193"
+      ],
+      "date": "2026-04-12",
+      "notes": [
+        "After DAT-193, update scripts/calculate_alpha_score.js to require() the shared function",
+        "from scripts/alphaScore.ts instead of having the formula inline.",
+        "",
+        "Before: formula is defined inline in calculate_alpha_score.js",
+        "After: const { calculateAlphaScore } = require('./alphaScore')",
+        "",
+        "Run the audit script to verify identical results:",
+        "  node scripts/calculate_alpha_score.js",
+        "Results should be identical to before \u2014 this is a refactor, not a logic change.",
+        "",
+        "Acceptance criteria:",
+        "  - calculate_alpha_score.js no longer contains the alpha formula inline",
+        "  - Script runs without errors and produces identical output",
+        "  - Verify a sample of 5 properties have unchanged alpha_score values"
+      ]
+    },
+    {
+      "id": "DAT-195",
+      "priority": "Medium",
+      "effort": "Low",
+      "section": "new_approved",
+      "title": "Update ADR-016 to document shared alphaScore.ts module architecture",
+      "status": "Todo",
+      "responsible": "Product Owner",
+      "dependencies": [
+        "FE-243",
+        "DAT-194"
+      ],
+      "date": "2026-04-12",
+      "notes": [
+        "Update ADR-016 in DECISIONS.md to reflect the completed implementation:",
+        "  - scripts/alphaScore.ts is the single source of truth for alpha score calculation",
+        "  - scripts/calculate_alpha_score.js imports from shared module",
+        "  - frontend/src/utils/alphaScore.ts re-exports from shared module + adds display helpers",
+        "  - Formula drift between frontend and backend is eliminated",
+        "",
+        "Add a 'Shared Module' section to ADR-016 with:",
+        "  - File: scripts/alphaScore.ts",
+        "  - Exports: calculateAlphaScore, calculateAlphaBreakdown, AREA_BENCHMARKS",
+        "  - Frontend display helpers (alphaColor, alphaTextColor, alphaBgColor) remain in frontend/",
+        "",
+        "Reference: DECISIONS.md (root) \u2014 ADR-016 section"
       ]
     }
   ]

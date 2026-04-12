@@ -37,6 +37,10 @@
 <tr><td><strong>QA-013</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Review and audit Acquisition Strategy section — verify completeness and data accuracy'>QA: Review and audit Acquisition Strategy section — verify completeness and data accuracy</td><td>In Progress</td><td>UI/UX QA</td><td>FE-237</td><td></td></tr>
 <tr><td><strong>DAT-192</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DAT: Enrich all properties with real council tax band from UK Gov portal or agent listings'>DAT: Enrich all properties with real council tax band from UK Gov portal or agent listings</td><td>In Progress</td><td>Data Analyst</td><td>None</td><td></td></tr>
 <tr><td><strong>FE-242</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Fix HPI chart data schema mismatch — HPIHistoryChart and LondonPrimePremiumChart always fell back to synthetic data despite real data existing'>FE: Fix HPI chart data schema mismatch — HPIHistoryChart and LondonPrimePremiumChart always fell back to synthetic data despite real data existing</td><td>done</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>DAT-193</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Extract alpha score calculation into shared TypeScript module — scripts/alphaScore.ts'>Extract alpha score calculation into shared TypeScript module — scripts/alphaScore.ts</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-243</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Frontend: wire alphaScore.ts to import from shared scripts/alphaScore.ts'>Frontend: wire alphaScore.ts to import from shared scripts/alphaScore.ts</td><td>Todo</td><td>Frontend Engineer</td><td>DAT-193</td><td></td></tr>
+<tr><td><strong>DAT-194</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Update scripts/calculate_alpha_score.js to import from shared scripts/alphaScore.ts'>Update scripts/calculate_alpha_score.js to import from shared scripts/alphaScore.ts</td><td>Todo</td><td>Data Analyst</td><td>DAT-193</td><td></td></tr>
+<tr><td><strong>DAT-195</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Update ADR-016 to document shared alphaScore.ts module architecture'>Update ADR-016 to document shared alphaScore.ts module architecture</td><td>Todo</td><td>Product Owner</td><td>FE-243, DAT-194</td><td></td></tr>
 </tbody>
 </table>
 
@@ -57,37 +61,6 @@
 </thead>
 <tbody>
 <tr><td><strong>DAT-187</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Data Analyst: Check lead inbox on every launch — enrich all pending leads before any other work'>Data Analyst: Check lead inbox on every launch — enrich all pending leads before any other work</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
-</tbody>
-</table>
-
-## 🎨 UX Improvements
-
-<table>
-<thead>
-<tr>
-  <th align="left">ID</th>
-  <th align="left">Priority</th>
-  <th align="left">Effort</th>
-  <th align="left" style="width:480px">Task</th>
-  <th align="left">Status</th>
-  <th align="left">Responsible</th>
-  <th align="left">Dependencies</th>
-  <th align="left">Block Reason / Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr><td><strong>UX-041</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: PropertyTable redesign — reduce to 8 default visible columns, decision data first'>FE: PropertyTable redesign — reduce to 8 default visible columns, decision data first</td><td>In Progress</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
-<tr><td><strong>UX-042</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Remove &#x27;Added Date&#x27; column from PropertyTable default view — metadata, not comparison metric'>FE: Remove &#x27;Added Date&#x27; column from PropertyTable default view — metadata, not comparison metric</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
-<tr><td><strong>UX-043</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Split &#x27;Com.&#x27; (Commute) column into &#x27;Pat.&#x27; and &#x27;Can.&#x27; — two separate hub-specific columns'>FE: Split &#x27;Com.&#x27; (Commute) column into &#x27;Pat.&#x27; and &#x27;Can.&#x27; — two separate hub-specific columns</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
-<tr><td><strong>UX-044</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Move LTV Match score from PropertyTable column to PreviewDrawer — not a comparison metric'>FE: Move LTV Match score from PropertyTable column to PreviewDrawer — not a comparison metric</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
-<tr><td><strong>UX-045</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Remove thesis tags from PropertyTable — move tag management to PreviewDrawer'>FE: Remove thesis tags from PropertyTable — move tag management to PreviewDrawer</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
-<tr><td><strong>UX-046</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Batch selection redesign — remove checkbox column, make batch ops a toggled secondary mode'>FE: Batch selection redesign — remove checkbox column, make batch ops a toggled secondary mode</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
-<tr><td><strong>UX-047</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: PropertyTable Value Gap — fix sign convention, show as &#x27;X% below list&#x27;'>FE: PropertyTable Value Gap — fix sign convention, show as &#x27;X% below list&#x27;</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
-<tr><td><strong>UX-048</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: MarketStatusBadge — reduce to dot indicator in PropertyTable, remove full badge column'>FE: MarketStatusBadge — reduce to dot indicator in PropertyTable, remove full badge column</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
-<tr><td><strong>UX-049</strong></td><td>Low</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Shallow Data indicator — move from AlphaBadge cell to AlphaBadge tooltip'>FE: Shallow Data indicator — move from AlphaBadge cell to AlphaBadge tooltip</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
-<tr><td><strong>UX-050</strong></td><td>Low</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Rank column — add #1 crown/star visual treatment to top-ranked property in PropertyTable'>FE: Rank column — add #1 crown/star visual treatment to top-ranked property in PropertyTable</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
-<tr><td><strong>UX-051</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Fix sort state desync — PropertyTable localSort and PropertiesPage URL params must stay in sync'>FE: Fix sort state desync — PropertyTable localSort and PropertiesPage URL params must stay in sync</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
-<tr><td><strong>UX-052</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: PropertyTable typography audit — enforce consistent type scale across table cells'>FE: PropertyTable typography audit — enforce consistent type scale across table cells</td><td>Todo</td><td>Frontend Engineer</td><td>UX-041</td><td></td></tr>
 </tbody>
 </table>
 
@@ -344,6 +317,18 @@
 <tr><td><strong>UX-052</strong></td><td>UX: Research and design Acquisition Strategy section — transform into a full data-dense hero area on /property/:id</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-240</strong></td><td>FE: Rebuild Acquisition Strategy section on PropertyDetail — full data overhaul per UX-052</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-241</strong></td><td>FE: Display council tax band badge on PropertyDetail page and in Total Monthly Outlay section</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>UX-041</strong></td><td>FE: PropertyTable redesign — reduce to 8 default visible columns, decision data first</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>UX-042</strong></td><td>FE: Remove &#x27;Added Date&#x27; column from PropertyTable default view — metadata, not comparison metric</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>UX-043</strong></td><td>FE: Split &#x27;Com.&#x27; (Commute) column into &#x27;Pat.&#x27; and &#x27;Can.&#x27; — two separate hub-specific columns</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>UX-044</strong></td><td>FE: Move LTV Match score from PropertyTable column to PreviewDrawer — not a comparison metric</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>UX-045</strong></td><td>FE: Remove thesis tags from PropertyTable — move tag management to PreviewDrawer</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>UX-046</strong></td><td>FE: Batch selection redesign — remove checkbox column, make batch ops a toggled secondary mode</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>UX-047</strong></td><td>FE: PropertyTable Value Gap — fix sign convention, show as &#x27;X% below list&#x27;</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>UX-048</strong></td><td>FE: MarketStatusBadge — reduce to dot indicator in PropertyTable, remove full badge column</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>UX-049</strong></td><td>FE: Shallow Data indicator — move from AlphaBadge cell to AlphaBadge tooltip</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>UX-050</strong></td><td>FE: Rank column — add #1 crown/star visual treatment to top-ranked property in PropertyTable</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>UX-051</strong></td><td>FE: Fix sort state desync — PropertyTable localSort and PropertiesPage URL params must stay in sync</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>UX-052</strong></td><td>FE: PropertyTable typography audit — enforce consistent type scale across table cells</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>FE-162</strong></td><td>Runtime crash in Inbox.tsx — Cannot read properties of undefined (reading toLoca...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-187</strong></td><td>Responsive Layout Audit: Sidebar layout (pl-64 fixed) not mobile-optimised — res...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-172</strong></td><td>Runtime React error in MarketConditionsBar.tsx:141 — &#x27;Objects are not valid as a...</td><td>Done</td><td></td></tr>
