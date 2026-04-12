@@ -12,7 +12,8 @@ import {
   ShieldCheck,
   CheckSquare,
   Square,
-  Layers
+  Layers,
+  Star,
 } from 'lucide-react';
 import type { PropertyWithCoords } from '../types/property';
 import type { PropertyStatus } from '../hooks/usePipeline';
@@ -508,7 +509,16 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                         }`}
                         title={getRank(property.id) !== undefined ? `Rank ${getRank(property.id)} — click to remove` : 'Assign rank'}
                       >
-                        {getRank(property.id) !== undefined ? getRank(property.id) : '—'}
+                        {getRank(property.id) !== undefined ? (
+                          getRank(property.id) === 1 ? (
+                            <div className="flex items-center gap-0.5">
+                              <Star size={9} className="text-amber-400 fill-amber-400" />
+                              <span>{getRank(property.id)}</span>
+                            </div>
+                          ) : (
+                            getRank(property.id)
+                          )
+                        ) : '—'}
                       </button>
                     ) : null}
                   </td>
