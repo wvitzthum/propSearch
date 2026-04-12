@@ -41,6 +41,34 @@
 <tr><td><strong>FE-243</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Frontend: wire alphaScore.ts to import from shared scripts/alphaScore.ts'>Frontend: wire alphaScore.ts to import from shared scripts/alphaScore.ts</td><td>Todo</td><td>Frontend Engineer</td><td>DAT-193</td><td></td></tr>
 <tr><td><strong>DAT-194</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Update scripts/calculate_alpha_score.js to import from shared scripts/alphaScore.ts'>Update scripts/calculate_alpha_score.js to import from shared scripts/alphaScore.ts</td><td>Todo</td><td>Data Analyst</td><td>DAT-193</td><td></td></tr>
 <tr><td><strong>DAT-195</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Update ADR-016 to document shared alphaScore.ts module architecture'>Update ADR-016 to document shared alphaScore.ts module architecture</td><td>Todo</td><td>Product Owner</td><td>FE-243, DAT-194</td><td></td></tr>
+<tr><td><strong>DAT-198</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Alpha score: add Days on Market (DOM) → Negotiation Leverage component'>Alpha score: add Days on Market (DOM) → Negotiation Leverage component</td><td>Todo</td><td>Data Analyst</td><td>DAT-197</td><td></td></tr>
+<tr><td><strong>DAT-199</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Alpha score: add EPC rating → Institutional Standard Risk component'>Alpha score: add EPC rating → Institutional Standard Risk component</td><td>Todo</td><td>Data Analyst</td><td>DAT-197</td><td></td></tr>
+<tr><td><strong>DAT-200</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Alpha score: add Lifestyle/Urban Village proximity component (Waitrose, Whole Foods, Wellness)'>Alpha score: add Lifestyle/Urban Village proximity component (Waitrose, Whole Foods, Wellness)</td><td>Todo</td><td>Data Analyst</td><td>DAT-197</td><td></td></tr>
+<tr><td><strong>DAT-201</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Alpha score: integrate appreciation_potential as ± modifier on final score'>Alpha score: integrate appreciation_potential as ± modifier on final score</td><td>Todo</td><td>Data Analyst</td><td>DAT-198, DAT-199, DAT-200</td><td></td></tr>
+<tr><td><strong>DAT-202</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Alpha score: add floor level scoring and service charge density'>Alpha score: add floor level scoring and service charge density</td><td>Todo</td><td>Data Analyst</td><td>DAT-197</td><td></td></tr>
+<tr><td><strong>FE-244</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Frontend: update alphaScore.ts with new components and breakdown UI'>Frontend: update alphaScore.ts with new components and breakdown UI</td><td>Todo</td><td>Frontend Engineer</td><td>DAT-198, DAT-199, DAT-200, DAT-201, DAT-202</td><td></td></tr>
+<tr><td><strong>DAT-203</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Documentation: update alpha score methodology in alphaScore.ts and DECISIONS.md'>Documentation: update alpha score methodology in alphaScore.ts and DECISIONS.md</td><td>Todo</td><td>Data Analyst</td><td>FE-244</td><td></td></tr>
+<tr><td><strong>PO-002</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='ADR-021: Alpha Score v2 — Multi-Axis Acquisition Quality Framework'>ADR-021: Alpha Score v2 — Multi-Axis Acquisition Quality Framework</td><td>Todo</td><td>Product Owner</td><td>DAT-203</td><td></td></tr>
+</tbody>
+</table>
+
+## 🐛 Bug Fixes
+
+<table>
+<thead>
+<tr>
+  <th align="left">ID</th>
+  <th align="left">Priority</th>
+  <th align="left">Effort</th>
+  <th align="left" style="width:480px">Task</th>
+  <th align="left">Status</th>
+  <th align="left">Responsible</th>
+  <th align="left">Dependencies</th>
+  <th align="left">Block Reason / Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr><td><strong>DAT-197</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Alpha score: null-safe sqft requirement for price efficiency + E LADOG line bonus + commute destination scoring'>Alpha score: null-safe sqft requirement for price efficiency + E LADOG line bonus + commute destination scoring</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
 </tbody>
 </table>
 
@@ -61,6 +89,27 @@
 </thead>
 <tbody>
 <tr><td><strong>DAT-187</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Data Analyst: Check lead inbox on every launch — enrich all pending leads before any other work'>Data Analyst: Check lead inbox on every launch — enrich all pending leads before any other work</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>DAT-196</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DAT-196: Audit all properties with local image_url paths and verify correct path format in DB'>DAT-196: Audit all properties with local image_url paths and verify correct path format in DB</td><td>Todo</td><td>Data Analyst</td><td>BUG-005</td><td></td></tr>
+</tbody>
+</table>
+
+## 🧪 Test Coverage
+
+<table>
+<thead>
+<tr>
+  <th align="left">ID</th>
+  <th align="left">Priority</th>
+  <th align="left">Effort</th>
+  <th align="left" style="width:480px">Task</th>
+  <th align="left">Status</th>
+  <th align="left">Responsible</th>
+  <th align="left">Dependencies</th>
+  <th align="left">Block Reason / Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr><td><strong>QA-030</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA-030: Test local image serving end-to-end after BUG-005 deployment'>QA-030: Test local image serving end-to-end after BUG-005 deployment</td><td>Todo</td><td>UI/UX QA</td><td>BUG-005, DAT-196</td><td></td></tr>
 </tbody>
 </table>
 
