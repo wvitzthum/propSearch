@@ -46,6 +46,21 @@
 | Images | When official sources don't have imagery |
 | Tenure details | When Land Registry title register inaccessible |
 | Days on market | When not verifiable via portal archives |
+| **Price evolution history** | **When portal exposes `priceHistory[]` or `listingHistory[]` — capture on every enrich** |
+
+**IMPORTANT: Portal Price History Must Be Captured on Enrichment**
+
+Both Zoopla and Rightmove expose structured price change timelines on listing detail pages. The analyst **must** extract and store these at enrichment time — do not rely solely on reactive snapshots from `sync_data.js`:
+
+| Portal | Field | What it contains |
+|--------|-------|-----------------|
+| Zoopla | `priceHistory[]` | Array of `{date, price, eventType, reason}` — full portal-visible price timeline |
+| Zoopla | `dateFirstListed` | Portal's own first-listing ISO date (not same as your `first_seen`) |
+| Rightmove | `listingHistory[].priceChangeData` | Portal-visible price changes with old/new price and date |
+| Rightmove | `prices.primaryPrice` | Current asking price (string `"£765,000"`) |
+| Rightmove | `prices.pricePerSqFt` | Portal-computed £/sqft (not extracted in current scraper) |
+
+See `PROTOCOLS/08_SCRAPING.md` for extraction patterns. Price history entries must be written to `price_history` at enrichment time — never wait for the next sync cycle.
 
 **Important:** If Tier 1 source has the data you need, do NOT fall back to Tier 3 for the same data point. Use Tier 3 only for data that Tier 1 doesn't provide.
 

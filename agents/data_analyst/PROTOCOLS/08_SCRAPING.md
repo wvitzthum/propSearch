@@ -157,7 +157,33 @@ window.PAGE_MODEL.propertyData
 ├── images[].url
 ├── keyFeatures[]        ← Array of strings e.g. "Second Floor (Lift)", "Two Bedrooms"
 └── text.description     ← Full HTML description
+└── listingHistory[]     ← [{listingUpdateReason, listingDate, priceChangeData{previousPrice, newPrice, date}}, ...]
+└── listingId            ← Stable portal listing ID (needed for re-scraping — store in links/links)
 ```
+
+### Rightmove Price History Extraction (DAT-204)
+
+`listingHistory[]` on detail pages contains the portal-visible price change log. Extract it on every enrichment:
+
+```javascript
+// In enrichRightmoveDetail, add to the return object:
+listingHistory: (pd.listingHistory || []).map(entry => ({
+  listingUpdateReason: entry.listingUpdateReason || null,
+  listingDate: entry.listingDate || null,
+  priceChangeData: entry.priceChangeData ? {
+    previousPrice: entry.priceChangeData.previousPrice,
+    newPrice: entry.priceChangeData.newPrice,
+    date: entry.priceChangeData.date
+  } : null
+})),
+listingId: pd.listingId || null,
+
+// Also parse prices.primaryPrice from string:
+listPrice: parseInt((pd.prices?.primaryPrice || '').replace(/[£,\s]/g, '') || '0') || null,
+pricePerSqFtPortal: pd.prices?.pricePerSqFt || null,
+```
+
+Each `priceChangeData` entry represents a portal-visible price change with a date and old/new price. Write all entries to `price_history` at enrichment time — do not discard.
 
 ### Floor Level Fallback (when `entranceFloor` is null)
 ```javascript
@@ -184,6 +210,32 @@ const floorLevel = pd.entranceFloor ||
 5. **Rightmove search pages DO use `__NEXT_DATA__`** — use the search scraper for discovery, Playwright PAGE_MODEL for enrichment.
 6. **Pagination on search** — add `&index=24` for page 2, `&index=48` for page 3, etc. (24 results per page).
 7. **`prop.price` may be an object `{amount: 750000}` not a raw number** — always use `prop.price?.amount`.
+8. **`listingHistory[]` may be sparse** — some listings have no price history; still write whatever entries exist.
+
+### Zoopla Price History Extraction (DAT-205)
+
+Zoopla listing pages expose a structured `priceHistory[]` array in the page JSON (same location as `floorArea`). Always extract and write to `price_history`:
+
+```javascript
+// In FlareSolverr or page-evaluate extraction, add:
+const priceHist = clean.match(/"priceHistory":\s*\[([^\]]+)\]/)?.[1];
+// Parse each entry: {date, price, eventType, reason}
+const priceHistory = priceHist ? JSON.parse(`[${priceHist}]`) : [];
+// Extract:
+const zooplaDateFirstListed = clean.match(/"dateFirstListed":\s*"([^"]+)"/)?.[1];
+const zooplaListingId = clean.match(/"listingId":\s*"([^"]+)"/)?.[1];
+const zooplaQualityScore = clean.match(/"qualityScore":\s*(\d+)/)?.[1];
+```
+
+Each `priceHistory` entry `{date, price, eventType}` represents a portal-visible price event. Map `eventType` to `status` in `price_history`:
+- `"price_reduced"` → `status: 'reduced'`, compute `reduction_pct`
+- `"price_increased"` → `status: 'listed'` (price back up)
+- `"listed"` → `status: 'listed'`
+- `"under_offer"` → `status: 'under_offer'`
+- `"sold"` → `status: 'sold'`
+- `"withdrawn"` → `status: 'withdrawn'`
+
+Store `zooplaListingId` in `links` array — needed for programmatic re-scraping (DE-220).
 
 ---
 

@@ -29,22 +29,15 @@
 </tr>
 </thead>
 <tbody>
-<tr><td><strong>QA-012</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Verify Data Actions section — Recheck, Request Enrichment, and Edit Data buttons present on PropertyDetail page'>QA: Verify Data Actions section — Recheck, Request Enrichment, and Edit Data buttons present on PropertyDetail page</td><td>In Progress</td><td>UI/UX QA</td><td>FE-229, FE-231, FE-234</td><td></td></tr>
-<tr><td><strong>DAT-205</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DAT: price_history enrichment — populate for active properties [DAT-190]'>DAT: price_history enrichment — populate for active properties [DAT-190]</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
-<tr><td><strong>QA-013</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA: Review and audit Acquisition Strategy section — verify completeness and data accuracy'>QA: Review and audit Acquisition Strategy section — verify completeness and data accuracy</td><td>In Progress</td><td>UI/UX QA</td><td>FE-237</td><td></td></tr>
-<tr><td><strong>DAT-192</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DAT: Enrich all properties with real council tax band from UK Gov portal or agent listings'>DAT: Enrich all properties with real council tax band from UK Gov portal or agent listings</td><td>In Progress</td><td>Data Analyst</td><td>None</td><td></td></tr>
-<tr><td><strong>DAT-193</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Extract alpha score calculation into shared TypeScript module — scripts/alphaScore.ts'>Extract alpha score calculation into shared TypeScript module — scripts/alphaScore.ts</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
-<tr><td><strong>FE-243</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Frontend: wire alphaScore.ts to import from shared scripts/alphaScore.ts'>Frontend: wire alphaScore.ts to import from shared scripts/alphaScore.ts</td><td>Todo</td><td>Frontend Engineer</td><td>DAT-193</td><td></td></tr>
-<tr><td><strong>DAT-194</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Update scripts/calculate_alpha_score.js to import from shared scripts/alphaScore.ts'>Update scripts/calculate_alpha_score.js to import from shared scripts/alphaScore.ts</td><td>Todo</td><td>Data Analyst</td><td>DAT-193</td><td></td></tr>
-<tr><td><strong>DAT-195</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Update ADR-016 to document shared alphaScore.ts module architecture'>Update ADR-016 to document shared alphaScore.ts module architecture</td><td>Todo</td><td>Product Owner</td><td>FE-243, DAT-194</td><td></td></tr>
-<tr><td><strong>DAT-198</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Alpha score: add Days on Market (DOM) → Negotiation Leverage component'>Alpha score: add Days on Market (DOM) → Negotiation Leverage component</td><td>Todo</td><td>Data Analyst</td><td>DAT-197</td><td></td></tr>
-<tr><td><strong>DAT-199</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Alpha score: add EPC rating → Institutional Standard Risk component'>Alpha score: add EPC rating → Institutional Standard Risk component</td><td>Todo</td><td>Data Analyst</td><td>DAT-197</td><td></td></tr>
-<tr><td><strong>DAT-200</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Alpha score: add Lifestyle/Urban Village proximity component (Waitrose, Whole Foods, Wellness)'>Alpha score: add Lifestyle/Urban Village proximity component (Waitrose, Whole Foods, Wellness)</td><td>Todo</td><td>Data Analyst</td><td>DAT-197</td><td></td></tr>
-<tr><td><strong>DAT-201</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Alpha score: integrate appreciation_potential as ± modifier on final score'>Alpha score: integrate appreciation_potential as ± modifier on final score</td><td>Todo</td><td>Data Analyst</td><td>DAT-198, DAT-199, DAT-200</td><td></td></tr>
-<tr><td><strong>DAT-202</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Alpha score: add floor level scoring and service charge density'>Alpha score: add floor level scoring and service charge density</td><td>Todo</td><td>Data Analyst</td><td>DAT-197</td><td></td></tr>
-<tr><td><strong>FE-244</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Frontend: update alphaScore.ts with new components and breakdown UI'>Frontend: update alphaScore.ts with new components and breakdown UI</td><td>Todo</td><td>Frontend Engineer</td><td>DAT-198, DAT-199, DAT-200, DAT-201, DAT-202</td><td></td></tr>
-<tr><td><strong>DAT-203</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Documentation: update alpha score methodology in alphaScore.ts and DECISIONS.md'>Documentation: update alpha score methodology in alphaScore.ts and DECISIONS.md</td><td>Todo</td><td>Data Analyst</td><td>FE-244</td><td></td></tr>
-<tr><td><strong>PO-002</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='ADR-021: Alpha Score v2 — Multi-Axis Acquisition Quality Framework'>ADR-021: Alpha Score v2 — Multi-Axis Acquisition Quality Framework</td><td>Todo</td><td>Product Owner</td><td>DAT-203</td><td></td></tr>
+<tr><td><strong>DAT-204</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DAT: enrichment_requests polling workflow follow-on [DAT-189]'>DAT: enrichment_requests polling workflow follow-on [DAT-189]</td><td>done</td><td>Data Analyst</td><td>DE-218</td><td></td></tr>
+<tr><td><strong>DAT-205</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DAT: price_history enrichment — populate for active properties [DAT-190]'>DAT: price_history enrichment — populate for active properties [DAT-190]</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>DAT-192</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DAT: Enrich all properties with real council tax band from UK Gov portal or agent listings'>DAT: Enrich all properties with real council tax band from UK Gov portal or agent listings</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>DAT-193</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Extract alpha score calculation into shared TypeScript module — scripts/alphaScore.ts'>Extract alpha score calculation into shared TypeScript module — scripts/alphaScore.ts</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>DAT-194</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Update scripts/calculate_alpha_score.js to import from shared scripts/alphaScore.ts'>Update scripts/calculate_alpha_score.js to import from shared scripts/alphaScore.ts</td><td>done</td><td>Data Analyst</td><td>DAT-193</td><td></td></tr>
+<tr><td><strong>DAT-203</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Documentation: update alpha score methodology in alphaScore.ts and DECISIONS.md'>Documentation: update alpha score methodology in alphaScore.ts and DECISIONS.md</td><td>done</td><td>Data Analyst</td><td>FE-244</td><td></td></tr>
+<tr><td><strong>DAT-204</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Update Rightmove detail scraper to extract listingHistory[].priceChangeData, prices.primaryPrice, and listingId.'>Update Rightmove detail scraper to extract listingHistory[].priceChangeData, prices.primaryPrice, and listingId.</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>DAT-205</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Add Zoopla priceHistory[], dateFirstListed, and listingId extraction to scraping protocol.'>Add Zoopla priceHistory[], dateFirstListed, and listingId extraction to scraping protocol.</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>PO-003</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='PO: Analyst Statement Panel — surface written macro summaries at top of Market Intel page'>PO: Analyst Statement Panel — surface written macro summaries at top of Market Intel page</td><td>Todo</td><td>Product Owner</td><td>None</td><td></td></tr>
 </tbody>
 </table>
 
@@ -64,7 +57,31 @@
 </tr>
 </thead>
 <tbody>
-<tr><td><strong>DAT-197</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Alpha score: null-safe sqft requirement for price efficiency + E LADOG line bonus + commute destination scoring'>Alpha score: null-safe sqft requirement for price efficiency + E LADOG line bonus + commute destination scoring</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>QA-197</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='BUG: Silent financial defaults in PropertyContext.tsx — service_charge defaults to £4K/yr, ground_rent defaults to £250/yr'>BUG: Silent financial defaults in PropertyContext.tsx — service_charge defaults to £4K/yr, ground_rent defaults to £250/yr</td><td>Todo</td><td>UI/UX QA</td><td>None</td><td></td></tr>
+<tr><td><strong>BUG-006</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='BUG: Silent financial defaults in PropertyContext.tsx — service_charge defaults to 4K/yr, ground_rent to 250/yr'>BUG: Silent financial defaults in PropertyContext.tsx — service_charge defaults to 4K/yr, ground_rent to 250/yr</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+</tbody>
+</table>
+
+## 📊 Data & Research (Unblocked First)
+
+<table>
+<thead>
+<tr>
+  <th align="left">ID</th>
+  <th align="left">Priority</th>
+  <th align="left">Effort</th>
+  <th align="left" style="width:480px">Task</th>
+  <th align="left">Status</th>
+  <th align="left">Responsible</th>
+  <th align="left">Dependencies</th>
+  <th align="left">Block Reason / Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr><td><strong>DAT-206</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Macro: Refresh market_indicators and global_context macro_trend — data is 12 days stale (Red)'>Macro: Refresh market_indicators and global_context macro_trend — data is 12 days stale (Red)</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>DAT-207</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Alpha 7+ Data Quality Audit — CT band sourcing, sqft correction, alpha recalculation'>Alpha 7+ Data Quality Audit — CT band sourcing, sqft correction, alpha recalculation</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>DAT-208</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Verify and resolve lease years for Lower Ground Floor Gloucester Terrace Bayswater (d4e5f6a7)'>Verify and resolve lease years for Lower Ground Floor Gloucester Terrace Bayswater (d4e5f6a7)</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>DAT-209</strong></td><td>Low</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Resolve CT bands for Highbury New Park N5 (1f55a0c4...) and Caledonian Road N7 (man-0404-9ca80037)'>Resolve CT bands for Highbury New Park N5 (1f55a0c4...) and Caledonian Road N7 (man-0404-9ca80037)</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
 </tbody>
 </table>
 
@@ -323,7 +340,6 @@
 <tr><td><strong>FE-230</strong></td><td>AffordabilitySettings: &#x27;Your Affordable Range&#x27; card does not update when monthly budget or loan term changes</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-246</strong></td><td>FE: Request Enrichment modal — follow-on work [FE-229]</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>DE-218</strong></td><td>DE: Create enrichment_requests table and API endpoints — server-side plumbing for ADR-018</td><td>Done</td><td>2026-04-07</td></tr>
-<tr><td><strong>DAT-204</strong></td><td>DAT: enrichment_requests polling workflow follow-on [DAT-189]</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-231</strong></td><td>Fix PropertyDetail monthly payment display — localStorage corruption guard and demo data defaults</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-247</strong></td><td>FE: Recheck button on PropertyDetail [FE-231]</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-232</strong></td><td>FE: Async UX patterns for Recheck and Enrichment Request — optimistic updates, toasts, debounce</td><td>Done</td><td>2026-04-07</td></tr>
@@ -333,6 +349,7 @@
 <tr><td><strong>FE-235</strong></td><td>FE: Replace Seasonal Market Cycle phase card grid with compact lookup table (Option A from ADR-017)</td><td>Done</td><td>2026-04-09</td></tr>
 <tr><td><strong>UX-052</strong></td><td>UX: Design horizontal phase strip (Option B) for market page compact view — ADR-017 follow-on</td><td>Done</td><td>2026-04-09</td></tr>
 <tr><td><strong>FE-236</strong></td><td>FE: Add Seasonal Market Cycle phase strip to MarketPage.tsx (ADR-018)</td><td>Done</td><td>2026-04-09</td></tr>
+<tr><td><strong>QA-012</strong></td><td>QA: Verify Data Actions section — Recheck, Request Enrichment, and Edit Data buttons present on PropertyDetail page</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-248</strong></td><td>FE: edit form all property fields [FE-235]</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-237</strong></td><td>FE: Add &quot;Request Enrichment&quot; button and modal to PropertyDetail sidebar (FE-229 not delivered)</td><td>Done</td><td>2026-04-09</td></tr>
 <tr><td><strong>FE-238</strong></td><td>FE: Add &quot;Edit Data&quot; button to PropertyDetail sidebar (FE-234 entry point missing — edit page itself is done)</td><td>Done</td><td>2026-04-09</td></tr>
@@ -345,6 +362,7 @@
 <tr><td><strong>DAT-191</strong></td><td>DAT: Enrich all active properties with real bedroom and bathroom counts from portal listings</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>UX-055</strong></td><td>UX: Acquisition Strategy design — follow-on from UX-051 [UX-052]</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-240</strong></td><td>FE: Rebuild Acquisition Strategy section on PropertyDetail — full data overhaul per UX-052</td><td>Done</td><td>2026-04-07</td></tr>
+<tr><td><strong>QA-013</strong></td><td>QA: Review and audit Acquisition Strategy section — verify completeness and data accuracy</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-241</strong></td><td>FE: Display council tax band badge on PropertyDetail page and in Total Monthly Outlay section</td><td>Done</td><td>2026-04-07</td></tr>
 <tr><td><strong>FE-242</strong></td><td>FE: Fix HPI chart data schema mismatch — HPIHistoryChart and LondonPrimePremiumChart always fell back to synthetic data despite real data existing</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>UX-041</strong></td><td>FE: PropertyTable redesign — reduce to 8 default visible columns, decision data first</td><td>Done</td><td>2026-04-12</td></tr>
@@ -359,8 +377,33 @@
 <tr><td><strong>UX-053</strong></td><td>FE: Rank column visual treatment [UX-050]</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>UX-054</strong></td><td>FE: sort state desync fix [UX-051]</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>FE-249</strong></td><td>FE: PropertyTable typography audit [UX-052]</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>FE-243</strong></td><td>Frontend: wire alphaScore.ts to import from shared scripts/alphaScore.ts</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>DAT-195</strong></td><td>Update ADR-016 to document shared alphaScore.ts module architecture</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>BUG-005</strong></td><td>BUG-005: Serve local images via /api/images/ endpoint — resolve 304 on data/images/ paths</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>DAT-196</strong></td><td>DAT-196: Audit all properties with local image_url paths and verify correct path format in DB</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>DAT-197</strong></td><td>Alpha score: null-safe sqft requirement for price efficiency + E LADOG line bonus + commute destination scoring</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>DAT-198</strong></td><td>Alpha score: add Days on Market (DOM) → Negotiation Leverage component</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>DAT-199</strong></td><td>Alpha score: add EPC rating → Institutional Standard Risk component</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>DAT-200</strong></td><td>Alpha score: add Lifestyle/Urban Village proximity component (Waitrose, Whole Foods, Wellness)</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>DAT-201</strong></td><td>Alpha score: integrate appreciation_potential as ± modifier on final score</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>DAT-202</strong></td><td>Alpha score: add floor level scoring and service charge density</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>FE-244</strong></td><td>Frontend: update alphaScore.ts with new components and breakdown UI</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>PO-002</strong></td><td>ADR-021: Alpha Score v2 — Multi-Axis Acquisition Quality Framework</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>FE-250</strong></td><td>RentalYieldVsGiltChart tooltip not appearing on hover — FE-229 regression</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>FE-251</strong></td><td>Map View: Alpha Score Color Grade Toggle — Replace static marker colours with a toggleable colour mode that maps score → colour gradient</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>FE-252</strong></td><td>Map View: Multi-Select Status Filter — Replace single-value status filter with multi-select checkboxes, matching the Properties page pattern</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>FE-253</strong></td><td>Map View: Add &#x27;View Property&#x27; button to slide-in detail panel — link to /property/{id}</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>QA-053</strong></td><td>QA-053: Bug — Bidding Posture buttons don&#x27;t update bid ladder values</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>DE-220</strong></td><td>Build portal re-scrape loop: re-fetch active properties from Rightmove/Zoopla and detect price changes.</td><td>Done</td><td>2026-04-13</td></tr>
+<tr><td><strong>DE-221</strong></td><td>Extend price_history schema: add status, reduction_pct, price_per_sqm, days_on_market, london_hpi, source, portal_price_id columns.</td><td>Done</td><td>2026-04-13</td></tr>
+<tr><td><strong>DE-222</strong></td><td>Update price_monitor.js: write enriched price_history entries (status, reduction_pct) instead of only updating properties table reduction fields.</td><td>Done</td><td>2026-04-13</td></tr>
+<tr><td><strong>DE-225</strong></td><td>Fix sync_data.js: SqliteError 45 values for 47 columns — schema mismatch</td><td>Done</td><td>2026-04-13</td></tr>
+<tr><td><strong>VISX-025</strong></td><td>FE: Add peak premium marker annotation to LondonPrimePremiumChart</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>VISX-026</strong></td><td>FE: Add trend direction annotation to LondonPrimePremiumChart right edge</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>VISX-027</strong></td><td>FE: Add UK=100 baseline annotation and Y-axis context to LondonPrimePremiumChart</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>VISX-028</strong></td><td>FE: Expand LondonPrimePremiumChart tooltip with MoM change and date formatting</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>UX-053</strong></td><td>FE: Font size audit — bump data labels and values from 8/9px to minimum 10/11px across all components</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>QA-196</strong></td><td>QA: Null/undefined display defaults on PropertyDetail page — replace silent fallbacks with N/A indicators</td><td>Done</td><td>2026-04-13</td></tr>
 <tr><td><strong>FE-162</strong></td><td>Runtime crash in Inbox.tsx — Cannot read properties of undefined (reading toLoca...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-187</strong></td><td>Responsive Layout Audit: Sidebar layout (pl-64 fixed) not mobile-optimised — res...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-172</strong></td><td>Runtime React error in MarketConditionsBar.tsx:141 — &#x27;Objects are not valid as a...</td><td>Done</td><td></td></tr>

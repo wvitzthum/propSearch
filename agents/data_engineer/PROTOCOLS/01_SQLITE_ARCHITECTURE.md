@@ -9,9 +9,31 @@
 ### Core Tables
 - **`properties`** — master property records with all acquisition metrics
 - **`archived_properties`** — historical archive (no longer auto-populated from auto-archive)
-- **`price_history`** — time-series price data (populated by `backfill_price_history.js`)
+- **`price_history`** — time-series price data with enriched status (populated by `backfill_price_history.js` and `sync_data.js`; enrich entries on portal re-scrape — see DE-221)
 - **`enrichment_requests`** — user-initiated field enrichment queue
 - **`manual_queue`** — analyst-sourced leads pending import
+
+### `price_history` Table Schema (DE-221)
+The `price_history` table stores enriched time-series entries, not just raw snapshots:
+
+```sql
+CREATE TABLE price_history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  property_id TEXT,
+  price REAL,                    -- listed price on that date
+  date TEXT,                     -- ISO date
+  status TEXT,                    -- 'listed' | 'reduced' | 'under_offer' | 'sold' | 'withdrawn'
+  reduction_pct REAL,            -- % reduction from previous price (only for 'reduced')
+  price_per_sqm REAL,            -- price per sqm on that date
+  days_on_market INTEGER,        -- DOM on that date
+  london_hpi REAL,               -- London-wide HPI value (for benchmark line)
+  source TEXT,                   -- 'portal_scrape' | 'sync_snapshot' | 'price_monitor'
+  portal_price_id TEXT,          -- stable portal price entry ID (if available from portal)
+  FOREIGN KEY(property_id) REFERENCES properties(id)
+);
+```
+
+> ⚠️ **Active gap (DE-221):** The current `price_history` table only has `(property_id, price, date)`. The enriched columns are not yet added. All chart tooltip fields (`status`, `reduction_pct`, `DOM`, `HPI`) are currently `undefined` because the table schema never populated them. The `price_monitor.js` detects reductions but never writes enriched entries here — it only updates `properties` reduction fields.
 
 ### Indexing
 Ensure indexes on: `id`, `address`, `area`, `archived`, `pipeline_status`, `market_status`, `alpha_score`

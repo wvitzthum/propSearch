@@ -1,136 +1,100 @@
 # propSearch: Property Acquisition Research Dashboard
 
-**propSearch** is a high-density research dashboard for identifying and acquiring prime properties. It aggregates data from multiple sources, calculates institutional-grade metrics (Alpha Scores, appreciation potential, value gaps), and presents everything in a Bloomberg Terminal-style interface for rapid decision-making.
+**propSearch** is a high-density research dashboard for identifying and acquiring prime properties in London. It aggregates data from multiple portals, calculates institutional-grade acquisition metrics, and presents everything in a Bloomberg Terminal-style interface designed for rapid, high-stakes decision-making.
 
-**🔗 [Live Demo](https://prop-search.vercel.app/)** (demo mode with sample London data)
+**🔗 [Live Demo](https://prop-search.vercel.app/)** · Demo mode with sample London data · No authentication required
 
-> This project is designed for personal/research use. No authentication required — all data stays local.
+> This is a personal research tool. All data stays local. No commercial use, no account required.
 
 ---
 
-## 🎯 What Does This Do?
+## ✦ What propSearch Does
 
-- **Property Discovery:** Scrape/import listings from Rightmove, Zoopla, and estate agent portals
-- **Institutional Metrics:** Calculate Alpha Scores, value gaps, appreciation potential, and total cost of ownership
-- **Comparison Engine:** Side-by-side analysis of multiple properties with winner highlighting
-- **Pipeline Workflow:** Track properties from Discovery → Shortlisted → Vetted → Archived
-- **Map View:** Interactive Leaflet map with London Tube/Overground lines and property markers
-- **Macro Context:** HPI history, rental yields, purchasing power, and gilt yield correlations
+propSearch is purpose-built for a single use case: **finding and vetting the right prime London property at the right price.** It combines live portal data with institutional-quality analytics that most buyers only get from a buying agent — but surfaced in a real-time dashboard you control.
+
+**Core capabilities:**
+
+| Capability | What it means in practice |
+|---|---|
+| **Portal integration** | Scrape and import from Rightmove, Zoopla, and estate agent sites via Playwright + FlareSolverr |
+| **Alpha Score™** | 0–10 acquisition quality rating using tenure, spatial access, price efficiency, EPC, DOM, floor level, service charge density, and lifestyle proximity |
+| **Price evolution tracking** | Snapshot-based price history with reduction detection — know when a listing drops |
+| **Spatial intelligence** | Distance to nearest Tube, Elizabeth Line stations, parks, Waitrose/Whole Foods, wellness hubs, and your commute destinations |
+| **Total cost modelling** | Monthly outlay calculator with mortgage stress tests, SDLT, service charges, ground rent, and CAPEX estimates |
+| **Pipeline workflow** | Track every property from Discovery → Shortlisted → Vetted → Archived |
+| **Map view** | Interactive Leaflet map with London Tube/Overground lines and property markers |
+| **Macro context** | HPI history, gilt yields, BoE base rate, mortgage rate bands, and seasonal market cycle phase |
+
+---
+
+## 📂 Key Pages
+
+### Dashboard (`/`)
+High-density overview: active pipeline counts, recent price reductions, alpha score distribution, HPI sparklines, market pulse indicators, and quick-access cards to shortlisted and vetted properties.
+
+### Properties (`/properties`)
+Full property list with inline alpha score badges, price delta, DOM, pipeline status, and filter controls. Sortable by any column.
+
+### Property Detail (`/property/:id`)
+Every acquisition data point for a single property in one view:
+- Gallery with lightbox + floorplan tab + price history chart
+- Alpha Score breakdown with tenure, spatial, price efficiency, DOM leverage, EPC, floor level, and service charge components
+- Acquisition strategy section with realistic price, negotiation rationale, and thesis tags
+- Total monthly outlay with mortgage, SDLT, service charge, ground rent, and council tax
+- CAPEX & Retrofit node (EPC rating, improvement potential, estimated upgrade cost)
+- Commute times to your key destinations
+
+### Map View (`/map`)
+Interactive Leaflet map with London Tube and Overground lines overlaid. Property markers with quick-preview on click.
+
+### Comparison (`/compare`)
+Side-by-side comparison of up to 4 properties. Winner highlighting across alpha score, price, sqft, DOM, and monthly outlay.
+
+### Mortgage Tracker (`/mortgage`)
+LTV band analysis, deposit mode configuration, and monthly payment calculations with stress testing at +2% rate scenarios.
+
+### Rates (`/rates`)
+Macro dashboard: HPI history (UK + London), gilt yields, BoE base rate, mortgage rate bands by LTV, seasonal market cycle phase, and SDLT calculator.
+
+### Inbox (`/inbox`)
+Incoming leads from scraped portal searches. Analyst triaging queue — enrich or reject before they enter the main pipeline.
 
 ---
 
 ## ⚡ Quick Start
 
-### Prerequisites
-- **Node.js:** v20.x or higher
-- **npm** (comes with Node.js)
-- **Make** (optional but recommended)
-
-### 1. Clone and Install
-
 ```bash
 git clone https://github.com/wvitzthum/propSearch.git
 cd propSearch
 make install
-```
-
-Or without Make:
-
-```bash
-cd frontend && npm install && cd ..
-```
-
-### 2. Start the Application
-
-```bash
 make start
 ```
 
-This starts:
-- **Dashboard:** http://localhost:5173
-- **API Server:** http://localhost:3001
+Opens at **http://localhost:5173** (frontend) + **http://localhost:3001** (API).
 
-### 3. Add Your First Property
-
-1. Open the dashboard at http://localhost:5173
-2. Click **"Add Property"** in the sidebar
-3. Paste a Rightmove, Zoopla, or estate agent URL
-4. The system will scrape and analyze it automatically
+To add your first property, click **"Add Property"** in the sidebar and paste a Rightmove or Zoopla URL. The scraper extracts listing data automatically.
 
 ---
 
 ## 🏠 Adapting for Your Own Use Case
 
-This project is pre-configured for **prime London property acquisition**. To adapt it for your own market:
+propSearch is pre-configured for **prime London property acquisition** (Chelsea SW3/SW10, Islington N1/N7, Belsize Park NW3, West Hampstead NW6, Bayswater W2, Primrose Hill NW1). To adapt:
 
-### 1. Change the Target City
+### Change target areas
+Edit `frontend/src/types/property.ts` — update the `Area` type and `AREA_BENCHMARKS` in `scripts/alphaScore.ts` with your target postcodes and area benchmarks.
 
-Edit `data/london_metro.geojson` with your city's transit geometry (or remove it for non-map use).
+### Update scoring criteria
+| File | What it controls |
+|------|-----------------|
+| `scripts/alphaScore.ts` | Alpha Score formula, weights, benchmarks, bonus thresholds |
+| `agents/data_analyst/README.md` | Acquisition criteria (price range, bedroom count, tenure minimums) |
+| `REQUIREMENTS.md` | Full scope definition |
 
-### 2. Update Scoring Criteria
+### Configure commute destinations
+Edit `commute_paternoster` / `commute_canada_square` references in `scripts/alphaScore.ts` and `agents/data_analyst/README.md` to use your actual commute targets.
 
-Modify scoring weights in `agents/data_analyst/`:
-
-| File | Purpose |
-|------|---------|
-| `alpha_score.js` | Overall property score calculation |
-| `appreciation_potential.js` | 5-year growth rating |
-| `value_gap.js` | Price efficiency vs market |
-
-### 3. Configure Data Sources
-
-Update `data/sources/` with your target portals:
-
-```json
-{
-  "name": "Rightmove",
-  "base_url": "https://www.rightmove.co.uk",
-  "scraper": "scrape_rightmove.js"
-}
-```
-
-### 4. Adjust Commute Destinations
-
-Edit the commute targets in `agents/data_analyst/README.md` or update `REQUIREMENTS.md` to reflect your key destinations.
-
-### 5. Customize Property Types
-
-Filter by your target property types in `src/hooks/useProperties.ts`:
-
-```typescript
-const filters = {
-  propertyType: ['Flat', 'House', 'Penthouse'],
-  minBedrooms: 2,
-  maxPrice: 2000000
-};
-```
-
----
-
-## 📊 Data Flow
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Property URLs  │ ──▶ │  Data Pipeline   │ ──▶ │  SQLite DB       │
-│  (Manual/Scape)  │     │  (Normalize)     │     │  (propSearch.db)│
-└─────────────────┘     └─────────────────┘     └────────┬────────┘
-                                                         │
-                        ┌─────────────────┐              │
-                        │  Dashboard UI   │ ◀─────────────┘
-                        │  (React + visx) │
-                        └────────┬────────┘
-                                 │
-                        ┌────────▼────────┐
-                        │   REST API      │
-                        │   /api/properties│
-                        └─────────────────┘
-```
-
-### Data Files
-- `data/propSearch.db` — SQLite database with all property records
-- `data/inbox/` — New leads pending analysis
-- `data/import/` — Drop raw JSON here for batch import
-- `data/demo_master.json` — Sample dataset for demo mode
+### Swap city transit geometry
+Replace `data/london_metro.geojson` with your target city's transit GeoJSON for the map layer.
 
 ---
 
@@ -141,11 +105,11 @@ const filters = {
 | `make start` | Start API + frontend dev server |
 | `make install` | Install all dependencies |
 | `make api` | Start API server only |
-| `make sync` | Run data ingestion pipeline |
+| `make sync` | Run data ingestion pipeline (inbox → SQLite) |
 | `make build` | Build frontend for production |
-| `make clean` | Remove build artifacts |
-| `make lint` | Run linter |
 | `make tasks` | View active task backlog |
+| `make tasks-regen` | Regenerate Tasks.md from tasks.json |
+| `make lint` | Run linter |
 
 ---
 
@@ -153,94 +117,129 @@ const filters = {
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/properties` | GET | List all properties (supports `?status=shortlisted`) |
-| `/api/properties/:id` | GET | Get single property details |
+| `/api/properties` | GET | List all properties (filter: `?pipeline_status=shortlisted`) |
+| `/api/properties/:id` | GET | Single property with price history |
 | `/api/properties/:id/status` | PATCH | Update pipeline status |
-| `/api/metrics` | GET | Aggregate market metrics |
-| `/api/macro` | GET | Macro indicators (HPI, yields, etc.) |
+| `/api/properties/:id/enrichment-request` | POST | Request field enrichment |
+| `/api/enrichment-requests` | GET | List enrichment requests |
+| `/api/macro` | GET | Macro indicators (HPI, yields, rates, SDLT tiers) |
+| `/api/inbox` | GET | Inbox leads |
+| `/api/health` | GET | API health check |
 
 ---
 
-## 🗂 Project Structure
+## 📊 Data Flow
+
+```
+Portal URL (Rightmove/Zoopla/G&H)
+        │
+        ▼
+  Scraping Layer (Playwright + FlareSolverr)
+        │  Extracts: sqft, bedrooms, tenure, EPC, images,
+        │  floorplan, price history, nearest stations
+        ▼
+  Inbox / Import Layer (data/inbox/, data/import/)
+        │  JSON schema validation, duplicate detection
+        ▼
+  Sync Pipeline (sync_data.js → SQLite)
+        │  Upsert → price_history snapshot on price change
+        ▼
+  SQLite DB (data/propSearch.db)
+        │  WAL mode, indexed on id/pipeline_status/market_status
+        ▼
+  REST API (server/index.js — port 3001)
+        │
+        ▼
+  React Dashboard (frontend — port 5173)
+        │  Alpha Score calculation, affordability model,
+        │  visx charts, Leaflet map
+        ▼
+  Property Detail / Dashboard / Map / Compare
+```
+
+---
+
+## 📂 Project Structure
 
 ```
 propSearch/
-├── agents/              # AI agent instructions and domain logic
-│   ├── data_analyst/    # Property research, Alpha scoring, metrics
-│   ├── data_engineer/   # SQLite, pipelines, API server
-│   └── frontend_engineer/ # React dashboard implementation
-├── data/                # Property database and datasets
-│   ├── propSearch.db    # SQLite database
-│   ├── london_metro.geojson # Transit map geometry
-│   └── import/          # Drop files here for batch import
-├── frontend/            # React 19 + Tailwind CSS dashboard
-│   └── src/
-│       ├── components/  # Chart components (visx), PropertyCard, etc.
-│       ├── hooks/       # useProperties, useMacroData, usePipeline
-│       └── pages/       # Dashboard, PropertyDetail, Compare
-├── server/              # Node.js REST API server
-└── scripts/             # Utility scripts
+├── agents/
+│   ├── data_analyst/       # Research, scraping, alpha scoring, enrichment
+│   ├── data_engineer/      # SQLite schema, sync pipeline, API server
+│   ├── frontend_engineer/   # React dashboard, visx charts
+│   └── product_owner/       # Task management, strategic roadmap
+├── data/
+│   ├── propSearch.db       # SQLite database (WAL mode)
+│   ├── london_metro.geojson # Tube/Overground line geometry
+│   ├── inbox/              # New leads pending analysis
+│   └── import/             # Drop JSON/JSONL here for batch import
+├── frontend/src/
+│   ├── components/         # visx charts, cards, modals
+│   ├── hooks/              # usePropertyContext, usePipeline, useAffordability
+│   ├── pages/              # Dashboard, PropertyDetail, MapView, Compare, Rates
+│   └── types/              # Property, PriceHistoryEntry, MacroData types
+├── scripts/
+│   ├── sync_data.js        # Main ingestion pipeline
+│   ├── price_monitor.js    # Weekly price change detector
+│   ├── scrape_*.js         # Portal scrapers (Rightmove, Zoopla, G&H)
+│   └── capture_images.js   # Localise remote images to data/images/
+├── server/
+│   └── index.js            # Node.js REST API (better-sqlite3, no Express)
+└── docs/screenshots/        # UI screenshots for documentation
 ```
+
+---
+
+## 🤖 AI Agent System
+
+The project includes Claude-powered AI agents for automated property research:
+
+```bash
+# Requires RTK (Rust Token Killer)
+curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
+
+make agent-analyst   # Property research, enrichment, metrics
+make agent-de        # Data engineering, pipeline, schema
+make agent-fe       # Frontend development
+```
+
+Agents read the agent protocol files in `agents/<role>/` and follow strict data guardrails — no synthetic data, no deletions, no overwrites of analyst-set fields.
 
 ---
 
 ## 📚 Key Documentation
 
-- [REQUIREMENTS.md](./REQUIREMENTS.md) — Project goals and detailed requirements
-- [DECISIONS.md](./DECISIONS.md) — Architectural decision records
-- [AGENTS.md](./AGENTS.md) — AI agent behavioral rules
-- [agents/README.md](./agents/README.md) — Agent system documentation
-
----
-
-## 🤖 AI Agent System (Optional)
-
-This project includes Claude-powered AI agents for automated property research:
-
-```bash
-# Install RTK (required for agents)
-curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
-
-# Run specific agents
-make agent-analyst    # Property research and metrics
-make agent-de         # Data engineering
-make agent-fe         # Frontend development
-```
-
-Agents can automatically:
-- Scrape new property listings
-- Calculate Alpha Scores and valuations
-- Update the database with enriched data
-- Identify data quality issues
+- [REQUIREMENTS.md](./REQUIREMENTS.md) — Project scope, acquisition criteria, and data requirements
+- [DECISIONS.md](./DECISIONS.md) — Architectural Decision Records (ADRs)
+- [AGENTS.md](./AGENTS.md) — AI agent behavioral rules and territorial boundaries
+- [Tasks.md](./Tasks.md) — Full task backlog (auto-generated from `tasks/tasks.json`)
 
 ---
 
 ## 🐛 Troubleshooting
 
-### "npm error ERESOLVE" during install
+**"npm error ERESOLVE" during install**
 ```bash
 cd frontend && npm install --legacy-peer-deps
 ```
 
-### Dashboard shows "No properties found"
-1. Check API server is running: `curl http://localhost:3001/api/properties`
-2. Verify database exists: `ls -la data/propSearch.db`
+**Dashboard shows "No properties found"**
+1. Verify API running: `curl http://localhost:3001/api/properties`
+2. Check DB exists: `ls -la data/propSearch.db`
 3. Run sync: `make sync`
 
-### Map not loading
-- Verify `data/london_metro.geojson` exists
-- Check browser console for Leaflet errors
-- Ensure you're not blocking map tiles in firewall
+**Map tiles not loading**
+Verify `data/london_metro.geojson` exists. Check browser console for Leaflet errors.
 
-### Demo mode (Vercel deployment)
-The demo at https://prop-search.vercel.app/ uses `demo_master.json` with sample data. To populate with your own data, use the "Add Property" button or drop JSON files into `data/import/`.
+**Demo mode (Vercel)**
+The demo at https://prop-search.vercel.app/ uses `demo_master.json` with sample data. No real data is included.
 
 ---
 
 ## 📄 License
 
-This project is for personal research and educational use. Property data sourced from public portals must be used in accordance with their terms of service.
+Personal research and educational use. Property data sourced from public portals must be used in accordance with their terms of service.
 
 ---
 
-*Built with [React 19](https://react.dev/), [visx](https://airbnb.io/visx/), [Leaflet](https://leafletjs.com/), and [Tailwind CSS](https://tailwindcss.com/).*
+*Built with [React 19](https://react.dev/), [visx](https://airbnb.io/visx/), [Leaflet](https://leafletjs.com/), [Tailwind CSS](https://tailwindcss.com/), and [better-sqlite3](https://github.com/WiseLibs/better-sqlite3).*
