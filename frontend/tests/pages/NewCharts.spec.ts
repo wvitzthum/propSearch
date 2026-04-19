@@ -557,9 +557,11 @@ test.describe('London Prime Premium Tracker (QA-191) - FE-191', () => {
       const svgBox = await svg.boundingBox().catch(() => null);
       if (!svgBox) { expect(true).toBeTruthy(); return; }
 
-      // Hover using svg.hover() — dispatches to SVG element's center
-      await svg.hover();
-      console.log('[DEBUG] hovered SVG, bbox:', svgBox);
+      // Hover at the center of the 2nd bar (y=21*2 + 8 = 50px from SVG top).
+      // Bar spacing: barHeight=16 + barPad=5 = 21px per row.
+      // Bar 2 center: y=21*2 + 16/2 = 50px in SVG element-local coords.
+      // Use svg.hover({ position }) which dispatches to the SVG element itself.
+      await svg.hover({ position: { x: Math.round(svgBox.width / 2), y: 50 } });
 
       // Wait for the tooltip state to update
       await page.waitForTimeout(500);
@@ -575,11 +577,8 @@ test.describe('London Prime Premium Tracker (QA-191) - FE-191', () => {
           html: tooltipEl ? tooltipEl.outerHTML.substring(0, 200) : null,
         };
       });
-      console.log('[DEBUG] tooltipState:', JSON.stringify(tooltipState));
-
       const tooltip = page.locator('[class*="visx-tooltip"]').first();
       const visible = await tooltip.isVisible().catch(() => false);
-      console.log('[DEBUG] tooltip visible:', visible);
       if (visible) {
         const text = await tooltip.textContent();
         const hasContent = /yield|gilt|%|£/i.test(text ?? '');

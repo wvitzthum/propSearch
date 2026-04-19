@@ -1,7 +1,7 @@
 // FE-216: Purchasing Power Index — shows max loan achievable at monthly budget over historical rates
 // VISX-017: Migrated to ParentSize responsive SVG (no viewBox) — tooltip coords are screen pixels
-import React, { useMemo } from 'react';
-import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { TrendingUp, TrendingDown, DollarSign, Maximize2, Minimize2 } from 'lucide-react';
 import { scaleLinear } from '@visx/scale';
 import { LinePath, AreaClosed } from '@visx/shape';
 import { Group } from '@visx/group';
@@ -31,6 +31,7 @@ const PurchasingPowerChart: React.FC<PurchasingPowerChartProps> = ({
 }) => {
   const { macroData } = useFinancialData();
   const mortgageHistory: MortgageHistoryEntry[] = macroData?.mortgage_history ?? [];
+  const [autoScale, setAutoScale] = useState(false); // UX-73: fixed scale by default
 
   // Calculate max loan from monthly payment using mortgage formula
   // M = P * [r(1+r)^n] / [(1+r)^n - 1]
@@ -81,6 +82,22 @@ const PurchasingPowerChart: React.FC<PurchasingPowerChartProps> = ({
   const deltaPct = earliestMaxLoan > 0 ? (delta / earliestMaxLoan) * 100 : 0;
   const isImproving = delta > 0;
 
+  // PPI-001: x-axis year labels — show year at start of each new year in the series
+  const yearLabels = chartData.reduce<Array<{ idx: number; label: string }>>((acc, d, i) => {
+    const yr = d.date.slice(0, 4);
+    if (acc.length === 0 || acc[acc.length - 1].label !== yr) acc.push({ idx: i, label: yr });
+    return acc;
+  }, []);
+
+  // PPI-004: starting-point reference
+  const startPoint = chartData[0];
+  const startLoan = startPoint?.maxLoan ?? 0;
+
+  // PPI-006: date range for header
+  const firstDate = chartData[0]?.date ?? '';
+  const lastDate = chartData[chartData.length - 1]?.date ?? '';
+  const dateRangeLabel = firstDate && lastDate ? `${firstDate} → ${lastDate}` : '';
+
   return (
     <div className="bg-linear-card border border-linear-border rounded-2xl overflow-hidden">
       {/* Header */}
@@ -91,7 +108,7 @@ const PurchasingPowerChart: React.FC<PurchasingPowerChartProps> = ({
           </div>
           <div>
             <h3 className="text-[11px] font-bold text-white uppercase tracking-widest">Purchasing Power Index</h3>
-            <p className="text-[9px] text-linear-text-muted">Max loan at £{monthlyBudget.toLocaleString()}/mo budget · {termYears}yr term</p>
+            <p className="text-[9px] text-linear-text-muted">5yr fixed · £{monthlyBudget.toLocaleString()}/mo · {termYears}yr term{dateRangeLabel ? ` · ${dateRangeLabel}` : ''}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -106,8 +123,17 @@ const PurchasingPowerChart: React.FC<PurchasingPowerChartProps> = ({
               <span className="text-[10px] font-black uppercase tracking-widest">{deltaPct.toFixed(1)}%</span>
             </div>
           )}
+          {/* UX-73: Scale mode toggle */}
+          <button
+            onClick={() => setAutoScale(v => !v)}
+            title={autoScale ? 'Switch to fixed scale (trend view)' : 'Switch to auto-scale (fit view)'}
+            className="p-1.5 rounded-lg border transition-all text-linear-text-muted hover:text-white hover:border-blue-500/40"
+            style={{ borderColor: autoScale ? 'rgba(59, 130, 246, 0.3)' : 'rgba(255,255,255,0.1)' }}
+          >
+            {autoScale ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+          </button>
           <div className="text-right">
-            <div className="text-sm font-bold text-white">£{(currentMaxLoan / 1000).toFixed(0)}K</div>
+            <div className="text-sm font-bold text-white">£{currentMaxLoan.toLocaleString('en-GB', { maximumFractionDigits: 0 })}</div>
             <div className="text-[8px] text-linear-text-muted">current max</div>
           </div>
         </div>
@@ -129,9 +155,28 @@ const PurchasingPowerChart: React.FC<PurchasingPowerChartProps> = ({
               range: [pad.left, W - pad.right],
             });
 
-            const maxLoanValues = chartData.map(d => d.maxLoan);
-            const yMin = Math.min(...maxLoanValues) * 0.95;
-            const yMax = Math.max(...maxLoanValues) * 1.05;
+            // UX-73: Fixed scale using affordable range — chart shifts horizontally as budget changes,
+            // enabling trend comparison across budget changes. Auto-scale recalculates per data range.
+            let yMin: number, yMax: number;
+            if (autoScale) {
+              const maxLoanValues = chartData.map(d => d.maxLoan);
+              yMin = Math.min(...maxLoanValues) * 0.95;
+              yMax = Math.max(...maxLoanValues) * 1.05;
+            } else {
+              // Derive affordable range from monthlyBudget at current rate
+              const termMonths = termYears * 12;
+              const currentRate = chartData[chartData.length - 1]?.rate ?? 4.55;
+              const monthlyRate = currentRate / 100 / 12;
+              let currentMax: number;
+              if (monthlyRate === 0) {
+                currentMax = monthlyBudget * termMonths;
+              } else {
+                currentMax = monthlyBudget * (Math.pow(1 + monthlyRate, termMonths) - 1) / (monthlyRate * Math.pow(1 + monthlyRate, termMonths));
+              }
+              const minLoan = currentMax * 0.85;
+              yMin = minLoan * 0.90;
+              yMax = currentMax * 1.10;
+            }
 
             const yScale = scaleLinear({
               domain: [yMin, yMax],
@@ -154,7 +199,7 @@ const PurchasingPowerChart: React.FC<PurchasingPowerChartProps> = ({
                         <line
                           x1={pad.left} y1={yScale(v)}
                           x2={W - pad.right} y2={yScale(v)}
-                          stroke="rgba(255,255,255,0.05)"
+                          stroke="rgba(255,255,255,0.08)"
                           strokeWidth={1}
                         />
                         <text
@@ -163,7 +208,7 @@ const PurchasingPowerChart: React.FC<PurchasingPowerChartProps> = ({
                           textAnchor="end"
                           fontSize={11}
                         >
-                          £{(v / 1000).toFixed(0)}K
+                          £{(v / 1000).toLocaleString('en-GB', { maximumFractionDigits: 0 })}K
                         </text>
                       </g>
                     );
@@ -189,6 +234,21 @@ const PurchasingPowerChart: React.FC<PurchasingPowerChartProps> = ({
                     strokeWidth={2}
                   />
 
+                  {/* PPI-001: x-axis year labels */}
+                  {yearLabels.map(({ idx, label }) => (
+                    <text
+                      key={label}
+                      x={xScale(idx)}
+                      y={height - pad.bottom + 16}
+                      fill="rgba(161,161,170,0.6)"
+                      fontSize={11}
+                      fontWeight="bold"
+                      textAnchor="middle"
+                    >
+                      {label}
+                    </text>
+                  ))}
+
                   {/* Current value dot */}
                   <circle
                     cx={xScale(chartData.length - 1)}
@@ -197,6 +257,31 @@ const PurchasingPowerChart: React.FC<PurchasingPowerChartProps> = ({
                     fill="#3b82f6"
                     opacity={0.9}
                   />
+
+                  {/* PPI-002: current mortgage rate annotation */}
+                  {chartData.length > 0 && (
+                    <text
+                      x={xScale(chartData.length - 1) - 6}
+                      y={yScale(currentMaxLoan) - 10}
+                      fill="rgba(59,130,246,0.6)"
+                      fontSize={9}
+                      fontWeight="bold"
+                      textAnchor="end"
+                    >
+                      {chartData[chartData.length - 1].rate.toFixed(2)}%
+                    </text>
+                  )}
+
+                  {/* PPI-004: starting-point reference line */}
+                  {startLoan > 0 && (
+                    <line
+                      x1={xScale(0)} y1={pad.top}
+                      x2={xScale(0)} y2={height - pad.bottom}
+                      stroke="rgba(34,197,94,0.35)"
+                      strokeWidth={1}
+                      strokeDasharray="3,3"
+                    />
+                  )}
 
                   {/* Hover rect — localPoint gives screen coords, matching SVG pixel coords */}
                   <rect
@@ -238,7 +323,7 @@ const PurchasingPowerChart: React.FC<PurchasingPowerChartProps> = ({
         >
           <div className="text-[10px] font-black text-white mb-1">{tooltipData.date}</div>
           <div className="text-[9px] text-blue-400">
-            Max Loan: <span className="font-bold">£{(tooltipData.maxLoan / 1000).toFixed(0)}K</span>
+            Max Loan: <span className="font-bold">£{tooltipData.maxLoan.toLocaleString('en-GB', { maximumFractionDigits: 0 })}</span>
           </div>
           <div className="text-[9px] text-linear-text-muted">
             Rate: <span className="font-bold">{tooltipData.rate.toFixed(2)}%</span>

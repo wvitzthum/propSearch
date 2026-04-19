@@ -66,7 +66,7 @@ export const useAffordability = () => {
     if (!stored) return 25;
     const parsed = JSON.parse(stored);
     // Clamp on init: guard against corrupted stored values.
-    return VALID_TERMS.includes(parsed as any) ? parsed : 25;
+    return VALID_TERMS.includes(parsed as (typeof VALID_TERMS)[number]) ? parsed as (typeof VALID_TERMS)[number] : 25;
   });
 
   // Persist term to localStorage
@@ -166,15 +166,14 @@ export const useAffordability = () => {
       const upper = upperBounds[i] ?? Infinity;
       const taxableInBand = Math.min(propertyPrice, upper) - prevBound;
       if (taxableInBand > 0) {
-        totalSDLT += taxableInBand * (rates[i].rate / 100);
+        // Apply additional property surcharge per band — correct HMRC approach
+        const rate = isAdditionalProperty
+          ? rates[i].rate + additionalSurcharge
+          : rates[i].rate;
+        totalSDLT += taxableInBand * (rate / 100);
       }
       prevBound = upper;
       if (prevBound >= propertyPrice) break;
-    }
-
-    // Add 3% additional property surcharge if applicable
-    if (isAdditionalProperty) {
-      totalSDLT += propertyPrice * (additionalSurcharge / 100);
     }
 
     return { sdlt: Math.round(totalSDLT), sdltBand };

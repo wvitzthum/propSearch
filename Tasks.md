@@ -38,27 +38,16 @@
 <tr><td><strong>DAT-204</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Update Rightmove detail scraper to extract listingHistory[].priceChangeData, prices.primaryPrice, and listingId.'>Update Rightmove detail scraper to extract listingHistory[].priceChangeData, prices.primaryPrice, and listingId.</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
 <tr><td><strong>DAT-205</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Add Zoopla priceHistory[], dateFirstListed, and listingId extraction to scraping protocol.'>Add Zoopla priceHistory[], dateFirstListed, and listingId extraction to scraping protocol.</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
 <tr><td><strong>PO-003</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='PO: Analyst Statement Panel — surface written macro summaries at top of Market Intel page'>PO: Analyst Statement Panel — surface written macro summaries at top of Market Intel page</td><td>Todo</td><td>Product Owner</td><td>None</td><td></td></tr>
-</tbody>
-</table>
-
-## 🐛 Bug Fixes
-
-<table>
-<thead>
-<tr>
-  <th align="left">ID</th>
-  <th align="left">Priority</th>
-  <th align="left">Effort</th>
-  <th align="left" style="width:480px">Task</th>
-  <th align="left">Status</th>
-  <th align="left">Responsible</th>
-  <th align="left">Dependencies</th>
-  <th align="left">Block Reason / Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr><td><strong>QA-197</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='BUG: Silent financial defaults in PropertyContext.tsx — service_charge defaults to £4K/yr, ground_rent defaults to £250/yr'>BUG: Silent financial defaults in PropertyContext.tsx — service_charge defaults to £4K/yr, ground_rent defaults to £250/yr</td><td>Todo</td><td>UI/UX QA</td><td>None</td><td></td></tr>
-<tr><td><strong>BUG-006</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='BUG: Silent financial defaults in PropertyContext.tsx — service_charge defaults to 4K/yr, ground_rent to 250/yr'>BUG: Silent financial defaults in PropertyContext.tsx — service_charge defaults to 4K/yr, ground_rent to 250/yr</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-254</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Expose area quartile £/sqft endpoints (Q1, Q3) via useAppreciationModel hook — needed by PriceAssessment.tsx price range bar'>FE: Expose area quartile £/sqft endpoints (Q1, Q3) via useAppreciationModel hook — needed by PriceAssessment.tsx price range bar</td><td>done</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-256</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Surface negotiation range offer tiers and all-in cost estimate in PropertyDetail sidebar'>FE: Surface negotiation range offer tiers and all-in cost estimate in PropertyDetail sidebar</td><td>done</td><td>Frontend Engineer</td><td>UX-56</td><td></td></tr>
+<tr><td><strong>PO-004</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='PO: Define PriceAssessment verdict logic — decision tree for &#x27;overpriced / fairly priced / below market&#x27; verdicts'>PO: Define PriceAssessment verdict logic — decision tree for &#x27;overpriced / fairly priced / below market&#x27; verdicts</td><td>done</td><td>Product Owner</td><td>None</td><td></td></tr>
+<tr><td><strong>PO-005</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='PO: Define 8-10 key factors with green/amber/red thresholds for PriceAssessment factor list'>PO: Define 8-10 key factors with green/amber/red thresholds for PriceAssessment factor list</td><td>done</td><td>Product Owner</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-257</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Build BorrowingPowerCalculator.tsx — income-to-maximum-loan component for AffordabilitySettings'>FE: Build BorrowingPowerCalculator.tsx — income-to-maximum-loan component for AffordabilitySettings</td><td>done</td><td>Frontend Engineer</td><td>DE-230</td><td></td></tr>
+<tr><td><strong>FE-258</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Integrate BorrowingPowerCalculator into AffordabilitySettings.tsx — new &#x27;Borrowing Power&#x27; accordion section'>FE: Integrate BorrowingPowerCalculator into AffordabilitySettings.tsx — new &#x27;Borrowing Power&#x27; accordion section</td><td>done</td><td>Frontend Engineer</td><td>FE-257</td><td></td></tr>
+<tr><td><strong>PO-006</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='PO: Specify exact income multiplier tiers and bonus treatment rules for BorrowingPowerCalculator'>PO: Specify exact income multiplier tiers and bonus treatment rules for BorrowingPowerCalculator</td><td>done</td><td>Product Owner</td><td>DE-230</td><td></td></tr>
+<tr><td><strong>PO-007</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Investigate macro/geopolitical data integration into propSearch dashboards'>Investigate macro/geopolitical data integration into propSearch dashboards</td><td>Todo</td><td>Product Owner</td><td>None</td><td></td></tr>
+<tr><td><strong>UX-129</strong></td><td>High</td><td>Small</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='E2E test cases: SDLT calculation must match gov.uk worked examples and edge cases'>E2E test cases: SDLT calculation must match gov.uk worked examples and edge cases</td><td>Todo</td><td>UI UX QA</td><td>FE-270</td><td></td></tr>
+<tr><td><strong>FE-274</strong></td><td>Medium</td><td>Small</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Add &#x27;Date Added&#x27; sort column to PropertyTable — makes new entries discoverable'>Add &#x27;Date Added&#x27; sort column to PropertyTable — makes new entries discoverable</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
 </tbody>
 </table>
 
@@ -80,12 +69,10 @@
 <tbody>
 <tr><td><strong>DAT-206</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Macro: Refresh market_indicators and global_context macro_trend — data is 12 days stale (Red)'>Macro: Refresh market_indicators and global_context macro_trend — data is 12 days stale (Red)</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
 <tr><td><strong>DAT-207</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Alpha 7+ Data Quality Audit — CT band sourcing, sqft correction, alpha recalculation'>Alpha 7+ Data Quality Audit — CT band sourcing, sqft correction, alpha recalculation</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
-<tr><td><strong>DAT-208</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Verify and resolve lease years for Lower Ground Floor Gloucester Terrace Bayswater (d4e5f6a7)'>Verify and resolve lease years for Lower Ground Floor Gloucester Terrace Bayswater (d4e5f6a7)</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
-<tr><td><strong>DAT-209</strong></td><td>Low</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Resolve CT bands for Highbury New Park N5 (1f55a0c4...) and Caledonian Road N7 (man-0404-9ca80037)'>Resolve CT bands for Highbury New Park N5 (1f55a0c4...) and Caledonian Road N7 (man-0404-9ca80037)</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
 </tbody>
 </table>
 
-## 🔗 Blocked by Outstanding Data (Clear Dependencies)
+## 🎨 UX Improvements
 
 <table>
 <thead>
@@ -101,7 +88,16 @@
 </tr>
 </thead>
 <tbody>
-<tr><td><strong>QA-030</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='QA-030: Test local image serving end-to-end after BUG-005 deployment'>QA-030: Test local image serving end-to-end after BUG-005 deployment</td><td><span style='color:#f59e0b;font-weight:bold'>⚠️ Blocked</span></td><td>UI/UX QA</td><td>BUG-005, DAT-196</td><td><span style='color:#ef4444;font-size:11px' title='Waiting for BUG-005 (server endpoint for local images) and DAT-196 (DB audit with local image paths) to be completed'>Waiting for BUG-005 (server endpoint for local images) and DAT-196 (DB audit with local image paths) to be completed</span></td></tr>
+<tr><td><strong>VISX-025</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Add peak premium marker annotation to LondonPrimePremiumChart'>FE: Add peak premium marker annotation to LondonPrimePremiumChart</td><td>done</td><td>Frontend Engineer</td><td>VISX-024</td><td></td></tr>
+<tr><td><strong>VISX-026</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Add trend direction annotation to LondonPrimePremiumChart right edge'>FE: Add trend direction annotation to LondonPrimePremiumChart right edge</td><td>done</td><td>Frontend Engineer</td><td>VISX-024</td><td></td></tr>
+<tr><td><strong>VISX-027</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Add UK=100 baseline annotation and Y-axis context to LondonPrimePremiumChart'>FE: Add UK=100 baseline annotation and Y-axis context to LondonPrimePremiumChart</td><td>done</td><td>Frontend Engineer</td><td>VISX-024</td><td></td></tr>
+<tr><td><strong>VISX-028</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Expand LondonPrimePremiumChart tooltip with MoM change and date formatting'>FE: Expand LondonPrimePremiumChart tooltip with MoM change and date formatting</td><td>done</td><td>Frontend Engineer</td><td>VISX-024</td><td></td></tr>
+<tr><td><strong>UX-56</strong></td><td>High</td><td>High</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UX: Build PriceAssessment.tsx component for /property/{id} — verdict box, 4-metric grid, value benchmarks card, property specs card, price range bar, coloured key factors list, and negotiation range table'>UX: Build PriceAssessment.tsx component for /property/{id} — verdict box, 4-metric grid, value benchmarks card, property specs card, price range bar, coloured key factors list, and negotiation range table</td><td>done</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>UX-57</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UX: Restructure /property/{id} page layout — place PriceAssessment hero at top (above pipeline tracker and gallery), then fold remaining sections below'>UX: Restructure /property/{id} page layout — place PriceAssessment hero at top (above pipeline tracker and gallery), then fold remaining sections below</td><td>done</td><td>Frontend Engineer</td><td>UX-56</td><td></td></tr>
+<tr><td><strong>FE-255</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Slim PropertyDetail sticky sidebar — price + primary CTAs only; move notes/links to collapsible panel'>FE: Slim PropertyDetail sticky sidebar — price + primary CTAs only; move notes/links to collapsible panel</td><td>done</td><td>Frontend Engineer</td><td>UX-57</td><td></td></tr>
+<tr><td><strong>FE-259</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Unify income-based and budget-based max loan — show binding constraint clearly across AffordabilitySettings'>FE: Unify income-based and budget-based max loan — show binding constraint clearly across AffordabilitySettings</td><td>done</td><td>Frontend Engineer</td><td>FE-258</td><td></td></tr>
+<tr><td><strong>FE-260</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Surface income-based max loan in PropertyDetail AffordabilityNode — show dual constraint (income + budget)'>FE: Surface income-based max loan in PropertyDetail AffordabilityNode — show dual constraint (income + budget)</td><td>done</td><td>Frontend Engineer</td><td>FE-259</td><td></td></tr>
+<tr><td><strong>UX-58</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UX: Move RentalYieldVsGiltChart from AffordabilitySettings to PropertyDetail.tsx — make property-specific'>UX: Move RentalYieldVsGiltChart from AffordabilitySettings to PropertyDetail.tsx — make property-specific</td><td>done</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
 </tbody>
 </table>
 
@@ -381,6 +377,7 @@
 <tr><td><strong>DAT-195</strong></td><td>Update ADR-016 to document shared alphaScore.ts module architecture</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>BUG-005</strong></td><td>BUG-005: Serve local images via /api/images/ endpoint — resolve 304 on data/images/ paths</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>DAT-196</strong></td><td>DAT-196: Audit all properties with local image_url paths and verify correct path format in DB</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>QA-030</strong></td><td>QA-030: Test local image serving end-to-end after BUG-005 deployment</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>DAT-197</strong></td><td>Alpha score: null-safe sqft requirement for price efficiency + E LADOG line bonus + commute destination scoring</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>DAT-198</strong></td><td>Alpha score: add Days on Market (DOM) → Negotiation Leverage component</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>DAT-199</strong></td><td>Alpha score: add EPC rating → Institutional Standard Risk component</td><td>Done</td><td>2026-04-12</td></tr>
@@ -389,7 +386,7 @@
 <tr><td><strong>DAT-202</strong></td><td>Alpha score: add floor level scoring and service charge density</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>FE-244</strong></td><td>Frontend: update alphaScore.ts with new components and breakdown UI</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>PO-002</strong></td><td>ADR-021: Alpha Score v2 — Multi-Axis Acquisition Quality Framework</td><td>Done</td><td>2026-04-12</td></tr>
-<tr><td><strong>FE-250</strong></td><td>RentalYieldVsGiltChart tooltip not appearing on hover — FE-229 regression</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>FE-250</strong></td><td>RentalYieldVsGiltChart tooltip not appearing on hover — FE-229 regression</td><td>Done</td><td>2026-04-19</td></tr>
 <tr><td><strong>FE-251</strong></td><td>Map View: Alpha Score Color Grade Toggle — Replace static marker colours with a toggleable colour mode that maps score → colour gradient</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>FE-252</strong></td><td>Map View: Multi-Select Status Filter — Replace single-value status filter with multi-select checkboxes, matching the Properties page pattern</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>FE-253</strong></td><td>Map View: Add &#x27;View Property&#x27; button to slide-in detail panel — link to /property/{id}</td><td>Done</td><td>2026-04-12</td></tr>
@@ -398,12 +395,104 @@
 <tr><td><strong>DE-221</strong></td><td>Extend price_history schema: add status, reduction_pct, price_per_sqm, days_on_market, london_hpi, source, portal_price_id columns.</td><td>Done</td><td>2026-04-13</td></tr>
 <tr><td><strong>DE-222</strong></td><td>Update price_monitor.js: write enriched price_history entries (status, reduction_pct) instead of only updating properties table reduction fields.</td><td>Done</td><td>2026-04-13</td></tr>
 <tr><td><strong>DE-225</strong></td><td>Fix sync_data.js: SqliteError 45 values for 47 columns — schema mismatch</td><td>Done</td><td>2026-04-13</td></tr>
-<tr><td><strong>VISX-025</strong></td><td>FE: Add peak premium marker annotation to LondonPrimePremiumChart</td><td>Done</td><td>2026-04-12</td></tr>
-<tr><td><strong>VISX-026</strong></td><td>FE: Add trend direction annotation to LondonPrimePremiumChart right edge</td><td>Done</td><td>2026-04-12</td></tr>
-<tr><td><strong>VISX-027</strong></td><td>FE: Add UK=100 baseline annotation and Y-axis context to LondonPrimePremiumChart</td><td>Done</td><td>2026-04-12</td></tr>
-<tr><td><strong>VISX-028</strong></td><td>FE: Expand LondonPrimePremiumChart tooltip with MoM change and date formatting</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>UX-053</strong></td><td>FE: Font size audit — bump data labels and values from 8/9px to minimum 10/11px across all components</td><td>Done</td><td>2026-04-12</td></tr>
 <tr><td><strong>QA-196</strong></td><td>QA: Null/undefined display defaults on PropertyDetail page — replace silent fallbacks with N/A indicators</td><td>Done</td><td>2026-04-13</td></tr>
+<tr><td><strong>QA-197</strong></td><td>BUG: Silent financial defaults in PropertyContext.tsx — service_charge defaults to £4K/yr, ground_rent defaults to £250/yr</td><td>Done</td><td>2026-04-13</td></tr>
+<tr><td><strong>BUG-006</strong></td><td>BUG: Silent financial defaults in PropertyContext.tsx — service_charge defaults to 4K/yr, ground_rent to 250/yr</td><td>Done</td><td>2026-04-12</td></tr>
+<tr><td><strong>DAT-208</strong></td><td>Verify and resolve lease years for Lower Ground Floor Gloucester Terrace Bayswater (d4e5f6a7)</td><td>Done</td><td>2026-04-13</td></tr>
+<tr><td><strong>DAT-209</strong></td><td>Resolve CT bands for Highbury New Park N5 (1f55a0c4...) and Caledonian Road N7 (man-0404-9ca80037)</td><td>Done</td><td>2026-04-13</td></tr>
+<tr><td><strong>DE-226</strong></td><td>DE: Source area-level £/sqft quartile data (Q1/Q3) by postcode for use in PriceAssessment range bar</td><td>Done</td><td>2026-04-16</td></tr>
+<tr><td><strong>DE-229</strong></td><td>DE: Single ingestion point — all scrapers write to inbox JSON, sync_data.js is the only SQLite writer</td><td>Done</td><td>2026-04-16</td></tr>
+<tr><td><strong>DE-230</strong></td><td>DE: Research UK mortgage lending multipliers by income bracket and lender — build lending_rules.json reference dataset</td><td>Done</td><td>2026-04-17</td></tr>
+<tr><td><strong>FE-250</strong></td><td>FE: Clean up TS6133 unused variable/import warnings — 23 remaining across 7 files</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>PED-001</strong></td><td>FE: Add min=0 to all number inputs in PropertyEdit — negative values corrupt data</td><td>Done</td><td>2026-04-16</td></tr>
+<tr><td><strong>PED-003</strong></td><td>FE: Add step attributes to price and number inputs in PropertyEdit — prevent sub-unit accidental values</td><td>Done</td><td>2026-04-16</td></tr>
+<tr><td><strong>PED-006</strong></td><td>FE: Replace window.confirm in PropertyEdit cancel with inline discard confirmation</td><td>Done</td><td>2026-04-16</td></tr>
+<tr><td><strong>SORT-001</strong></td><td>FE: Fix PropertyTable user_priority sort — ranks appear out of order, direction not synced</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-59</strong></td><td>UX: Remove ranking system — delete usePropertyRank.ts, strip rank from PropertyTable, PreviewDrawer, sort logic</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>DE-231</strong></td><td>DE: Add &#x27;watchlist&#x27; to pipeline_status enum and remove property_rank column from SQLite schema</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-60</strong></td><td>UX: Add &#x27;watchlist&#x27; step to PipelineTracker.tsx asset lifecycle — between &#x27;vetted&#x27; and &#x27;archived&#x27;</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>FE-261</strong></td><td>FE: Add &#x27;watchlist&#x27; to PropertyStatus type and usePipeline hook — pipeline advance/retreat logic</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>FE-262</strong></td><td>FE: Surface watchlist count in Layout sidebar nav and PropertiesPage filter options</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>QA-198</strong></td><td>QA: Test full watchlist pipeline flow — advance from vetted to watchlist to archived, verify all UIs</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-61</strong></td><td>UX: Rename deposit &#x27;Auto&#x27; mode to &#x27;Budget-Linked&#x27; with tooltip — current naming is semantically confusing</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-61</strong></td><td>UX: Clarify affordability URL routing — two pages with overlapping purpose</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-61</strong></td><td>UX: Derive payment scenarios dynamically from affordableRange — hardcoded scenarios are irrelevant to high-budget users</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-61</strong></td><td>UX: Fix PurchasingPowerChart y-axis to absolute scale — rescales on budget change making trends incomparable</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-61</strong></td><td>UX: Align budget slider max to £50K — BudgetSlider.tsx cap doesn&#x27;t match useAffordability clamp</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-66</strong></td><td>UX: Rename deposit &#x27;Auto&#x27; mode to &#x27;Budget-Linked&#x27; with tooltip — current naming is semantically confusing</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-71</strong></td><td>UX: Clarify affordability URL routing — two pages with overlapping purpose</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-72</strong></td><td>UX: Derive payment scenarios dynamically from affordableRange — hardcoded scenarios are irrelevant to high-budget users</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-73</strong></td><td>UX: Fix PurchasingPowerChart y-axis to absolute scale — rescales on budget change making trends incomparable</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-74</strong></td><td>UX: Align budget slider max to £50K — BudgetSlider.tsx cap doesn&#x27;t match useAffordability clamp</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>FE-263</strong></td><td>BUG: PropertiesPage.tsx Vite HMR error — smoke tests fail on 3 pages with &#x27;[vite] Failed to reload /src/pages/PropertiesPage.tsx&#x27;</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-75</strong></td><td>UX: Reduce PropertyTable default visible columns — table is barely legible with 18 columns at 1280px</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-76</strong></td><td>UX: Add Value Gap column tooltip explaining green/red convention — &#x27;below list&#x27; vs &#x27;above list&#x27; is ambiguous</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-77</strong></td><td>UX: Add confirmation state to PropertyTable pipeline advance button — single click advances pipeline without feedback</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-78</strong></td><td>UX: Grid view loses Table view features — sort, columns, batch selection reset on view switch</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-79</strong></td><td>UX: Column visibility button has no hidden-count badge — no discoverability for hidden columns</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-80</strong></td><td>UX: Sort direction toggle is broken — clicking a column always sorts DESC, ASC never fires</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-81</strong></td><td>UX: Keyboard nav hint bar shown in Grid view — J/K/O shortcuts only work in Table view</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-82</strong></td><td>UX: Persist batchSelected state at PropertiesPage level — batch selection lost on view-mode switch</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-83</strong></td><td>UX: Filter panel Max Price slider has no tick labels — Alpha slider has 0/10, Max Price slider has nothing</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-84</strong></td><td>UX: Rename &#x27;Date Added&#x27; column to &#x27;First Seen&#x27; — label is ambiguous between ingestion date and market listing date</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-85</strong></td><td>UX: Grid view empty state ignores active sort — generic message doesn&#x27;t mention sort context</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-86</strong></td><td>UX: Add sort indicator to Grid view header — no visual indication of active sort</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-87</strong></td><td>UX: DoM column header has no tooltip — source and context of &#x27;days on market&#x27; is unclear</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-88</strong></td><td>UX: Archived filter label inconsistent — Pipeline Strip shows &#x27;Archived&#x27;, Filter Panel shows &#x27;Archived (User)&#x27;</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-89</strong></td><td>UX: Comparison Zap icon has no visible add/remove affordance — small icon with no label</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-90</strong></td><td>UX: Filter panel may scroll off-screen on mobile — Clear All Filters button inaccessible</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-91</strong></td><td>UX: PropertyTable value_gap sort has special-case code — should use generic property accessor pattern</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-92</strong></td><td>UX: Improve search placeholder &#x27;/&#x27; hint — clarify it only works when input is unfocused</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-93</strong></td><td>UX: Replace sidebar SDLT IIFE with useAffordability.calculateSDLT — three copies of hardcoded formula</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-94</strong></td><td>UX: Wire up or disable &#x27;Generate PDF Report&#x27; button — currently does nothing</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-95</strong></td><td>UX: Wire up &#x27;View Detailed CAPEX Breakdown&#x27; button or replace with modal trigger</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-96</strong></td><td>UX: Fix Data Provenance last_refreshed — hardcoded 2026-04-01 should come from real data</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-97</strong></td><td>UX: Add last_checked freshness visual indicator — green/amber/rose by recency</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-98</strong></td><td>UX: Extract negotiation tier logic to shared utility — sidebar and PriceAssessment both hardcode same percentages</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-99</strong></td><td>UX: Fix sidebar density — rename &#x27;Back to Terminal&#x27; to &#x27;← Back to Dashboard&#x27;</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-100</strong></td><td>UX: Always show analyst notes indicator dot — disappears when panel is open</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-101</strong></td><td>UX: Add tooltip to &#x27;Request Enrichment&#x27; button — no preview of what fields it collects</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-102</strong></td><td>UX: Darken PriceAssessment verdict box — light green/cream on dark page breaks theme consistency</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-103</strong></td><td>UX: Rename &#x27;Recheck Property&#x27; to &#x27;Verify Listing&#x27; — label is ambiguous</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-104</strong></td><td>UX: Show &#x27;—&#x27; for null EPC improvement potential instead of defaulting to &#x27;B&#x27;</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-105</strong></td><td>UX: Remove or replace non-informational CAPEX progress bar — hardcoded width not derived from data</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-106</strong></td><td>UX: Replace or remove static &#x27;Location Insight&#x27; placeholder text in sidebar</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-107</strong></td><td>UX: Fix sidebar sticky position for tablet breakpoints — may overlap with nav bar</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-108</strong></td><td>UX: Update &#x27;Financing: 90% LTV&#x27; label to show property&#x27;s actual LTV band</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-109</strong></td><td>UX: Change gallery thumbnails from 4:3 to match main image ratio 16:9</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-110</strong></td><td>UX: Label service charge sections clearly as /year vs /month — currently ambiguous</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-111</strong></td><td>UX: Remove &#x27;ID: FIN-OUT-XXXX&#x27; jargon label from bottom of Institutional Ownership Model</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-112</strong></td><td>UX: Add backward-movement hint to PipelineTracker for archived step</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-113</strong></td><td>UX: Rename &#x27;Gallery Stream&#x27; tab to &#x27;Gallery&#x27; — &#x27;Stream&#x27; adds nothing</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>UX-114</strong></td><td>UX: Add keyboard accessibility to Data Provenance accordion button</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>FE-264</strong></td><td>Build affordability utility functions (pure TypeScript, zero React deps)</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>FE-265</strong></td><td>Build useAffordabilityCalculator hook (state + localStorage, zero UI)</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>FE-266</strong></td><td>Build BorrowingEngine component (Floor 1 — income sliders to max mortgage hero)</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>FE-267</strong></td><td>Build CashAssessment component (Floor 2 — property price + deposit to Cash Stack waterfall)</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>FE-268</strong></td><td>Build AffordabilityCalculator page (assembles Floor 1 + Floor 2, wires hook to live rates)</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>FE-269</strong></td><td>Wire new AffordabilityCalculator into /affordability route + rewrite Playwright tests</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>UX-115</strong></td><td>UX review of PurchasingPowerChart.tsx — decide disposition (keep /affordability, move /rates, or move /market)</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>DAT-210</strong></td><td>Split ps-bb934eac: 4 aggregated Zoopla URLs need separate property records</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>UX-116</strong></td><td>UX: Remove CAPEX &amp; Retrofit section from /property/{id} — EPC data is questionable, section adds noise not signal</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>UX-117</strong></td><td>UX: Remove 5-col specs grid (bed/floor/tenure/epc/ct) from PropertyDetail — already in PriceAssessment hero</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>UX-118</strong></td><td>UX: Merge Asset Overhead + Institutional Ownership Model + AffordabilityNode into single Financial Summary card</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>UX-119</strong></td><td>UX: Merge AcquisitionStrategy + AlphaScoreBreakdown + CapitalAppreciationChart into single Bid Strategy card</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>UX-120</strong></td><td>UX: Move Investment Yield into collapsible Market Context section</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>UX-121</strong></td><td>UX: Action buttons accessible on mobile — sticky bottom bar (Edit, Verify, Enrichment, Source Hub)</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>UX-122</strong></td><td>UX: Replace SourceHub hover-only dropdown with always-visible list — mobile accessible agent links</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>UX-123</strong></td><td>UX: Collapse PipelineTracker + Investment Thesis Tags into a compact single-row bar</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>UX-124</strong></td><td>UX: Data Provenance → collapsible, collapsed by default — low actionability</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>UX-125</strong></td><td>UX: Merge LocationNodeMap + commute cards into collapsible Location Context section</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>UX-126</strong></td><td>UX: Mobile — wrap PipelineTracker in horizontal scroll container</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>UX-127</strong></td><td>UX: Mobile — fix 5-col specs grid overflow, collapse to 2-col (bed/floor | tenure/epc/ct merged)</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>UX-128</strong></td><td>UX: Alpha score deduplication — PriceAssessment shows headline, AlphaScoreBreakdown becomes expandable detail</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>FE-270</strong></td><td>BUG FIX: SDLT additional property rates are wrong — uses standard rates + 3% instead of correct gov.uk higher rates</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>QA-001</strong></td><td>QA: Clean up outdated Playwright tests that reference unimplemented UI features</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>FE-271</strong></td><td>Integrate PurchasingPowerChart into AffordabilityCalculator — collapsible below Floor 2</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>DE-240</strong></td><td>DE: Remove dead user_priority sort code from PropertiesPage.tsx — ranking feature removed by UX-59</td><td>Done</td><td>2026-04-19</td></tr>
+<tr><td><strong>FE-272</strong></td><td>HPIHistoryChart: Increase market event label font size and fix tooltip positioning offset</td><td>Done</td><td>2026-04-18</td></tr>
+<tr><td><strong>FE-273</strong></td><td>HPIHistoryChart: Add Iran Oil Crisis (1973) market event annotation</td><td>Done</td><td>2026-04-18</td></tr>
 <tr><td><strong>FE-162</strong></td><td>Runtime crash in Inbox.tsx — Cannot read properties of undefined (reading toLoca...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-187</strong></td><td>Responsive Layout Audit: Sidebar layout (pl-64 fixed) not mobile-optimised — res...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-172</strong></td><td>Runtime React error in MarketConditionsBar.tsx:141 — &#x27;Objects are not valid as a...</td><td>Done</td><td></td></tr>

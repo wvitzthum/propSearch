@@ -146,13 +146,11 @@ const AdditionalCostsCard: React.FC<AdditionalCostsCardProps> = ({
           </div>
         </div>
 
-        {costs.sdlt > 0 && (
+        {costs.sdlt > 0 && !costs.isFtB && (
           <div className="flex items-start gap-2 p-3 bg-rose-500/5 border border-rose-500/15 rounded-xl">
             <Info size={12} className="text-rose-400 mt-0.5 flex-shrink-0" />
             <p className="text-[9px] text-rose-300 leading-relaxed">
-              SDLT of £{costs.sdlt.toLocaleString()} is payable on completion.{' '}
-              {!costs.isFtB && 'FTB relief may reduce this if you have never owned property.'}
-              {' '}This is a separate cash requirement on top of your deposit.
+              3% additional property surcharge applies. If this is your first property, enable FTB relief above to save £{costs.sdlt.toLocaleString()}.
             </p>
           </div>
         )}

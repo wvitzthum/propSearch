@@ -1,8 +1,9 @@
 // VISX-008: Voronoi pixel-precise hover via @visx/voronoi VoronoiPolygon
 // FE-205: Migrated to @visx — replaces hand-rolled SVG with visx scale/shape/axis primitives
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useMacroData } from '../hooks/useMacroData';
 import { extractValue } from '../types/macro';
+import type { MacroTrend } from '../types/macro';
 import { scaleLinear } from '@visx/scale';
 import { LinePath } from '@visx/shape';
 import { Group } from '@visx/group';
@@ -17,6 +18,32 @@ import { ParentSize } from '@visx/responsive';
 interface HPIHistoryChartProps {
   className?: string;
   height?: number;
+}
+
+interface HPIHistoryDataPoint {
+  date: string;
+  uk_hpi: number;
+  london_hpi: number;
+  london_vs_uk_pct?: number;
+  annual_change_pct?: number;
+}
+
+interface ScenarioDef {
+  probability?: number;
+  annual_return?: number;
+  five_year_total?: number;
+}
+
+interface AppreciationModel {
+  scenario_definitions?: {
+    bear?: ScenarioDef;
+    base?: ScenarioDef;
+    bull?: ScenarioDef;
+  } | undefined;
+}
+
+interface MacroTrendWithAppreciation {
+  appreciation_model?: AppreciationModel;
 }
 
 const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', height = 260 }) => {
@@ -40,21 +67,44 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
   const svgBoxRef = useRef(svgBox);
   // Track parent element (the .px-4.py-3.relative div) for tooltip offset calculation
   const parentRef = useRef<HTMLElement | null>(null);
+  // Track parent rect for tooltip positioning (avoids React Compiler ref-during-render warning)
+  const [parentBox, setParentBox] = useState({ left: 0, top: 0 });
+  const parentBoxRef = useRef(parentBox);
   // Keep svgBoxRef in sync whenever state changes
   const _setSvgBox = (val: { x: number; y: number }) => {
     svgBoxRef.current = val;
     setSvgBox(val);
   };
+  const _setParentBox = (val: { left: number; top: number }) => {
+    parentBoxRef.current = val;
+    setParentBox(val);
+  };
 
-  const raw = data as any;
+  // Track parent bounding rect via ResizeObserver — avoids infinite render cycle
+  // that would occur if setParentBox were called directly in the ref callback.
+  useEffect(() => {
+    const el = parentRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      const rect = el.getBoundingClientRect();
+      _setParentBox({ left: rect.left, top: rect.top });
+    });
+    observer.observe(el);
+    // Initial measurement
+    const rect = el.getBoundingClientRect();
+    _setParentBox({ left: rect.left, top: rect.top });
+    return () => observer.disconnect();
+  }, []);
+
+  const raw = data;
 
   // Historical HPI series from macro_trend.json → hpi_history.data
   // Schema: { date, london_hpi, uk_hpi, london_vs_uk_pct } — 2015-01 to 2026-01
   const history = useMemo(() => {
-    const rawHpi: any[] = raw?.hpi_history?.data ?? [];
+    const rawHpi: HPIHistoryDataPoint[] = raw?.hpi_history?.data ?? [];
     if (!Array.isArray(rawHpi) || rawHpi.length === 0) return [];
     // Use uk_hpi as the UK index; london_hpi as the London-specific index
-    const indexed = rawHpi.map((h: any, i: number) => ({
+    const indexed = rawHpi.map((h: HPIHistoryDataPoint, i: number) => ({
       date: h.date,
       index_uk: h.uk_hpi ?? 100,
       index_london: h.london_hpi ?? h.uk_hpi ?? 100,
@@ -67,6 +117,9 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
 
   // Annotations from hpi_history.annotations
   const annotations = useMemo(() => (raw?.hpi_history?.annotations ?? [
+    // Note: data starts 2015-01 — 1973-10 annotation below has no matching data point
+    // and will not render. Keeping for future long-range HPI datasets.
+    { date: '1973-10', event: 'Iran Oil Crisis', description: 'OPEC oil embargo triggers global inflation surge' },
     { date: '2016-06', event: 'Brexit Vote', description: 'EU referendum result triggers market uncertainty' },
     { date: '2020-03', event: 'COVID-19 Shock', description: 'Lockdown causes temporary market freeze' },
     { date: '2020-09', event: 'SDLT Holiday', description: 'SDLT holiday spurs buying frenzy' },
@@ -77,7 +130,7 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
 
   // Appreciation scenarios from appreciation_model.json
   const scenarios = useMemo(() => {
-    const model = raw as any;
+    const model = raw as MacroTrend & MacroTrendWithAppreciation;
     const last = history[history.length - 1];
     if (!last) return null;
     const current = last.index_uk;
@@ -104,6 +157,7 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
 
   // Event color mapping
   const eventColors: Record<string, string> = {
+    'Iran Oil Crisis': '#f97316',
     'Brexit Vote': '#f59e0b',
     'COVID-19 Shock': '#ef4444',
     'SDLT Holiday': '#22c55e',
@@ -113,19 +167,15 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
   };
 
 
-  // Visible window: last 60 months of history + 36 months projection
+  // PPI-008: Fixed x-axis — xMax now matches actual data extent so chart fills full width
   const displayHistory = history.slice(-60);
-
-  // Scales (used by ParentSize SVG — coords are in screen pixels, not viewBox)
-  const xMax = displayHistory.length + 36 - 1;
+  const xMax = displayHistory.length - 1;
   const allValues = [
     ...displayHistory.map(h => h.index_uk),
     ...(scenarios ? [...scenarios.bear.path, ...scenarios.base.path, ...scenarios.bull.path] : []),
   ];
   const minV = Math.min(...allValues) * 0.94;
   const maxV = Math.max(...allValues) * 1.04;
-
-  // Annotation x positions (month index in displayHistory)
   const annotationX = useMemo(() => {
     const result: Record<string, number> = {};
     annotations.forEach(a => {
@@ -207,7 +257,9 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
           2. SVG font sizes (2.5px, 2.8px) were in viewBox space and scaled to near-invisible
           NEW: ParentSize provides actual pixel width; SVG has no viewBox, all coords are screen pixels.
           FIX: SVG height = H + 32 to accommodate year labels that sit below the chart area. */}
-      <div className="px-4 py-3 relative" ref={el => { parentRef.current = el; }}>
+      <div className="px-4 py-3 relative" ref={el => {
+        parentRef.current = el;
+      }}>
         <div style={{ height: height + 32 }}>
           <ParentSize>
             {({ width: parentWidth }) => {
@@ -312,7 +364,6 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
                   ref={svgRef}
                   width={W}
                   height={SVG_H}
-                  viewBox={`0 0 ${W} ${SVG_H}`}
                   className="overflow-visible"
                   onMouseMove={() => {
                     if (svgRef.current) {
@@ -452,7 +503,7 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
                           <text
                             x={labelX}
                             y={labelY}
-                            fontSize={9}
+                            fontSize={11}
                             fontWeight="900"
                             fill={color}
                             opacity={0.85}
@@ -491,7 +542,7 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
                       <text
                         x={getX(projBase[projBase.length - 1].x) + 4}
                         y={getY(projBase[projBase.length - 1].y) - 6}
-                        fontSize={9}
+                        fontSize={11}
                         fontWeight="bold"
                         fill="rgba(59,130,246,0.6)"
                         textAnchor="start"
@@ -513,7 +564,7 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
                             const rect = svgRef.current.getBoundingClientRect();
                             _setSvgBox({ x: rect.left, y: rect.top });
                           }
-                          showTooltip({ tooltipData: { date: d.date, index: d.index }, tooltipLeft: d.x + (svgBoxRef.current?.x ?? 0), tooltipTop: d.y + (svgBoxRef.current?.y ?? 0) });
+                          showTooltip({ tooltipData: { date: d.date, index: d.index }, tooltipLeft: d.x, tooltipTop: d.y });
                         }}
                         onMouseLeave={hideTooltip}
                         className="cursor-crosshair"
@@ -526,17 +577,16 @@ const HPIHistoryChart: React.FC<HPIHistoryChartProps> = ({ className = '', heigh
           </ParentSize>
         </div>
 
-        {/* VISX-018: Voronoi hover tooltip — tooltipLeft/Top are viewport-relative (SVG-local + svgBox offset).
-            SVG is inside parentRef (position:relative). Transform must offset by parent rect to
-            get parent-relative coordinates. Formula: (viewport - parent.left, viewport - parent.top) */}
+        {/* VISX-018: Direct position:fixed tooltip at mouse coordinates.
+            TooltipWithBounds uses a Portal which can cause unexpected offset in complex layouts.
+            Using position:fixed with tooltipLeft/tooltipTop (page coords from localPoint) directly. */}
         {tooltipOpen && tooltipData && (
           <div
             className="visx-tooltip"
             style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              transform: `translate(${(tooltipLeft ?? 0) - (parentRef.current?.getBoundingClientRect().left ?? 0) - 16}px, ${(tooltipTop ?? 0) - (parentRef.current?.getBoundingClientRect().top ?? 0) - 12}px)`,
+              position: 'fixed',
+              left: tooltipLeft ?? 0,
+              top: (tooltipTop ?? 0) + 16,
               background: '#0f172a',
               border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: 8,

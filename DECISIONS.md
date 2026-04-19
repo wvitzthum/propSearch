@@ -181,6 +181,26 @@ Floorplans are a critical data point for judging spatial volume and flow before 
 1.  **Extraction:** Implement specialized "Hidden Web Data" research to isolate `floorplan_url` from portal JSON blobs (Rightmove/Zoopla).
 2.  **Schema:** Expand the SQLite `properties` table and JSON schema to support `floorplan_url` as a first-class metric.
 3.  **Visualization:** Integrate a dedicated "Floorplan Preview" in the Lead Inbox and Property Detail page to enable rapid spatial assessment.
+
+### Shared Module Architecture (DAT-195)
+
+Following ADR-021 (Alpha Score v2), the alpha score calculation moved to a shared module architecture. ADR-016 is updated to reflect the completed implementation:
+
+| File | Role |
+|------|------|
+| `scripts/alphaScore.ts` | **Single source of truth** — canonical calculation logic, fully typed |
+| `scripts/calculate_alpha_score.js` | Server audit scripts — imports from shared module |
+| `frontend/src/utils/alphaScore.ts` | Re-exports from shared module + adds display helpers (`alphaColor`, `alphaBgColor`, `alphaTextColor`) |
+
+**Exports from `scripts/alphaScore.ts`:**
+- `calculateAlphaScore(property)` — returns plain `number` (0–10). Used by server audit scripts.
+- `calculateAlphaBreakdown(property)` — returns full `AlphaBreakdown` interface with all component scores, warnings, and signals.
+- `AREA_BENCHMARKS` — empirical £/sqm benchmarks per area (2026 data)
+- All component parsers: `parseTenure`, `parseSpatial`, `parsePrice`, `parseDOM`, `parseEPC`, `parseFloorLevel`, `parseServiceCharge`, `parseAppreciation`, `parseMarketStatus`
+
+**Formula drift eliminated:** Frontend display and server audit now use identical calculation logic. The frontend wraps the shared module with display helpers; it does not re-implement the formula.
+
+**See also:** ADR-021 §Canonical Source for the full v2 methodology.
 ## Status
 Accepted
 
@@ -771,3 +791,366 @@ These are surfaced in the AlphaScoreBreakdown component and do NOT cap the score
 ### Status
 
 Accepted
+
+---
+
+# ADR-022: Single Ingestion Point Architecture
+## Context
+Following DAT-216 findings, the database has accumulated multiple independent write paths:
+- **6 scraper ID prefixes** (ch-, man-, pb-, gh-, chelsea-, ps-) writing directly to SQLite
+- sync_data.js deduplication bypassed by scripts that write directly before sync runs
+- Address string variants causing false-negative dedup (e.g., 'Chelsea Manor Gardens' vs 'Chelsea Manor Gardens, , Chelsea, SW3')
+- demo_master.json seeded with portal URLs belonging to mis-matched properties
+
+## Problem
+No single canonical entry point means the same property can exist under multiple IDs if its address string varies even slightly between scrape runs.
+
+## Decision
+
+### 1. Single-Writer Rule
+**`sync_data.js` is the ONLY script authorized to write to the SQLite `properties` table.**
+
+All scrapers, enrichers, and batch scripts must:
+- **Scrapers** → write enriched JSON to `data/inbox/` (filename: `{timestamp}_RAW.json`)
+- **Enrichers** → read from `data/inbox/`, write enriched results to `data/inbox/` (filename: `{timestamp}_ENRICHED.json`)
+- **sync_data.js** → processes inbox files, writes to SQLite, archives processed files
+
+No script in `scripts/` may use `better-sqlite3` to INSERT or UPDATE the `properties` table except `sync_data.js`.
+
+### 2. Ingestion Flow
+
+```
+scraper → data/inbox/{timestamp}_RAW.json
+                ↓
+          sync_data.js  ← ONLY SQLite writer
+                ↓
+          SQLite (properties table)
+```
+
+### 3. Exception: Field-Only Enrichment Scripts
+Enrichment scripts that only update specific sub-fields (not address/list_price/area) may write directly to SQLite, BUT:
+- They must read current values before writing (Rule 5: Read-Before-Write)
+- They must write only the specific enriched field (no full-record overwrite)
+- They must be documented in the table below
+
+### 4. Current Exception Allowlist (Field-Only Writers)
+
+| Script | Fields Updated | Rationale |
+|--------|----------------|-----------|
+| `enrich_council_tax.js` | `council_tax_band` | Targeted field; address/list_price unchanged |
+| `enrich_flagged_properties.js` | `image_url`, `gallery`, `floorplan_url`, `floor_level` | Visual enrichment; no identifying fields |
+| `portal_rescrape.js` | `list_price`, `price_reduction_*`, `bedrooms`, `bathrooms`, `source_id`, `last_checked` | Re-scrapes portal URLs to detect price changes |
+
+All three are whitelisted as field-only writers. Any new direct writer must be added here via DE task.
+
+### 5. URL Audit
+`sync_data.js --audit-urls` (DAT-216) runs a contamination check on every commit via pre-commit hook. It detects:
+- Same URL → multiple property IDs (cross-contamination)
+- Orphaned portal links pointing to wrong addresses
+
+### 6. demo_master.json Validation
+Before any import, every URL in `links[]` arrays must be checked against the live DB: does this URL already map to a different address? If yes, strip it and log the removal.
+
+### 7. Pre-Commit Hook Update
+`scripts/pre-commit-data-guard.sh` now:
+- Warns on `data/propSearch.db` or `data/master.jsonl` changes without `data/backups/LOG.md` update
+- Blocks `data/inbox/` file commits
+- Runs `sync_data.js --audit-urls` if data files are staged (warns; does not block)
+
+### 8. Acceptance Criteria
+- Zero scraper scripts write directly to `properties` table (verify: `grep "new Database" scripts/scrape_*.js`)
+- `sync_data.js --audit-urls` returns CLEAN before and after any import
+- New scraper runs produce inbox JSON that `sync_data.js` processes correctly
+
+---
+
+### Status
+Accepted
+
+---
+
+## ADR-022: Price Assessment UX — Hero-First Property Detail
+
+**Date**: 2026-04-16
+**Status**: Approved
+**Deciders**: Product Owner
+
+### Context
+
+The `/property/{id}` page (`PropertyDetail.tsx`) is a **data terminal** — it dumps the user into pipeline status, thesis tags, and image gallery before providing any opinion on whether the property is worth considering. The decision-relevant content (value benchmarks, price positioning, negotiation range) is buried below the fold, mixed with analysis layer content (affordability, capital appreciation, CAPEX) that matters only after the first-pass filter is passed.
+
+Reference: `data/import/queens_gardens_price_assessment.html` demonstrates the correct pattern — a single-pass, decision-first layout that gives a buyer everything needed to form an initial view in under 30 seconds.
+
+### Problems with Current PropertyDetail Layout
+
+| Issue | Impact |
+|-------|--------|
+| No verdict at top | User must read half the page to form a view |
+| Pipeline/Gallery before price opinion | Buying decision data is below the fold |
+| No area range bar | Property £/sqft vs area Q1–Q3 is invisible |
+| No factor analysis section | Alpha score breakdown is complex; simple signal list is missing |
+| No negotiation range | Offer tiers and all-in cost are absent |
+| Sidebar is cluttered | Duplicates main column content; action buttons buried |
+
+### Design: Hero-First Layout
+
+```
+Page Order:
+1. Property address + area tags
+2. [PRICE ASSESSMENT HERO] ← new
+   2a. Verdict box (1-2 sentence headline)
+   2b. 4-metric grid (asking, £/sqft, Δ%, BoE rate)
+   2c. Value Benchmarks card (left) + Property Specs card (right)
+   2d. Price Positioning range bar (property marker vs area Q1–Q3)
+   2e. Key Factors list (green/amber/red dots)
+   2f. Negotiation Range table (strong/mid/near-ask offer tiers + SDLT + all-in)
+3. Pipeline Tracker + Thesis Tags (collapsed, secondary)
+4. Gallery/Floorplan/Price Evolution tabs
+5. — Below fold (analysis layer) —
+   Affordability Node, Capital Appreciation, Alpha Score, Acquisition Strategy,
+   CAPEX/Retrofit, Location Map
+```
+
+**Sidebar:** Strip to price + primary CTAs only. Analyst notes and map blurb move to collapsible "More Details" panel.
+
+### Component Architecture
+
+| Component | File | Role |
+|-----------|------|------|
+| `PriceAssessment` | `frontend/src/components/PriceAssessment.tsx` | Hero section — verdict, metrics, benchmarks, range bar, factors, negotiation |
+| `PropertyDetail` refactor | `frontend/src/pages/PropertyDetail.tsx` | Page shell — reorders sections, slim sidebar |
+
+### Verdict Logic (PO-004)
+
+Inputs: `realistic_price` vs `list_price` delta, alpha score, area quartile position, BoE rate environment, DOM status.
+
+| Condition | Verdict | Rationale |
+|-----------|---------|-----------|
+| `realistic_price` ≤ area median AND `dom` > 60 | **Below market — motivated seller** | Price is good; DOM signals vendor urgency |
+| `realistic_price` ≤ area median AND `dom` ≤ 60 | **Fairly priced** | At or below area median; no pressure signal |
+| `realistic_price` > area median AND alpha ≥ 8 | **Premium justified by quality** | Above median but alpha score validates it |
+| `realistic_price` > area median AND alpha < 5 | **Above market — avoid or negotiate hard** | Paying for a below-average asset |
+| `list_price` reduced by ≥5% | **Price reduction signals negotiation room** | Vendor motivation; use in rationale |
+| BoE rate rising + flat market | **Constrained market — careful pricing** | Affordability headwinds |
+| BoE rate falling + flat market | **Entry window** | Macro improving |
+
+Verdict rationale: 1-2 sentences max. No essay.
+
+### Key Factors Taxonomy (PO-005)
+
+8-10 factors, each with: label, colour (green/amber/red), 1-sentence description.
+
+| Colour | Signal | Conditions |
+|--------|--------|-----------|
+| 🟢 Green | Positive for buyer | Location quality (zone 1), SOF tenure, area regeneration underway, discount to benchmark |
+| 🟡 Amber | Caution / informational | BoE rate environment, DOM market conditions, market headwinds, macro uncertainty |
+| 🔴 Red | Negative / risk | Top floor no lift, EPC E/F/G, service charge >£8/sqft/yr, short lease (<90yr), sold at loss risk |
+
+### Price Positioning Range Bar
+
+- **Q1** (25th percentile £/sqft) and **Q3** (75th percentile £/sqft) from `lending_rules.json` area data or hardcoded area constants
+- Property marker positioned proportionally: `position% = (property_psf - q1) / (q3 - q1) × 100`
+- Marker colour: green (≤Q2), amber (Q2–Q3), red (>Q3)
+
+### Negotiation Range Table
+
+| Row | Format |
+|-----|--------|
+| Strong offer | £XXXX–£XXXX (green) — seller motivated, below realistic |
+| Reasonable mid | £XXXX–£XXXX (blue) — at realistic price |
+| Near-ask | £XXXX–£XXXX (amber) — quick close, list price proximity |
+| Stamp duty | £XX,XXX — from SDLT calculator |
+| All-in cost | £XXXXXX+ — deposit + SDLT + fees |
+
+### Data Sources
+
+| Data Point | Source | Existing? |
+|-----------|--------|-----------|
+| Verdict logic | `calculateAlphaBreakdown` + `useMacroData` | Yes |
+| 4-metric grid | `property` fields + `useMacroData` | Yes |
+| Value benchmarks | `AREA_BENCHMARKS` from `alphaScore.ts` + `macro_trend.json` | Yes |
+| Price positioning | `useAppreciationModel` area Q1/Q3 (FE-254) | Partial |
+| Key factors | `calculateAlphaBreakdown` modifiers + property fields | Yes |
+| Negotiation range | `calcBidLadder` from `AcquisitionStrategy.tsx` + SDLT | Yes |
+
+### Implementation Order
+
+1. **PO-004 + PO-005** — Product Owner defines verdict logic + factor taxonomy
+2. **DE-226** — Data Engineer sources area quartile data (unblocks FE-254)
+3. **FE-254** — Frontend exposes Q1/Q3 via `useAppreciationModel`
+4. **UX-56** — Frontend builds `PriceAssessment.tsx`
+5. **UX-57** — Frontend integrates into `PropertyDetail.tsx` and slim sidebar
+6. **FE-255 + FE-256** — Frontend cleans sidebar
+
+### Status
+Accepted
+
+---
+
+## ADR-023: Borrowing Power Calculator — Income-to-Loan Affordability
+
+**Date**: 2026-04-16
+**Status**: Approved
+**Deciders**: Product Owner
+
+### Context
+
+The current Affordability Settings page (`AffordabilitySettings.tsx`) is built around **monthly budget** as the sole affordability constraint. Users configure a monthly payment capacity, and the system derives a maximum loan and max property price from it.
+
+This is necessary but insufficient. A buyer earning £100k + 20% bonus wants to know: *"What can I actually borrow from a bank given my income?"*
+
+The two constraints operate differently:
+- **Cash-flow constraint:** Monthly budget → max loan (mortgage payment affordability)
+- **Income constraint:** Salary × multiplier → max loan (bank lending rules)
+
+The binding constraint is whichever is lower. Showing only one produces blind spots — a user might think they can afford a £900k property because their budget allows it, without knowing their bank will only lend £612k.
+
+Additionally, the Investment Yield Analysis section (`RentalYieldVsGiltChart`) is area-level data misplaced on the personal affordability page.
+
+### Design: Borrowing Power Section
+
+Add a **"Your Borrowing Power"** accordion section to `AffordabilitySettings.tsx`, before the Budget Profile section.
+
+```
+Collapsed state:
+┌─────────────────────────────────────────────────────┐
+│  🏦 Your Borrowing Power                    £612,000 │
+│     Based on £100,000 salary + 20% bonus    [expand] │
+└─────────────────────────────────────────────────────┘
+
+Expanded state:
+Inputs:
+  Annual Salary  [£100,000]
+  Bonus %         [20%] → £20k regular bonus included at 100%
+  Overtime/Commission £ [optional]
+  Employment type: [Employed ▼] — Employed / Self-employed / Contractor
+  Partner salary  [optional, for joint mortgages]
+
+Results:
+  ┌───────────────────────────────────────────────┐
+  │  Conservative   Standard    High Earner    Cap │
+  │  £504,000      £612,000    £680,000       £XXX │
+  │  (4.5×)        (5.5×)      (6.0×)         (budget)│
+  └───────────────────────────────────────────────┘
+
+Lender Comparison Table:
+  Barclays    5.5×   ÷  ÷  ÷
+  HSBC        5.5×   6.0× ÷  ÷   ← Premier for £100k+
+  NatWest     5.5×   6.0× ÷  ÷
+  Lloyds      5.5×   ÷  ÷  ÷
+  Santander   5.0×   ÷  ÷  ÷
+
+Binding constraint callout:
+  ┌────────────────────────────────────────────────┐
+  │  ✓ INCOME-CEILING: £612K  (binding)             │
+  │    Budget allows: £720K  (slack: £108K)          │
+  └────────────────────────────────────────────────┘
+```
+
+### Income Multiplier Tiers
+
+| Income (base salary) | Standard | High Earner | Lenders |
+|----------------------|----------|-------------|---------|
+| £0–25k | 4.5× | 4.5× | All |
+| £25–50k | 4.75× | 5.0× | All |
+| £50–75k | 5.0× | 5.5× | Barclays, HSBC, NatWest |
+| £75–100k | 5.25× | 5.5× | HSBC Premier, NatWest high earner |
+| £100k+ | 5.5× | 6.0× | HSBC Premier, NatWest |
+
+**Bonus treatment:** Regular (variance <20% between years) → averaged over 2 years, included at 100%. Irregular → 50% or excluded.  
+**Overtime/commission:** Consistent 2-year average → included at 50–75%.  
+**Self-employed:** 2-year average net profit via SA302 or accountant-certified accounts.  
+**Contractor/IR35:** 12-month contract + day rate × 240 days or SA302.  
+**Dual income:** Combined income × 4.5–5.5×; some lenders allow up to 10× combined for strong joint applicants.  
+**Stress test:** 3pp over offered rate, floor 6.5–7%.
+
+### Component Architecture
+
+| Component | File | Role |
+|-----------|------|------|
+| `BorrowingPowerCalculator` | `frontend/src/components/BorrowingPowerCalculator.tsx` | Inputs + income multiplier logic + lender comparison |
+| AffordabilitySettings refactor | `frontend/src/pages/AffordabilitySettings.tsx` | Adds "Borrowing Power" section; unifies dual constraints |
+| `useAffordability` | `frontend/src/hooks/useAffordability.ts` | Add income-based `getIncomeMaxLoan()` |
+
+### Cross-Page Binding Constraint
+
+When a user visits `/property/{id}`:
+- `AffordabilityNode` shows **monthly budget constraint** only
+- After FE-260: `AffordabilityNode` shows **both** income-based ceiling and budget-based ceiling
+- Binding constraint highlighted in green; slack in amber
+
+### Data Sources
+
+| Data Point | Source | Existing? |
+|-----------|--------|-----------|
+| Lender multipliers | `data/sources/lending_rules.json` (DE-230) | No |
+| Stress test rate | `lending_rules.json` or fallback 6.5% | No |
+| Salary inputs | `localStorage` (user-configured) | Yes (partial) |
+| Monthly budget | `useAffordability` | Yes |
+| SDLT | `useAffordability.calculateSDLT` | Yes |
+
+### Relationship to Existing Affordability Model
+
+```
+AffordabilitySettings page:
+┌─────────────────────────────────────────────────────────────┐
+│  YOUR BORROWING POWER                    ← NEW (FE-258)      │
+│  Income: £100k + 20% bonus → max £612k                       │
+│  Binding constraint: INCOME (£612k) vs BUDGET (£720k)         │
+├─────────────────────────────────────────────────────────────┤
+│  BUDGET PROFILE                                            │
+│  Monthly: £6,000 → max loan £XXX → max price £XXX          │
+├─────────────────────────────────────────────────────────────┤
+│  AFFORDABILITY MATRIX                                      │
+│  Entry/Mid/Core/Ultra properties → LTV band + affordability │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Implementation Order
+
+1. **DE-230** — Data Engineer builds `lending_rules.json`
+2. **PO-006** — Product Owner specifies exact multiplier tiers
+3. **FE-257** — Frontend builds `BorrowingPowerCalculator.tsx`
+4. **FE-258** — Frontend integrates into `AffordabilitySettings`
+5. **FE-259** — Frontend unifies dual constraint display
+6. **FE-260** — Frontend surfaces dual constraint in `AffordabilityNode` on `PropertyDetail`
+
+### RentalYieldVsGiltChart — Related Fix
+
+`RentalYieldVsGiltChart` (currently on `AffordabilitySettings`) is area-level yield data — not user-specific. Move to `PropertyDetail` as `UX-58`.
+
+### Status
+Accepted
+
+---
+
+## ADR-022: PurchasingPowerChart — disposition
+
+**Date:** 2026-04-18  
+**Status:** Accepted
+
+### Context
+
+The `PurchasingPowerChart` component shows the user's maximum mortgage over 24 months of historical rate data — it is personal to the user's monthly budget and term. After the AFFORD-001 rebuild, the new `/affordability` page (two-floor model) does not include it, and the old `AffordabilitySettings` page is deprecated.
+
+Three options were considered:
+1. **Keep on `/affordability`** — below Floor 2, collapsible
+2. **Move to `/rates`** — shown with a fixed reference budget (e.g., £6K/month)
+3. **Delete** — the two-floor design makes it redundant
+
+### Decision
+
+**Keep on `/affordability`** — placed below Floor 2, collapsible by default.
+
+### Rationale
+
+1. **Personal data**: The chart is meaningful only with the user's actual monthly budget as the input. Moving it to `/rates` would require showing it with a generic budget, which reduces its value significantly.
+2. **Thematic fit**: The two-floor model answers "how much can I borrow?" (Floor 1) and "what cash do I need?" (Floor 2). The chart answers "how has that borrowing power changed?" — a natural follow-on question at the bottom of the same page.
+3. **Low visual priority**: Placed below Floor 2 as a collapsed "Purchasing Power History" accordion, it doesn't compete with the primary calculator UX but remains accessible.
+4. **No other page is a better fit**: `/rates` is for market-level rate instruments (swap rates, BoE path). `/market` is for area performance and HPI. Neither is a natural home for personal purchasing power history.
+
+### Consequences
+
+- Frontend Engineer to add `<PurchasingPowerChart>` to `AffordabilityCalculator.tsx` below `CashAssessment`, wrapped in a collapsible section.
+- Component receives `monthlyBudget` and `termYears` from the hook.
+- Default state: collapsed (user clicks to expand).

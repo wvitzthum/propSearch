@@ -47,14 +47,14 @@ test.describe('AffordabilitySettings Page', () => {
       await page.waitForTimeout(500);
 
       // Should see mode toggle buttons
-      await expect(page.locator('button:has-text("Auto")').first()).toBeVisible();
-      await expect(page.locator('button:has-text("Fixed")').first()).toBeVisible();
+      await expect(page.locator('button:has-text("Budget-Linked")').first()).toBeVisible();
+      await expect(page.locator('button:has-text("Fixed Deposit")').first()).toBeVisible();
     });
 
     test('Fixed mode shows percentage controls', async ({ page }) => {
       await page.locator('h2:has-text("Deposit Configuration")').first().click();
       await page.waitForTimeout(500);
-      await page.locator('button:has-text("Fixed")').first().click();
+      await page.locator('button:has-text("Fixed Deposit")').first().click();
       await page.waitForTimeout(300);
 
       // Fixed mode should show percentage options - check for deposit amount display
@@ -229,17 +229,16 @@ test.describe('AffordabilitySettings Page', () => {
     test('max affordable property price is consistent with monthly budget', async ({ page }) => {
       await setBudget(page, 6000);
 
-      // Extract max affordable from the "Your Affordable Range" card.
-      // The heading and price are sibling elements at the same DOM level — need grandparent.
-      const affordableHeading = page.locator('text=/Your Affordable Range/i').first();
-      await affordableHeading.scrollIntoViewIfNeeded();
-      await expect(affordableHeading).toBeVisible({ timeout: 3000 });
-      const affordableText = await affordableHeading.locator('..').locator('..').textContent() ?? '';
+      // Extract max affordable from the "Max Affordable" card (Quick Stats section).
+      const card = page.locator('text=/Max Affordable/i').first().locator('..').locator('..');
+      await card.scrollIntoViewIfNeeded();
+      await expect(card).toBeVisible({ timeout: 3000 });
+      const cardText = await card.textContent() ?? '';
 
-      // Allow optional space before K: "£1074K" or "£1074 K"
-      const maxMatch = affordableText.match(/£([0-9,]+)\s*K\s*-\s*£([0-9,]+)\s*K/);
-      expect(maxMatch, `Affordable Range text should contain a price range: ${affordableText}`).toBeTruthy();
-      const maxAffordable = parseInt(maxMatch![2].replace(/,/g, '')) * 1000;
+      // Pattern: "£1074K" or "£1074 K" (single value, not a range)
+      const maxMatch = cardText.match(/£([0-9,]+)\s*K/);
+      expect(maxMatch, `Max Affordable card should contain a price value: "${cardText}"`).toBeTruthy();
+      const maxAffordable = parseInt(maxMatch![1].replace(/,/g, '')) * 1000;
       // At £6K/month, 4.55%, 25yr: max mortgage ≈ £955K. At 85% LTV: max price ≈ £1,124K
       expect(maxAffordable, `Max affordable (~£1,124K) should be in a reasonable range for £6K budget`).toBeGreaterThan(800000);
       expect(maxAffordable).toBeLessThan(2000000);
@@ -249,17 +248,15 @@ test.describe('AffordabilitySettings Page', () => {
   // FE-230: Affordability range reactivity — must update immediately when budget or term changes
   test.describe('Affordability Range Reactivity — FE-230', () => {
     /**
-     * Reads the current max affordable value from the "Your Affordable Range" card.
-     * The heading and price are sibling elements — need grandparent to get both.
+     * Reads the current max affordable value from the "Max Affordable" card (Quick Stats).
+     * The heading "Max Affordable" is in the card. The value "£XXXK" is the next text node.
      */
     const getMaxAffordable = async (page: any): Promise<number | null> => {
-      const heading = page.locator('text=/Your Affordable Range/i').first();
-      await heading.scrollIntoViewIfNeeded();
-      const card = heading.locator('..').locator('..');
+      const card = page.locator('text=/Max Affordable/i').first().locator('..').locator('..');
       const text = await card.textContent().catch(() => '');
-      const match = text.match(/£([0-9,]+)\s*K\s*-\s*£([0-9,]+)\s*K/);
+      const match = text.match(/£([0-9,]+)\s*K/);
       if (!match) return null;
-      return parseInt(match[2].replace(/,/g, '')) * 1000;
+      return parseInt(match[1].replace(/,/g, '')) * 1000;
     };
 
     test('affordable range is lower at £4K budget than at £6K baseline', async ({ page }) => {

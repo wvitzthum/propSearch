@@ -10,7 +10,7 @@ import MarketPage from './pages/MarketPage';
 import ArchiveReview from './pages/ArchiveReview';
 import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import ComparisonPage from './pages/ComparisonPage';
-import AffordabilitySettings from './pages/AffordabilitySettings';
+import AffordabilityCalculator from './pages/AffordabilityCalculator';
 import Inbox from './pages/Inbox';
 import { PropertyProvider } from './hooks/PropertyContext';
 
@@ -33,7 +33,7 @@ function App() {
             <Route path="/map" element={<MapView />} />
             <Route path="/inbox" element={<Inbox />} />
             <Route path="/comparison" element={<ComparisonPage />} />
-            <Route path="/affordability" element={<AffordabilitySettings />} />
+            <Route path="/affordability" element={<AffordabilityCalculator />} />
             <Route path="/archive" element={<ArchiveReview />} />
 
             {/* Deep-dive routes */}

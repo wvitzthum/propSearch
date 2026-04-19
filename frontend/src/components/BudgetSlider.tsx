@@ -17,6 +17,7 @@ const BudgetSlider: React.FC<BudgetSliderProps> = ({ onBudgetChange, compact = f
     calculateMortgageFromPayment,
   } = useAffordability();
   const [localBudget, setLocalBudget] = useState(monthlyBudget);
+  const DEFAULT_BUDGET = 6000;
 
   useEffect(() => {
     setLocalBudget(monthlyBudget);
@@ -46,6 +47,12 @@ const BudgetSlider: React.FC<BudgetSliderProps> = ({ onBudgetChange, compact = f
     onBudgetChange?.(newBudget);
   };
 
+  const handleReset = () => {
+    setLocalBudget(DEFAULT_BUDGET);
+    updateBudget(DEFAULT_BUDGET);
+    onBudgetChange?.(DEFAULT_BUDGET);
+  };
+
   const presets = [
     { label: '£4K', value: 4000 },
     { label: '£6K', value: 6000 },
@@ -64,7 +71,7 @@ const BudgetSlider: React.FC<BudgetSliderProps> = ({ onBudgetChange, compact = f
           <input
             type="range"
             min="500"
-            max="20000"
+            max="50000"
             step="100"
             value={localBudget}
             onChange={(e) => handleChange(Number(e.target.value))}
@@ -91,8 +98,15 @@ const BudgetSlider: React.FC<BudgetSliderProps> = ({ onBudgetChange, compact = f
             <div className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">
               Monthly Budget
             </div>
-            <div className="text-lg font-bold text-white tracking-tight">
+            <div className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
               £{localBudget.toLocaleString()}
+              <button
+                onClick={handleReset}
+                className="text-[9px] text-linear-text-muted hover:text-white transition-colors"
+                title="Reset to default (£6,000)"
+              >
+                ↺ reset
+              </button>
               <span className="text-[10px] text-linear-text-muted font-normal"> / month</span>
             </div>
           </div>
@@ -118,7 +132,7 @@ const BudgetSlider: React.FC<BudgetSliderProps> = ({ onBudgetChange, compact = f
         <input
           type="range"
           min="500"
-          max="20000"
+          max="50000"
           step="100"
           value={localBudget}
           onChange={(e) => handleChange(Number(e.target.value))}
@@ -128,7 +142,8 @@ const BudgetSlider: React.FC<BudgetSliderProps> = ({ onBudgetChange, compact = f
         />
         <div className="flex justify-between text-[9px] text-linear-text-muted">
           <span>£500</span>
-          <span>£20,000</span>
+          <span>£20K</span>
+          <span>£50K</span>
         </div>
       </div>
 

@@ -32,3 +32,25 @@ Based on: Area Momentum, Transport Connectivity, Asset Quality, Value Gap.
 - When `nearest_tube_distance` or `park_proximity` is updated
 - When `realistic_price` changes significantly
 - Always document the basis for changes in `analyst_notes`
+
+### Critical Field Schema (DAT-217 — Fixed 2026-04-17)
+
+| Column | Type | Allowed Values | Never Put Here |
+|--------|------|---------------|----------------|
+| `alpha_score` | FLOAT 0–10 | 0.0 to 10.0 | Descriptive text |
+| `appreciation_potential` | FLOAT 0–10 | 0.0 to 10.0 | Investment thesis prose |
+| `analyst_notes` | TEXT | Any length prose | — |
+
+**Bug (DAT-217):** A Python UPDATE script on 2026-04-16 used this tuple order:
+```python
+(prop_id, alpha, appreciation, analyst_notes_text)
+```
+against this SQL:
+```sql
+UPDATE properties SET alpha_score=?, appreciation_potential=?, analyst_notes=?, ...
+```
+The parameter at position 3 (`appreciation`) contained a **descriptive investment thesis string** (not a number), which was written into `appreciation_potential`. Result: 7 properties had their investment rationale stored as the numeric score field, while `analyst_notes` was unchanged.
+
+**Fix:** Corrected all 7 properties. Descriptive text moved to `analyst_notes`. Numeric scores set to values consistent with each property's alpha, location quality, and price premium/discount.
+
+**Prevention:** Any script that writes to `alpha_score` or `appreciation_potential` must validate that the value is numeric before executing the UPDATE. Add assertion: `assert isinstance(val, (int, float)) and 0 <= val <= 10`.

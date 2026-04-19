@@ -7,6 +7,85 @@ export interface Provenance<T> {
   last_refreshed?: string;
 }
 
+// Raw input types for the useMacroData normalization layer.
+// These describe the actual JSON shapes returned by /api/macro and
+// /data/macro_trend.json — including legacy variants and provenance wrappers.
+// Using these instead of `any` ensures full type coverage in the normalization.
+export interface RawAreaTrendEntry {
+  area: string;
+  score?: ProvenanceOrValue<number>;
+  heat_index?: ProvenanceOrValue<number>;
+  annual_growth?: ProvenanceOrValue<number>;
+  hpi_forecast_12m?: ProvenanceOrValue<number>;
+  london_benchmark?: ProvenanceOrValue<number>;
+}
+
+export interface RawMortgageHistoryPoint {
+  date?: string;
+  month?: string;
+  boe_rate?: ProvenanceOrValue<number>;
+  rate_90?: ProvenanceOrValue<number>;
+  rate_75?: ProvenanceOrValue<number>;
+  mortgage_2yr?: ProvenanceOrValue<number>;
+  mortgage_2yr_90ltv?: ProvenanceOrValue<number>;
+  mortgage_2yr_85ltv?: ProvenanceOrValue<number>;
+  mortgage_2yr_75ltv?: ProvenanceOrValue<number>;
+  mortgage_2yr_60ltv?: ProvenanceOrValue<number>;
+  mortgage_5yr?: ProvenanceOrValue<number>;
+  mortgage_5yr_90ltv?: ProvenanceOrValue<number>;
+  mortgage_5yr_85ltv?: ProvenanceOrValue<number>;
+  mortgage_5yr_75ltv?: ProvenanceOrValue<number>;
+  mortgage_5yr_60ltv?: ProvenanceOrValue<number>;
+  cpi?: ProvenanceOrValue<number>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+}
+
+export interface RawSwapRatePoint {
+  month?: string;
+  date?: string;
+  rate: ProvenanceOrValue<number> | number;
+}
+
+export interface RawSwapRatesInput {
+  gbp_2yr?: ProvenanceOrValue<number>;
+  gbp_5yr?: ProvenanceOrValue<number>;
+  two_year_gbp_swap?: ProvenanceOrValue<number>;
+  five_year_gbp_swap?: ProvenanceOrValue<number>;
+  trend_2yr?: string;
+  trend_5yr?: string;
+  history_2yr?: RawSwapRatePoint[];
+  history_5yr?: RawSwapRatePoint[];
+  current?: RawSwapRatesInput;
+}
+
+export interface RawHPIForecastPoint {
+  area: string;
+  forecast_12m?: ProvenanceOrValue<number>;
+  london_benchmark?: ProvenanceOrValue<number>;
+}
+
+// Handles both legacy format: { data: MortgageHistoryEntry[] } and flat array
+export interface RawMortgageHistoryInput {
+  data?: RawMortgageHistoryPoint[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+}
+
+// Raw mortgage_rates field from macro_trend.json — handles mixed key naming conventions
+export interface RawMortgageRatesInput {
+  two_year_fixed_90_ltv?: ProvenanceOrValue<number>;
+  "90_ltv_2yr_fixed"?: ProvenanceOrValue<number>;
+  five_year_fixed_90_ltv?: ProvenanceOrValue<number>;
+  "90_ltv_5yr_fixed"?: ProvenanceOrValue<number>;
+  five_year_fixed_85_ltv?: ProvenanceOrValue<number>;
+  "85_ltv_5yr_fixed"?: ProvenanceOrValue<number>;
+  five_year_fixed_75_ltv?: ProvenanceOrValue<number>;
+  "75_ltv_5yr_fixed"?: ProvenanceOrValue<number>;
+  five_year_fixed_60_ltv?: ProvenanceOrValue<number>;
+  "60_ltv_5yr_fixed"?: ProvenanceOrValue<number>;
+  avg_fees?: ProvenanceOrValue<number>;
+  [key: string]: unknown;
+}
+
 // Type that can be either a primitive or provenance-wrapped
 export type ProvenanceOrValue<T> = T | Provenance<T>;
 
@@ -128,6 +207,14 @@ export interface MacroTrend {
   london_benchmark?: number;
   // UX-009: Data freshness timestamp
   last_refreshed?: string;
+  // FE-188: Appreciation model scenario definitions — used by HPIHistoryChart for 3-scenario fan chart
+  appreciation_model?: {
+    scenario_definitions?: {
+      bear?: { probability?: number; annual_return?: number; five_year_total?: number };
+      base?: { probability?: number; annual_return?: number; five_year_total?: number };
+      bull?: { probability?: number; annual_return?: number; five_year_total?: number };
+    };
+  };
   // VISX-021 / VISX-022: Seasonal market cycle indices (0–10, Jan–Dec)
   seasonal_supply_index?: number[];
   seasonal_demand_index?: number[];
