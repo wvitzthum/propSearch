@@ -1,0 +1,254 @@
+{
+  "_meta": {
+    "title": "UK Mortgage Lending Rules Reference Dataset",
+    "version": "1.0.0",
+    "last_refreshed": "2026-04-17",
+    "sources": [
+      "FCA Mortgage Market Review (MMR) — PS12/16",
+      "Bank of England Financial Policy Committee LTV guidance",
+      "Major UK lender published product criteria (Barclays, HSBC, Lloyds, NatWest, Halifax, Santander, Metro Bank, Kensington, Precise, MT Finance)",
+      "UK Finance Mortgage Lending Standards"
+    ],
+    "notes": "Multipliers shown are loan-to-income (LTI) ratios. Post-FCA MMR (2014), all lenders must stress-test at higher of notional rate (min 6.5%) or contract rate + 1%. High earner multipliers available only to applicants meeting full affordability assessment with verified income."
+  },
+  "income_tiers": {
+    "basic":    { "label": "Basic",    "range": [0,      25000], "description": "Minimum wage / near-minimum income" },
+    "standard": { "label": "Standard", "range": [25001,  50000], "description": "Typical employed single income" },
+    "mid":      { "label": "Mid",      "range": [50001,  75000], "description": "Established professional" },
+    "upper_mid":{ "label": "Upper-Mid", "range": [75001, 100000], "description": "Senior professional / dual income" },
+    "high":     { "label": "High",     "range": [100001, 999999999], "description": "High earner / complex income structure" }
+  },
+  "lenders": {
+    "Barclays": {
+      "tier_overview": "Standard bank — strong for employed with regular bonus. Conservative on self-employed.",
+      "affordability_model": "stress_at_min_6.5pct",
+      "stress_rate": 6.5,
+      "stress_rate_note": "Higher of 6.5% or contract rate + 1.5%",
+      "tiers": {
+        "basic":    { "multiplier": { "min": 3.5, "std": 4.0, "max": 4.25 }, "cap": 250000 },
+        "standard": { "multiplier": { "min": 4.0, "std": 4.5, "max": 4.75 }, "cap": 500000 },
+        "mid":      { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.0  }, "cap": 750000 },
+        "upper_mid":{ "multiplier": { "min": 4.0, "std": 4.5, "max": 5.25 }, "cap": 1000000 },
+        "high":     { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.5  }, "cap": 5000000, "high_earner_notes": "Upper multipliers require senior role + clean credit + no committed expenditure" }
+      },
+      "bonus_treatment":     { "treatment": "averaged", "haircut_pct": 50, "note": "Fixed bonus averaged over 2 years, 50% haircut applied" },
+      "ot_treatment":         { "treatment": "averaged", "haircut_pct": 50, "note": "Overtime averaged over 2 years, 50% haircut" },
+      "self_employed_rules":  { "treatment": "sa302_required", "yrs_accounts": 2, "note": "SA302 + 2 years of accounts required. Ltd company dividends treated as retained profit." },
+      "existing_debt":       { "treatment": "deducted_from_available_income", "note": "Monthly committed debt repayments deducted from gross monthly income before affordability calculation" },
+      "dual_income":         { "combined_multiplier_cap": 5.5, "individual_cap": 4.5, "note": "Joint borrower individual caps apply" },
+      "btl_rules": {
+        "ltv_max": 75,
+        "rental_coverage_min": 125,
+        "stress_rate": 5.5,
+        "personal_income_supplement": true,
+        "note": "Ltd company BTL requires 25% deposit minimum. Personal income can supplement rental shortfall."
+      }
+    },
+    "HSBC": {
+      "tier_overview": "Strong on residential. Conservative self-employed — favour PAYE. BTL via HSBC Specialist Expatriate & International only.",
+      "affordability_model": "stress_at_min_7pct",
+      "stress_rate": 7.0,
+      "stress_rate_note": "Uses 7% stressed rate for affordability. Less aggressive than some peers.",
+      "tiers": {
+        "basic":    { "multiplier": { "min": 3.5, "std": 4.0, "max": 4.25 }, "cap": 250000 },
+        "standard": { "multiplier": { "min": 4.0, "std": 4.5, "max": 4.75 }, "cap": 500000 },
+        "mid":      { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.0  }, "cap": 750000 },
+        "upper_mid":{ "multiplier": { "min": 4.0, "std": 4.5, "max": 5.25 }, "cap": 1000000 },
+        "high":     { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.5  }, "cap": 5000000 }
+      },
+      "bonus_treatment":     { "treatment": "included", "haircut_pct": 0, "note": "Regular bonus included at full value if verifiable via payslip. Subject to 12-month tenure minimum." },
+      "ot_treatment":         { "treatment": "included", "haircut_pct": 0, "note": "Regular overtime included at full value if 12-month history. Requires payslip evidence." },
+      "self_employed_rules":  { "treatment": "sa302_required", "yrs_accounts": 2, "note": "HMRC SA302 + 2 years accounts. Income calculated as average of 2 years net profit." },
+      "existing_debt":       { "treatment": "deducted_from_available_income" },
+      "dual_income":         { "combined_multiplier_cap": 5.5, "individual_cap": 4.5 },
+      "btl_rules": {
+        "ltv_max": 75,
+        "rental_coverage_min": 125,
+        "stress_rate": 5.5,
+        "personal_income_supplement": true,
+        "note": "BTL primarily via HSBC International / Premier. UK residential-only BTL limited."
+      }
+    },
+    "Lloyds Banking Group": {
+      "tier_overview": "Covers Halifax + Lloyds brand. Most aggressive on multipliers for strong borrowers. Halifax most generous for first-time buyers.",
+      "affordability_model": "stress_at_min_6.5pct",
+      "stress_rate": 6.5,
+      "stress_rate_note": "Stress at 6.5% or contract rate + 1%, whichever is higher.",
+      "tiers": {
+        "basic":    { "multiplier": { "min": 3.5, "std": 4.25, "max": 4.5  }, "cap": 300000 },
+        "standard": { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.0  }, "cap": 600000 },
+        "mid":      { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.25 }, "cap": 1000000 },
+        "upper_mid":{ "multiplier": { "min": 4.0, "std": 4.5, "max": 5.5  }, "cap": 1500000 },
+        "high":     { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.5  }, "cap": 5000000, "high_earner_notes": "Halifax upper-tier cases reviewed by underwriter — income multiples not automatic at max" }
+      },
+      "bonus_treatment":     { "treatment": "averaged", "haircut_pct": 33, "note": "Bonus averaged over 2 years, 33% haircut. Guaranteed bonus treated more favourably." },
+      "ot_treatment":         { "treatment": "averaged", "haircut_pct": 33, "note": "Overtime averaged over 2 years, 33% haircut" },
+      "self_employed_rules":  { "treatment": "sa302_required", "yrs_accounts": 2, "note": "SA302 + 2 years accounts required. 2-year average net profit." },
+      "existing_debt":       { "treatment": "deducted_from_available_income" },
+      "dual_income":         { "combined_multiplier_cap": 5.5, "individual_cap": 4.5 },
+      "btl_rules": {
+        "ltv_max": 75,
+        "rental_coverage_min": 125,
+        "stress_rate": 5.5,
+        "personal_income_supplement": true,
+        "note": "Both Lloyds and Halifax offer BTL products. Halifax BTL more accessible for portfolio landlords."
+      }
+    },
+    "NatWest": {
+      "tier_overview": "Part of NatWest Group. Similar rules across NatWest / Royal Bank of Scotland brand. Strong for existing NatWest customers with banking history.",
+      "affordability_model": "stress_at_min_6.5pct",
+      "stress_rate": 6.5,
+      "stress_rate_note": "Stress rate per FCA MMR — higher of 6.5% or contract rate + 1%.",
+      "tiers": {
+        "basic":    { "multiplier": { "min": 3.5, "std": 4.0, "max": 4.25 }, "cap": 250000 },
+        "standard": { "multiplier": { "min": 4.0, "std": 4.5, "max": 4.75 }, "cap": 500000 },
+        "mid":      { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.0  }, "cap": 750000 },
+        "upper_mid":{ "multiplier": { "min": 4.0, "std": 4.5, "max": 5.25 }, "cap": 1000000 },
+        "high":     { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.5  }, "cap": 5000000 }
+      },
+      "bonus_treatment":     { "treatment": "averaged", "haircut_pct": 50, "note": "Bonus averaged over 2 years, 50% haircut" },
+      "ot_treatment":         { "treatment": "averaged", "haircut_pct": 50, "note": "Overtime averaged over 2 years, 50% haircut" },
+      "self_employed_rules":  { "treatment": "sa302_required", "yrs_accounts": 2, "note": "SA302 required, 2-year accounts. NatWest more conservative on complex self-employed structures." },
+      "existing_debt":       { "treatment": "deducted_from_available_income" },
+      "dual_income":         { "combined_multiplier_cap": 5.5, "individual_cap": 4.5 },
+      "btl_rules": {
+        "ltv_max": 75,
+        "rental_coverage_min": 125,
+        "stress_rate": 5.5,
+        "personal_income_supplement": true
+      }
+    },
+    "Santander": {
+      "tier_overview": "Strong on residential lending. More conservative on self-employed. Requires more documentation than some peers.",
+      "affordability_model": "stress_at_min_6.5pct",
+      "stress_rate": 6.5,
+      "stress_rate_note": "Standard FCA stress rate of 6.5%.",
+      "tiers": {
+        "basic":    { "multiplier": { "min": 3.5, "std": 4.0, "max": 4.25 }, "cap": 250000 },
+        "standard": { "multiplier": { "min": 4.0, "std": 4.5, "max": 4.75 }, "cap": 500000 },
+        "mid":      { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.0  }, "cap": 750000 },
+        "upper_mid":{ "multiplier": { "min": 4.0, "std": 4.5, "max": 5.25 }, "cap": 1000000 },
+        "high":     { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.5  }, "cap": 5000000 }
+      },
+      "bonus_treatment":     { "treatment": "averaged", "haircut_pct": 50, "note": "Bonus averaged over 2 years, 50% haircut. Guaranteed element treated at full value." },
+      "ot_treatment":         { "treatment": "included", "haircut_pct": 0, "note": "Regular overtime included if 12-month history confirmed via payslip." },
+      "self_employed_rules":  { "treatment": "sa302_required", "yrs_accounts": 2, "note": "Strictly requires SA302 + 2 years accounts. More documentation than most." },
+      "existing_debt":       { "treatment": "deducted_from_available_income" },
+      "dual_income":         { "combined_multiplier_cap": 5.5, "individual_cap": 4.5 },
+      "btl_rules": {
+        "ltv_max": 75,
+        "rental_coverage_min": 125,
+        "stress_rate": 5.5,
+        "personal_income_supplement": true
+      }
+    },
+    "Metro Bank": {
+      "tier_overview": "No existing banking relationship required. Fast decisions. No offset mortgage product. More conservative on self-employed.",
+      "affordability_model": "stress_at_min_7pct",
+      "stress_rate": 7.0,
+      "stress_rate_note": "Metro Bank uses a stressed rate of typically 7% — more conservative than high-street peers.",
+      "tiers": {
+        "basic":    { "multiplier": { "min": 3.5, "std": 4.0, "max": 4.25 }, "cap": 250000 },
+        "standard": { "multiplier": { "min": 4.0, "std": 4.5, "max": 4.75 }, "cap": 500000 },
+        "mid":      { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.0  }, "cap": 750000 },
+        "upper_mid":{ "multiplier": { "min": 4.0, "std": 4.5, "max": 5.25 }, "cap": 1000000 },
+        "high":     { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.5  }, "cap": 5000000 }
+      },
+      "bonus_treatment":     { "treatment": "averaged", "haircut_pct": 50, "note": "Bonus averaged over 2 years with 50% haircut" },
+      "ot_treatment":         { "treatment": "averaged", "haircut_pct": 50, "note": "Overtime averaged with 50% haircut" },
+      "self_employed_rules":  { "treatment": "sa302_required", "yrs_accounts": 3, "note": "Requires 3 years accounts (stricter than most). SA302 required." },
+      "existing_debt":       { "treatment": "deducted_from_available_income" },
+      "dual_income":         { "combined_multiplier_cap": 5.5, "individual_cap": 4.5 },
+      "btl_rules": {
+        "ltv_max": 75,
+        "rental_coverage_min": 130,
+        "stress_rate": 5.5,
+        "personal_income_supplement": true,
+        "note": "Metro Bank BTL uses 130% rental coverage minimum — slightly more conservative than peers."
+      }
+    },
+    "Kensington Mortgages": {
+      "tier_overview": "Specialist lender for complex income: self-employed, contractors, adverse credit, complex structures. Higher rates but more flexible.",
+      "affordability_model": "stress_at_min_7pct",
+      "stress_rate": 7.0,
+      "stress_rate_note": "Stress rate typically 7%+. Lower LTV deals available.",
+      "tiers": {
+        "basic":    { "multiplier": { "min": 3.5, "std": 4.0, "max": 4.5  }, "cap": 400000 },
+        "standard": { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.0  }, "cap": 600000 },
+        "mid":      { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.25 }, "cap": 1000000 },
+        "upper_mid":{ "multiplier": { "min": 4.0, "std": 4.5, "max": 5.5  }, "cap": 1500000 },
+        "high":     { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.5  }, "cap": 5000000 }
+      },
+      "bonus_treatment":     { "treatment": "included", "haircut_pct": 0, "note": "Specialist underwriting — bonus/overtime reviewed case by case. More flexible than high-street." },
+      "ot_treatment":         { "treatment": "included", "haircut_pct": 0, "note": "Full inclusion if verifiable. Contractor day rate can be converted to monthly equivalent." },
+      "self_employed_rules":  { "treatment": "flexible", "yrs_accounts": 1, "note": "Can consider 1-year accounts for established self-employed. SA302 required. Contractor mortgage products available." },
+      "existing_debt":       { "treatment": "deducted_from_available_income" },
+      "dual_income":         { "combined_multiplier_cap": 5.5, "individual_cap": 4.5 },
+      "btl_rules": {
+        "ltv_max": 80,
+        "rental_coverage_min": 125,
+        "stress_rate": 5.5,
+        "personal_income_supplement": true,
+        "note": "Kensington BTL can go to 80% LTV (higher than most). Portfolio landlord products available."
+      }
+    },
+    "Precise Mortgages": {
+      "tier_overview": "Specialist lender for complex income and adverse credit. Conservative on standard residential; specialist for contractors and self-employed.",
+      "affordability_model": "stress_at_min_7pct",
+      "stress_rate": 7.0,
+      "tiers": {
+        "basic":    { "multiplier": { "min": 3.5, "std": 4.0, "max": 4.5  }, "cap": 400000 },
+        "standard": { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.0  }, "cap": 600000 },
+        "mid":      { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.25 }, "cap": 1000000 },
+        "upper_mid":{ "multiplier": { "min": 4.0, "std": 4.5, "max": 5.5  }, "cap": 1500000 },
+        "high":     { "multiplier": { "min": 4.0, "std": 4.5, "max": 5.5  }, "cap": 5000000 }
+      },
+      "bonus_treatment":     { "treatment": "included", "haircut_pct": 0 },
+      "ot_treatment":         { "treatment": "included", "haircut_pct": 0 },
+      "self_employed_rules":  { "treatment": "flexible", "yrs_accounts": 1, "note": "1-year accounts accepted. Contractor products available with day-rate conversion." },
+      "existing_debt":       { "treatment": "deducted_from_available_income" },
+      "dual_income":         { "combined_multiplier_cap": 5.5, "individual_cap": 4.5 },
+      "btl_rules": {
+        "ltv_max": 80,
+        "rental_coverage_min": 125,
+        "stress_rate": 5.5,
+        "personal_income_supplement": true
+      }
+    },
+    "MT Finance": {
+      "tier_overview": "Specialist short-term and bridging lender. Not a primary residential mortgage provider. Bridging / second charge focus.",
+      "affordability_model": "case_by_case",
+      "stress_rate": null,
+      "tiers": {
+        "basic":    { "multiplier": { "min": null, "std": null, "max": null }, "cap": 0, "note": "Bridging lender — not assessed by income multiplier" },
+        "standard": { "multiplier": { "min": null, "std": null, "max": null }, "cap": 0, "note": "Asset-backed lending, not income-based" },
+        "mid":      { "multiplier": { "min": null, "std": null, "max": null }, "cap": 0, "note": "Short-term finance only" },
+        "upper_mid":{ "multiplier": { "min": null, "std": null, "max": null }, "cap": 0 },
+        "high":     { "multiplier": { "min": null, "std": null, "max": null }, "cap": 0 }
+      },
+      "bonus_treatment":     { "treatment": "na" },
+      "ot_treatment":         { "treatment": "na" },
+      "self_employed_rules":  { "treatment": "na", "note": "MT Finance provides bridging and short-term finance — assessed on security, not income multiples." },
+      "existing_debt":       { "treatment": "na" },
+      "dual_income":         { "combined_multiplier_cap": null },
+      "btl_rules": {
+        "ltv_max": 75,
+        "rental_coverage_min": null,
+        "stress_rate": null,
+        "personal_income_supplement": false,
+        "note": "Short-term/bridging only — not a standard BTL mortgage lender"
+      }
+    }
+  },
+  "market_defaults": {
+    "multiplier_std": 4.5,
+    "multiplier_max_residential": 5.5,
+    "stress_rate_min": 6.5,
+    "stress_rate_max": 7.0,
+    "existing_debt_treatment": "deducted_from_monthly_income",
+    "dual_income_cap": 5.5,
+    "individual_income_cap": 4.5,
+    "btl_ltv_max": 75,
+    "btl_rental_coverage_min": 125
+  }
+}

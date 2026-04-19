@@ -1,4 +1,4 @@
-.PHONY: install start start-tmux build lint clean agent agent-po agent-analyst agent-data agent-fe agent-qa agent-de tasks help guard-install agent-windows agent-tmux-all agent-po-tmux agent-analyst-tmux agent-de-tmux agent-fe-tmux agent-qa-tmux sync price-monitor enrich ports kill
+.PHONY: install start start-tmux build lint clean test migrate-staging agent agent-po agent-analyst agent-data agent-fe agent-qa agent-de tasks help guard-install agent-windows agent-tmux-all agent-po-tmux agent-analyst-tmux agent-de-tmux agent-fe-tmux agent-qa-tmux agent-tmux-grid agent-tmux-all sync price-monitor enrich ports kill
 
 # Default target
 all: install start
@@ -107,6 +107,16 @@ enrich:
 	@echo "Running Enrichment Pipeline..."
 	@node agents/data_analyst/enrich_leads.js
 
+# Run portal re-scrape loop — re-fetches active properties from Rightmove/Zoopla,
+# detects price changes, and writes enriched price_history entries (DE-220)
+rescrape:
+	@echo "Running Portal Re-scrape Loop..."
+	@node scripts/portal_rescrape.js
+
+rescrape-dry:
+	@echo "Running Portal Re-scrape Loop (DRY RUN)..."
+	@node scripts/portal_rescrape.js --dry-run
+
 # Build the frontend for production
 build:
 	@echo "Building frontend for production..."
@@ -116,6 +126,32 @@ build:
 lint:
 	@echo "Running linter..."
 	@rtk cd frontend && npm run lint
+
+# --- Safe Database Operations (MUST use isolated DB) ---
+# WARNING: These targets are NOT safe for production use without explicit PO approval.
+
+# Run tests — uses ephemeral test DB only (never touches propSearch.db)
+# Usage: make test [DB=/tmp/test.db]
+test:
+	@echo "Running tests (ephemeral DB — production data untouched)..."
+	@TEST_DB=$(or $(DB),/tmp/propSearch_test_$$$$.db) \
+	 SQLITE_PATH=$(TEST_DB) \
+	 NODE_ENV=test \
+	 node --test
+
+# Run SQLite migrations on a STAGING copy — NEVER against production
+# Usage: make migrate-staging STAGING_DB=/tmp/staging.db
+migrate-staging:
+	@if [ -z "$(STAGING_DB)" ]; then \
+		echo "ERROR: STAGING_DB must be specified"; \
+		echo "Usage: make migrate-staging STAGING_DB=/tmp/staging.db"; \
+		exit 1; \
+	fi
+	@echo "Copying production DB to staging..."; \
+	cp data/propSearch.db "$(STAGING_DB)"; \
+	echo "Running migrations on staging DB: $(STAGING_DB)"; \
+	SQLITE_PATH="$(STAGING_DB)" node server/index.js; \
+	echo "Migrations complete on staging. Production DB untouched."
 
 # Clean build artifacts
 clean:
@@ -261,7 +297,9 @@ help:
 	@echo "  make sync       - Run data sync pipeline"
 	@echo "  make build      - Build frontend for production"
 	@echo "  make lint       - Run linter"
-	@echo "  make clean      - Clean build artifacts"
+	@echo "  make test      - Run tests (ephemeral DB — never touches propSearch.db)"
+	@echo "  make migrate-staging STAGING_DB=/tmp/staging.db - Run migrations on staging copy"
+	@echo "  make clean     - Clean build artifacts"
 	@echo ""
 	@echo "Agents (via orchestrator):"
 	@echo "  make agent-po      - Product Owner"

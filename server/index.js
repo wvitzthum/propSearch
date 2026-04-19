@@ -3,9 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const Database = require('better-sqlite3');
 
-const PORT = 3001;
+const PORT = (process.env.PORT ? parseInt(process.env.PORT) : 3001);
 const DATA_DIR = path.join(__dirname, '../data');
-const DB_PATH = path.join(DATA_DIR, 'propSearch.db');
+const DB_PATH = process.env.SQLITE_PATH
+  ?? path.join(DATA_DIR, 'propSearch.db');
 const INBOX_DIR = path.join(DATA_DIR, 'inbox');
 const TRIAGED_DIR = path.join(DATA_DIR, 'triaged');
 const ARCHIVE_INBOX_DIR = path.join(DATA_DIR, 'archive/inbox');
@@ -78,13 +79,13 @@ function initializeDB() {
     { name: 'wellness_hub_distance', type: 'REAL' },
     { name: 'floorplan_url', type: 'TEXT' },
     // FE-186: pipeline_status — user pipeline decisions, persisted server-side
-    { name: 'pipeline_status', type: "TEXT DEFAULT 'discovered' CHECK(pipeline_status IN ('discovered','shortlisted','vetted','archived'))" },
+    // DE-231: Added 'watchlist' to enum
+    { name: 'pipeline_status', type: "TEXT DEFAULT 'discovered' CHECK(pipeline_status IN ('discovered','shortlisted','vetted','watchlist','archived'))" },
     // ADR-014: market_status — market reality (active/under_offer/sold_stc/sold_completed/withdrawn/unknown)
     { name: 'market_status', type: "TEXT DEFAULT 'unknown' CHECK(market_status IN ('active','under_offer','sold_stc','sold_completed','withdrawn','unknown'))" },
     // ADR-014: last_checked — last date property was verified against live portal
     { name: 'last_checked', type: 'TEXT' },
-    // UX-034: property_rank — user-defined priority order within pipeline status
-    { name: 'property_rank', type: 'INTEGER DEFAULT NULL' }
+    // UX-034: property_rank — DEPRECATED by DE-231. Column removed in v2026-04-18 migration.
   ];
 
   for (const col of missingColumns) {
@@ -92,6 +93,105 @@ function initializeDB() {
       console.log(`Adding missing column: ${col.name}`);
       db.prepare(`ALTER TABLE properties ADD COLUMN ${col.name} ${col.type}`).run();
     }
+  }
+
+  // DE-231: Drop deprecated property_rank column (SQLite 3.35+ supports DROP COLUMN)
+  // Property rank functionality is removed from the pipeline — status is now ordinal.
+  if (columnNames.includes('property_rank')) {
+    try {
+      db.prepare('ALTER TABLE properties DROP COLUMN property_rank').run();
+      console.log('DE-231: Dropped deprecated property_rank column');
+    } catch (e) {
+      console.error('DE-231: Failed to drop property_rank column (SQLite version may not support DROP COLUMN):', e.message);
+    }
+  }
+
+  // DE-231: Migrate pipeline_status CHECK constraint to include 'watchlist'
+  // SQLite doesn't support ALTER CONSTRAINT, so we recreate the column safely.
+  // Detect by checking if current schema still has old CHECK (without 'watchlist').
+  try {
+    const schemaRow = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='properties'").get();
+    if (schemaRow && schemaRow.sql && !schemaRow.sql.includes("'watchlist'")) {
+      console.log('DE-231: Migrating pipeline_status CHECK constraint to include watchlist...');
+      // Pre-fix: correct misclassified market_status values (data issue from prior pipeline_status/market_status confusion)
+      const fixed = db.prepare("UPDATE properties SET market_status = 'unknown' WHERE market_status = 'discovered'").run();
+      if (fixed.changes > 0) console.log(`DE-231: Fixed ${fixed.changes} rows with market_status='discovered' (should be pipeline_status)`);
+      // Clean up any stale temp table from a previous failed migration attempt
+      db.exec('DROP TABLE IF EXISTS properties_new');
+      // Re-add column with new CHECK: SQLite allows ADD COLUMN on same name after DROP
+      // We use a rename-and-recreate pattern for safety within a transaction
+      db.exec('PRAGMA legacy_alter_table = ON');
+      db.pragma('foreign_keys = OFF'); // Disable FK checks during table recreation
+      db.exec(`
+        CREATE TABLE properties_new (
+          id TEXT PRIMARY KEY,
+          address TEXT,
+          area TEXT,
+          image_url TEXT,
+          gallery TEXT,
+          streetview_url TEXT,
+          list_price REAL,
+          realistic_price REAL,
+          sqft REAL,
+          price_per_sqm REAL,
+          nearest_tube_distance REAL,
+          park_proximity REAL,
+          commute_paternoster REAL,
+          commute_canada_square REAL,
+          is_value_buy INTEGER,
+          epc TEXT,
+          tenure TEXT,
+          dom INTEGER,
+          neg_strategy TEXT,
+          alpha_score REAL,
+          appreciation_potential REAL,
+          links TEXT,
+          metadata TEXT,
+          floor_level TEXT,
+          floorplan_url TEXT,
+          source TEXT,
+          source_name TEXT,
+          service_charge REAL,
+          ground_rent REAL,
+          lease_years_remaining REAL,
+          vetted INTEGER DEFAULT 0,
+          analyst_notes TEXT,
+          price_reduction_amount REAL,
+          price_reduction_percent REAL,
+          days_since_reduction INTEGER,
+          waitrose_distance REAL,
+          whole_foods_distance REAL,
+          wellness_hub_distance REAL,
+          epc_improvement_potential TEXT,
+          est_capex_requirement REAL,
+          ltv_match_score REAL,
+          appr_bear_5yr REAL,
+          appr_base_5yr REAL,
+          appr_bull_5yr REAL,
+          appr_p10 REAL,
+          appr_p50 REAL,
+          appr_p90 REAL,
+          rental_yield_gross REAL,
+          rental_yield_net REAL,
+          bedrooms INTEGER,
+          archived INTEGER DEFAULT 0,
+          archive_reason TEXT,
+          market_status TEXT DEFAULT 'unknown' CHECK(market_status IN ('active','under_offer','sold_stc','sold_completed','withdrawn','unknown')),
+          last_checked TEXT,
+          pipeline_status TEXT DEFAULT 'discovered' CHECK(pipeline_status IN ('discovered','shortlisted','vetted','watchlist','archived')),
+          bathrooms INTEGER,
+          council_tax_band TEXT,
+          source_id TEXT
+        )
+      `);
+      db.exec(`INSERT INTO properties_new SELECT * FROM properties`);
+      db.exec(`DROP TABLE properties`);
+      db.exec(`ALTER TABLE properties_new RENAME TO properties`);
+      db.pragma('foreign_keys = ON'); // Re-enable FK checks after migration
+      console.log('DE-231: pipeline_status CHECK constraint migrated successfully');
+    }
+  } catch (e) {
+    console.error('DE-231: Failed to migrate pipeline_status CHECK constraint:', e.message);
   }
 
   // 3. global_context table
@@ -351,7 +451,11 @@ const server = http.createServer((req, res) => {
       const area = url.searchParams.get('area');
       const isValueBuy = url.searchParams.get('is_value_buy');
       const vetted = url.searchParams.get('vetted');
-      const limit = parseInt(url.searchParams.get('limit') || '100');
+      // DE-241: Increased default limit from 100 to 300 to ensure all properties are returned.
+      // With LIMIT 100, ASC/DESC sorts returned different property sets (properties with alpha scores
+      // in different ranges fell outside the 100-row window). At 222 total properties, limit=300
+      // guarantees full coverage regardless of sort direction.
+      const limit = parseInt(url.searchParams.get('limit') || '300');
       const offset = parseInt(url.searchParams.get('offset') || '0');
       const sortBy = url.searchParams.get('sortBy') || 'alpha_score';
       const sortOrder = url.searchParams.get('sortOrder') || 'DESC';
@@ -379,15 +483,34 @@ const server = http.createServer((req, res) => {
         sql += ' AND vetted = 1';
       }
 
-      const validSortColumns = ['alpha_score', 'list_price', 'realistic_price', 'price_per_sqm', 'dom', 'appreciation_potential', 'property_rank'];
-      // UX-034: user_priority maps to property_rank for custom ordering
-      let finalSortBy = sortBy === 'user_priority' ? 'property_rank' : (validSortColumns.includes(sortBy) ? sortBy : 'alpha_score');
+      const validSortColumns = ['alpha_score', 'list_price', 'realistic_price', 'price_per_sqm', 'dom', 'appreciation_potential', 'pipeline_status'];
+      // DE-231: property_rank removed — sortBy 'user_priority' now falls back to default sort
+      let finalSortBy = validSortColumns.includes(sortBy) ? sortBy : 'alpha_score';
       const finalSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+      // DE-241: When sorting by alpha_score ASC, NULL values should sort last (not first).
+      // SQLite doesn't support NULLS LAST directly, so use a CASE expression to push NULLs to end.
+      const orderByClause = finalSortBy === 'alpha_score' && finalSortOrder === 'ASC'
+        ? `CASE WHEN alpha_score IS NULL THEN 1 ELSE 0 END, alpha_score ASC`
+        : `${finalSortBy} ${finalSortOrder}`;
 
-      sql += ` ORDER BY ${finalSortBy} ${finalSortOrder} LIMIT ? OFFSET ?`;
+      sql += ` ORDER BY ${orderByClause} LIMIT ? OFFSET ?`;
       params.push(limit, offset);
 
       const rows = db.prepare(sql).all(...params);
+      // Also fetch price_history for all returned property IDs in one query
+      const ids = rows.map(r => r.id);
+      const priceHistoryMap = {};
+      if (ids.length > 0) {
+        const placeholders = ids.map(() => '?').join(',');
+        const phRows = db.prepare(
+          `SELECT property_id, date, price, price_per_sqm, status, reduction_pct, days_on_market, london_hpi, source
+           FROM price_history WHERE property_id IN (${placeholders}) ORDER BY date ASC`
+        ).all(...ids);
+        for (const h of phRows) {
+          if (!priceHistoryMap[h.property_id]) priceHistoryMap[h.property_id] = [];
+          priceHistoryMap[h.property_id].push(h);
+        }
+      }
       const results = rows.map(row => {
         const base = {
           ...row,
@@ -396,7 +519,8 @@ const server = http.createServer((req, res) => {
           metadata: safeParse(row.metadata, {}),
           is_value_buy: Boolean(row.is_value_buy),
           vetted: Boolean(row.vetted),
-          archived: Boolean(row.archived)
+          archived: Boolean(row.archived),
+          price_history: priceHistoryMap[row.id] ?? []
         };
         // BUG-005: Rewrite local image_url (data/images/) to server endpoint path
         if (base.image_url && base.image_url.startsWith('data/')) {
@@ -429,7 +553,7 @@ const server = http.createServer((req, res) => {
         // Update last_checked to today; market_status unchanged (set by analyst/pipeline)
         db.prepare('UPDATE properties SET last_checked = ? WHERE id = ?').run(today, id);
         const updated = db.prepare('SELECT * FROM properties WHERE id = ?').get(id);
-        const history = db.prepare('SELECT price, date FROM price_history WHERE property_id = ? ORDER BY date ASC').all(id);
+        const history = db.prepare('SELECT date, price, price_per_sqm, status, reduction_pct, days_on_market, london_hpi, source FROM price_history WHERE property_id = ? ORDER BY date ASC').all(id);
         const result = {
           ...updated,
           gallery: safeParse(updated.gallery, []),
@@ -446,7 +570,7 @@ const server = http.createServer((req, res) => {
       }
     }
     // FE-186: PATCH /api/properties/:id/status — persist pipeline_status to SQLite
-    // Valid values: discovered | shortlisted | vetted | archived
+    // DE-231: Valid values: discovered | shortlisted | vetted | watchlist | archived
     else if (url.pathname.match(/^\/api\/properties\/[^/]+\/status$/) && req.method === 'PATCH') {
       const parts = url.pathname.split('/');
       const id = parts[parts.length - 2]; // /api/properties/{id}/status
@@ -455,7 +579,7 @@ const server = http.createServer((req, res) => {
       req.on('end', () => {
         try {
           const data = JSON.parse(body);
-          const validStatuses = ['discovered', 'shortlisted', 'vetted', 'archived'];
+          const validStatuses = ['discovered', 'shortlisted', 'vetted', 'watchlist', 'archived']; // DE-231
           if (!data.pipeline_status || !validStatuses.includes(data.pipeline_status)) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: `pipeline_status must be one of: ${validStatuses.join('|')}` }));
@@ -469,7 +593,7 @@ const server = http.createServer((req, res) => {
           }
           db.prepare('UPDATE properties SET pipeline_status = ? WHERE id = ?').run(data.pipeline_status, id);
           const updated = db.prepare('SELECT * FROM properties WHERE id = ?').get(id);
-          const history = db.prepare('SELECT price, date FROM price_history WHERE property_id = ? ORDER BY date ASC').all(id);
+          const history = db.prepare('SELECT date, price, price_per_sqm, status, reduction_pct, days_on_market, london_hpi, source FROM price_history WHERE property_id = ? ORDER BY date ASC').all(id);
           const result = {
             ...updated,
             gallery: safeParse(updated.gallery, []),
@@ -488,45 +612,14 @@ const server = http.createServer((req, res) => {
         }
       });
     }
-    // UX-034: PATCH /api/properties/:id/rank — update user-defined priority rank
-    // property_rank is an integer where 1 = highest priority within a pipeline status
-    // rank=null removes the rank (sets to NULL in SQLite)
+    // UX-034: PATCH /api/properties/:id/rank — DEPRECATED by DE-231
+    // property_rank column has been dropped. This endpoint is retained but always returns 410 Gone.
     else if (url.pathname.match(/^\/api\/properties\/[^/]+\/rank$/) && req.method === 'PATCH') {
-      const parts = url.pathname.split('/');
-      const id = parts[parts.length - 2];
-      let body = '';
-      req.on('data', chunk => { body += chunk; });
-      req.on('end', () => {
-        try {
-          const data = JSON.parse(body);
-          const rawRank = data.rank;
-          // null/undefined removes the rank
-          if (rawRank === null || rawRank === undefined || rawRank === '') {
-            db.prepare('UPDATE properties SET property_rank = NULL WHERE id = ?').run(id);
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ id, property_rank: null }));
-            return;
-          }
-          const rank = parseInt(String(rawRank), 10);
-          if (isNaN(rank) || rank < 1) {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'rank must be a positive integer (1 = highest priority)' }));
-            return;
-          }
-          const existing = db.prepare('SELECT id FROM properties WHERE id = ?').get(id);
-          if (!existing) {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Property not found' }));
-            return;
-          }
-          db.prepare('UPDATE properties SET property_rank = ? WHERE id = ?').run(rank, id);
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ id, property_rank: rank }));
-        } catch (e) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid JSON: ' + e.message }));
-        }
-      });
+      res.writeHead(410, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        error: 'property_rank is deprecated (DE-231). The column has been removed from the schema.',
+        hint: 'Use pipeline_status to manage property progression: discovered → shortlisted → vetted → watchlist → archived'
+      }));
     }
     // FE-233: PATCH /api/properties/:id — partial field update for manual data editing
     // Only allows listed fields to be updated. archive_reason, archived, pipeline_status
@@ -563,8 +656,8 @@ const server = http.createServer((req, res) => {
             'bedrooms', 'bathrooms', 'council_tax_band'
           ];
 
-          const protected_ = ['archived', 'archive_reason', 'pipeline_status', 'property_rank',
-                               'vetted', 'metadata', 'gallery'];
+          const protected_ = ['archived', 'archive_reason', 'pipeline_status',
+                               'vetted', 'metadata', 'gallery']; // DE-231: property_rank removed
           // BUG-002 fix: image_url, floorplan_url, and links are plain URL / URL-struct fields
           // that users should be able to correct. gallery is a complex multi-image JSON array —
           // keep protected. Analyst flags always remain protected.
@@ -574,7 +667,7 @@ const server = http.createServer((req, res) => {
             res.end(JSON.stringify({
               error: 'Protected fields cannot be updated via this endpoint',
               attempted_protected_fields: attemptedProtected,
-              hint: 'Use /api/properties/{id}/status for pipeline_status, /api/properties/{id}/rank for property_rank'
+              hint: 'Use /api/properties/{id}/status for pipeline_status. Note: property_rank is deprecated (DE-231).'
             }));
             return;
           }
@@ -601,7 +694,7 @@ const server = http.createServer((req, res) => {
 
           db.prepare(`UPDATE properties SET ${updates.join(', ')} WHERE id = ?`).run(...params);
           const updated = db.prepare('SELECT * FROM properties WHERE id = ?').get(id);
-          const history = db.prepare('SELECT price, date FROM price_history WHERE property_id = ? ORDER BY date ASC').all(id);
+          const history = db.prepare('SELECT date, price, price_per_sqm, status, reduction_pct, days_on_market, london_hpi, source FROM price_history WHERE property_id = ? ORDER BY date ASC').all(id);
           const result = {
             ...updated,
             gallery: safeParse(updated.gallery, []),
@@ -628,7 +721,7 @@ const server = http.createServer((req, res) => {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Property not found' }));
       } else {
-        const history = db.prepare('SELECT price, date FROM price_history WHERE property_id = ? ORDER BY date ASC').all(id);
+        const history = db.prepare('SELECT date, price, price_per_sqm, status, reduction_pct, days_on_market, london_hpi, source FROM price_history WHERE property_id = ? ORDER BY date ASC').all(id);
         const result = {
           ...property,
           gallery: safeParse(property.gallery, []),
@@ -710,6 +803,18 @@ const server = http.createServer((req, res) => {
       } else {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(row.data);
+      }
+    }
+    // FE-254: Appreciation model — served from data file (not SQLite global_context)
+    else if (url.pathname === '/api/appreciation' && req.method === 'GET') {
+      // Read directly from data/appreciation_model.json (maintained by Data Analyst)
+      const appreciationPath = path.join(DATA_DIR, 'appreciation_model.json');
+      if (!fs.existsSync(appreciationPath)) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Appreciation model not found' }));
+      } else {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(fs.readFileSync(appreciationPath, 'utf8'));
       }
     }
     // 4. London Metro
@@ -987,10 +1092,25 @@ const server = http.createServer((req, res) => {
       });
     }
     else if (url.pathname === '/api/manual-queue' && req.method === 'GET') {
+      // Normalise legacy status values to canonical frontend labels
+      const statusMap = {
+        'completed': 'completed',
+        'Completed': 'completed',
+        'Closed': 'completed',
+        'closed': 'completed',
+        'failed': 'failed',
+        'Failed': 'failed',
+        'pending': 'pending',
+        'Pending': 'pending',
+        'processing': 'processing',
+        'Processing': 'processing',
+      };
       const rows = db.prepare('SELECT * FROM manual_queue ORDER BY queued_at DESC').all();
       const results = rows.map(row => ({
         ...row,
-        raw_data: safeParse(row.raw_data, {})
+        status: statusMap[row.status] ?? 'pending',
+        completed_at: row.processed_at ?? null, // alias for frontend compatibility
+        raw_data: safeParse(row.raw_data, {}),
       }));
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(results));
@@ -1003,7 +1123,7 @@ const server = http.createServer((req, res) => {
           // DE-162 fix: count flagged records from properties.archived=1, not old archived_properties table
           archived: db.prepare('SELECT COUNT(*) as n FROM properties WHERE archived = 1').get().n,
           price_history: db.prepare('SELECT COUNT(*) as n FROM price_history').get().n,
-          manual_queue: db.prepare('SELECT COUNT(*) as n FROM manual_queue WHERE status = ?').get('Pending').n,
+          manual_queue: db.prepare("SELECT COUNT(*) as n FROM manual_queue WHERE LOWER(status) IN ('pending','processing')").get().n,
           // Historical reference: pre-migration archived_properties table (legacy, no longer written to)
           archived_properties_legacy: db.prepare('SELECT COUNT(*) as n FROM archived_properties').get().n,
         };
@@ -1188,6 +1308,86 @@ const server = http.createServer((req, res) => {
           .run(new Date().toISOString(), id);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ id, status: 'cancelled' }));
+      }
+    }
+    // DE-226: Area-level price/sqft quartile data for PriceAssessment range bar
+    // Fix: price_per_sqm column stores £/sqft × 10.764 — divide by 10.764 to get £/sqft
+    else if (url.pathname === '/api/area-price-bands' && req.method === 'GET') {
+      try {
+        const rows = db.prepare(`
+          SELECT area, price_per_sqm
+          FROM properties
+          WHERE (archived IS NULL OR archived = 0)
+            AND sqft > 0
+            AND price_per_sqm > 0
+          ORDER BY area, price_per_sqm
+        `).all();
+
+        // Group by area, compute quartiles
+        // price_per_sqm stored as true £/sqm — convert to £/sqft for display comparison
+        const byArea = {};
+        for (const r of rows) {
+          if (!byArea[r.area]) byArea[r.area] = [];
+          byArea[r.area].push((r.price_per_sqm ?? 0) * 10.764);
+        }
+
+        // Merge sub-areas into postcode-level bands
+        // e.g. "Chelsea (SW3)", "Chelsea (SW3/SW10)", "Chelsea (SW10)" → "SW3" bucket
+        const pcBuckets = {}; // pc -> { areas: [], allValues: [] }
+        for (const [area, values] of Object.entries(byArea)) {
+          const pcMatch = area.match(/(NW\d|N\d|EC\d|W\d{1,2}|SW\d)/);
+          const pc = pcMatch ? pcMatch[1] : area;
+          if (!pcBuckets[pc]) pcBuckets[pc] = { areas: [], allValues: [] };
+          pcBuckets[pc].areas.push(area);
+          pcBuckets[pc].allValues.push(...values);
+        }
+
+        const bands = {};
+        for (const [pc, bucket] of Object.entries(pcBuckets)) {
+          if (bucket.allValues.length < 4) continue;
+          const sorted = [...bucket.allValues].sort((a, b) => a - b);
+          const n = sorted.length;
+          const q1 = sorted[Math.floor(n * 0.25)];
+          const median = sorted[Math.floor(n * 0.50)];
+          const q3 = sorted[Math.floor(n * 0.75)];
+          bands[pc] = {
+            areas: [...new Set(bucket.areas)],
+            q1: Math.round(q1),
+            median: Math.round(median),
+            q3: Math.round(q3),
+            n,
+            last_refreshed: new Date().toISOString().split('T')[0],
+          };
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(bands));
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to compute area price bands: ' + e.message }));
+      }
+    }
+    // DE-230: Serve lending_rules.json via API
+    else if (url.pathname === '/api/lending-rules' && req.method === 'GET') {
+      try {
+        const row = db.prepare("SELECT data FROM global_context WHERE key = 'lending_rules'").get();
+        if (row) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(row.data);
+        } else {
+          // Fallback: serve directly from file
+          const filePath = path.join(DATA_DIR, 'sources/lending_rules.json');
+          if (fs.existsSync(filePath)) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(fs.readFileSync(filePath, 'utf8'));
+          } else {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'lending_rules.json not found' }));
+          }
+        }
+      } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to load lending rules: ' + e.message }));
       }
     }
     // BUG-005: Serve local images via /api/images/{property_id}/{filename}

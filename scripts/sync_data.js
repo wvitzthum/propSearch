@@ -5,10 +5,46 @@ const Database = require('better-sqlite3');
 const { execSync } = require('child_process');
 
 const DATA_DIR = path.join(__dirname, '../data');
-const DB_PATH = path.join(DATA_DIR, 'propSearch.db');
+const DB_PATH = process.env.SQLITE_PATH
+  ?? path.join(DATA_DIR, 'propSearch.db');
 const INBOX_DIR = path.join(DATA_DIR, 'inbox');
 const TRIAGED_DIR = path.join(DATA_DIR, 'triaged');
 const IMPORT_DIR = path.join(DATA_DIR, 'import');
+
+// ── DAT-216: Standalone URL contamination audit ─────────────────────────────────
+// Run: node scripts/sync_data.js --audit-urls
+if (process.argv.includes('--audit-urls')) {
+  const db2 = new Database(DB_PATH);
+  const all = db2.prepare('SELECT id, address, area, list_price, links FROM properties WHERE archived != 1').all();
+  const urlToProps = {};
+  for (const p of all) {
+    const links = (() => { try { return typeof p.links === 'string' ? JSON.parse(p.links) : (p.links || []); } catch { return []; } })();
+    for (const link of links) {
+      const url = typeof link === 'string' ? link : (link && link.url) || null;
+      if (!url) continue;
+      if (!urlToProps[url]) urlToProps[url] = [];
+      urlToProps[url].push({ id: p.id, address: p.address, price: p.list_price });
+    }
+  }
+  const conflicts = [];
+  for (const [url, props] of Object.entries(urlToProps)) {
+    const uniqIds = [...new Set(props.map(p => p.id))];
+    if (uniqIds.length > 1) {
+      conflicts.push({ url, props });
+    }
+  }
+  if (conflicts.length === 0) {
+    console.log('CLEAN: No URL cross-contaminations detected.');
+  } else {
+    console.log('CROSS-CONTAMINATIONS DETECTED:', conflicts.length);
+    for (const { url, props } of conflicts) {
+      console.log('\n  URL:', url);
+      for (const p of props) console.log('    ->', p.id, '|', p.address, '| £' + (p.price || '?'));
+    }
+  }
+  db2.close();
+  process.exit(0);
+}
 
 const db = new Database(DB_PATH);
 
@@ -86,10 +122,10 @@ async function sync() {
           const processedItem = processItem(enrichedItem);
           dailySnapshot.push(processedItem);
           
-          db.prepare("UPDATE manual_queue SET status = 'Completed', processed_at = CURRENT_TIMESTAMP WHERE id = ?").run(item.id);
+          db.prepare("UPDATE manual_queue SET status = 'completed', processed_at = CURRENT_TIMESTAMP WHERE id = ?").run(item.id);
         } catch (e) {
           console.error(`Failed to process manual item ${item.id}: ${e.message}`);
-          db.prepare("UPDATE manual_queue SET status = 'Failed', processed_at = CURRENT_TIMESTAMP, notes = ? WHERE id = ?").run(e.message, item.id);
+          db.prepare("UPDATE manual_queue SET status = 'failed', processed_at = CURRENT_TIMESTAMP, notes = ? WHERE id = ?").run(e.message, item.id);
         }
       }
     }
@@ -238,9 +274,12 @@ async function sync() {
       price_reduction_amount, price_reduction_percent, days_since_reduction,
       epc_improvement_potential, est_capex_requirement,
       waitrose_distance, whole_foods_distance, wellness_hub_distance,
-      bedrooms, bathrooms,
+      bedrooms, bathrooms, council_tax_band,
+      ltv_match_score, appr_bear_5yr, appr_base_5yr, appr_bull_5yr,
+      appr_p10, appr_p50, appr_p90, rental_yield_gross, rental_yield_net,
+      property_rank, source_id,
       archived, archive_reason, market_status, last_checked, pipeline_status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   // UPDATE preserves archived/archive_reason/pipeline_status — analyst-set and user pipeline flags must not be overwritten by sync
@@ -273,9 +312,37 @@ async function sync() {
     )
   `).run();
 
+  // ── Address normalization helper ──────────────────────────────────────────────
+  // DAT-216: Normalize addresses before duplicate detection to catch:
+  // "Chelsea Manor Gardens, , Chelsea" vs "Chelsea Manor Gardens" (double comma)
+  // "1 King's Road" vs "King's Road" (unit prefix variation)
+  function normalizeAddress(addr) {
+    if (!addr) return '';
+    return addr
+      .toLowerCase()
+      .replace(/,\s*,/g, ',')       // double commas → single
+      .replace(/,\s*$/g, '')         // trailing comma
+      .replace(/^\s*,\s*/g, '')       // leading comma
+      .replace(/\s+/g, ' ')           // collapse spaces
+      .replace(/^flat\s+/i, '')       // strip "Flat " prefix
+      .replace(/^apt\s+/i, '')
+      .replace(/^unit\s+/i, '')
+      .replace(/^(\d+),(.+)/i, '$2 $1') // "1, King's Road" → "King's Road 1"
+      .trim();
+  }
+
   for (const newItem of dailySnapshot) {
     try {
-      const existing = db.prepare("SELECT id, metadata, list_price, links, image_url, gallery, floorplan_url, streetview_url FROM properties WHERE address = ? AND area = ?").get(newItem.address, newItem.area);
+      // DAT-216: Use normalized address for duplicate detection
+      const normAddr = normalizeAddress(newItem.address);
+      // Match on normalized address + same area (case-insensitive)
+      const existing = db.prepare(`
+        SELECT id, metadata, list_price, links, image_url, gallery, floorplan_url, streetview_url, address
+        FROM properties
+        WHERE LOWER(TRIM(REPLACE(REPLACE(address, ',,', ','), ', ', ' '))) = ?
+          AND area = ?
+          AND archived != 1
+      `).get(normAddr, newItem.area);
 
       if (existing) {
         // DE-164: Fetch and merge visual/link fields from existing record
@@ -290,10 +357,30 @@ async function sync() {
         const existingStreetview = existing.streetview_url || null;
 
         // (a) Merge new links into existing — dedupe by URL string
+        // DAT-216: Cross-property URL uniqueness — prevent URL contamination
+        // A portal listing URL belongs to exactly one property. If a new URL already exists
+        // in another property's links array (with a different address), do NOT add it.
         const newLinks = Array.isArray(newItem.links) ? newItem.links : [];
         const mergedLinks = [...existingLinks];
         for (const link of newLinks) {
-          if (link && typeof link === 'object' && link.url && !mergedLinks.find(l => l && l.url === link.url)) {
+          const newUrl = (typeof link === 'string') ? link : (link && link.url) || null;
+          if (!newUrl) continue;
+
+          // Check if this URL already exists in any OTHER property's links
+          const allProps = db.prepare('SELECT id, address, links FROM properties WHERE archived != 1 AND id != ?').all(existing.id);
+          const conflicting = allProps.filter(p => {
+            try {
+              const pLinks = typeof p.links === 'string' ? JSON.parse(p.links) : (p.links || []);
+              return pLinks.some(pl => (typeof pl === 'string' ? pl : (pl && pl.url)) === newUrl);
+            } catch { return false; }
+          });
+
+          if (conflicting.length > 0) {
+            console.log(`  [DAT-216] SKIP — URL ${newUrl} already in ${conflicting[0].id} (${conflicting[0].address}). Addresses differ — not merging into ${existing.id}.`);
+            continue; // Do NOT add this URL to this property
+          }
+
+          if (!mergedLinks.find(l => l && (typeof l === 'string' ? l : l.url) === newUrl)) {
             mergedLinks.push(link);
           }
         }
@@ -357,6 +444,35 @@ async function sync() {
         }
       } else {
         const id = newItem.id || crypto.randomUUID();
+
+        // DAT-216: Extract url field into links[] for inbox submissions
+        // Inbox files from the frontend store the submission URL in the 'url' field, not 'links'.
+        // If links[] is empty/missing but url is present, populate links[].
+        // links[] MUST be a plain string array — frontend SourceHub.tsx expects string[].
+        if ((!newItem.links || newItem.links.length === 0) && newItem.url) {
+          newItem.links = [newItem.url];
+          console.log(`  [DAT-216] Extracted submission URL into links[]: ${newItem.url}`);
+        }
+
+        // DAT-216: Before inserting new record, validate URL uniqueness
+        // Warn if any of this new record's URLs already exist in other properties
+        const incomingUrls = Array.isArray(newItem.links) ? newItem.links.map(l => typeof l === 'string' ? l : (l && l.url)) : [];
+        if (incomingUrls.length > 0) {
+          const allProps = db.prepare('SELECT id, address, links FROM properties WHERE archived != 1').all();
+          for (const prop of allProps) {
+            try {
+              const propLinks = typeof prop.links === 'string' ? JSON.parse(prop.links) : (prop.links || []);
+              for (const propLink of propLinks) {
+                const propUrl = typeof propLink === 'string' ? propLink : (propLink && propLink.url);
+                const match = incomingUrls.find(u => u === propUrl);
+                if (match) {
+                  console.log(`  [DAT-216] WARNING — new record URL ${match} already in ${prop.id} (${prop.address}). New record: ${newItem.address}.`);
+                }
+              }
+            } catch { /* skip malformed */ }
+          }
+        }
+
         const metadata = {
           first_seen: new Date().toISOString().split('T')[0],
           last_seen: new Date().toISOString().split('T')[0],
@@ -376,7 +492,11 @@ async function sync() {
           newItem.price_reduction_amount || null, newItem.price_reduction_percent || null, newItem.days_since_reduction || null,
           newItem.epc_improvement_potential || null, newItem.est_capex_requirement || null,
           newItem.waitrose_distance || null, newItem.whole_foods_distance || null, newItem.wellness_hub_distance || null,
-          newItem.bedrooms || null, newItem.bathrooms || null,
+          newItem.bedrooms || null, newItem.bathrooms || null, newItem.council_tax_band || null,
+          newItem.ltv_match_score || null, newItem.appr_bear_5yr || null, newItem.appr_base_5yr || null,
+          newItem.appr_bull_5yr || null, newItem.appr_p10 || null, newItem.appr_p50 || null,
+          newItem.appr_p90 || null, newItem.rental_yield_gross || null, newItem.rental_yield_net || null,
+          newItem.property_rank || null, newItem.source_id || null,
           // DE-162 fix: preserve archived/archive_reason on new pipeline inserts (default active)
           newItem.archived !== undefined ? newItem.archived : 0,
           newItem.archive_reason || null,
