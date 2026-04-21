@@ -64,3 +64,8 @@ with open('tests/pages/AffordabilityCalculator.spec.ts', 'w') as f:
 Or use `sed -i` for simple inline substitutions. Avoid multi-line heredocs when the content contains regex patterns or other double-escaped characters.
 **Scope:** Any agent writing JS/TS test files or component files that contain regex literals, backslash-heavy patterns, or special chars via shell/Python heredoc. Affects Playwright locators, RegExp constructors, etc.
 **Status:** Active
+
+## Temp/Scratch File Rule (2026-04-21)
+- Use `/tmp/` for any temporary working files, debug scripts, one-off imports, screenshot captures.
+- Do NOT create temp files in the project root or `tmp/` directory -- they will be removed and gitignored.
+- `/tmp/` is outside the project and safe for arbitrary working files.

@@ -24,3 +24,8 @@
 **Now:** New `enrichment_requests` SQLite table + API endpoints per ADR-018. Tasks: DE-218 (server), FE-229 (UI), DAT-189 (analyst workflow)
 **Scope:** Data Engineer — implement `enrichment_requests` table and REST endpoints per DECISIONS.md ADR-018
 **Status:** Resolved (DE-218 Done) — table created, all endpoints live in server/index.js: GET/POST/PATCH/DELETE /api/enrichment-requests + GET /api/properties/:id/enrichment-request
+
+## Temp/Scratch File Rule (2026-04-21)
+- Use `/tmp/` for any temporary working files, debug scripts, one-off imports, scrape outputs.
+- Do NOT create temp files in the project root or `tmp/` directory -- they will be removed and gitignored.
+- `/tmp/` is outside the project and safe for arbitrary working files.

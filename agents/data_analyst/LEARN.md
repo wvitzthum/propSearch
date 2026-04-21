@@ -78,3 +78,9 @@
 **Now:** tenure="Leasehold" (171yr), bathrooms=1, neg_strategy set. Alpha 7.9 unchanged.
 **Scope:** Barness Court record
 **Status:** Active
+
+## Temp/Scratch File Rule (2026-04-21)
+- Use `/tmp/` for any temporary working files, debug scripts, one-off imports, scrape outputs.
+- Do NOT create temp files in the project root or `tmp/` directory -- they will be removed and gitignored.
+- `/tmp/` is outside the project and safe for arbitrary working files.
+- Debug screenshots (e.g. `debug_scrape.png`) are also not allowed in the project root.
