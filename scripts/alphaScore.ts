@@ -135,6 +135,8 @@ export const AREA_BENCHMARKS: Record<string, number> = {
   'Chelsea (SW3)':        18_000,
   'Chelsea (SW10)':      18_000,
   'Primrose Hill (NW1)': 13_500,
+  'Pimlico (SW1)':       14_500,
+  'Bermondsey (SE1)':    12_500,
 };
 
 // ---------------------------------------------------------------------------

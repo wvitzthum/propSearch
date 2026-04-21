@@ -51,11 +51,13 @@ const METRICS = Object.keys(METRIC_META);
 
 const AreaMetricHeatmap: React.FC<AreaMetricHeatmapProps> = ({ maxRows = 8 }) => {
   const { data } = useMacroData();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const raw = data as any;
   const containerRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
   const heatmapData = useMemo((): HeatmapCell[] => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const areas = (raw?.area_heat_index ?? raw?.area_trends ?? []).slice(0, maxRows);
     if (!areas.length) {
       // Fallback demo data
@@ -65,6 +67,8 @@ const AreaMetricHeatmap: React.FC<AreaMetricHeatmapProps> = ({ maxRows = 8 }) =>
           return { area, metric, value: val, normalized: val / 10 };
         }));
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return areas.flatMap((a: any) => METRICS.map(metric => {
       let val = 5;
       if (metric === 'Heat Index') val = a.score ?? a.heat_index ?? 5;

@@ -22,6 +22,7 @@ interface PropertySegment {
 
 const PropertyTypePerformanceChart: React.FC = () => {
   const { data } = useMacroData();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const raw = data as any;
 
   const {
@@ -68,7 +69,7 @@ const PropertyTypePerformanceChart: React.FC = () => {
   }, [raw]);
 
   const maxReturn = Math.max(...segments.map(s => s.annualReturn)) * 1.1;
-  const boeRate = extractValue((data as any)?.economic_indicators?.boe_base_rate) ?? 3.75;
+  const boeRate = extractValue(raw?.economic_indicators?.boe_base_rate) ?? 3.75;
 
   // UX-031: Larger dimensions for hero placement (used inside ParentSize)
   const labelWidth = 100;

@@ -44,3 +44,23 @@
 **Now:** Uses Playwright test suite for verification. Never starts dev servers.
 **Scope:** All agents
 **Status:** Formalised — see PROTOCOLS/04_SESSION_STARTUP.md
+
+---
+
+## 2026-04-18
+
+**Trigger:** Bash heredocs + Python heredocs collapse JS regex backslashes when writing test/component files — `\\d` arrives as `\d` in the file, breaking Playwright locators.
+**Was:** Attempting to write regex locators like `text=/\\d+K/` via `cat > file << END`, `python3 - << PYEOF`, or `Edit` tool all resulted in the JS file containing `text=/\d+K/` (single backslash, non-functional in Playwright).
+**Now:** Write problematic lines via indexed Python list assignment instead of heredoc/replace:
+
+```python
+with open('tests/pages/AffordabilityCalculator.spec.ts') as f:
+    lines = f.readlines()
+lines[17] = "    const rate = page.getByText(/\\d+\\.\\d{2}%/).first();\n"
+with open('tests/pages/AffordabilityCalculator.spec.ts', 'w') as f:
+    f.writelines(lines)
+```
+
+Or use `sed -i` for simple inline substitutions. Avoid multi-line heredocs when the content contains regex patterns or other double-escaped characters.
+**Scope:** Any agent writing JS/TS test files or component files that contain regex literals, backslash-heavy patterns, or special chars via shell/Python heredoc. Affects Playwright locators, RegExp constructors, etc.
+**Status:** Active

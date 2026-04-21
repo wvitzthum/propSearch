@@ -976,10 +976,33 @@ const server = http.createServer((req, res) => {
     }
     else if (url.pathname === '/api/inbox' && req.method === 'GET') {
       const files = fs.readdirSync(INBOX_DIR).filter(f => f.endsWith('.json'));
+      // Reconstruct portal URL from propertyId + portal when url field is absent.
+      // rightmove: propertyId = "man-{agentId}-{listingId}" → rightmove.co.uk/property/{listingId}.html
+      // zoopla:    no reliable listing-ID URL pattern without the full URL slug
+      // jitty:     no reliable pattern — fall back to Google search by address
+      const constructUrl = (item) => {
+        if (item.url) return item.url;
+        if (!item.propertyId || !item.portal) return null;
+        if (item.portal === 'rightmove.co.uk') {
+          const parts = item.propertyId.split('-');
+          const listingId = parts[parts.length - 1]; // last segment = Rightmove listing ID
+          return `https://www.rightmove.co.uk/property/${listingId}.html`;
+        }
+        if (item.portal === 'zoopla.co.uk') {
+          // Zoopla uses non-predictable slug-based URLs — fall back to search
+          return `https://www.zoopla.co.uk/search/?q=${encodeURIComponent(item.address || '')}`;
+        }
+        if (item.portal === 'jitty.com') {
+          return `https://www.jitty.com/properties?q=${encodeURIComponent(item.address || '')}`;
+        }
+        return null;
+      };
       const fileData = files.map(filename => {
         try {
           const content = fs.readFileSync(path.join(INBOX_DIR, filename), 'utf8');
-          return { ...JSON.parse(content), filename };
+          const parsed = JSON.parse(content);
+          const url = constructUrl(parsed);
+          return { ...parsed, filename, url };
         } catch (e) {
           return { filename, error: 'Malformed JSON' };
         }

@@ -22,7 +22,7 @@ const SubmissionHistory: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
       const data = await res.json();
       setItems(data); // SQLite query already handles ordering
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
 
       console.error('Failed to fetch submission history:', err);
       setError('System trace unavailable');
@@ -106,36 +106,38 @@ const SubmissionHistory: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 };
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-  switch (status) {
-    case 'completed':
-      return (
-        <div className="flex items-center gap-1 text-[8px] font-black text-retro-green uppercase bg-retro-green/10 px-1.5 py-0.5 rounded border border-retro-green/20">
-          <CheckCircle2 size={10} />
-          Synced
-        </div>
-      );
-    case 'processing':
-      return (
-        <div className="flex items-center gap-1 text-[8px] font-black text-blue-400 uppercase bg-blue-400/10 px-1.5 py-0.5 rounded border border-blue-400/20">
-          <Loader2 size={10} className="animate-spin" />
-          Analyzing
-        </div>
-      );
-    case 'failed':
-      return (
-        <div className="flex items-center gap-1 text-[8px] font-black text-rose-400 uppercase bg-rose-400/10 px-1.5 py-0.5 rounded border border-rose-400/20">
-          <AlertCircle size={10} />
-          Error
-        </div>
-      );
-    default:
-      return (
-        <div className="flex items-center gap-1 text-[8px] font-black text-zinc-500 uppercase bg-zinc-500/10 px-1.5 py-0.5 rounded border border-zinc-500/20">
-          <Clock size={10} />
-          Waiting
-        </div>
-      );
+  // Normalise all legacy/variant status strings to canonical labels
+  const s = (status ?? '').toLowerCase();
+  if (s === 'completed' || s === 'closed') {
+    return (
+      <div className="flex items-center gap-1 text-[8px] font-black text-retro-green uppercase bg-retro-green/10 px-1.5 py-0.5 rounded border border-retro-green/20">
+        <CheckCircle2 size={10} />
+        Synced
+      </div>
+    );
   }
+  if (s === 'processing') {
+    return (
+      <div className="flex items-center gap-1 text-[8px] font-black text-blue-400 uppercase bg-blue-400/10 px-1.5 py-0.5 rounded border border-blue-400/20">
+        <Loader2 size={10} className="animate-spin" />
+        Analyzing
+      </div>
+    );
+  }
+  if (s === 'failed') {
+    return (
+      <div className="flex items-center gap-1 text-[8px] font-black text-rose-400 uppercase bg-rose-400/10 px-1.5 py-0.5 rounded border border-rose-400/20">
+        <AlertCircle size={10} />
+        Error
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1 text-[8px] font-black text-zinc-500 uppercase bg-zinc-500/10 px-1.5 py-0.5 rounded border border-zinc-500/20">
+      <Clock size={10} />
+      Waiting
+    </div>
+  );
 };
 
 export default SubmissionHistory;

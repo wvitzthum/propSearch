@@ -10,6 +10,7 @@ import { LinePath, AreaClosed, Bar } from '@visx/shape';
 import { Group } from '@visx/group';
 import { useTooltip, TooltipWithBounds } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
+import { ParentSize } from '@visx/responsive';
 
 interface CapitalAppreciationChartProps {
   propertyPrice: number;
@@ -135,20 +136,10 @@ const CapitalAppreciationChart: React.FC<CapitalAppreciationChartProps> = ({
   const bearData = yearlyData.map((d, i) => ({ x: i, y: d.bear }));
   const baseData = yearlyData.map((d, i) => ({ x: i, y: d.base }));
   const bullData = yearlyData.map((d, i) => ({ x: i, y: d.bull }));
-  const adjBaseData = yearlyData.map((d, i) => ({ x: i, y: d.adjBase }));
-  const rfData = yearlyData.map((d, i) => {
-    const rfVal = propertyPrice * Math.pow(1 + BOE_BASE / 100, d.year);
-    return { x: i, y: rfVal };
-  });
 
   // Fan area: bull-to-bear closed polygon (top=bull, bottom=bear)
   const fanBullData = bullData;
   const fanBearData = [...bearData].reverse();
-
-  // Monte Carlo band data
-  const mcP10Data = (mc?.yearlyBandP10 ?? []).map((v, i) => ({ x: i, y: v }));
-  const mcP50Data = (mc?.yearlyBandP50 ?? []).map((v, i) => ({ x: i, y: v }));
-  const mcP90Data = (mc?.yearlyBandP90 ?? []).map((v, i) => ({ x: i, y: v }));
 
   if (compact) {
     const yData5 = yearlyData[mcHorizon];
@@ -237,173 +228,171 @@ const CapitalAppreciationChart: React.FC<CapitalAppreciationChartProps> = ({
           </div>
         </div>
 
-        {/* SVG Fan Chart — @visx */}
-        <div className="relative" style={{ height: 180 }}>
-          <svg
-            viewBox={`0 0 ${W} ${H}`}
-            preserveAspectRatio="xMidYMid meet"
-            className="w-full h-full overflow-visible"
-          >
-            <Group>
-              {/* Grid */}
-              {[0.25, 0.5, 0.75].map(pct => {
-                const v = minV + range * pct;
-                return (
-                  <g key={pct}>
-                    <line
-                      x1={pad} y1={yScale(v)} x2={W - pad} y2={yScale(v)}
-                      stroke="rgba(255,255,255,0.05)" strokeWidth="0.1"
+        {/* VISX-030: SVG Fan Chart — @visx via ParentSize (no viewBox) */}
+        <div style={{ height: 200 }}>
+          <ParentSize>
+            {({ width: parentWidth }) => {
+              if (parentWidth < 10) return null;
+              const W = parentWidth;
+              const H = 160;
+              const pad = 16;
+
+              const minVal = Math.min(...allValues) * 0.97;
+              const maxVal = Math.max(...allValues) * 1.03;
+              const valRange = maxVal - minVal;
+
+              const xScale = scaleLinear({ domain: [0, yearlyData.length - 1], range: [pad, W - pad] });
+              const yScale = scaleLinear({ domain: [minVal, maxVal], range: [H - pad, pad] });
+
+              const safeGetY = (v: number | undefined | null) => {
+                if (v == null || !isFinite(v) || isNaN(v)) return H - pad;
+                return H - pad - ((v - minVal) / valRange) * (H - 2 * pad);
+              };
+
+              const bearD = yearlyData.map((d, i) => ({ x: i, y: d.bear }));
+              const baseD = yearlyData.map((d, i) => ({ x: i, y: d.base }));
+              const bullD = yearlyData.map((d, i) => ({ x: i, y: d.bull }));
+              const adjBaseD = yearlyData.map((d, i) => ({ x: i, y: d.adjBase }));
+              const rfD = yearlyData.map((d, i) => ({ x: i, y: propertyPrice * Math.pow(1 + BOE_BASE / 100, d.year) }));
+              const fanBearD = [...bearD].reverse();
+
+              const mcP10D = (mc?.yearlyBandP10 ?? []).map((v, i) => ({ x: i, y: v }));
+              const mcP50D = (mc?.yearlyBandP50 ?? []).map((v, i) => ({ x: i, y: v }));
+              const mcP90D = (mc?.yearlyBandP90 ?? []).map((v, i) => ({ x: i, y: v }));
+
+              return (
+                <svg width={W} height={H} className="overflow-visible">
+                  <Group>
+                    {/* Grid rows */}
+                    {[0.25, 0.5, 0.75, 1].map(pct => {
+                      const v = minVal + valRange * pct;
+                      return (
+                        <g key={pct}>
+                          <line
+                            x1={pad} y1={yScale(v)} x2={W - pad} y2={yScale(v)}
+                            stroke="rgba(255,255,255,0.06)" strokeWidth={0.5}
+                          />
+                          <text
+                            x={pad - 6} y={yScale(v) + 4}
+                            fill="rgba(161,161,170,0.6)"
+                            fontSize={10}
+                            fontWeight="bold"
+                            textAnchor="end"
+                          >
+                            £{(v / 1000).toFixed(0)}K
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    {/* Fan area (bull-to-bear) */}
+                    <AreaClosed
+                      data={bullD}
+                      x={d => xScale(d.x)}
+                      y0={(_, i) => safeGetY(fanBearD[i]?.y)}
+                      y1={d => yScale(d.y)}
+                      yScale={yScale}
+                      fill="#3b82f6"
+                      opacity={0.07}
                     />
-                    <text
-                      x={pad - 1} y={yScale(v) + 1}
-                      className="text-[3px] fill-linear-text-muted"
-                      textAnchor="end"
-                    >
-                      £{(v / 1000).toFixed(0)}K
-                    </text>
-                  </g>
-                );
-              })}
 
-              {/* Fan area (bull-to-bear) */}
-              <AreaClosed
-                data={fanBullData}
-                x={d => xScale(d.x)}
-                y0={(_, i) => safeGetY(fanBearData[i]?.y)}
-                y1={d => yScale(d.y)}
-                yScale={yScale}
-                fill="#3b82f6"
-                opacity={0.07}
-              />
+                    {/* Risk-free line */}
+                    <LinePath
+                      data={rfD}
+                      x={d => xScale(d.x)}
+                      y={d => yScale(d.y)}
+                      stroke="#a1a1aa"
+                      strokeWidth={0.5}
+                      strokeDasharray="1,1"
+                      opacity={0.5}
+                    />
 
-              {/* Risk-free line — @visx LinePath */}
-              <LinePath
-                data={rfData}
-                x={d => xScale(d.x)}
-                y={d => yScale(d.y)}
-                stroke="#a1a1aa"
-                strokeWidth={0.5}
-                strokeDasharray="1,1"
-                opacity={0.5}
-              />
+                    {/* Monte Carlo percentile bands */}
+                    {showMC && mc && mcP10D.length > 0 && (
+                      <>
+                        <AreaClosed
+                          data={mcP10D}
+                          x={d => xScale(d.x)}
+                          y0={(_, i) => safeGetY(mcP90D[i]?.y ?? 0)}
+                          y1={d => safeGetY(d.y)}
+                          yScale={yScale}
+                          fill="#a855f7"
+                          opacity={0.08}
+                        />
+                        <rect
+                          x={xScale(0)}
+                          y={safeGetY(mc.p75)}
+                          width={xScale(mcHorizon) - xScale(0)}
+                          height={safeGetY(mc.p25) - safeGetY(mc.p75)}
+                          fill="#a855f7"
+                          opacity={0.12}
+                        />
+                        <LinePath
+                          data={mcP50D}
+                          x={d => xScale(d.x)}
+                          y={d => safeGetY(d.y)}
+                          stroke="#a855f7"
+                          strokeWidth={1.2}
+                          strokeDasharray="3,1"
+                        />
+                        {mcP10D.map((d, i) => (
+                          <circle key={`p10-${i}`} cx={xScale(d.x)} cy={safeGetY(d.y)} r={2} fill="#a855f7" opacity={0.5} />
+                        ))}
+                        {mcP90D.map((d, i) => (
+                          <circle key={`p90-${i}`} cx={xScale(d.x)} cy={safeGetY(d.y)} r={2} fill="#a855f7" opacity={0.5} />
+                        ))}
+                      </>
+                    )}
 
-              {/* Monte Carlo percentile bands */}
-              {showMC && mc && mcP10Data.length > 0 && (
-                <>
-                  {/* P10-P90 band — @visx AreaClosed */}
-                  <AreaClosed
-                    data={mcP10Data}
-                    x={d => xScale(d.x)}
-                    y0={(_, i) => safeGetY(mcP90Data[i]?.y ?? 0)}
-                    y1={d => safeGetY(d.y)}
-                    yScale={yScale}
-                    fill="#a855f7"
-                    opacity={0.08}
-                  />
-                  {/* P25-P75 band — native rect area */}
-                  <rect
-                    x={xScale(0)}
-                    y={safeGetY(mc.p75)}
-                    width={xScale(mcHorizon) - xScale(0)}
-                    height={safeGetY(mc.p25) - safeGetY(mc.p75)}
-                    fill="#a855f7"
-                    opacity={0.12}
-                  />
-                  {/* P50 line — @visx LinePath */}
-                  <LinePath
-                    data={mcP50Data}
-                    x={d => xScale(d.x)}
-                    y={d => safeGetY(d.y)}
-                    stroke="#a855f7"
-                    strokeWidth={1.2}
-                    strokeDasharray="3,1"
-                  />
-                  {/* P10/P90 endpoint dots */}
-                  {mcP10Data.map((d, i) => (
-                    <circle key={`p10-${i}`} cx={xScale(d.x)} cy={safeGetY(d.y)} r={0.8} fill="#a855f7" opacity={0.5} />
-                  ))}
-                  {mcP90Data.map((d, i) => (
-                    <circle key={`p90-${i}`} cx={xScale(d.x)} cy={safeGetY(d.y)} r={0.8} fill="#a855f7" opacity={0.5} />
-                  ))}
-                </>
-              )}
+                    {/* Bear (dashed) */}
+                    <LinePath data={bearD} x={d => xScale(d.x)} y={d => yScale(d.y)} stroke="#ef4444" strokeWidth={0.8} strokeDasharray="2,1" opacity={0.7} />
+                    {/* Bull (dashed) */}
+                    <LinePath data={bullD} x={d => xScale(d.x)} y={d => yScale(d.y)} stroke="#22c55e" strokeWidth={0.8} strokeDasharray="2,1" opacity={0.7} />
+                    {/* Base (solid) */}
+                    <LinePath data={baseD} x={d => xScale(d.x)} y={d => yScale(d.y)} stroke="#3b82f6" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" />
+                    {/* Adjusted base (dashed) */}
+                    <LinePath data={adjBaseD} x={d => xScale(d.x)} y={d => yScale(d.y)} stroke="#3b82f6" strokeWidth={0.4} strokeDasharray="1,1" opacity={0.4} />
 
-              {/* Bear (dashed) — @visx LinePath */}
-              <LinePath
-                data={bearData}
-                x={d => xScale(d.x)}
-                y={d => yScale(d.y)}
-                stroke="#ef4444"
-                strokeWidth={0.8}
-                strokeDasharray="2,1"
-                opacity={0.7}
-              />
-              {/* Bull (dashed) — @visx LinePath */}
-              <LinePath
-                data={bullData}
-                x={d => xScale(d.x)}
-                y={d => yScale(d.y)}
-                stroke="#22c55e"
-                strokeWidth={0.8}
-                strokeDasharray="2,1"
-                opacity={0.7}
-              />
-              {/* Base (solid) — @visx LinePath */}
-              <LinePath
-                data={baseData}
-                x={d => xScale(d.x)}
-                y={d => yScale(d.y)}
-                stroke="#3b82f6"
-                strokeWidth={1.2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              {/* Adjusted base (dashed) — @visx LinePath */}
-              <LinePath
-                data={adjBaseData}
-                x={d => xScale(d.x)}
-                y={d => yScale(d.y)}
-                stroke="#3b82f6"
-                strokeWidth={0.4}
-                strokeDasharray="1,1"
-                opacity={0.4}
-              />
+                    {/* Year dots + labels */}
+                    {yearlyData.map((d, i) => (
+                      <g key={i}>
+                        <circle cx={xScale(i)} cy={yScale(d.adjBase)} r={3} fill="#3b82f6" />
+                        <text
+                          x={xScale(i)} y={H - pad + 14}
+                          fill="rgba(161,161,170,0.6)"
+                          fontSize={10}
+                          fontWeight="bold"
+                          textAnchor="middle"
+                        >
+                          Y{i}
+                        </text>
+                      </g>
+                    ))}
 
-              {/* Year dots + labels */}
-              {yearlyData.map((d, i) => (
-                <g key={i}>
-                  <circle cx={xScale(i)} cy={yScale(d.adjBase)} r={1.2} fill="#3b82f6" />
-                  <text
-                    x={xScale(i)} y={H - pad + 4}
-                    className="text-[3px] fill-linear-text-muted"
-                    textAnchor="middle"
-                  >
-                    Y{i}
-                  </text>
-                </g>
-              ))}
-
-              {/* Hover interaction */}
-              <rect
-                x={pad} y={pad}
-                width={W - 2 * pad} height={H - 2 * pad}
-                fill="transparent"
-                onMouseMove={(e) => {
-                  const coords = localPoint(e);
-                  if (!coords) return;
-                  const ratio = (coords.x - pad) / (W - 2 * pad);
-                  const idx = Math.round(ratio * (yearlyData.length - 1));
-                  const clamped = Math.max(0, Math.min(yearlyData.length - 1, idx));
-                  showTooltip({
-                    tooltipData: { year: yearlyData[clamped].year, adjBase: yearlyData[clamped].adjBase },
-                    tooltipLeft: coords.x,
-                    tooltipTop: coords.y,
-                  });
-                }}
-                onMouseLeave={hideTooltip}
-              />
-            </Group>
-          </svg>
+                    {/* Hover interaction */}
+                    <rect
+                      x={pad} y={pad}
+                      width={W - 2 * pad} height={H - 2 * pad}
+                      fill="transparent"
+                      onMouseMove={(e) => {
+                        const coords = localPoint(e);
+                        if (!coords) return;
+                        const ratio = (coords.x - pad) / (W - 2 * pad);
+                        const idx = Math.round(ratio * (yearlyData.length - 1));
+                        const clamped = Math.max(0, Math.min(yearlyData.length - 1, idx));
+                        showTooltip({
+                          tooltipData: { year: yearlyData[clamped].year, adjBase: yearlyData[clamped].adjBase },
+                          tooltipLeft: coords.x,
+                          tooltipTop: coords.y,
+                        });
+                      }}
+                      onMouseLeave={hideTooltip}
+                    />
+                  </Group>
+                </svg>
+              );
+            }}
+          </ParentSize>
         </div>
 
         {/* Year markers */}

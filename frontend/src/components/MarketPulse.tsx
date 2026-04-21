@@ -145,6 +145,7 @@ const MarketPulse: React.FC = () => {
             Area Heat
           </span>
           <div className="flex items-center gap-2">
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {areaHeat.map((area: any) => {
               const score = extractValue(area.score) ?? 5;
               const color = heatColor(score);

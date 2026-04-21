@@ -4,6 +4,30 @@ const { execSync } = require('child_process');
 
 const INBOX_DIR = path.join(__dirname, '../../data/inbox');
 
+/**
+ * DAT-216 FIX: Always ensure the submission URL is in links[].
+ * Frontend submissions store the portal URL in the `url` field, not `links[]`.
+ * If links[] is empty but `url` is present, populate links[] now.
+ * The `links` field MUST be a plain string array — frontend SourceHub.tsx expects
+ * `string[]` (URL strings only). Never store objects like `{url, source}` in DB.
+ */
+function ensureUrlInLinks(data) {
+  const url = (data.url || '').trim();
+  if (!url) return data;
+
+  const existingUrls = Array.isArray(data.links)
+    ? data.links.map(l => (typeof l === 'string' ? l : (l && l.url) || ''))
+    : [];
+
+  const urlAlreadyInLinks = existingUrls.some(u => u.toLowerCase() === url.toLowerCase());
+
+  if (urlAlreadyInLinks) return data;
+
+  data.links = [...(data.links || []), url];
+  console.log(`[DAT-216] Injected submission URL into links[]: ${url}`);
+  return data;
+}
+
 console.log('--- Starting Enrichment Pipeline ---');
 
 if (!fs.existsSync(INBOX_DIR)) {
@@ -17,17 +41,39 @@ console.log(`Found ${files.length} files in inbox.`);
 for (const file of files) {
   const filePath = path.join(INBOX_DIR, file);
   console.log(`Processing ${file}...`);
-  
+
   try {
     const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    
+
+    // Guard: skip files with no links and no price — nothing to scrape or import
+    const links = Array.isArray(data.links) ? data.links : (data.url ? [data.url] : []);
+    const hasPrice = data.list_price && data.list_price > 0;
+    if (links.length === 0 && !hasPrice) {
+      console.log(`[GUARD] SKIPPED — no links/URL and no price for: ${file}`);
+      continue;
+    }
+    if (links.length === 0) {
+      console.log(`[GUARD] SKIPPED — no links/URL for: ${file} (has price £${data.list_price})`);
+      continue;
+    }
+
+    // DAT-216 FIX: Ensure submission URL is in links[] before scraping or syncing
+    // Capture state BEFORE injection so we can detect if links[] changed
+    const linksCountBefore = (data.links || []).length;
+    if (!data.links) data.links = [];
+    data = ensureUrlInLinks(data);
+    const linksUpdated = data.links.length > linksCountBefore;
+
     // Find a valid URL to scrape
     let targetUrl = null;
     if (data.links && data.links.length > 0) {
       // Prioritize Rightmove/Zoopla for visual extraction
-      targetUrl = data.links.find(l => l.includes('rightmove.co.uk') || l.includes('zoopla.co.uk'));
+      targetUrl = data.links.find(l => {
+        const linkUrl = typeof l === 'string' ? l : (l && l.url);
+        return linkUrl && (linkUrl.includes('rightmove.co.uk') || linkUrl.includes('zoopla.co.uk'));
+      });
     }
-    
+
     if (targetUrl) {
       console.log(`Scraping visuals from: ${targetUrl}`);
       try {
@@ -51,6 +97,23 @@ for (const file of files) {
           
           // Merge results into data
           let updated = false;
+
+          // DAT-216 FIX: Extract portal URL and source from scrape result
+          // scrape_visuals.js already knows the URL it scraped — capture it as a plain string
+          if (result.url && result.source && result.source !== 'Unknown') {
+            const resultUrl = typeof result.url === 'string' ? result.url : result.url.url || result.url;
+            if (resultUrl) {
+              const existingUrls = Array.isArray(data.links)
+                ? data.links.map(l => (typeof l === 'string' ? l : (l && l.url) || ''))
+                : [];
+              if (!existingUrls.some(u => u.toLowerCase() === resultUrl.toLowerCase())) {
+                data.links = [...(data.links || []), resultUrl];
+                updated = true;
+                console.log(`[DAT-216] Captured portal URL from scrape result: ${resultUrl}`);
+              }
+            }
+          }
+
           if (result.image_url && !data.image_url) {
             data.image_url = result.image_url;
             updated = true;
@@ -84,8 +147,14 @@ for (const file of files) {
       } catch (err) {
         console.error(`Failed to scrape ${targetUrl}: ${err.message}`);
       }
-    } else {
-      console.log('No suitable portal URL found in links.');
+    }
+
+    // DAT-216 FIX: If links[] was injected from the `url` field, save the inbox file
+    // so sync_data.js picks up the URL when it next runs. This is the only chance to
+    // get the URL into the SQLite links[] column — sync_data.js reads links[], not url.
+    if (linksUpdated) {
+      fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+      console.log(`[DAT-216] Saved ${file} with injected links[]. URL will be captured by sync_data.js.`);
     }
     
   } catch (e) {

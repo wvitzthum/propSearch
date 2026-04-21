@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-export type PropertyStatus = 'discovered' | 'shortlisted' | 'vetted' | 'archived';
+export type PropertyStatus = 'discovered' | 'shortlisted' | 'vetted' | 'watchlist' | 'archived';
 
 export interface PipelineState {
   [propertyId: string]: PropertyStatus;
@@ -53,8 +53,8 @@ export const usePipeline = () => {
       if (!res.ok) {
         throw new Error(`Server responded ${res.status}`);
       }
-    } catch (err: any) {
-      console.warn(`Pipeline sync failed for ${id}: ${err.message}. Rolling back to ${rollback}`);
+    } catch (err: unknown) {
+      console.warn(`Pipeline sync failed for ${id}: ${err instanceof Error ? err.message : err}. Rolling back to ${rollback}`);
       // Rollback: revert to previous status
       setPipeline(prev => ({ ...prev, [id]: rollback }));
       showToast(`Pipeline sync failed for property. Change reverted.`);
@@ -85,7 +85,7 @@ export const usePipeline = () => {
       const next = { ...prev };
       for (const prop of properties) {
         if (prop.pipeline_status) {
-          const validStatus = ['discovered', 'shortlisted', 'vetted', 'archived'].includes(prop.pipeline_status)
+          const validStatus = ['discovered', 'shortlisted', 'vetted', 'watchlist', 'archived'].includes(prop.pipeline_status)
             ? prop.pipeline_status as PropertyStatus
             : 'discovered';
           // Only clobber localStorage values if we have server data for this ID

@@ -170,6 +170,19 @@ async function sync() {
             console.error(`  WARNING: Skipping record with null/empty address from ${path.basename(file)}`);
             continue;
           }
+          // Guard: skip records without at least one portal link — link is the primary ID key
+          const itemLinks = item.links || (item.url ? [item.url] : []);
+          if (!Array.isArray(itemLinks) || itemLinks.length === 0) {
+            skipped++;
+            console.error(`  WARNING: Skipping record with no links/URL from ${path.basename(file)}: ${item.address}`);
+            continue;
+          }
+          // Guard: skip records without a positive list price
+          if (!item.list_price || item.list_price <= 0) {
+            skipped++;
+            console.error(`  WARNING: Skipping record with no/zero price from ${path.basename(file)}: ${item.address}`);
+            continue;
+          }
           const enrichedItem = enrichVisuals(item);
           const processedItem = processItem(enrichedItem);
           dailySnapshot.push(processedItem);
@@ -216,6 +229,19 @@ async function sync() {
           if (!item.address || item.address.trim() === '') {
             skipped++;
             console.error(`  WARNING: Skipping record with null/empty address from ${path.basename(file)}`);
+            continue;
+          }
+          // Guard: skip records without at least one portal link — link is the primary ID key
+          const itemLinks = item.links || (item.url ? [item.url] : []);
+          if (!Array.isArray(itemLinks) || itemLinks.length === 0) {
+            skipped++;
+            console.error(`  WARNING: Skipping record with no links/URL from ${path.basename(file)}: ${item.address}`);
+            continue;
+          }
+          // Guard: skip records without a positive list price
+          if (!item.list_price || item.list_price <= 0) {
+            skipped++;
+            console.error(`  WARNING: Skipping record with no/zero price from ${path.basename(file)}: ${item.address}`);
             continue;
           }
           const enrichedItem = enrichVisuals(item);
@@ -277,9 +303,9 @@ async function sync() {
       bedrooms, bathrooms, council_tax_band,
       ltv_match_score, appr_bear_5yr, appr_base_5yr, appr_bull_5yr,
       appr_p10, appr_p50, appr_p90, rental_yield_gross, rental_yield_net,
-      property_rank, source_id,
+      source_id,
       archived, archive_reason, market_status, last_checked, pipeline_status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
   `);
 
   // UPDATE preserves archived/archive_reason/pipeline_status — analyst-set and user pipeline flags must not be overwritten by sync
@@ -473,6 +499,20 @@ async function sync() {
           }
         }
 
+        // Guard: minimum viable record — skip if critical fields missing
+        const hasLinks = Array.isArray(newItem.links) && newItem.links.length > 0;
+        const hasPrice = newItem.list_price !== null && newItem.list_price !== undefined && newItem.list_price > 0;
+        if (!hasLinks) {
+          console.log(`  [GUARD] SKIPPED — no links[] for: ${newItem.address || newItem.url || '(unknown)'}`);
+          skipped++;
+          continue;
+        }
+        if (!hasPrice) {
+          console.log(`  [GUARD] SKIPPED — no price for: ${newItem.address || newItem.url || '(unknown)'}`);
+          skipped++;
+          continue;
+        }
+
         const metadata = {
           first_seen: new Date().toISOString().split('T')[0],
           last_seen: new Date().toISOString().split('T')[0],
@@ -496,7 +536,7 @@ async function sync() {
           newItem.ltv_match_score || null, newItem.appr_bear_5yr || null, newItem.appr_base_5yr || null,
           newItem.appr_bull_5yr || null, newItem.appr_p10 || null, newItem.appr_p50 || null,
           newItem.appr_p90 || null, newItem.rental_yield_gross || null, newItem.rental_yield_net || null,
-          newItem.property_rank || null, newItem.source_id || null,
+          newItem.source_id || null,
           // DE-162 fix: preserve archived/archive_reason on new pipeline inserts (default active)
           newItem.archived !== undefined ? newItem.archived : 0,
           newItem.archive_reason || null,

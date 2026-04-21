@@ -13,8 +13,8 @@ import LTVMatchBadge from './LTVMatchBadge';
 
 interface AffordabilityNodeProps {
   propertyPrice: number;
-  serviceCharge: number;
-  groundRent: number;
+  serviceCharge?: number;
+  groundRent?: number;
   compact?: boolean;
 }
 
@@ -57,14 +57,52 @@ const AffordabilityNode: React.FC<AffordabilityNodeProps> = ({
         </div>
 
         {/* Quick Metrics — FE-218: Responsive grid, 1 col on mobile, 2 on sm+ */}
+        {/* FE-260: Show dual constraint — income-based ceiling + budget ceiling */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          {/* Monthly Payment */}
           <div>
-            <div className="text-[9px] text-linear-text-muted uppercase tracking-wider mb-1">Monthly Payment</div>
+            <div className="text-[11px] text-linear-text-muted uppercase tracking-wider mb-1">Monthly Payment</div>
             <div className="text-lg font-bold text-white tracking-tight">£{budgetProfile.monthlyPayment.toLocaleString()}</div>
           </div>
+          {/* Binding Constraint — FE-260: income vs budget dual display */}
           <div>
-            <div className="text-[9px] text-linear-text-muted uppercase tracking-wider mb-1">Deposit</div>
-            <div className="text-lg font-bold text-white tracking-tight">£{budgetProfile.deposit.toLocaleString()}</div>
+            <div className="text-[11px] text-linear-text-muted uppercase tracking-wider mb-1">Income Ceiling</div>
+            {(() => {
+              const incomeCeiling = (() => {
+                const stored = localStorage.getItem('propSearch_income_salary');
+                if (!stored) return null;
+                const salary = JSON.parse(stored);
+                if (!salary || salary <= 0) return null;
+                const bonusStored = localStorage.getItem('propSearch_income_bonus_amt');
+                const bonus = bonusStored ? JSON.parse(bonusStored) : 0;
+                const income = salary + (bonus || 0);
+                const tiers = [
+                  { maxIncome: 25000, std: 4.5 }, { maxIncome: 50000, std: 4.75 },
+                  { maxIncome: 75000, std: 5.0 }, { maxIncome: 100000, std: 5.25 }, { maxIncome: Infinity, std: 5.5 }
+                ];
+                const tier = tiers.find(t => income <= t.maxIncome) ?? tiers[tiers.length - 1];
+                return income * tier.std;
+              })();
+              if (incomeCeiling == null) {
+                return <div className="text-[10px] text-linear-text-muted/60 italic">Not configured</div>;
+              }
+              const binding = incomeCeiling < maxAffordable ? incomeCeiling : maxAffordable;
+              const isBinding = incomeCeiling < maxAffordable;
+              return (
+                <div className="flex items-center gap-1.5">
+                  <div className="text-lg font-bold tracking-tight" style={{ color: isBinding ? '#22c55e' : '#f59e0b' }}>
+                    £{(binding / 1000).toFixed(0)}K
+                  </div>
+                  <div className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded border ${
+                    isBinding
+                      ? 'bg-retro-green/10 border-retro-green/20 text-retro-green'
+                      : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                  }`}>
+                    {isBinding ? 'BINDING' : 'BUDGET'}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -127,7 +165,7 @@ const AffordabilityNode: React.FC<AffordabilityNodeProps> = ({
         <div className="p-4 bg-linear-bg rounded-xl border border-linear-border">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign size={12} className="text-blue-400" />
-            <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-linear-text-muted uppercase tracking-wider">
               Monthly Payment
             </span>
           </div>
@@ -142,7 +180,7 @@ const AffordabilityNode: React.FC<AffordabilityNodeProps> = ({
         <div className="p-4 bg-linear-bg rounded-xl border border-linear-border">
           <div className="flex items-center gap-2 mb-2">
             <PiggyBank size={12} className="text-emerald-400" />
-            <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-linear-text-muted uppercase tracking-wider">
               Deposit Required
             </span>
           </div>
@@ -156,11 +194,51 @@ const AffordabilityNode: React.FC<AffordabilityNodeProps> = ({
       </div>
 
       {/* Budget vs Affordability */}
+      {/* FE-260: Add income-based constraint comparison */}
       <div className="p-4 bg-linear-card rounded-xl border border-linear-border">
         <div className="space-y-3">
+          {/* Income-based constraint */}
+          {(() => {
+            const incomeCeiling = (() => {
+              const stored = localStorage.getItem('propSearch_income_salary');
+              if (!stored) return null;
+              const salary = JSON.parse(stored);
+              if (!salary || salary <= 0) return null;
+              const bonusStored = localStorage.getItem('propSearch_income_bonus_amt');
+              const bonus = bonusStored ? JSON.parse(bonusStored) : 0;
+              const income = salary + (bonus || 0);
+              const tiers = [
+                { maxIncome: 25000, std: 4.5 }, { maxIncome: 50000, std: 4.75 },
+                { maxIncome: 75000, std: 5.0 }, { maxIncome: 100000, std: 5.25 }, { maxIncome: Infinity, std: 5.5 }
+              ];
+              const tier = tiers.find(t => income <= t.maxIncome) ?? tiers[tiers.length - 1];
+              return income * tier.std;
+            })();
+            if (incomeCeiling != null) {
+              const binding = incomeCeiling < maxAffordable ? 'income' : 'budget';
+              return (
+                <div>
+                  <div className="flex justify-between text-[10px] mb-1">
+                    <span className="text-linear-text-muted font-bold uppercase tracking-wider">
+                      Income Ceiling
+                    </span>
+                    <span className="font-bold" style={{ color: binding === 'income' ? '#22c55e' : '#f59e0b' }}>
+                      £{incomeCeiling.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="text-[8px] text-linear-text-muted/60 mb-2">
+                    {binding === 'income' ? 'BINDING — limits you below budget ceiling' : 'Budget is binding — income ceiling is higher'}
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })()}
+
+          {/* Budget max */}
           <div>
             <div className="flex justify-between text-[10px] mb-1">
-              <span className="text-linear-text-muted font-bold uppercase tracking-wider">Your Max</span>
+              <span className="text-linear-text-muted font-bold uppercase tracking-wider">Budget Ceiling</span>
               <span className="text-white font-bold">£{maxAffordable.toLocaleString()}</span>
             </div>
             <div className="h-2 bg-linear-bg rounded-full overflow-hidden">
@@ -210,17 +288,21 @@ const AffordabilityNode: React.FC<AffordabilityNodeProps> = ({
 
       {/* Running Costs Context */}
       <div className="p-4 bg-linear-bg rounded-xl border border-linear-border">
-        <div className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest mb-3">
+        <div className="text-[11px] font-bold text-linear-text-muted uppercase tracking-widest mb-3">
           Monthly Carry (after mortgage)
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <div className="text-[8px] text-linear-text-muted uppercase tracking-wider">Service Charge</div>
-            <div className="text-sm font-bold text-white">£{(serviceCharge / 12).toLocaleString()}</div>
+            <div className="text-[10px] text-linear-text-muted uppercase tracking-wider">Service Charge</div>
+            <div className="text-sm font-bold text-white">
+              {serviceCharge != null ? `£${(serviceCharge / 12).toLocaleString()}` : '—'}
+            </div>
           </div>
           <div>
-            <div className="text-[8px] text-linear-text-muted uppercase tracking-wider">Ground Rent</div>
-            <div className="text-sm font-bold text-white">£{(groundRent / 12).toLocaleString()}</div>
+            <div className="text-[10px] text-linear-text-muted uppercase tracking-wider">Ground Rent</div>
+            <div className="text-sm font-bold text-white">
+              {groundRent != null ? `£${(groundRent / 12).toLocaleString()}` : '—'}
+            </div>
           </div>
         </div>
       </div>

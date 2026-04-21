@@ -45,6 +45,9 @@ const DataProvenanceSection: React.FC<DataProvenanceSectionProps> = ({
       {/* Header */}
       <button
         onClick={() => setIsOpen(!isOpen)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsOpen(v => !v); } }}
+        aria-expanded={isOpen}
+        aria-controls="data-provenance-body"
         className="w-full px-4 py-3 flex items-center justify-between hover:bg-linear-bg/50 transition-colors"
       >
         <div className="flex items-center gap-2">
@@ -65,7 +68,7 @@ const DataProvenanceSection: React.FC<DataProvenanceSectionProps> = ({
 
       {/* Expanded content */}
       {isOpen && (
-        <div className="px-4 pb-4 border-t border-linear-border/50 space-y-4 pt-4">
+        <div id="data-provenance-body" className="px-4 pb-4 border-t border-linear-border/50 space-y-4 pt-4">
           <p className="text-[10px] text-linear-text-muted leading-relaxed">
             All metrics on this page are sourced from authoritative public datasets. Provenance data is
             refreshed weekly (Mondays 09:00 UTC) from primary sources.

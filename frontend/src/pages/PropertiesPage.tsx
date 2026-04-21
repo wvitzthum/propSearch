@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom';
 import {
   Building2, Search, Table as TableIcon, LayoutGrid, Filter,
-  X, Check, Eye, ChevronRight, Star, TrendingUp, CheckSquare
+  X, Check, Eye, ChevronRight, Star, TrendingUp, CheckSquare, Clock, Bookmark
 } from 'lucide-react';
 import PropertyTable from '../components/PropertyTable';
 import LoadingNode from '../components/LoadingNode';
@@ -13,8 +13,8 @@ import PreviewDrawer from '../components/PreviewDrawer';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import { usePipeline } from '../hooks/usePipeline';
 import { useThesisTags } from '../hooks/useThesisTags';
+import type { ThesisTag } from '../hooks/useThesisTags';
 import { useComparison } from '../hooks/useComparison';
-import { usePropertyRank } from '../hooks/usePropertyRank';
 import type { PropertyWithCoords } from '../types/property';
 import type { PropertyStatus } from '../hooks/usePipeline';
 import type { MarketStatus } from '../types/property';
@@ -22,11 +22,10 @@ import MarketStatusBadge from '../components/MarketStatusBadge';
 
 /** UX-007: URL-persisted filters. UX-008: vim-style keyboard navigation. */
 const PropertiesPage: React.FC = () => {
-  const { properties, loading, updateFilters, filters, registerPipeline, registerHydrate } = usePropertyContext();
+  const { properties, loading, updateFilters, updateFiltersWithoutFetch, filters, registerPipeline, registerHydrate } = usePropertyContext();
   const { setStatus, getStatus, hydrateFromProperties } = usePipeline();
   const { getTags } = useThesisTags();
   const comparison = useComparison();
-  const { getRank, setRank, hydrateFromProperties: hydrateRanks } = usePropertyRank();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const filteredPropsRef = useRef<PropertyWithCoords[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -34,12 +33,12 @@ const PropertiesPage: React.FC = () => {
   // UX-008: Preview drawer state
   const [previewProperty, setPreviewProperty] = useState<PropertyWithCoords | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  // UX-82: Batch selection state lives at page level — survives table↔grid view switch
+  const [batchSelected, setBatchSelected] = useState<Set<string>>(new Set());
 
   // FE-181: Register pipeline getter; FE-222: Register pipeline hydration function
   useEffect(() => { registerPipeline(getStatus); }, [registerPipeline, getStatus]);
   useEffect(() => { registerHydrate(hydrateFromProperties); }, [registerHydrate, hydrateFromProperties]);
-  // UX-034: Register rank hydration from API response (runs after property fetch)
-  useEffect(() => { hydrateRanks(properties as Array<{ id: string; property_rank?: number | null }>); }, [properties, hydrateRanks]);
 
   // View mode
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
@@ -72,7 +71,7 @@ const PropertiesPage: React.FC = () => {
 
   // UX-018: Pipeline counts for Status Pipeline Strip
   const pipelineCounts = useMemo(() => {
-    const c = { discovered: 0, shortlisted: 0, vetted: 0, archived: 0 };
+    const c = { discovered: 0, shortlisted: 0, vetted: 0, watchlist: 0, archived: 0 };
     properties.forEach(p => {
       const s = getStatus(p.id);
       if (s in c) c[s as keyof typeof c]++;
@@ -95,7 +94,7 @@ const PropertiesPage: React.FC = () => {
     { key: 'bathrooms', label: 'Bathrooms' },
     { key: 'market_status', label: 'Market Status' },
     { key: 'council_tax_band', label: 'Council Tax' },
-    { key: 'metadata.first_seen', label: 'Date Added' },
+    { key: 'metadata.first_seen', label: 'First Seen', tooltip: 'Date the property was first imported into your database (not the market listing date)' },
   ];
 
   // --- Computed values (declared before useEffects that depend on them) ---
@@ -111,7 +110,7 @@ const PropertiesPage: React.FC = () => {
   // FE-204.1: If showArchived is false, filter out archived pipeline_status by default
   const filteredProperties = useMemo(() => {
     if (!properties) return [];
-    let result = [...properties];
+    let result: import('../types/property').PropertyWithCoords[] = [...properties];
     // FE-204.1: Always exclude archived unless showArchived is true or statusFilter === 'archived'
     if (!showArchived && statusFilter !== 'archived') {
       result = result.filter(p => getStatus(p.id) !== 'archived');
@@ -135,23 +134,30 @@ const PropertiesPage: React.FC = () => {
         case 'alpha_score': return (b.alpha_score - a.alpha_score) * dir;
         case 'realistic_price': return (a.realistic_price - b.realistic_price) * dir;
         case 'price_per_sqm': return (a.price_per_sqm - b.price_per_sqm) * dir;
-        case 'appreciation_potential': return (((b as any).appreciation_potential ?? 0) - ((a as any).appreciation_potential ?? 0)) * dir;
-        case 'dom': return (((a as any).dom ?? 999) - ((b as any).dom ?? 999)) * dir;
+        case 'appreciation_potential': return (((b).appreciation_potential ?? 0) - ((a).appreciation_potential ?? 0)) * dir;
+        case 'dom': return (((a).dom ?? 999) - ((b).dom ?? 999)) * dir;
         case 'sqft': return ((a.sqft ?? 0) - (b.sqft ?? 0)) * dir;
         // FE-216: Date Added sort — uses metadata.first_seen ISO string, lex compare works for dates
+        // SORT-001: user_priority ranks are ordinal — rank 1 (highest priority) always
+        // comes first. Ranks are sorted ASC regardless of dir; unranked properties
+        // (null / 0) always appear at the end. The dir multiplier is ignored since
+        // reversing ordinal ranks makes no semantic sense.
+        case 'user_priority': {
+          const rankA = (a as any).user_priority ?? 0;
+          const rankB = (b as any).user_priority ?? 0;
+          // Both unranked → equal
+          if (rankA === 0 && rankB === 0) return 0;
+          // Only A unranked → B first
+          if (rankA === 0) return 1;
+          // Only B unranked → A first
+          if (rankB === 0) return -1;
+          // Both ranked → ascending (rank 1 first)
+          return rankA - rankB;
+        }
         case 'date_added': {
           const aDate = (a.metadata?.first_seen ?? '');
           const bDate = (b.metadata?.first_seen ?? '');
           return (aDate < bDate ? -1 : aDate > bDate ? 1 : 0) * dir;
-        }
-        // UX-034: User-defined priority — ranked properties sorted ascending (1 = highest)
-        case 'user_priority': {
-          const rankA = getRank(a.id);
-          const rankB = getRank(b.id);
-          if (rankA === undefined && rankB === undefined) return 0;
-          if (rankA === undefined) return dir; // unranked at bottom
-          if (rankB === undefined) return -dir;
-          return (rankA - rankB) * dir;
         }
         default: return 0;
       }
@@ -174,8 +180,19 @@ const PropertiesPage: React.FC = () => {
     if (minSqft > 0) next.set('minSqft', String(minSqft));
     if (searchQuery.trim()) next.set('q', encodeURIComponent(searchQuery.trim()));
     if (showArchived) next.set('showArchived', 'true');
+    if (filters.sortBy) next.set('sortBy', filters.sortBy);
+    if (filters.sortOrder) next.set('sortOrder', filters.sortOrder);
     setSearchParams(next, { replace: true });
-  }, [statusFilter, marketStatusFilter, areaFilter, alphaThreshold, maxPrice, minSqft, searchQuery, showArchived, setSearchParams]);
+  }, [statusFilter, marketStatusFilter, areaFilter, alphaThreshold, maxPrice, minSqft, searchQuery, showArchived, filters.sortBy, filters.sortOrder, setSearchParams]);
+
+  // DE-241: Separate immediate sync for sort changes — reads directly from the new sort values
+  // passed as args (avoids stale closure from React's batched state updates).
+  const syncSortToUrl = useCallback((sortBy: string, sortOrder: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (sortBy) next.set('sortBy', sortBy);
+    if (sortOrder) next.set('sortOrder', sortOrder);
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const handleStatusFilter = useCallback((status: PropertyStatus | 'all') => {
     setStatusFilter(status);
@@ -207,7 +224,7 @@ const PropertiesPage: React.FC = () => {
   // UX-007: Initialize all filters from URL params on mount
   useEffect(() => {
     const urlStatus = searchParams.get('status') as PropertyStatus | null;
-    if (urlStatus && ['discovered', 'shortlisted', 'vetted', 'archived'].includes(urlStatus)) {
+    if (urlStatus && ['discovered', 'shortlisted', 'vetted', 'watchlist', 'archived'].includes(urlStatus)) {
       setStatusFilter(urlStatus);
       updateFilters({ archived: urlStatus === 'archived' });
     }
@@ -228,6 +245,17 @@ const PropertiesPage: React.FC = () => {
     const urlMarketStatus = searchParams.get('marketStatus') as MarketStatus | null;
     if (urlMarketStatus && ['active', 'under_offer', 'sold_stc', 'sold_completed', 'withdrawn', 'unknown'].includes(urlMarketStatus)) {
       setMarketStatusFilter(urlMarketStatus);
+    }
+    // BUG-007: Initialize sortBy and sortOrder from URL — without this, sortOrder defaults to
+    // DESC on every page load regardless of URL params, breaking direct navigation to ASC URLs.
+    // Uses updateFiltersWithoutFetch to set state without triggering a second API fetch.
+    // The initial fetch (with DESC defaults) completes normally; local sort in filteredProperties
+    // applies the correct order from filters state.
+    const urlSortBy = searchParams.get('sortBy');
+    const urlSortOrder = searchParams.get('sortOrder');
+    if (urlSortBy) updateFiltersWithoutFetch({ sortBy: urlSortBy });
+    if (urlSortOrder === 'ASC' || urlSortOrder === 'DESC') {
+      updateFiltersWithoutFetch({ sortOrder: urlSortOrder as 'ASC' | 'DESC' });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -270,16 +298,6 @@ const PropertiesPage: React.FC = () => {
         comparison.toggleComparison(fp[selectedRowIndex].id);
         return;
       }
-      // UX-034: R key — toggle My Priority sort
-      if (key === 'r' && selectedRowIndex < 0) {
-        e.preventDefault();
-        if (filters.sortBy === 'user_priority') {
-          updateFilters({ sortBy: 'alpha_score', sortOrder: 'DESC' });
-        } else {
-          updateFilters({ sortBy: 'user_priority', sortOrder: 'ASC' });
-        }
-        return;
-      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -310,7 +328,7 @@ const PropertiesPage: React.FC = () => {
         </div>
         <div className="flex items-center gap-2">
           <div className="px-3 py-1.5 bg-linear-card border border-linear-border rounded-lg text-xs">
-            <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">Showing</span>
+            <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">Showing</span>
             <span className="ml-2 font-bold text-white">{filteredProperties.length}</span>
             <span className="ml-1 text-linear-text-muted">/ {properties.length}</span>
           </div>
@@ -355,20 +373,21 @@ const PropertiesPage: React.FC = () => {
             <span className="sm:hidden">Value</span>
           </button>
 
-          {/* Shortlisted */}
+          {/* Watchlisted */}
           <button
             onClick={() => {
               handleFilterChange(() => {
-                setStatusFilter('shortlisted');
+                setStatusFilter('watchlist');
                 setIsValueBuyFilter(false);
                 setAlphaThreshold(0);
               });
             }}
-            title="Shortlisted: Show shortlisted properties"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold transition-all ${statusFilter === 'shortlisted' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-linear-text-muted hover:text-white hover:bg-linear-bg'}`}
+            title="Watchlisted: Show watchlisted properties"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold transition-all ${statusFilter === 'watchlist' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'text-linear-text-muted hover:text-white hover:bg-linear-bg'}`}
           >
-            <span className="hidden sm:inline">Shortlisted</span>
-            <span className="sm:hidden">Short</span>
+            <Bookmark size={10} className={statusFilter === 'watchlist' ? 'text-amber-400 fill-current' : ''} />
+            <span className="hidden sm:inline">Watchlisted</span>
+            <span className="sm:hidden">Watch</span>
           </button>
 
           {/* All */}
@@ -381,23 +400,6 @@ const PropertiesPage: React.FC = () => {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold transition-all ${hasActiveFilters ? 'text-linear-text-muted hover:text-white hover:bg-linear-bg' : 'text-white bg-linear-bg border border-linear-border'}`}
           >
             All
-          </button>
-
-          {/* UX-034: My Priority sort — show ranked properties first */}
-          <button
-            onClick={() => {
-              if (filters.sortBy === 'user_priority') {
-                updateFilters({ sortBy: 'alpha_score', sortOrder: 'DESC' });
-              } else {
-                updateFilters({ sortBy: 'user_priority', sortOrder: 'ASC' });
-              }
-            }}
-            title="My Priority: Sort by user-defined rank (R)"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold transition-all ${filters.sortBy === 'user_priority' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-linear-text-muted hover:text-white hover:bg-linear-bg'}`}
-          >
-            <Star size={10} className={filters.sortBy === 'user_priority' ? 'text-blue-400 fill-current' : ''} />
-            <span className="hidden sm:inline">My Priority</span>
-            <span className="sm:hidden">Priority</span>
           </button>
         </div>
 
@@ -413,6 +415,23 @@ const PropertiesPage: React.FC = () => {
           </button>
         </div>
 
+        {/* Newest — sort by date added (most recent first); click again to clear */}
+        <button
+          onClick={() => {
+            if (filters.sortBy === 'date_added' && filters.sortOrder === 'DESC') {
+              // Toggle off — revert to default sort
+              updateFilters({ sortBy: 'alpha_score', sortOrder: 'DESC' });
+            } else {
+              updateFilters({ sortBy: 'date_added', sortOrder: 'DESC' });
+            }
+          }}
+          title="Newest: Sort by most recently added properties first"
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${filters.sortBy === 'date_added' && filters.sortOrder === 'DESC' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-linear-card border border-linear-border text-linear-text-muted hover:text-white hover:border-white/20'}`}
+        >
+          <Clock size={10} className={filters.sortBy === 'date_added' && filters.sortOrder === 'DESC' ? 'text-emerald-400' : ''} />
+          <span>Newest</span>
+        </button>
+
         {/* Search — full width on mobile, fixed width on desktop */}
         <div className="relative flex-1 w-full min-w-0">
           <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-linear-text-muted" />
@@ -421,7 +440,7 @@ const PropertiesPage: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={e => handleFilterChange(() => setSearchQuery(e.target.value))}
-            placeholder="Search address, area... (/)"
+            placeholder="Search address, area… (press / to focus when elsewhere)"
             className="w-full pl-8 pr-3 py-1.5 bg-linear-card border border-linear-border rounded-lg text-xs text-white placeholder-linear-text-muted focus:outline-none focus:border-blue-500/50"
           />
         </div>
@@ -433,7 +452,7 @@ const PropertiesPage: React.FC = () => {
             <div className="relative">
               <button onClick={() => setIsColumnMenuOpen(!isColumnMenuOpen)}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-linear-card border border-linear-border rounded-lg text-[10px] font-bold text-linear-text-muted hover:text-white transition-colors">
-                <Eye size={12} />Columns
+                <Eye size={12} />Columns{hiddenColumns.size > 0 && <span className="ml-1 px-1.5 py-0.5 bg-amber-500/20 text-amber-400 rounded text-[9px] font-black">{hiddenColumns.size}</span>}
               </button>
             {isColumnMenuOpen && (
               <>
@@ -441,7 +460,7 @@ const PropertiesPage: React.FC = () => {
                 <div className="absolute right-0 top-full mt-2 z-50 bg-linear-card border border-linear-border rounded-xl shadow-2xl w-52 overflow-hidden">
                   <div className="px-3 py-2 border-b border-linear-border flex items-center justify-between">
                     <span className="text-[10px] font-bold text-white uppercase tracking-widest">Visible Columns</span>
-                    <button onClick={() => setHiddenColumns(new Set())} className="text-[9px] text-blue-400 hover:text-blue-300">Show all</button>
+                    <button onClick={() => setHiddenColumns(new Set())} className="text-[10px] text-blue-400 hover:text-blue-300">Show all</button>
                   </div>
                   <div className="p-2 max-h-64 overflow-y-auto custom-scrollbar">
                     {allColumns.map(col => (
@@ -489,7 +508,7 @@ const PropertiesPage: React.FC = () => {
         </button>
 
         {hasActiveFilters && (
-          <button onClick={clearFilters} className="flex items-center gap-1 px-2 py-1.5 text-[9px] font-bold text-linear-text-muted hover:text-white transition-colors flex-shrink-0">
+          <button onClick={clearFilters} className="flex items-center gap-1 px-2 py-1.5 text-[10px] font-bold text-linear-text-muted hover:text-white transition-colors flex-shrink-0">
             <X size={10} />Clear
           </button>
         )}
@@ -497,13 +516,14 @@ const PropertiesPage: React.FC = () => {
 
       {/* UX-018: Status Pipeline Strip — FE-220: scrollable on mobile */}
       <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5 -mx-1 px-1">
-        <span className="text-[9px] font-black text-linear-text-muted/60 uppercase tracking-widest mr-1">Status:</span>
+        <span className="text-[10px] font-black text-linear-text-muted/60 uppercase tracking-widest mr-1">Status:</span>
         {[
           { key: 'discovered' as PropertyStatus, label: 'Discovered', color: 'blue' },
           { key: 'shortlisted' as PropertyStatus, label: 'Shortlisted', color: 'amber' },
           { key: 'vetted' as PropertyStatus, label: 'Vetted', color: 'emerald' },
+          { key: 'watchlist' as PropertyStatus, label: 'Watchlist', shortLabel: 'Watch', color: 'amber' },
           // FE-204.3: Label clarifies this is user's archived pipeline, not market withdrawal
-          { key: 'archived' as PropertyStatus, label: 'Archived', shortLabel: 'Arch.', color: 'rose' },
+          { key: 'archived' as PropertyStatus, label: 'Archived (User)', shortLabel: 'Arch.', color: 'rose' },
         ].map(({ key, label, shortLabel, color }) => (
           <button
             key={key}
@@ -524,7 +544,7 @@ const PropertiesPage: React.FC = () => {
               'bg-rose-400'
             }`} />
             <span className="font-black">{pipelineCounts[key]}</span>
-            <span className="hidden sm:inline text-[9px] opacity-70">{label}</span>
+            <span className="hidden sm:inline text-[10px] opacity-70">{label}</span>
             <span className="sm:hidden text-[8px] opacity-70">{shortLabel}</span>
           </button>
         ))}
@@ -544,7 +564,7 @@ const PropertiesPage: React.FC = () => {
         </button>
         {/* ADR-017: Market status filter — analyst-owned axis, compact on mobile */}
         <div className="flex items-center gap-1 border-l border-linear-border/50 pl-2 md:pl-3 flex-shrink-0">
-          <span className="hidden md:inline text-[9px] font-black text-linear-text-muted/50 uppercase tracking-widest mr-1">Market:</span>
+          <span className="hidden md:inline text-[10px] font-black text-linear-text-muted/50 uppercase tracking-widest mr-1">Market:</span>
           {([
             { key: 'all' as MarketStatus | 'all', label: 'All', shortLabel: 'All' },
             { key: 'active' as MarketStatus, label: 'Active', shortLabel: 'Act.' },
@@ -554,7 +574,7 @@ const PropertiesPage: React.FC = () => {
             <button
               key={key}
               onClick={() => { setMarketStatusFilter(key); syncAllFiltersToUrl(); }}
-              className={`px-1.5 md:px-2 py-1 rounded-lg text-[9px] md:text-[10px] font-bold transition-all border flex-shrink-0 ${
+              className={`px-1.5 md:px-2 py-1 rounded-lg text-[10px] md:text-[11px] font-bold transition-all border flex-shrink-0 ${
                 marketStatusFilter === key
                   ? key === 'active' ? 'bg-retro-green/10 text-retro-green border-retro-green/30' :
                     key === 'under_offer' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
@@ -571,15 +591,24 @@ const PropertiesPage: React.FC = () => {
       </div>
 
       {/* Filter Panel */}
+      {/* UX-90: Sticky header ensures Clear All Filters button is always reachable */}
       {isFilterOpen && (
-        <div className="bg-linear-card border border-linear-border rounded-xl p-4 grid grid-cols-2 md:grid-cols-6 gap-4">
+        <div className="bg-linear-card border border-linear-border rounded-xl">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-linear-border">
+            <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">Filters</span>
+            <button onClick={clearFilters} className="text-[9px] font-bold text-blue-400 hover:text-blue-300 uppercase tracking-widest transition-colors">
+              Clear All
+            </button>
+          </div>
+          <div className="p-4 grid grid-cols-2 md:grid-cols-6 gap-4">
           <div>
-            <div className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest mb-2">Status</div>
+            <div className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest mb-2">Status</div>
             <div className="flex flex-wrap gap-1">
-              {(['all', 'discovered', 'shortlisted', 'vetted', 'archived'] as const).map(s => (
+              {(['all', 'discovered', 'shortlisted', 'vetted', 'watchlist', 'archived'] as const).map(s => (
                 <button key={s} onClick={() => handleStatusFilter(s)}
-                  className={`px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all ${statusFilter === s
+                  className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${statusFilter === s
                     ? s === 'archived' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                      s === 'watchlist' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
                       s === 'vetted' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
                       s === 'shortlisted' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
                       'bg-linear-bg text-white border border-linear-border'
@@ -592,7 +621,7 @@ const PropertiesPage: React.FC = () => {
           </div>
           {/* ADR-017: Market status filter — analyst-owned axis */}
           <div>
-            <div className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest mb-2">Market</div>
+            <div className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest mb-2">Market</div>
             <div className="flex flex-wrap gap-1">
               {([
                 { key: 'all' as MarketStatus | 'all', label: 'All' },
@@ -641,6 +670,7 @@ const PropertiesPage: React.FC = () => {
             <input type="range" min="250000" max="5000000" step="50000" value={maxPrice}
               onChange={e => handleFilterChange(() => setMaxPrice(Number(e.target.value)))}
               className="w-full h-1 bg-linear-bg rounded-full appearance-none cursor-pointer accent-blue-500" />
+            <div className="flex justify-between text-[8px] text-linear-text-muted mt-0.5"><span>£250K</span><span>£5M</span></div>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -652,21 +682,42 @@ const PropertiesPage: React.FC = () => {
               className="w-full h-1 bg-linear-bg rounded-full appearance-none cursor-pointer accent-blue-500" />
           </div>
         </div>
+      </div>
       )}
 
       {/* Table View */}
       {viewMode === 'table' && (
         <PropertyTable
           properties={filteredProperties}
-          onSortChange={key => updateFilters({ sortBy: key as string })}
+          sortOrder={filters.sortOrder}
+          onSortChange={key => {
+            // SORT-001: user_priority is ordinal — rank 1 always at top, no meaningful
+            // DESC interpretation. Always use ASC so the first click works correctly.
+            if (key === 'user_priority') {
+              updateFilters({ sortBy: key, sortOrder: 'ASC' });
+            } else {
+              const newDir: 'ASC' | 'DESC' =
+                filters.sortBy === key && filters.sortOrder === 'DESC' ? 'ASC' : 'DESC';
+              updateFilters({ sortBy: key, sortOrder: newDir });
+              // DE-241: Use syncSortToUrl (not syncAllFiltersToUrl) — reads new sort values directly
+              // as args, bypassing React's batched state closure staleness issue.
+              syncSortToUrl(key, newDir);
+            }
+          }}
           currentSort={filters.sortBy}
           showBatchCheckbox={isBatchMode}
           hiddenColumns={hiddenColumns}
           onPreview={p => { setPreviewProperty(p); setIsPreviewOpen(true); }}
           onStatusChange={(id, s) => setStatus(id, s)}
           getStatus={getStatus}
-          getRank={getRank}
-          onRankChange={setRank}
+          batchSelected={batchSelected}
+          onBatchSelectedChange={(id, selected) => {
+            setBatchSelected(prev => {
+              const next = new Set(prev);
+              if (selected) next.add(id); else next.delete(id);
+              return next;
+            });
+          }}
         />
       )}
 
@@ -678,7 +729,11 @@ const PropertiesPage: React.FC = () => {
               <Building2 size={40} className="text-linear-text-muted/20 mb-4" />
               <h3 className="text-base font-bold text-white mb-2">No properties match your filters</h3>
               <p className="text-xs text-linear-text-muted mb-4 max-w-sm">
-                {properties.length === 0 ? 'Your property database is empty. Add your first property to get started.' : 'Try adjusting your filter criteria or clearing all filters.'}
+                {properties.length === 0
+                  ? 'Your property database is empty. Add your first property to get started.'
+                  : filters.sortBy
+                    ? `Sorted by ${filters.sortBy.replace('_', ' ')} (${filters.sortOrder}). Switch to Table view to see all columns.`
+                    : 'Try adjusting your filter criteria or clearing all filters.'}
               </p>
               <button onClick={clearFilters} className="px-4 py-2 bg-blue-500/20 border border-blue-500/30 text-blue-400 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-blue-500/30 transition-all">
                 Clear All Filters
@@ -690,6 +745,14 @@ const PropertiesPage: React.FC = () => {
               )}
             </div>
           )}
+          {/* UX-86: Sort indicator shown above grid when sort is active */}
+          {filteredProperties.length > 0 && filters.sortBy && (
+            <div className="col-span-full text-[9px] text-linear-text-muted/50 flex items-center gap-2">
+              <span>SORTED</span>
+              <span>{filters.sortBy.replace('_', ' ')}</span>
+              <span>{filters.sortOrder === 'ASC' ? '↑' : '↓'}</span>
+            </div>
+          )}
           {filteredProperties.map(property => (
             <PropertyCard
               key={property.id}
@@ -698,13 +761,21 @@ const PropertiesPage: React.FC = () => {
               onStatusChange={(id, s) => setStatus(id, s)}
               tags={getTags(property.id)}
               onPreview={() => { setPreviewProperty(property); setIsPreviewOpen(true); }}
+              batchSelected={batchSelected}
+              onBatchSelectedChange={(id, selected) => {
+                setBatchSelected(prev => {
+                  const next = new Set(prev);
+                  if (selected) next.add(id); else next.delete(id);
+                  return next;
+                });
+              }}
             />
           ))}
         </div>
       )}
 
-      {/* Keyboard nav hint — desktop only (keyboard nav irrelevant on mobile) */}
-      {filteredProperties.length > 0 && (
+      {/* UX-81: Keyboard nav hint — desktop only, table view only */}
+      {viewMode === 'table' && filteredProperties.length > 0 && (
         <div className="hidden md:block text-[9px] text-linear-text-muted/40 font-mono text-center py-2 tracking-widest">
           J/K NAVIGATE · O OPEN · S SHORTLIST · A COMPARE · / SEARCH
         </div>
@@ -743,19 +814,23 @@ interface PropertyCardProps {
   property: PropertyWithCoords;
   status: PropertyStatus;
   onStatusChange: (id: string, status: PropertyStatus) => void;
-  tags: string[];
+  tags: ThesisTag[];
   onPreview?: (property: PropertyWithCoords) => void;
+  batchSelected?: Set<string>;
+  onBatchSelectedChange?: (id: string, selected: boolean) => void;
 }
 
 const STATUS_COLORS: Record<PropertyStatus, string> = {
   discovered: 'text-linear-text-muted',
   shortlisted: 'text-blue-400',
   vetted: 'text-emerald-400',
+  watchlist: 'text-amber-400',
   archived: 'text-rose-400',
 };
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property, status, onStatusChange, tags, onPreview }) => {
-  const statusCycles: PropertyStatus[] = ['discovered', 'shortlisted', 'vetted', 'archived'];
+const PropertyCard: React.FC<PropertyCardProps> = ({ property, status, onStatusChange, tags, onPreview, batchSelected: _batchSelected, onBatchSelectedChange: _onBatchSelectedChange }) => {
+  void _batchSelected; void _onBatchSelectedChange; // UX-82: props plumbed for future grid-view batch integration
+  const statusCycles: PropertyStatus[] = ['discovered', 'shortlisted', 'vetted', 'watchlist', 'archived'];
   const nextStatus = (s: PropertyStatus) => {
     const idx = statusCycles.indexOf(s);
     return statusCycles[(idx + 1) % statusCycles.length];
@@ -818,7 +893,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, status, onStatusC
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {tags.slice(0, 3).map(tag => (
-              <ThesisTagBadge key={tag} tag={tag as any} size="sm" />
+              <ThesisTagBadge key={tag} tag={tag} size="sm" />
             ))}
             {tags.length > 3 && <span className="text-[8px] text-linear-text-muted">+{tags.length - 3}</span>}
           </div>

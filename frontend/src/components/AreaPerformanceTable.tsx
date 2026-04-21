@@ -10,27 +10,28 @@ const AreaPerformanceTable: React.FC = () => {
   // is also an array but may lack .area in legacy API responses. area_heat_index is
   // explicitly constructed by useMacroData with the area name from Object.keys().
   const areas = useMemo(() => {
-    const trends = data?.area_heat_index || data?.area_trends || [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const trends: any[] = data?.area_heat_index || data?.area_trends || [];
     const londonBenchmark = data?.london_benchmark ?? 1.2;
 
-    return trends
-      .map((a: any) => {
-        const heat = extractValue(a.score ?? a.heat_index) ?? 5;
-        const growth = extractValue(a.annual_growth) ?? 0;
-        const forecast = extractValue(a.hpi_forecast_12m ?? a.forecast_12m);
-        const benchmark = extractValue(a.london_benchmark ?? londonBenchmark);
-        const delta = forecast != null ? forecast - benchmark : growth - benchmark;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return trends.map((a: any) => {
+      const heat = extractValue(a.score ?? a.heat_index) ?? 5;
+      const growth = extractValue(a.annual_growth) ?? 0;
+      const forecast = extractValue(a.hpi_forecast_12m ?? a.forecast_12m);
+      const benchmark = extractValue(a.london_benchmark ?? londonBenchmark);
+      const delta = forecast != null ? forecast - benchmark : growth - benchmark;
 
-        return {
-          name: a.area,
-          heat,
-          growth,
-          forecast,
-          benchmark,
-          delta,
-        };
-      })
-      .sort((a: any, b: any) => b.heat - a.heat);
+      return {
+        name: a.area,
+        heat,
+        growth,
+        forecast,
+        benchmark,
+        delta,
+      };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    }).sort((a: any, b: any) => b.heat - a.heat);
   }, [data]);
 
   if (!data || areas.length === 0) {
@@ -67,6 +68,7 @@ const AreaPerformanceTable: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-linear-border/50">
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {areas.map((area: any) => {
               const DeltaIcon = area.delta > 0.5 ? TrendingUp : area.delta < -0.5 ? TrendingDown : Minus;
               const deltaColor = area.delta > 0.5 ? '#22c55e' : area.delta < -0.5 ? '#ef4444' : '#a1a1aa';

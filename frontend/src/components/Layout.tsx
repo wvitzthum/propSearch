@@ -228,12 +228,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   // UX-015: Pipeline funnel counts for header progress bar
   const pipelineStats = useMemo(() => {
-    const stats = { discovered: 0, shortlisted: 0, vetted: 0 };
+    const stats = { discovered: 0, shortlisted: 0, vetted: 0, watchlist: 0, archived: 0 };
     properties.forEach(p => {
       const s = getStatus(p.id);
       if (s === 'discovered') stats.discovered++;
       else if (s === 'shortlisted') stats.shortlisted++;
       else if (s === 'vetted') stats.vetted++;
+      else if (s === 'watchlist') stats.watchlist++;
+      else if (s === 'archived') stats.archived++;
     });
     return stats;
   }, [properties, getStatus]);

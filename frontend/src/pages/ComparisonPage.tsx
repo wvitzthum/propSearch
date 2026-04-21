@@ -88,7 +88,7 @@ const MATRIX_ROWS: MatrixRowConfig[] = [
     label: 'Running Costs',
     icon: <CreditCard size={12} />,
     mode: 'none',
-    getValue: (p) => p.service_charge + p.ground_rent,
+    getValue: (p) => (p.service_charge ?? 0) + (p.ground_rent ?? 0),
     render: (p) => (
       <div className="flex flex-col gap-0.5">
         <div className="text-xs font-bold text-white">{fmtNum((p.service_charge ?? 0) + (p.ground_rent ?? 0))}/yr</div>

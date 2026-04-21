@@ -1,3 +1,4 @@
+// VISX-034: Migrated to @visx — ParentSize, scaleLinear, Group, LinePath/AreaClosed replace raw SVG viewBox
 import React from 'react';
 import {
   TrendingUp,
@@ -8,81 +9,232 @@ import {
 } from 'lucide-react';
 import { useMacroData } from '../hooks/useMacroData';
 import { extractValue } from '../types/macro';
+import { scaleLinear } from '@visx/scale';
+import { LinePath, AreaClosed } from '@visx/shape';
+import { Group } from '@visx/group';
+import { ParentSize } from '@visx/responsive';
+import { useTooltip, TooltipWithBounds } from '@visx/tooltip';
+import { localPoint } from '@visx/event';
 
 const MarketVolumeChart: React.FC<{ data: { month: string, listed: number, sold?: number }[] }> = ({ data }) => {
+  const {
+    showTooltip,
+    hideTooltip,
+    tooltipOpen,
+    tooltipData,
+    tooltipLeft,
+    tooltipTop,
+  } = useTooltip<{ month: string; listed: number; sold: number }>();
+
   if (!data || data.length === 0) return null;
 
-  const maxVal = Math.max(...data.map(d => Math.max(d.listed, d.sold || 0)));
-  const padding = 20;
-  const width = 800;
-  const height = 200;
-  const chartWidth = width - (padding * 2);
-  const chartHeight = height - (padding * 2);
+  const MARGIN = { top: 16, right: 16, bottom: 32, left: 40 };
+  const INNER_H = 200;
 
-  const getX = (index: number) => padding + (index * (chartWidth / (data.length - 1)));
-  const getY = (val: number) => height - padding - ((val / maxVal) * chartHeight);
+  const ChartInner: React.FC<{ width: number }> = ({ width }) => {
+    const W = width;
+    const innerW = Math.max(W - MARGIN.left - MARGIN.right, 80);
 
-  const listedPoints = data.map((d, i) => `${getX(i)},${getY(d.listed)}`).join(' ');
-  const soldPoints = data.map((d, i) => `${getX(i)},${getY(d.sold || 0)}`).join(' ');
+    const maxVal = Math.max(...data.map(d => Math.max(d.listed, d.sold || 0)));
+
+    const xScale = scaleLinear({
+      domain: [0, data.length - 1],
+      range: [MARGIN.left, W - MARGIN.right],
+    });
+
+    const yScale = scaleLinear({
+      domain: [0, maxVal * 1.05],
+      range: [INNER_H - MARGIN.bottom, MARGIN.top],
+      nice: true,
+    });
+
+    const listedData = data.map((d, i) => ({ x: i, y: d.listed }));
+    const soldData = data.map((d, i) => ({ x: i, y: d.sold || 0 }));
+    const fillData = data.map((d, i) => ({
+      x: i,
+      yTop: d.listed,
+      yBot: 0,
+    }));
+
+    const getX = (i: number) => xScale(i);
+    const getY = (v: number) => yScale(v);
+
+    // Year labels on x-axis
+    const yearLabels = data.reduce<Array<{ i: number; label: string }>>((acc, d, i) => {
+      const yr = d.month.slice(0, 4);
+      if (acc.length === 0 || acc[acc.length - 1].label !== yr) acc.push({ i, label: yr });
+      return acc;
+    }, []).filter((_, idx) => idx % 2 === 0);
+
+    const handleMouseMove = (e: React.MouseEvent<SVGRectElement>) => {
+      const svgEl = e.currentTarget.ownerSVGElement as SVGSVGElement;
+      if (!svgEl) return;
+      const rel = localPoint(e);
+      if (!rel) return;
+      const svgRect = svgEl.getBoundingClientRect();
+      const xInSvg = e.clientX - svgRect.left;
+      const step = innerW / (data.length - 1);
+      const idx = Math.max(0, Math.min(Math.round((xInSvg - MARGIN.left) / step), data.length - 1));
+      const d = data[idx];
+      showTooltip({
+        tooltipData: { month: d.month, listed: d.listed, sold: d.sold || 0 },
+        tooltipLeft: rel.x,
+        tooltipTop: rel.y - 40,
+      });
+    };
+
+    return (
+      <svg width={W} height={INNER_H} data-testid="market-volume-svg">
+        <Group>
+          {/* Grid lines */}
+          {[0, 0.25, 0.5, 0.75, 1].map(pct => {
+            const v = maxVal * pct * 1.05;
+            return (
+              <g key={pct}>
+                <line
+                  x1={MARGIN.left}
+                  y1={getY(v)}
+                  x2={W - MARGIN.right}
+                  y2={getY(v)}
+                  stroke="rgba(255,255,255,0.06)"
+                  strokeWidth={0.5}
+                />
+                <text
+                  x={MARGIN.left - 6}
+                  y={getY(v) + 4}
+                  fill="rgba(161,161,170,0.6)"
+                  fontSize={10}
+                  fontWeight="bold"
+                  textAnchor="end"
+                >
+                  {(v / 1000).toFixed(0)}K
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Listed area fill */}
+          <AreaClosed
+            data={fillData}
+            x={d => getX(d.x)}
+            y0={getY(0)}
+            y1={d => getY(d.yTop)}
+            yScale={yScale}
+            fill="#3b82f6"
+            opacity={0.05}
+          />
+
+          {/* Sold area fill */}
+          <AreaClosed
+            data={soldData}
+            x={d => getX(d.x)}
+            y0={getY(0)}
+            y1={d => getY(d.y)}
+            yScale={yScale}
+            fill="#22c55e"
+            opacity={0.05}
+          />
+
+          {/* Listed line */}
+          <LinePath
+            data={listedData}
+            x={d => getX(d.x)}
+            y={d => getY(d.y)}
+            stroke="#3b82f6"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {/* Sold line */}
+          <LinePath
+            data={soldData}
+            x={d => getX(d.x)}
+            y={d => getY(d.y)}
+            stroke="#22c55e"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {/* Current endpoint dots */}
+          <circle
+            cx={getX(data.length - 1)}
+            cy={getY(data[data.length - 1].listed)}
+            r={4}
+            fill="#3b82f6"
+          />
+          <circle
+            cx={getX(data.length - 1)}
+            cy={getY(data[data.length - 1].sold || 0)}
+            r={4}
+            fill="#22c55e"
+          />
+
+          {/* Year labels */}
+          {yearLabels.map(({ i, label }) => (
+            <text
+              key={label}
+              x={getX(i)}
+              y={INNER_H - 6}
+              fill="rgba(161,161,170,0.6)"
+              fontSize={10}
+              fontWeight="bold"
+              textAnchor="middle"
+            >
+              {label}
+            </text>
+          ))}
+
+          {/* Invisible hit area */}
+          <rect
+            x={MARGIN.left}
+            y={MARGIN.top}
+            width={innerW}
+            height={INNER_H - MARGIN.top - MARGIN.bottom}
+            fill="transparent"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={hideTooltip}
+          />
+        </Group>
+      </svg>
+    );
+  };
 
   return (
     <div className="relative h-64 w-full bg-linear-bg/30 border border-linear-border rounded-xl p-4 overflow-hidden">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-4">
-           <div className="flex items-center gap-1.5">
-             <div className="h-0.5 w-4 bg-blue-500"></div>
-             <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">Listed Inventory</span>
-           </div>
-           <div className="flex items-center gap-1.5">
-             <div className="h-0.5 w-4 bg-emerald-500"></div>
-             <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">Sold Volume</span>
-           </div>
+          <div className="flex items-center gap-1.5">
+            <div className="h-0.5 w-4 bg-blue-500"></div>
+            <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">Listed Inventory</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="h-0.5 w-4 bg-emerald-500"></div>
+            <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">Sold Volume</span>
+          </div>
         </div>
         <div className="text-[9px] font-mono text-linear-accent uppercase">Protocol: Volume_Tracking_v4.1</div>
       </div>
-      
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
-        {/* Grid lines */}
-        {[0, 0.25, 0.5, 0.75, 1].map((p) => (
-          <line 
-            key={p}
-            x1={padding} 
-            y1={padding + (p * chartHeight)} 
-            x2={width - padding} 
-            y2={padding + (p * chartHeight)} 
-            className="stroke-linear-border/30" 
-            strokeWidth="0.5" 
-          />
-        ))}
 
-        {/* Areas */}
-        <polyline
-          points={`${padding},${height-padding} ${listedPoints} ${width-padding},${height-padding}`}
-          className="fill-blue-500/5 stroke-none"
-        />
-        <polyline
-          points={`${padding},${height-padding} ${soldPoints} ${width-padding},${height-padding}`}
-          className="fill-emerald-500/5 stroke-none"
-        />
+      <ParentSize>
+        {({ width }) => width > 0 ? <ChartInner width={width} /> : null}
+      </ParentSize>
 
-        {/* Lines */}
-        <polyline
-          points={listedPoints}
-          className="fill-none stroke-blue-500"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-        />
-        <polyline
-          points={soldPoints}
-          className="fill-none stroke-emerald-500"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-        />
-
-        {/* Highlight current point */}
-        <circle cx={getX(data.length - 1)} cy={getY(data[data.length - 1].listed)} r="3" className="fill-blue-500 shadow-xl" />
-        <circle cx={getX(data.length - 1)} cy={getY(data[data.length - 1].sold || 0)} r="3" className="fill-emerald-500 shadow-xl" />
-      </svg>
+      {tooltipOpen && tooltipData && (
+        <TooltipWithBounds
+          left={tooltipLeft}
+          top={tooltipTop}
+          applyPositionStyle
+          offsetLeft={0}
+          offsetTop={0}
+          className="bg-black/90 backdrop-blur border border-linear-border rounded-lg px-3 py-2 pointer-events-none z-50"
+        >
+          <div className="text-[10px] font-black text-white mb-1">{tooltipData.month}</div>
+          <div className="text-[9px] text-blue-400">Listed: {(tooltipData.listed / 1000).toFixed(1)}K</div>
+          <div className="text-[9px] text-retro-green">Sold: {(tooltipData.sold / 1000).toFixed(1)}K</div>
+        </TooltipWithBounds>
+      )}
     </div>
   );
 };

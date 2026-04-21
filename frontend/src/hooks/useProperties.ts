@@ -11,6 +11,8 @@ const AREA_COORDS: Record<string, [number, number]> = {
   'Chelsea (SW3)': [51.4912, -0.1634],
   'Chelsea (SW10)': [51.4856, -0.1823],
   'Primrose Hill (NW1)': [51.5410, -0.1550],
+  'Pimlico (SW1)': [51.4893, -0.1400],
+  'Bermondsey (SE1)': [51.5016, -0.0711],
 };
 
 export interface PropertyFilters {
@@ -62,9 +64,9 @@ export const useProperties = (initialFilters: PropertyFilters = {}) => {
       
       setProperties(propertiesWithCoords);
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Data loading error:', err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }

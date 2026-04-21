@@ -3,6 +3,7 @@ import { useFinancialData } from '../hooks/useFinancialData';
 import KPICard from '../components/KPICard';
 import LoadingNode from '../components/LoadingNode';
 import { extractValue } from '../types/macro';
+import type { ProvenanceOrValue } from '../types/macro';
 import {
   TrendingUp,
   Landmark,
@@ -95,15 +96,10 @@ const MortgageTracker: React.FC = () => {
 
   const { mortgage_history = [], economic_indicators } = macroData;
   const mortgageRates = economic_indicators?.mortgage_rates;
-  // Pre-compute all rates to avoid ?.["key"] JSX parser edge case in tsc --noEmit
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rate90: any = mortgageRates ? mortgageRates["90_ltv_5yr_fixed"] : undefined;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rate85: any = mortgageRates ? mortgageRates["85_ltv_5yr_fixed"] : undefined;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rate75: any = mortgageRates ? mortgageRates["75_ltv_5yr_fixed"] : undefined;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rate60: any = mortgageRates ? mortgageRates["60_ltv_5yr_fixed"] : undefined;
+  const rate90: ProvenanceOrValue<number> | undefined = mortgageRates?.["90_ltv_5yr_fixed"];
+  const rate85: ProvenanceOrValue<number> | undefined = mortgageRates?.["85_ltv_5yr_fixed"];
+  const rate75: ProvenanceOrValue<number> | undefined = mortgageRates?.["75_ltv_5yr_fixed"];
+  const rate60: ProvenanceOrValue<number> | undefined = mortgageRates?.["60_ltv_5yr_fixed"];
   const rateDelta = (((extractValue(rate90) ?? 4.55) - (extractValue(rate75) ?? 4.05))).toFixed(2);
   const {
     maxRate, minRate, range, getX, getY,
@@ -135,7 +131,7 @@ const MortgageTracker: React.FC = () => {
             {['90', '85', '75', '60'].map(ltv => (
               <button
                 key={ltv}
-                onClick={() => setActiveLTV(ltv as any)}
+                onClick={() => setActiveLTV(ltv as '90' | '85' | '75' | '60')}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase tracking-wider ${activeLTV === ltv ? 'bg-linear-accent text-linear-text-primary shadow-lg shadow-linear-accent/20 border border-linear-accent/50' : 'text-linear-text-muted hover:text-linear-text-primary hover:bg-linear-bg'}`}
               >
                 {ltv}% LTV
@@ -338,19 +334,19 @@ const MortgageTracker: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            {[
-              { ltv: '90', label: 'Entry Gate', rate: rate90 },
-              { ltv: '85', label: 'Mid-Tier', rate: rate85 },
-              { ltv: '75', label: 'Core Asset', rate: rate75 },
-              { ltv: '60', label: 'Ultra-Prime', rate: rate60 },
-            ].map((band) => {
+            {([
+              { ltv: '90' as const, label: 'Entry Gate', rate: rate90 },
+              { ltv: '85' as const, label: 'Mid-Tier', rate: rate85 },
+              { ltv: '75' as const, label: 'Core Asset', rate: rate75 },
+              { ltv: '60' as const, label: 'Ultra-Prime', rate: rate60 },
+            ] as const).map((band) => {
               const rateVal = extractValue(band.rate) ?? 0;
               const spreadToBase = rateVal - (extractValue(economic_indicators?.boe_base_rate) ?? 0);
               const isSelected = activeLTV === band.ltv;
               return (
                 <button
                   key={band.ltv}
-                  onClick={() => setActiveLTV(band.ltv as any)}
+                  onClick={() => setActiveLTV(band.ltv)}
                   className={`p-4 rounded-xl border transition-all text-left ${isSelected ? 'bg-linear-accent/10 border-linear-accent-blue' : 'bg-linear-bg border-linear-border hover:border-linear-accent/40'}`}
                 >
                   <div className="flex justify-between items-start mb-2">

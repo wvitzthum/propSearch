@@ -100,16 +100,22 @@ const PriceAssessment: React.FC<PriceAssessmentProps> = ({ property }) => {
     [property]
   );
 
-  // ── Price position ──────────────────────────────────────────────────────────
+  // ── Price position — all in £/sqm ────────────────────────────────────────
   const pricePerSqft = property.sqft > 0 ? Math.round(property.list_price / property.sqft) : 0;
+  const pricePerSqm = Math.round(pricePerSqft * 10.764);
   const areaQ1 = priceBand?.q1 ?? getFallback(property.area).q1;
   const areaQ3 = priceBand?.q3 ?? getFallback(property.area).q3;
   const areaAvg = priceBand?.median ?? getFallback(property.area).avg;
+  const areaQ1Sqm = Math.round(areaQ1 * 10.764);
+  const areaQ3Sqm = Math.round(areaQ3 * 10.764);
+  const areaAvgSqm = Math.round(areaAvg * 10.764);
+  // Canonical £/sqm from enrichment data — used in value benchmarks comparison
+  const thisSqm = property.price_per_sqm > 0 ? property.price_per_sqm : null;
 
-  // Position within Q1–Q3 range (0 = at Q1, 100 = at Q3)
-  const rangeSpan = areaQ3 - areaQ1;
+  // Position within Q1–Q3 range (0 = at Q1, 100 = at Q3) — all sqm
+  const rangeSpan = areaQ3Sqm - areaQ1Sqm;
   const positionPct = rangeSpan > 0
-    ? Math.max(0, Math.min(100, ((pricePerSqft - areaQ1) / rangeSpan) * 100))
+    ? Math.max(0, Math.min(100, ((pricePerSqm - areaQ1Sqm) / rangeSpan) * 100))
     : 50;
 
   // ── Verdict ─────────────────────────────────────────────────────────────────
@@ -136,7 +142,7 @@ const PriceAssessment: React.FC<PriceAssessmentProps> = ({ property }) => {
       return {
         type: 'under',
         title: 'Undervalued — acquisition grade',
-        sub: `At £${fmtPriceFull(property.list_price)} (${pricePerSqft}/sqft), this is well below area benchmark. Alpha ${alphaOverall.toFixed(1)} confirms institutional quality. Strong bid defensible.`,
+        sub: `At £${fmtPriceFull(property.list_price)} (£${pricePerSqm.toLocaleString()}/sqm), this is well below area benchmark. Alpha ${alphaOverall.toFixed(1)} confirms institutional quality. Strong bid defensible.`,
         bg: 'rgba(16, 185, 129, 0.1)',
         border: 'rgba(16, 185, 129, 0.3)',
         textColor: '#6ee7b7',
@@ -362,14 +368,14 @@ const PriceAssessment: React.FC<PriceAssessmentProps> = ({ property }) => {
           ) : null}
         </div>
 
-        {/* Price/sqft */}
+        {/* Price/sqm */}
         <div className="px-4 py-3">
-          <div className="text-[8px] text-linear-text-muted uppercase tracking-widest font-bold mb-1">Price / sq ft</div>
+          <div className="text-[8px] text-linear-text-muted uppercase tracking-widest font-bold mb-1">Price / sqm</div>
           <div className="text-[18px] font-bold text-white tracking-tight">
-            {pricePerSqft > 0 ? `£${pricePerSqft.toLocaleString()}` : '—'}
+            {pricePerSqm > 0 ? `£${pricePerSqm.toLocaleString()}` : '—'}
           </div>
-          {pricePerSqft > 0 && (
-            <div className="text-[8px] text-linear-text-muted mt-0.5">vs £{areaAvg.toLocaleString()} avg</div>
+          {pricePerSqm > 0 && (
+            <div className="text-[8px] text-linear-text-muted mt-0.5">vs £{areaAvgSqm.toLocaleString()} avg</div>
           )}
         </div>
 
@@ -402,13 +408,12 @@ const PriceAssessment: React.FC<PriceAssessmentProps> = ({ property }) => {
           <div className="space-y-0">
             {(() => {
               const areaName = (property.area ?? '').split(' (')[0];
-              const thisSqm = property.price_per_sqm > 0 ? property.price_per_sqm : null;
-              const sqftVsAvg = thisSqm && areaAvg ? ((thisSqm / (areaAvg * 10.764)) - 1) * 100 : null;
+              const sqmVsAvg = thisSqm && areaAvgSqm ? ((thisSqm / areaAvgSqm) - 1) * 100 : null;
               return [
-                { label: `${areaName || 'Area'} avg`,         value: `£${areaAvg.toLocaleString()}/sqft` },
-                { label: 'This property £/sqm',                value: thisSqm ? `£${thisSqm.toLocaleString()}` : '—' },
-                { label: 'Implied vs area',                   value: sqftVsAvg !== null ? `${sqftVsAvg >= 0 ? '+' : ''}${sqftVsAvg.toFixed(0)}%` : '—' },
-                { label: 'Realistic price',                   value: fmtPriceFull(property.realistic_price) },
+                { label: `${areaName || 'Area'} avg`,         value: `£${areaAvgSqm.toLocaleString()}/sqm` },
+                { label: 'This property £/sqm',              value: thisSqm ? `£${thisSqm.toLocaleString()}` : '—' },
+                { label: 'Implied vs area',                 value: sqmVsAvg !== null ? `${sqmVsAvg >= 0 ? '+' : ''}${sqmVsAvg.toFixed(0)}%` : '—' },
+                { label: 'Realistic price',                 value: fmtPriceFull(property.realistic_price) },
               ].map(row => (
                 <div key={row.label} className="flex justify-between items-center py-1.5 border-b border-white/5 last:border-0">
                   <span className="text-[10px] text-linear-text-muted">{row.label}</span>
@@ -445,7 +450,7 @@ const PriceAssessment: React.FC<PriceAssessmentProps> = ({ property }) => {
       {/* ── Price range bar ────────────────────────────────────────────────── */}
       <div className="px-4 py-4 border-t border-white/5">
         <div className="text-[10px] text-linear-text-muted mb-1">
-          {(property.area ?? '').split(' (')[0] || 'Area'} price range (middle 50% of sales) · £{areaQ1.toLocaleString()}–£{areaQ3.toLocaleString()}/sqft
+          {(property.area ?? '').split(' (')[0] || 'Area'} price range (middle 50% of sales) · £{areaQ1Sqm.toLocaleString()}–£{areaQ3Sqm.toLocaleString()}/sqm
         </div>
         <div className="relative h-2 bg-linear-bg rounded-full mt-2">
           {/* Full-range gradient */}
@@ -460,9 +465,9 @@ const PriceAssessment: React.FC<PriceAssessmentProps> = ({ property }) => {
           />
         </div>
         <div className="flex justify-between mt-1.5 text-[9px] text-linear-text-muted">
-          <span>£{areaQ1.toLocaleString()}/sqft (Q1)</span>
-          <span className="text-rose-400 font-medium">This: £{pricePerSqft.toLocaleString()}</span>
-          <span>£{areaQ3.toLocaleString()}/sqft (Q3)</span>
+          <span>£{areaQ1Sqm.toLocaleString()}/sqm (Q1)</span>
+          <span className="text-rose-400 font-medium">This: £{pricePerSqm.toLocaleString()}</span>
+          <span>£{areaQ3Sqm.toLocaleString()}/sqm (Q3)</span>
         </div>
       </div>
 

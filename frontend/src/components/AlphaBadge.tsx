@@ -42,7 +42,7 @@ const AlphaBadge: React.FC<AlphaBadgeProps> = ({
   const renderTooltipContent = () => (
     <div className="flex flex-col gap-2">
       <div className="flex justify-between items-center border-b border-linear-border pb-1.5">
-        <span className="text-[8px] font-bold text-linear-text-muted uppercase tracking-widest">Alpha Rating</span>
+        <span className="text-[8px] font-bold text-linear-text-muted uppercase tracking-widest">Alpha Rating v2</span>
         <span className={`text-[9px] font-bold uppercase ${score >= 8 ? 'text-linear-accent-emerald' : score >= 5 ? 'text-retro-amber' : 'text-linear-accent-rose'}`}>
           {getLabel()}
         </span>
@@ -55,7 +55,8 @@ const AlphaBadge: React.FC<AlphaBadgeProps> = ({
           </div>
         </div>
       )}
-      <div className="space-y-1.5">
+      {/* v2 base factors */}
+      <div className="space-y-1">
         {[
           { label: 'Tenure Quality', weight: '40%' },
           { label: 'Spatial Alpha', weight: '30%' },
@@ -66,6 +67,13 @@ const AlphaBadge: React.FC<AlphaBadgeProps> = ({
             <span className="text-[8px] text-linear-text-muted/50">{factor.weight}</span>
           </div>
         ))}
+      </div>
+      {/* v2 modifiers teaser */}
+      <div className="flex flex-wrap gap-1 pt-1 border-t border-linear-border/50">
+        {['DOM', 'EPC', 'Floor', 'SC', 'Appreciation', 'Market', 'Lifestyle'].map(mod => (
+          <span key={mod} className="text-[7px] text-linear-text-muted/40 font-mono">{mod}</span>
+        ))}
+        <span className="text-[7px] text-linear-text-muted/40 font-mono">±</span>
       </div>
       <div className="pt-1 border-t border-linear-border/50 flex items-center justify-center gap-1">
         <span className="text-[8px] text-blue-400 font-bold">See full breakdown ↓</span>

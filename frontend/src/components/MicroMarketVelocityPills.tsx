@@ -14,6 +14,7 @@ const MicroMarketVelocityPills: React.FC = () => {
   const areas = useMemo(() => {
     const trends = data?.area_trends || data?.area_heat_index || [];
     const londonBenchmark = data?.london_benchmark ?? 1.2;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return trends.map((a: any) => {
       const heat = extractValue(a.heat_index ?? a.score) ?? 5;
       const forecast = extractValue(a.hpi_forecast_12m);
@@ -21,6 +22,7 @@ const MicroMarketVelocityPills: React.FC = () => {
         ? forecast - londonBenchmark
         : (extractValue(a.annual_growth) ?? 0) - londonBenchmark;
       return { name: a.area, heat, delta };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }).sort((a: any, b: any) => b.heat - a.heat);
   }, [data]);
 
@@ -55,6 +57,7 @@ const MicroMarketVelocityPills: React.FC = () => {
         </div>
       </div>
       <div className="px-4 py-3 flex gap-2 overflow-x-auto custom-scrollbar">
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {topAreas.map((area: any) => {
           const color = heatColor(area.heat);
           return (

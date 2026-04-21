@@ -15,6 +15,7 @@ import { usePropertyContext } from '../hooks/PropertyContext';
 import { usePipeline } from '../hooks/usePipeline';
 import AlphaBadge from '../components/AlphaBadge';
 import PropertyImage from '../components/PropertyImage';
+import type { PropertyWithCoords } from '../types/property';
 
 // FE-185: Archive Review page — surfaces market_status + last_checked throughout the UI
 // Deps: DE-165 (market_status schema) — gracefully degrades if fields are absent
@@ -75,12 +76,12 @@ const STATUS_GROUPS: Array<{ key: MarketStatus; label: string }> = [
   { key: 'unknown', label: 'Unknown' },
 ];
 
-const getMarketStatus = (property: any): MarketStatus => {
-  return (property as any).market_status as MarketStatus || 'unknown';
+const getMarketStatus = (property: PropertyWithCoords): MarketStatus => {
+  return property.market_status as MarketStatus || 'unknown';
 };
 
-const getLastChecked = (property: any): string | null => {
-  return (property as any).last_checked as string | null || null;
+const getLastChecked = (property: PropertyWithCoords): string | null => {
+  return property.last_checked as string | null || null;
 };
 
 const isStaleCheck = (lastChecked: string | null, days = 30): boolean => {
@@ -101,7 +102,7 @@ const ArchiveReview: React.FC = () => {
   const [staleOnly, setStaleOnly] = useState(false);
   const [reasonSearch, setReasonSearch] = useState('');
   const [isRechecking, setIsRechecking] = useState<string | null>(null);
-  const [recheckMsg, setRecheckMsg] = useState<Record<string, 'success' | 'error'>>({});
+  const [recheckMsg, setRecheckMsg] = useState<Record<string, 'success' | 'error' | undefined>>({});
 
   // Get archived properties
   const archivedProperties = useMemo(() => {
@@ -120,7 +121,7 @@ const ArchiveReview: React.FC = () => {
     }
     if (reasonSearch.trim()) {
       const q = reasonSearch.toLowerCase();
-      result = result.filter(p => (p as any).archive_reason?.toLowerCase().includes(q));
+      result = result.filter(p => p.archive_reason?.toLowerCase().includes(q));
     }
     return result;
   }, [archivedProperties, statusFilter, staleOnly, reasonSearch]);
@@ -143,7 +144,7 @@ const ArchiveReview: React.FC = () => {
   }, [filteredProperties]);
 
   // Handle recheck
-  const handleRecheck = useCallback(async (property: any) => {
+  const handleRecheck = useCallback(async (property: PropertyWithCoords) => {
     setIsRechecking(property.id);
     try {
       const res = await fetch(`/api/properties/${property.id}/check`, {
@@ -165,7 +166,7 @@ const ArchiveReview: React.FC = () => {
   }, []);
 
   // Handle reactivate
-  const handleReactivate = useCallback((property: any) => {
+  const handleReactivate = useCallback((property: PropertyWithCoords) => {
     setStatus(property.id, 'discovered');
     // Also clear market_status in localStorage
     const saved = JSON.parse(localStorage.getItem('propsearch_archive_meta') || '{}');
@@ -391,9 +392,9 @@ const ArchiveReview: React.FC = () => {
                           </div>
 
                           {/* Archive Reason */}
-                          {(property as any).archive_reason && (
+                          {property.archive_reason && (
                             <div className="text-[9px] text-linear-text-muted/70 italic">
-                              {(property as any).archive_reason}
+                              {property.archive_reason}
                             </div>
                           )}
 

@@ -13,6 +13,8 @@ const AREA_COORDS: Record<string, [number, number]> = {
   'West Hampstead':  [51.5470, -0.2010],
   'Bayswater':      [51.5120, -0.1880],
   'Chelsea':         [51.4900, -0.1680],
+  'Pimlico':         [51.4893, -0.1400],
+  'Bermondsey':      [51.5016, -0.0711],
 };
 
 const heatColor = (heat: number): string => {
@@ -37,9 +39,12 @@ const LondonMicroMarketHeatMap: React.FC = () => {
   const { data } = useMacroData();
 
   const areas = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const heatData: any[] = data?.area_trends || data?.area_heat_index || [];
     const globalBenchmark = data?.london_benchmark ?? 1.2;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return heatData.map((a: any) => {
       const rawHeat = a.heat_index?.value ?? a.heat_index ?? a.score ?? 5;
       const heat = extractValue(rawHeat) ?? 5;
@@ -65,7 +70,9 @@ const LondonMicroMarketHeatMap: React.FC = () => {
         currentPrice: a.current_price_gbp ?? null,
         cumulativeGrowth: a.cumulative_growth_pct ?? null,
       };
-    }).sort((a: any, b: any) => b.heat - a.heat);
+    })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .sort((a: any, b: any) => b.heat - a.heat);
   }, [data]);
 
   if (!data || areas.length === 0) {
@@ -127,6 +134,7 @@ const LondonMicroMarketHeatMap: React.FC = () => {
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           />
 
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {areas.map((area: any) => {
             const color = heatColor(area.heat);
             const fillColor = heatColorWithOpacity(area.heat);
@@ -210,6 +218,7 @@ const LondonMicroMarketHeatMap: React.FC = () => {
 
         {/* Area label overlay — top-right rank strip */}
         <div className="absolute top-2 right-2 z-[500] flex flex-col gap-1 pointer-events-none">
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {areas.map((area: any, i: number) => {
             const color = heatColor(area.heat);
             return (

@@ -125,6 +125,100 @@ A task is blocked when you cannot proceed due to a dependency outside your contr
 
 ---
 
+## Testing & Development Safety (MANDATORY)
+
+### Port Usage — No Default Ports for Testing
+
+**Any agent running a server, mock, or test harness for development or testing purposes MUST use a non-default port.**
+
+| Service | Default Port | Required Test Port |
+|---------|-------------|---------------------|
+| Frontend dev server (Vite) | 5173 | `5900` + N (e.g. 5901, 5902) |
+| Node API server | 3000 | `3900` + N (e.g. 3901) |
+| SQLite browser (better-sqlite3) | in-process | in-process only |
+| Mock HTTP server | any | `4900` + N |
+| Any ad-hoc test server | any | `5900`–`5999` range |
+
+**Rules:**
+- Use `PORT=<non-default> node server/index.js` for any test API server
+- Use `VITE_PORT=<non-default> vite --port <non-default>` for any test frontend
+- Never start a test server on ports 3000, 5173, 8080, or 8000 — these may conflict with or override the user's live services
+- Document the port used in any test output or commit message
+
+**Pattern for test scripts:**
+```bash
+# ✅ Correct — non-default port
+PORT=3901 node --test server.test.js
+
+# ✅ Correct — Vite with explicit test port
+VITE_PORT=5902 vite --port 5902 --mode test
+
+# ❌ Forbidden — default ports
+PORT=3000 node server/index.js      # may kill live API
+PORT=5173 npx vite --port 5173     # may kill live frontend
+```
+
+### Database Safety — Never Use propSearch.db for Testing
+
+**The production SQLite database (`data/propSearch.db`) is the single source of truth for all property research. It must NEVER be touched by test scripts, migrations, or exploratory queries.**
+
+**Rules:**
+1. **Test databases must be ephemeral and isolated.** Create a temporary DB for any testing:
+   ```bash
+   # ✅ Correct — temp test DB
+   TEST_DB=/tmp/propSearch_test_$$.db SQLITE_PATH=/tmp/propSearch_test_$$.db node scripts/test_migration.js
+
+   # ✅ Correct — in-memory for unit tests
+   SQLITE_PATH=:memory: node --test
+
+   # ❌ Forbidden — touching production
+   node scripts/migrate_schema.js              # uses production path by default
+   ```
+2. **Any script that writes to the DB must accept `SQLITE_PATH` as an env var** and default to a test path if `NODE_ENV=test`:
+   ```javascript
+   const SQLITE_PATH =
+     process.env.NODE_ENV === 'test'
+       ? '/tmp/propSearch_test.db'
+       : process.env.SQLITE_PATH ?? 'data/propSearch.db';
+   ```
+3. **Frontend tests** must use mock data (static JSON) or in-memory fixtures — never hit the real `/api/*` endpoints against production.
+4. **SQLite migrations** run against production only when explicitly approved by the Product Owner. All migration testing uses a staging copy.
+5. **Verification before production writes:** Always run `SELECT COUNT(*) FROM properties` on the test DB first to confirm the script works before touching production.
+
+### Development Pattern for Frontend Agents
+
+When testing React components in isolation:
+```bash
+# ✅ Correct — isolated component test
+NODE_ENV=test SQLITE_PATH=/tmp/test.db npx vitest run src/components/PriceAssessment.test.tsx
+
+# ✅ Correct — use mock data files
+cp frontend/public/data/demo_master.json frontend/public/data/test_master.json
+# point test at test_master.json via VITE_DEMO_MODE test fixture
+```
+
+When running a local backend for frontend integration testing:
+```bash
+# ✅ Correct — isolated test environment
+PORT=3901 \
+  SQLITE_PATH=/tmp/propSearch_test_integration.db \
+  DEMO_MODE=true \
+  node server/index.js
+```
+
+### Summary
+
+| Rule | Enforcement |
+|------|-------------|
+| No default ports for test services | Agent discipline + code review |
+| No writes to `data/propSearch.db` in test scripts | `SQLITE_PATH` env var must be set for any DB write |
+| Test DBs are ephemeral (`/tmp`, `:memory:`) | Agent discipline |
+| Migrations tested on staging copy first | Product Owner approval gate |
+
+Violations of these rules should be flagged immediately in task notes and raised with the Product Owner.
+
+---
+
 ## Project Structure
 - `agents/`: Specialized agent logic and domain rules.
 - `data/`: Property datasets and master database.

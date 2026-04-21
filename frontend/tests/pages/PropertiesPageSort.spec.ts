@@ -7,12 +7,24 @@ import { test, expect } from '@playwright/test';
  * Without the fix, navigating to /properties?status=watchlist&sortBy=alpha_score&sortOrder=ASC
  * would show DESC ordering (alpha 5.1 first) because sortOrder was never read from the URL.
  *
- * NOTE on LIMIT 100: The backend query uses LIMIT 100. With ASC sort, watchlist properties
- * with higher alpha scores (4.2-5.1) fall beyond row 100, so only 1 is returned by the API.
- * With DESC sort, 6 watchlist properties are within the first 100 rows. This is a separate
- * backend limitation (DE-242). The tests below verify BUG-007 fix is working correctly
- * by checking that sort DIRECTION is respected, not absolute row counts.
+ * NOTE: Watchlist alpha scores are dynamic (DB can change between test runs).
+ * Tests query the live API to get actual watchlist property alpha scores and
+ * assert against the correct boundary values for the current DB state.
  */
+
+const API_BASE = 'http://localhost:3001';
+
+// Fetch current watchlist data from API — resolves with { lowestAlpha, highestAlpha }
+async function getWatchlistAlphas(apiUrl = API_BASE): Promise<{ lowestAlpha: number; highestAlpha: number }> {
+  const res = await fetch(`${apiUrl}/api/properties?archived=true&limit=500&sortBy=alpha_score&sortOrder=ASC`);
+  const data = await res.json();
+  const watchlist = data.filter((p: { pipeline_status: string }) => p.pipeline_status === 'watchlist');
+  if (watchlist.length === 0) return { lowestAlpha: 0, highestAlpha: 0 };
+  return {
+    lowestAlpha: watchlist[0].alpha_score,
+    highestAlpha: watchlist[watchlist.length - 1].alpha_score,
+  };
+}
 
 test.describe('BUG-007 / QA-199 / QA-200: PropertiesPage Sort Order from URL', () => {
 
@@ -21,12 +33,15 @@ test.describe('BUG-007 / QA-199 / QA-200: PropertiesPage Sort Order from URL', (
     await page.goto('/properties?status=watchlist&sortBy=alpha_score&sortOrder=ASC');
     await page.waitForTimeout(3000);
 
-    // The first table data row should have an alpha score of 3.6 (lowest watchlist alpha).
+    // The first table data row should show the lowest alpha score in the watchlist.
     // BUG-007 symptom (before fix): first row would show 5.1 because sortOrder was ignored.
     const firstAlphaCell = page.locator('tbody tr td').nth(2);
     await expect(firstAlphaCell).toBeVisible({ timeout: 10000 });
     const alphaText = await firstAlphaCell.textContent();
-    expect(alphaText?.trim()).toBe('3.6');
+
+    // Resolve expected value from live API (avoids hardcoded values)
+    const { lowestAlpha } = await getWatchlistAlphas();
+    expect(alphaText?.trim()).toBe(String(lowestAlpha));
   });
 
   // ── QA-199 Test 2: DESC sort from URL — verify sort direction is respected ──────
@@ -34,11 +49,13 @@ test.describe('BUG-007 / QA-199 / QA-200: PropertiesPage Sort Order from URL', (
     await page.goto('/properties?status=watchlist&sortBy=alpha_score&sortOrder=DESC');
     await page.waitForTimeout(3000);
 
-    // First alpha cell should show 5.1 (highest alpha among returned rows)
+    // First alpha cell should show the highest alpha score among watchlist properties
     const firstAlphaCell = page.locator('tbody tr td').nth(2);
     await expect(firstAlphaCell).toBeVisible({ timeout: 10000 });
     const alphaText = await firstAlphaCell.textContent();
-    expect(alphaText?.trim()).toBe('5.1');
+
+    const { highestAlpha } = await getWatchlistAlphas();
+    expect(alphaText?.trim()).toBe(String(highestAlpha));
   });
 
   // ── QA-200 Test 3: Watchlist shows ≥1 row in ASC (not zero) ───────────────────
@@ -46,8 +63,7 @@ test.describe('BUG-007 / QA-199 / QA-200: PropertiesPage Sort Order from URL', (
     await page.goto('/properties?status=watchlist&sortBy=alpha_score&sortOrder=ASC');
     await page.waitForTimeout(3000);
 
-    // With ASC, the backend LIMIT 100 returns only the lowest-alpha watchlist property (3.6).
-    // At minimum, 1 row should be visible.
+    // With ASC, at minimum the lowest-alpha watchlist property should be returned.
     const propertyRows = page.locator('tbody tr');
     const count = await propertyRows.count();
     expect(count).toBeGreaterThanOrEqual(1);
@@ -63,7 +79,6 @@ test.describe('BUG-007 / QA-199 / QA-200: PropertiesPage Sort Order from URL', (
     await page.goto('/properties?status=watchlist&sortBy=alpha_score&sortOrder=DESC');
     await page.waitForTimeout(3000);
 
-    // With DESC, the backend LIMIT 100 returns 6 watchlist properties
     const propertyRows = page.locator('tbody tr');
     const count = await propertyRows.count();
     expect(count).toBeGreaterThanOrEqual(3);
@@ -71,27 +86,30 @@ test.describe('BUG-007 / QA-199 / QA-200: PropertiesPage Sort Order from URL', (
 
   // ── QA-199 Test 5: Toggle sort direction via UI ───────────────────────────────
   test('clicking Alpha column toggles sort direction — BUG-007 UI interaction', async ({ page }) => {
+    // Pre-fetch expected values for the assertions
+    const { lowestAlpha, highestAlpha } = await getWatchlistAlphas();
+
     await page.goto('/properties?status=watchlist&sortBy=alpha_score&sortOrder=DESC');
     await page.waitForTimeout(3000);
 
-    // Verify DESC loaded correctly (first row alpha = 5.1)
+    // Verify DESC loaded correctly (first row = highest alpha)
     let firstAlphaCell = page.locator('tbody tr td').nth(2);
     await expect(firstAlphaCell).toBeVisible({ timeout: 10000 });
-    await expect(firstAlphaCell).toHaveText('5.1');
+    await expect(firstAlphaCell).toHaveText(String(highestAlpha));
 
     // Click the Alpha header to toggle to ASC
     const alphaHeader = page.locator('th', { hasText: /Alpha/i }).first();
     await alphaHeader.click();
     await page.waitForTimeout(1500);
 
-    // Now first row should show 3.6 (ASC: lowest alpha first)
+    // Now first row should show lowest alpha
     firstAlphaCell = page.locator('tbody tr td').nth(2);
     await expect(firstAlphaCell).toBeVisible({ timeout: 10000 });
-    await expect(firstAlphaCell).toHaveText('3.6');
+    await expect(firstAlphaCell).toHaveText(String(lowestAlpha));
   });
 
   // ── QA-199 Test 6: URL is updated when sort direction changes via UI ───────────
-  test('URL is updated when sort direction changes via UI — syncAllFiltersToUrl working', async ({ page }) => {
+  test('URL is updated when sort direction changes via UI — syncSortToUrl working', async ({ page }) => {
     await page.goto('/properties?status=watchlist');
     await page.waitForTimeout(3000);
 
@@ -121,7 +139,7 @@ test.describe('BUG-007 / QA-199 / QA-200: PropertiesPage Sort Order from URL', (
     const table = page.locator('table');
     await expect(table).toBeVisible({ timeout: 10000 });
 
-    // No JS crashes
+    // No JS crashes (ignore asset 404s and known noise)
     const jsErrors = errors.filter(e =>
       !e.includes('404') &&
       !e.includes('Failed to load resource') &&

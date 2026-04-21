@@ -3,8 +3,21 @@ import type { AppreciationModel, AppreciationProfile, ScenarioResult } from '../
 
 const IS_DEMO = import.meta.env.VITE_DEMO_MODE === 'true';
 
-export const useAppreciationModel = (propertyPrice?: number) => {
+export interface AreaPriceBand {
+  areas: string[];
+  q1: number | null;   // 25th percentile £/sqft
+  median: number | null;
+  q3: number | null;   // 75th percentile £/sqft
+  n: number;            // data point count
+}
+
+export interface AreaPriceBands {
+  [postcode: string]: AreaPriceBand;
+}
+
+export const useAppreciationModel = (propertyPrice?: number, propertyArea?: string) => {
   const [data, setData] = useState<AppreciationModel | null>(null);
+  const [areaBands, setAreaBands] = useState<AreaPriceBands | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,11 +29,27 @@ export const useAppreciationModel = (propertyPrice?: number) => {
       })
       .then((raw: AppreciationModel) => {
         setData(raw);
-        setLoading(false);
       })
       .catch(err => {
         console.error('Appreciation model loading error:', err);
-        setLoading(false);
+      })
+      .finally(() => {
+        // Load area price bands regardless of appreciation model result
+        const bandsUrl = IS_DEMO ? '/data/appreciation_model.json' : '/api/area-price-bands';
+        fetch(bandsUrl)
+          .then(res => {
+            if (!res.ok) return null;
+            return res.json();
+          })
+          .then((bands: AreaPriceBands | null) => {
+            setAreaBands(bands);
+          })
+          .catch(() => {
+            // Non-fatal: area bands enhance but don't gate
+          })
+          .finally(() => {
+            setLoading(false);
+          });
       });
   }, []);
 
@@ -86,5 +115,22 @@ export const useAppreciationModel = (propertyPrice?: number) => {
     };
   }, [data, propertyPrice]);
 
-  return { data, loading, profile };
+  // FE-254: Area price band for the property's postcode
+  // Maps area name to postcode prefix, then looks up in areaBands
+  const priceBand = useMemo<AreaPriceBand | null>(() => {
+    if (!areaBands || !propertyArea) return null;
+    // Try exact area name first
+    if (areaBands[propertyArea]) return areaBands[propertyArea];
+    // Try postcode prefix match: "Islington (N1)" → "N1" → look for N1 key
+    const match = propertyArea.match(/(NW\d|N\d|EC\d|W\d|SW\d)/);
+    if (match) {
+      const pc = match[1];
+      for (const [key, band] of Object.entries(areaBands)) {
+        if (key.startsWith(pc) || key === pc) return band;
+      }
+    }
+    return null;
+  }, [areaBands, propertyArea]);
+
+  return { data, loading, profile, areaBands, priceBand };
 };

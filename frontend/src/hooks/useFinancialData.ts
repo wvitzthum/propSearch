@@ -27,6 +27,7 @@ export const useFinancialData = () => {
         const financial = await financialRes.json();
 
         // Normalization Layer for Macro — extract provenance-wrapped values
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const normalizeMacro = (raw: any): MacroTrend => {
           const rawEcon = raw.economic_indicators || raw;
           const rawRates = rawEcon.mortgage_rates || raw.mortgage_rates || {};
@@ -49,8 +50,10 @@ export const useFinancialData = () => {
             mortgage_history: (() => {
               const rawHist = raw.mortgage_history;
               const arr = Array.isArray(rawHist) ? rawHist
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 : (rawHist && typeof rawHist === 'object' && Array.isArray((rawHist as any).data)) ? (rawHist as any).data
                 : [];
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               return arr.map((h: any) => ({
                 month: h.date || h.month,
                 date: h.date,
@@ -77,9 +80,9 @@ export const useFinancialData = () => {
 
         setMacroData(normalizeMacro(macro));
         setFinancialContext(financial);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Financial data loading error:', err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : String(err));
       } finally {
         setLoading(false);
       }
@@ -111,8 +114,11 @@ export const useFinancialData = () => {
     const monthlyCouncilTax = annualCouncilTax / 12;
 
     // 3. Service Charge & Ground Rent
-    const monthlyServiceCharge = property.service_charge / 12;
-    const monthlyGroundRent = property.ground_rent / 12;
+    // BUG-006: Only include real numbers. null/undefined → 0 (unknown cost not fabricated).
+    // Real £0 service charge (from portal) will still appear as £0 — distinction is
+    // null = "not enriched" (unknown) vs 0 = "confirmed £0" (shown as £0).
+    const monthlyServiceCharge = (property.service_charge != null ? property.service_charge : 0) / 12;
+    const monthlyGroundRent = (property.ground_rent != null ? property.ground_rent : 0) / 12;
 
     const totalMonthly = monthlyMortgage + monthlyCouncilTax + monthlyServiceCharge + monthlyGroundRent;
 

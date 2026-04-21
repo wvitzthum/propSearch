@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, Circle, Bookmark, ShieldCheck, Archive } from 'lucide-react';
+import { CheckCircle2, Circle, Bookmark, ShieldCheck, Archive, Star } from 'lucide-react';
 import type { PropertyStatus } from '../hooks/usePipeline';
 
 interface PipelineTrackerProps {
@@ -8,10 +8,11 @@ interface PipelineTrackerProps {
   className?: string;
 }
 
-const STEPS: { status: PropertyStatus; label: string; icon: any }[] = [
+const STEPS: { status: PropertyStatus; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
   { status: 'discovered', label: 'Discovered', icon: Circle },
   { status: 'shortlisted', label: 'Shortlisted', icon: Bookmark },
   { status: 'vetted', label: 'Vetted', icon: ShieldCheck },
+  { status: 'watchlist', label: 'Watchlist', icon: Star },
   { status: 'archived', label: 'Archived', icon: Archive },
 ];
 
@@ -25,7 +26,7 @@ const PipelineTracker: React.FC<PipelineTrackerProps> = ({ status, onStatusChang
         <span className="text-[10px] font-bold text-linear-accent uppercase tracking-widest">{status}</span>
       </div>
       
-      <div className="relative flex justify-between">
+      <div className="relative flex justify-between" title="Click any step to jump directly through the pipeline">
         {/* Progress Line */}
         <div className="absolute top-1/2 left-0 w-full h-0.5 bg-linear-border -translate-y-1/2 z-0" />
         <div 

@@ -36,6 +36,33 @@ interface RawListing {
   filename: string;
 }
 
+interface DemoLead {
+  address?: string;
+  list_price?: number;
+  price?: number;
+  area?: string;
+  url?: string;
+  source?: string;
+  source_url?: string;
+  image_url?: string;
+  floorplan_url?: string;
+}
+
+interface InboxEntry {
+  filename?: string;
+  leads?: Record<string, unknown>[];
+}
+
+interface BatchActionResult {
+  results?: {
+    failed?: BatchFailedItem[];
+  };
+}
+
+interface BatchFailedItem {
+  filename: string;
+}
+
 type TriageStatus = 'pending' | 'approved' | 'rejected' | 'processing';
 
 const SUBMISSION_KEY = 'propsearch_inbox_submissions';
@@ -155,12 +182,13 @@ const Inbox: React.FC = () => {
       await fetchInbox();
       setToast({ msg: 'Lead added to inbox', type: 'success' });
       setQuickAddUrl('');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Quick-add failed:', err);
       // Still save to localStorage so the submission is not lost
       saveSubmission(entry);
       setSubmissions(loadSubmissions());
-      setToast({ msg: `Saved locally — sync error: ${err.message}`, type: 'error' });
+      const message = err instanceof Error ? err.message : String(err);
+      setToast({ msg: `Saved locally — sync error: ${message}`, type: 'error' });
     } finally {
       setQuickAddLoading(false);
     }
@@ -176,7 +204,7 @@ const Inbox: React.FC = () => {
         if (!res.ok) throw new Error('Failed to fetch demo inbox');
         const demoLeads = await res.json();
 
-        const normalized: RawListing[] = (Array.isArray(demoLeads) ? demoLeads : []).map((lead: any, i: number) => ({
+        const normalized: RawListing[] = (Array.isArray(demoLeads) ? demoLeads : []).map((lead: DemoLead, i: number) => ({
           filename: `demo-lead-${String(i + 1).padStart(3, '0')}`,
           address: lead.address || 'Unknown Address',
           price: lead.list_price ?? lead.price,
@@ -200,52 +228,53 @@ const Inbox: React.FC = () => {
       // - File format A: flat array [{}, {}, ...]       (new_leads_*.json)
       // - File format B: wrapper object { batch_id, leads: [{}, ...] }  (batch exports)
       // Each file entry has a `filename` key added by the server.
-      const normalized: RawListing[] = rawData.flatMap((entry: any) => {
+      const normalized: RawListing[] = rawData.flatMap((entry: unknown) => {
         // Skip non-object entries (e.g. error strings)
         if (!entry || typeof entry !== 'object') return [];
 
         // Extract filename from whatever shape the entry has
-        const filename = entry.filename as string || 'unknown';
+        const filename = (entry as InboxEntry).filename as string || 'unknown';
 
         // Format B: wrapper object with nested leads array
-        if (Array.isArray(entry.leads)) {
-          return entry.leads.map((lead: any) => ({
+        if (Array.isArray((entry as InboxEntry).leads)) {
+          return (entry as InboxEntry).leads!.map((lead: Record<string, unknown>) => ({
             filename,
-            address: lead.address || 'Unknown Address',
-            price: lead.price,
-            area: lead.area || '',
-            url: lead.url || '',
-            source: lead.source || '',
-            image_url: lead.image_url,
-            floorplan_url: lead.floorplan_url,
+            address: lead.address as string || 'Unknown Address',
+            price: lead.price as number | undefined,
+            area: lead.area as string || '',
+            url: lead.url as string || '',
+            source: lead.source as string || '',
+            image_url: lead.image_url as string | undefined,
+            floorplan_url: lead.floorplan_url as string | undefined,
           }));
         }
 
         // Format A: entry is an array of listings (the server spread an array + added filename)
         if (Array.isArray(entry)) {
-          return entry.map((item: any) => ({
+          return (entry as Record<string, unknown>[]).map((item: Record<string, unknown>) => ({
             filename,
-            address: item.address || 'Unknown Address',
-            price: item.price,
-            area: item.area || '',
-            url: item.url || '',
-            source: item.source || '',
-            image_url: item.image_url,
-            floorplan_url: item.floorplan_url,
+            address: item.address as string || 'Unknown Address',
+            price: item.price as number | undefined,
+            area: item.area as string || '',
+            url: item.url as string || '',
+            source: item.source as string || '',
+            image_url: item.image_url as string | undefined,
+            floorplan_url: item.floorplan_url as string | undefined,
           }));
         }
 
         // Single record (fallback): has address/price fields directly on the object
-        if (entry.address !== undefined || entry.price !== undefined) {
+        const entryRecord = entry as Record<string, unknown>;
+        if (entryRecord.address !== undefined || entryRecord.price !== undefined) {
           return [{
             filename,
-            address: entry.address || 'Unknown Address',
-            price: entry.price,
-            area: entry.area || '',
-            url: entry.url || '',
-            source: entry.source || '',
-            image_url: entry.image_url,
-            floorplan_url: entry.floorplan_url,
+            address: (entryRecord.address as string) || 'Unknown Address',
+            price: entryRecord.price as number | undefined,
+            area: (entryRecord.area as string) || '',
+            url: (entryRecord.url as string) || '',
+            source: (entryRecord.source as string) || '',
+            image_url: entryRecord.image_url as string | undefined,
+            floorplan_url: entryRecord.floorplan_url as string | undefined,
           }];
         }
 
@@ -262,7 +291,7 @@ const Inbox: React.FC = () => {
       );
 
       setListings(deduped);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Inbox error:', err);
       setError('Local API Server (port 3001) is required for Inbox management.');
     } finally {
@@ -322,8 +351,10 @@ const Inbox: React.FC = () => {
   }, [listings, currentIndex, setPipelineStatus]);
 
   const handlePeek = (url: string) => {
-    // Open a focused, smaller window to simulate an "embedded" feel without header pollution
-    window.open(url, 'PortalPeek', 'width=1200,height=900,menubar=no,toolbar=no,location=no,status=no');
+    if (!url) return;
+    // Always open a fresh window — omit the window name (2nd arg) so the browser
+    // never reuses a named window left on about:blank from a previous click.
+    window.open(url, '_blank', 'width=1200,height=900,menubar=no,toolbar=no,location=no,status=no');
   };
 
   const handleBatchAction = async (action: 'approve' | 'reject') => {
@@ -341,14 +372,15 @@ const Inbox: React.FC = () => {
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const data = await res.json();
+      const data = await res.json() as BatchActionResult;
 
       // FE-209: Only remove listings after server confirms success — keep failed ones visible
-      const failedFilenames = new Set((data.results?.failed ?? []).map((f: any) => f.filename));
+      const failedItems = data.results?.failed ?? [];
+      const failedFilenames = new Set(failedItems.map((f: BatchFailedItem) => f.filename));
       setListings(prev => prev.filter(l => !selectedIds.has(l.filename) || failedFilenames.has(l.filename)));
 
-      if (data.results?.failed?.length > 0) {
-        setToast({ msg: `${data.results.failed.length}/${filenames.length} failed — see individual leads`, type: 'error' });
+      if (failedItems.length > 0) {
+        setToast({ msg: `${failedItems.length}/${filenames.length} failed — see individual leads`, type: 'error' });
       } else {
         setToast({ msg: `${filenames.length} leads ${action === 'approve' ? 'approved' : 'rejected'}`, type: 'success' });
       }
@@ -473,13 +505,13 @@ const Inbox: React.FC = () => {
             <button
               onClick={handleQuickAdd}
               disabled={quickAddLoading}
-              className="px-3 py-1.5 bg-blue-500/20 border-l border-linear-border text-blue-400 text-[9px] font-black uppercase hover:bg-blue-500/30 disabled:opacity-50 transition-all"
+              className="px-3 py-1.5 bg-blue-500/20 border-l border-linear-border text-blue-400 text-[10px] font-black uppercase hover:bg-blue-500/30 disabled:opacity-50 transition-all"
             >
               {quickAddLoading ? '...' : '+'}
             </button>
           </div>
           {quickAddMsg && (
-            <span className="text-[9px] font-bold text-emerald-400 animate-in fade-in">{quickAddMsg}</span>
+            <span className="text-[11px] font-bold text-emerald-400 animate-in fade-in">{quickAddMsg}</span>
           )}
 
           {/* FE-180: Submission history toggle */}
@@ -522,7 +554,7 @@ const Inbox: React.FC = () => {
           )}
 
           {/* UX-021: Keyboard hint label */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-linear-card border border-linear-border rounded-lg text-[9px] font-bold text-linear-text-muted">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-linear-card border border-linear-border rounded-lg text-[10px] font-bold text-linear-text-muted">
             <Keyboard size={12} />
             <span>J/K NAV • A/R ACTION • M/F/V TOGGLE • L PEEK</span>
           </div>
@@ -573,7 +605,7 @@ const Inbox: React.FC = () => {
               <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">Lead Stream</span>
               <button 
                 onClick={() => setSelectedIds(selectedIds.size === listings.length ? new Set() : new Set(listings.map(l => l.filename)))}
-                className="text-[9px] font-bold text-blue-400 hover:text-white transition-colors uppercase tracking-widest"
+                className="text-[10px] font-bold text-blue-400 hover:text-white transition-colors uppercase tracking-widest"
               >
                 {selectedIds.size === listings.length ? 'Deselect All' : 'Select All'}
               </button>
@@ -603,12 +635,12 @@ const Inbox: React.FC = () => {
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5 mt-1">
                         {/* FE-180: Source attribution badge */}
-                        <span className="text-[8px] font-black px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded uppercase tracking-tighter">{listing.source || 'Unknown'}</span>
+                        <span className="text-[9px] font-black px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded uppercase tracking-tighter">{listing.source || 'Unknown'}</span>
                         {/* FE-180: Status badge */}
                         <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter border ${statusBg} ${statusColor}`}>
                           {status}
                         </span>
-                        <span className="text-[9px] font-bold text-blue-400/80">£{listing.price?.toLocaleString() ?? '—'}</span>
+                        <span className="text-[11px] font-bold text-blue-400/80">£{listing.price?.toLocaleString() ?? '—'}</span>
                       </div>
                     </div>
                     {i === currentIndex && <ArrowRight size={14} className="text-blue-500 shrink-0" />}
@@ -626,19 +658,19 @@ const Inbox: React.FC = () => {
                 <div className="flex bg-linear-bg p-1 rounded-lg border border-linear-border">
                   <button
                     onClick={() => setViewMode('metrics')}
-                    className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1 ${viewMode === 'metrics' ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
+                    className={`px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1 ${viewMode === 'metrics' ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
                   >
                     Metrics <kbd className="font-mono text-[8px] opacity-60">[M]</kbd>
                   </button>
                   <button
                     onClick={() => setViewMode('floorplan')}
-                    className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1 ${viewMode === 'floorplan' ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
+                    className={`px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1 ${viewMode === 'floorplan' ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
                   >
                     Floorplan <kbd className="font-mono text-[8px] opacity-60">[F]</kbd>
                   </button>
                   <button
                     onClick={() => setViewMode('portal')}
-                    className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1 ${viewMode === 'portal' ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
+                    className={`px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1 ${viewMode === 'portal' ? 'bg-linear-accent text-white shadow-lg' : 'text-linear-text-muted hover:text-white'}`}
                   >
                     Portal Intel <kbd className="font-mono text-[8px] opacity-60">[V]</kbd>
                   </button>
@@ -646,7 +678,7 @@ const Inbox: React.FC = () => {
               </div>
               <button
                 onClick={() => handlePeek(currentListing.url)}
-                className="flex items-center gap-2 px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-blue-500/20 transition-all"
+                className="flex items-center gap-2 px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-blue-500/20 transition-all"
               >
                 <ExternalLink size={12} />
                 Open Portal <kbd className="font-mono text-[8px] opacity-60">[L]</kbd>
@@ -689,11 +721,11 @@ const Inbox: React.FC = () => {
                       </h3>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="p-4 bg-linear-bg border border-linear-border rounded-xl">
-                          <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest block mb-1">List Price</span>
+                          <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest block mb-1">List Price</span>
                           <span className="text-lg font-bold text-white">£{currentListing.price?.toLocaleString() ?? '—'}</span>
                         </div>
                         <div className="p-4 bg-linear-bg border border-linear-border rounded-xl">
-                          <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest block mb-1">Discovery</span>
+                          <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest block mb-1">Discovery</span>
                           <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider">Automated Scrape</span>
                         </div>
                       </div>
@@ -710,7 +742,7 @@ const Inbox: React.FC = () => {
                         >
                           <div className="flex flex-col">
                             <span className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">Launch Focused Peek</span>
-                            <span className="text-[9px] text-linear-text-muted uppercase tracking-widest">Isolated Environment</span>
+                            <span className="text-[10px] text-linear-text-muted uppercase tracking-widest">Isolated Environment</span>
                           </div>
                           <Maximize2 size={16} className="text-linear-text-muted group-hover:text-blue-400 transition-colors" />
                         </button>

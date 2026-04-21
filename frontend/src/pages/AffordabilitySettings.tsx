@@ -4,7 +4,7 @@ import {
   Calculator,
   DollarSign,
   Landmark,
-  Percent,
+  CirclePercent,
   Clock,
   TrendingUp,
   Info,
@@ -19,9 +19,8 @@ import LTVMatchBadge from '../components/LTVMatchBadge';
 import BudgetSlider from '../components/BudgetSlider';
 import LoadingNode from '../components/LoadingNode';
 import AdditionalCostsCard from '../components/AdditionalCostsCard';
-import RentalYieldVsGiltChart from '../components/RentalYieldVsGiltChart';
 import PurchasingPowerChart from '../components/PurchasingPowerChart';
-// LTVBandComparisonChart removed — VISX-016
+import BorrowingPowerCalculator from '../components/BorrowingPowerCalculator';
 
 const AffordabilitySettings: React.FC = () => {
   const { macroData, loading } = useFinancialData();
@@ -42,7 +41,7 @@ const AffordabilitySettings: React.FC = () => {
     calculateMortgageFromPayment,
   } = useAffordability();
 
-  const [expandedSection, setExpandedSection] = useState<string | null>('budget');
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['budget', 'rates']));
   // FE-169: Property price used for cost calculations
   const [selectedPropertyPrice, setSelectedPropertyPrice] = useState<number>(() => {
     const stored = localStorage.getItem('propSearch_property_price');
@@ -67,12 +66,15 @@ const AffordabilitySettings: React.FC = () => {
   }, [monthlyBudget, depositMode, depositPct, calculateMortgageFromPayment, termYears]);
 
   // Calculate estimated monthly payments at different property prices
+  // UX-72: Derive scenarios dynamically from affordableRange.max — hardcoded prices are irrelevant for high-budget users
   const priceScenarios = useMemo(() => {
+    // UX-72: Scenarios anchored to affordableRange.max
+    const maxBudget = affordableRange.max;
     const scenarios = [
-      { label: 'Entry Level', price: 500000, ltv: '90%' },
-      { label: 'Mid-Tier', price: 750000, ltv: '85%' },
-      { label: 'Core Asset', price: 1000000, ltv: '75%' },
-      { label: 'Ultra-Prime', price: 1500000, ltv: '75%' },
+      { label: '50% of Max', price: Math.round(maxBudget * 0.50), ltv: '90%' },
+      { label: '75% of Max', price: Math.round(maxBudget * 0.75), ltv: '85%' },
+      { label: 'Max Budget', price: Math.round(maxBudget * 1.00), ltv: '75%' },
+      { label: 'Stretch (+30%)', price: Math.round(maxBudget * 1.30), ltv: '75%' },
     ];
 
     return scenarios.map(s => {
@@ -80,10 +82,18 @@ const AffordabilitySettings: React.FC = () => {
       const ltvScore = getLTVMatchScore(s.price);
       return { ...s, profile, ltvScore };
     });
-  }, [getBudgetProfile, getLTVMatchScore]);
+  }, [affordableRange, getBudgetProfile, getLTVMatchScore]);
 
   const toggleSection = (section: string) => {
-    setExpandedSection(expandedSection === section ? null : section);
+    setExpandedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(section)) {
+        next.delete(section);
+      } else {
+        next.add(section);
+      }
+      return next;
+    });
   };
 
   // Persist property price and FTB status
@@ -139,11 +149,11 @@ const AffordabilitySettings: React.FC = () => {
             <div className="text-lg font-bold text-white tracking-tight">{mortgageRate.toFixed(2)}% <span className="text-[10px] text-linear-text-muted font-normal">5yr fixed</span></div>
           </div>
           <Link
-            to="/affordability"
+            to="/rates"
             className="px-4 py-2 bg-linear-accent/10 border border-linear-accent/20 rounded-xl text-xs font-bold text-linear-accent hover:bg-linear-accent/20 transition-colors flex items-center gap-2"
           >
             <ExternalLink size={14} />
-            Mortgage Intel
+            Market Rates
           </Link>
         </div>
       </div>
@@ -166,7 +176,7 @@ const AffordabilitySettings: React.FC = () => {
             <TrendingUp size={14} className="text-emerald-400" />
             <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">Max Affordable</span>
           </div>
-          <div className="text-2xl font-bold text-white tracking-tight">
+          <div className="text-2xl font-bold text-white tracking-tight transition-all duration-300">
             £{(affordableRange.max / 1000).toFixed(0)}K
           </div>
           <div className="text-[10px] text-linear-text-muted mt-1">at {mortgageRate.toFixed(2)}%</div>
@@ -185,7 +195,7 @@ const AffordabilitySettings: React.FC = () => {
 
         <div className="p-5 bg-linear-card border border-linear-border rounded-2xl">
           <div className="flex items-center gap-2 mb-3">
-            <Percent size={14} className="text-emerald-400" />
+            <CirclePercent size={14} className="text-emerald-400" />
             <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">Spread to Base</span>
           </div>
           <div className="text-2xl font-bold text-white tracking-tight">
@@ -194,6 +204,9 @@ const AffordabilitySettings: React.FC = () => {
           <div className="text-[10px] text-linear-text-muted mt-1">mortgage vs BoE</div>
         </div>
       </div>
+
+      {/* FE-257: Your Borrowing Power — income-based loan calculator */}
+      <BorrowingPowerCalculator monthlyBudget={monthlyBudget} />
 
       {/* FE-216: Purchasing Power Index */}
       <div className="space-y-3">
@@ -232,11 +245,11 @@ const AffordabilitySettings: React.FC = () => {
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-lg font-bold text-white">£{monthlyBudget.toLocaleString()}</span>
-                <ChevronDown size={20} className={`text-linear-text-muted transition-transform ${expandedSection === 'budget' ? 'rotate-180' : ''}`} />
+                <ChevronDown size={20} className={`text-linear-text-muted transition-transform ${expandedSections.has('budget') ? 'rotate-180' : ''}`} />
               </div>
             </button>
 
-            {expandedSection === 'budget' && (
+            {expandedSections.has('budget') && (
               <div className="px-6 pb-6 border-t border-linear-border">
                 <div className="pt-6">
                   <BudgetSlider />
@@ -259,33 +272,33 @@ const AffordabilitySettings: React.FC = () => {
                   <h2 className="text-sm font-bold text-white uppercase tracking-widest">Deposit Configuration</h2>
                   <p className="text-[10px] text-linear-text-muted mt-1">
                     {depositMode === 'auto'
-                      ? 'Auto: deposit derived from your monthly budget'
-                      : `Fixed: ${depositPct}% deposit locked — £${Math.round(selectedPropertyPrice * depositPct / 100).toLocaleString()} on £${(selectedPropertyPrice / 1000).toFixed(0)}K property`}
+                      ? 'Budget-Linked: deposit adjusts to match your monthly budget'
+                      : `Fixed Deposit: ${depositPct}% — £${Math.round(selectedPropertyPrice * depositPct / 100).toLocaleString()} on £${(selectedPropertyPrice / 1000).toFixed(0)}K property`}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-lg font-bold text-white">
-                  {depositMode === 'auto' ? 'Auto' : `${depositPct}%`}
+                  {depositMode === 'auto' ? 'Budget-Linked' : `${depositPct}% Fixed`}
                 </span>
-                <ChevronDown size={20} className={`text-linear-text-muted transition-transform ${expandedSection === 'deposit' ? 'rotate-180' : ''}`} />
+                <ChevronDown size={20} className={`text-linear-text-muted transition-transform ${expandedSections.has('deposit') ? 'rotate-180' : ''}`} />
               </div>
             </button>
 
-            {expandedSection === 'deposit' && (
+            {expandedSections.has('deposit') && (
               <div className="px-6 pb-6 border-t border-linear-border">
                 <div className="pt-6 space-y-6">
                   {/* Auto / Fixed Toggle */}
                   <div className="flex bg-linear-bg rounded-xl border border-linear-border p-1.5 gap-1">
                     <button
                       onClick={() => setDepositMode('auto')}
-                      className={`flex-1 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+                      className={`flex-1 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all relative ${
                         depositMode === 'auto'
                           ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
                           : 'text-linear-text-muted hover:text-white hover:bg-white/5'
                       }`}
                     >
-                      Auto
+                      Budget-Linked
                     </button>
                     <button
                       onClick={() => setDepositMode('fixed')}
@@ -295,7 +308,7 @@ const AffordabilitySettings: React.FC = () => {
                           : 'text-linear-text-muted hover:text-white hover:bg-white/5'
                       }`}
                     >
-                      Fixed %
+                      Fixed Deposit
                     </button>
                   </div>
 
@@ -303,10 +316,11 @@ const AffordabilitySettings: React.FC = () => {
                     <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
                       <div className="flex items-center gap-2 mb-2">
                         <Info size={14} className="text-emerald-400" />
-                        <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Auto Mode</span>
+                        <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Budget-Linked Mode</span>
+                        <span className="text-[9px] text-linear-text-muted ml-auto">Hover for details</span>
                       </div>
                       <p className="text-[10px] text-linear-text-muted leading-relaxed">
-                        In Auto mode, your deposit is calculated as whatever is needed to bridge the gap between your mortgage capacity and the property price. It will vary automatically as your monthly budget changes.
+                        Your deposit adjusts automatically so your monthly payment matches your budget exactly. No fixed percentage needed — the deposit is whatever gap remains after your mortgage.
                       </p>
                       <div className="mt-3 pt-3 border-t border-emerald-500/10 flex justify-between">
                         <span className="text-[10px] text-linear-text-muted">Implied deposit at current budget:</span>
@@ -389,117 +403,60 @@ const AffordabilitySettings: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Property Price Reference */}
-                  <div>
-                    <div className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest mb-2">
-                      Property Price Reference
-                    </div>
-                    <div className="flex gap-2">
-                      {[500000, 750000, 1000000, 1500000].map((price) => (
-                        <button
-                          key={price}
-                          onClick={() => handlePropertyPriceChange(price)}
-                          className={`px-3 py-2 rounded-lg text-[10px] font-bold transition-all ${
-                            selectedPropertyPrice === price
-                              ? 'bg-blue-500/20 border border-blue-500/40 text-blue-400'
-                              : 'bg-linear-bg border border-linear-border text-linear-text-muted hover:text-white hover:border-blue-500/30'
-                          }`}
-                        >
-                          £{(price / 1000).toFixed(0)}K
-                        </button>
-                      ))}
-                    </div>
-                    <div className="mt-3 flex items-center gap-2">
-                      <input
-                        type="number"
-                        value={selectedPropertyPrice}
-                        onChange={(e) => handlePropertyPriceChange(Number(e.target.value))}
-                        className="w-40 bg-linear-bg border border-linear-border rounded-lg px-3 py-2 text-sm font-bold text-white placeholder-linear-text-muted focus:outline-none focus:border-blue-500/50"
-                        placeholder="Enter price..."
-                      />
-                      <span className="text-[10px] text-linear-text-muted">used for cost calculations</span>
-                    </div>
-                  </div>
-
-                  {/* FTB Toggle */}
-                  <div className="flex items-center justify-between p-4 bg-linear-bg rounded-xl border border-linear-border">
-                    <div>
-                      <div className="text-[10px] font-bold text-white">First-Time Buyer Relief</div>
-                      <div className="text-[9px] text-linear-text-muted mt-1">Reduces SDLT — nil rate up to £625K for FTB</div>
-                    </div>
-                    <button
-                      onClick={() => handleFtBChange(!isFtB)}
-                      className={`relative w-12 h-6 rounded-full transition-colors ${
-                        isFtB ? 'bg-emerald-500' : 'bg-linear-border'
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                          isFtB ? 'translate-x-6' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Live Rates Section */}
+          {/* Live Rates Section — always visible, no accordion */}
           <div className="bg-linear-card border border-linear-border rounded-3xl overflow-hidden">
-            <button
-              onClick={() => toggleSection('rates')}
-              className="w-full p-6 flex items-center justify-between hover:bg-linear-bg/50 transition-colors"
-            >
+            <div className="p-6">
               <div className="flex items-center gap-4">
                 <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
                   <TrendingUp size={20} />
                 </div>
                 <div className="text-left">
                   <h2 className="text-sm font-bold text-white uppercase tracking-widest">Live Mortgage Rates</h2>
-                  <p className="text-[10px] text-linear-text-muted mt-1">Sourced from macro_trend.json via useFinancialData</p>
+                  <p className="text-[10px] text-linear-text-muted mt-1">Sourced from macro_trend.json via useFinancialData · Last updated: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                 </div>
               </div>
-              <ChevronDown size={20} className={`text-linear-text-muted transition-transform ${expandedSection === 'rates' ? 'rotate-180' : ''}`} />
-            </button>
+            </div>
 
-            {expandedSection === 'rates' && (
-              <div className="px-6 pb-6 border-t border-linear-border">
-                <div className="pt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {[
-                    { ltv: '90%', label: 'Entry Gate', rate: mortgageRates.rate_90, color: 'rose' },
-                    { ltv: '85%', label: 'Mid-Tier', rate: mortgageRates.rate_85, color: 'amber' },
-                    { ltv: '75%', label: 'Core Asset', rate: mortgageRates.rate_75, color: 'emerald' },
-                    { ltv: '60%', label: 'Ultra-Prime', rate: mortgageRates.rate_60, color: 'blue' },
-                  ].map((band) => (
-                    <div
-                      key={band.ltv}
-                      className={`p-4 rounded-xl border ${
-                        band.color === 'rose' ? 'bg-rose-500/5 border-rose-500/20' :
-                        band.color === 'amber' ? 'bg-amber-500/5 border-amber-500/20' :
-                        band.color === 'emerald' ? 'bg-emerald-500/5 border-emerald-500/20' :
-                        'bg-blue-500/5 border-blue-500/20'
-                      }`}
-                    >
-                      <div className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest mb-2">{band.label}</div>
-                      <div className="text-2xl font-bold text-white tracking-tighter">{band.rate.toFixed(2)}%</div>
-                      <div className="text-[9px] text-linear-text-muted mt-1">{band.ltv} LTV, 5yr Fixed</div>
-                      <div className="text-[9px] text-linear-accent mt-2">
-                        +{(band.rate - boeBaseRate).toFixed(2)}% to base
-                      </div>
+            <div className="px-6 pb-6 border-t border-linear-border">
+              <div className="pt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { ltv: '90%', label: 'Entry Gate', rate: mortgageRates.rate_90, color: 'rose' },
+                  { ltv: '85%', label: 'Mid-Tier', rate: mortgageRates.rate_85, color: 'amber' },
+                  { ltv: '75%', label: 'Core Asset', rate: mortgageRates.rate_75, color: 'emerald' },
+                  { ltv: '60%', label: 'Ultra-Prime', rate: mortgageRates.rate_60, color: 'blue' },
+                ].map((band) => (
+                  <div
+                    key={band.ltv}
+                    className={`p-4 rounded-xl border ${
+                      band.color === 'rose' ? 'bg-rose-500/5 border-rose-500/20' :
+                      band.color === 'amber' ? 'bg-amber-500/5 border-amber-500/20' :
+                      band.color === 'emerald' ? 'bg-emerald-500/5 border-emerald-500/20' :
+                      'bg-blue-500/5 border-blue-500/20'
+                    }`}
+                  >
+                    <div className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest mb-2">{band.label}</div>
+                    <div className="text-2xl font-bold text-white tracking-tighter">{band.rate.toFixed(2)}%</div>
+                    <div className="text-[9px] text-linear-text-muted mt-1">{band.ltv} LTV, 5yr Fixed</div>
+                    <div className="text-[9px] text-linear-accent mt-2">
+                      +{(band.rate - boeBaseRate).toFixed(2)}% to base
                     </div>
-                  ))}
-                </div>
-
-                <div className="mt-6 p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl flex items-start gap-3">
-                  <Info size={16} className="text-blue-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-[10px] text-linear-text-muted leading-relaxed">
-                    Rates are fetched live from <span className="text-white font-medium">macro_trend.json</span> via the <span className="text-white font-medium">useFinancialData</span> hook.
-                    These represent market-leading 5-year fixed rates from the Bank of England Effective Interest Rates database.
-                  </p>
-                </div>
+                  </div>
+                ))}
               </div>
-            )}
+
+              <div className="mt-6 p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl flex items-start gap-3">
+                <Info size={16} className="text-blue-400 mt-0.5 flex-shrink-0" />
+                <p className="text-[10px] text-linear-text-muted leading-relaxed">
+                  Rates are fetched live from <span className="text-white font-medium">macro_trend.json</span> via the <span className="text-white font-medium">useFinancialData</span> hook.
+                  These represent market-leading 5-year fixed rates from the Bank of England Effective Interest Rates database.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Loan Term Section */}
@@ -519,11 +476,11 @@ const AffordabilitySettings: React.FC = () => {
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-lg font-bold text-white">{termYears} Years</span>
-                <ChevronDown size={20} className={`text-linear-text-muted transition-transform ${expandedSection === 'term' ? 'rotate-180' : ''}`} />
+                <ChevronDown size={20} className={`text-linear-text-muted transition-transform ${expandedSections.has('term') ? 'rotate-180' : ''}`} />
               </div>
             </button>
 
-            {expandedSection === 'term' && (
+            {expandedSections.has('term') && (
               <div className="px-6 pb-6 border-t border-linear-border">
                 <div className="pt-6">
                   {/* Term segmented control */}
@@ -576,27 +533,119 @@ const AffordabilitySettings: React.FC = () => {
 
         {/* Right Column - Summary & Scenarios */}
         <div className="space-y-6">
-          {/* Affordable Range Card */}
+          {/* UX-61: Reference Property — surfaced at top of right column */}
+          <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-2xl">
+            <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2">Reference Property</div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="text-xl font-bold text-white tracking-tight">
+                £{selectedPropertyPrice.toLocaleString()}
+              </div>
+              <div className="flex gap-1.5 flex-wrap">
+                {[500000, 750000, 1000000, 1500000].map((price) => (
+                  <button
+                    key={price}
+                    onClick={() => handlePropertyPriceChange(price)}
+                    className={`px-2.5 py-1 rounded-lg text-[9px] font-bold transition-all ${
+                      selectedPropertyPrice === price
+                        ? 'bg-blue-500/20 border border-blue-500/40 text-blue-400'
+                        : 'bg-linear-bg border border-linear-border text-linear-text-muted hover:text-white hover:border-blue-500/30'
+                    }`}
+                  >
+                    £{(price / 1000).toFixed(0)}K
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="text-[9px] text-linear-text-muted mt-2">Used for deposit &amp; SDLT estimates</p>
+          </div>
+
+          {/* FE-259: Affordable Range Card — shows binding constraint (income vs budget) */}
           <div className="p-6 bg-gradient-to-br from-blue-500/10 to-emerald-500/10 border border-blue-500/20 rounded-3xl">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp size={16} className="text-blue-400" />
-              <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">Your Affordable Range</span>
+              <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">Your Effective Limit</span>
             </div>
-            <div className="text-4xl font-bold text-white tracking-tighter mb-2">
-              £{(affordableRange.min / 1000).toFixed(0)}K - £{(affordableRange.max / 1000).toFixed(0)}K
-            </div>
-            <p className="text-[10px] text-linear-text-muted">
-              Based on £{monthlyBudget.toLocaleString()}/month at {mortgageRate.toFixed(2)}%
-            </p>
+            {/* FE-259: Show binding constraint — lower of income vs budget */}
+            {(() => {
+              const budgetMax = affordableRange.max;
+              const incomeMax = (() => {
+                const stored = localStorage.getItem('propSearch_income_salary');
+                if (!stored) return null;
+                const salary = JSON.parse(stored);
+                if (!salary || salary <= 0) return null;
+                const bonusStored = localStorage.getItem('propSearch_income_bonus_amt');
+                const bonus = bonusStored ? JSON.parse(bonusStored) : 0;
+                const income = salary + (bonus || 0);
+                const tiers = [
+                  { maxIncome: 25000, std: 4.5 }, { maxIncome: 50000, std: 4.75 },
+                  { maxIncome: 75000, std: 5.0 }, { maxIncome: 100000, std: 5.25 }, { maxIncome: Infinity, std: 5.5 }
+                ];
+                const tier = tiers.find(t => income <= t.maxIncome) ?? tiers[tiers.length - 1];
+                return income * tier.std;
+              })();
+              const binding = incomeMax != null ? (incomeMax < budgetMax ? incomeMax : budgetMax) : budgetMax;
+              const slack = incomeMax != null ? Math.abs(budgetMax - incomeMax) : null;
+              return (
+                <>
+                  <div className="text-4xl font-bold text-white tracking-tighter mb-1 transition-all duration-300" key={binding}>
+                    £{(binding / 1000).toFixed(0)}K
+                  </div>
+                  <p className="text-[10px] text-linear-text-muted mb-3">
+                    {incomeMax != null && incomeMax < budgetMax
+                      ? 'Income-limited — budget has headroom'
+                      : incomeMax != null
+                      ? 'Budget-limited — income has headroom'
+                      : `Budget-based at £${monthlyBudget.toLocaleString()}/mo`}
+                  </p>
+                  {slack != null && slack > 10000 && (
+                    <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                      <div className="text-[8px] font-black text-amber-400 uppercase tracking-widest">Budget Headroom</div>
+                      <div className="text-[11px] font-black text-white mt-0.5">
+                        £{(slack / 1000).toFixed(0)}K
+                        <span className="text-[8px] text-linear-text-muted font-normal ml-1">
+                          ({incomeMax != null && incomeMax < budgetMax ? 'income constrains you' : 'budget constrains you'})
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
 
           {/* FE-169: Additional Costs Card */}
           <AdditionalCostsCard costs={totalCosts} />
 
+          {/* UX-61: FTB Toggle moved to right column summary area */}
+          <div className="flex items-center justify-between p-4 bg-linear-card border border-linear-border rounded-2xl">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-white">First-Time Buyer</span>
+              <button
+                onClick={() => {}}
+                className="w-4 h-4 rounded-full bg-linear-bg border border-linear-border flex items-center justify-center text-linear-text-muted hover:text-white cursor-help"
+                title="Toggle to apply FTB SDLT relief (nil rate up to £625K)"
+              >
+                <Info size={10} />
+              </button>
+            </div>
+            <button
+              onClick={() => handleFtBChange(!isFtB)}
+              className={`relative w-12 h-6 rounded-full transition-colors ${
+                isFtB ? 'bg-emerald-500' : 'bg-linear-border'
+              }`}
+            >
+              <span
+                className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                  isFtB ? 'translate-x-6' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
           {/* LTV Match Score */}
           <div className="p-6 bg-linear-card border border-linear-border rounded-3xl">
             <div className="flex items-center gap-2 mb-4">
-              <Percent size={16} className="text-emerald-400" />
+              <CirclePercent size={16} className="text-emerald-400" />
               <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">LTV Match Analysis</span>
             </div>
             <LTVMatchBadge score={getLTVMatchScore(affordableRange.max)} size="lg" />
@@ -604,16 +653,16 @@ const AffordabilitySettings: React.FC = () => {
               <div className="flex justify-between">
                 <span>At 90% LTV:</span>
                 {/* FE-228: Fix — affordableRange.max is already at 85% LTV. Multiply by 0.90 directly, not 0.85×0.90 */}
-                <span className="text-rose-400">£{(Math.round(affordableRange.max * 0.90 / 1000)).toFixed(0)}K</span>
+                <span className="text-rose-400 transition-all duration-300" key={`90-${affordableRange.max}`}>£{(Math.round(affordableRange.max * 0.90 / 1000)).toFixed(0)}K</span>
               </div>
               <div className="flex justify-between">
                 <span>At 85% LTV:</span>
-                <span className="text-amber-400">£{(Math.round(affordableRange.max * 0.85 / 1000)).toFixed(0)}K</span>
+                <span className="text-amber-400 transition-all duration-300" key={`85-${affordableRange.max}`}>£{(Math.round(affordableRange.max * 0.85 / 1000)).toFixed(0)}K</span>
               </div>
               <div className="flex justify-between">
                 <span>At 75% LTV:</span>
                 {/* FE-228: Fix — multiply by 0.75 directly, not 0.85×0.75 */}
-                <span className="text-emerald-400">£{(Math.round(affordableRange.max * 0.75 / 1000)).toFixed(0)}K</span>
+                <span className="text-emerald-400 transition-all duration-300" key={`75-${affordableRange.max}`}>£{(Math.round(affordableRange.max * 0.75 / 1000)).toFixed(0)}K</span>
               </div>
             </div>
           </div>
@@ -650,33 +699,6 @@ const AffordabilitySettings: React.FC = () => {
 
       {/* Info Footer */}
       <div className="p-6 bg-linear-bg/50 border border-linear-border rounded-2xl">
-        <div className="flex items-start gap-4">
-          <div className="h-8 w-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 flex-shrink-0">
-            <Info size={16} />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-white mb-2">About This Calculator</h3>
-            <p className="text-[11px] text-linear-text-muted leading-relaxed max-w-3xl">
-              This affordability calculator uses live mortgage rates from <span className="text-white font-medium">macro_trend.json</span>, fetched via the <span className="text-white font-medium">useFinancialData</span> hook.
-              All rates represent market-leading 5-year fixed mortgage products at various LTV bands. The calculator does <span className="text-amber-400">not</span> include additional costs such as broker fees,
-              arrangement fees, or life insurance. For accurate affordability assessments, consult with a qualified mortgage broker.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* FE-192: Rental Yield vs Gilt yield comparison */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-xl bg-linear-card border border-linear-border flex items-center justify-center">
-            <Percent size={16} className="text-retro-green" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-white tracking-tight">Investment Yield Analysis</h2>
-            <p className="text-[11px] text-linear-text-muted">Gross rental yields vs UK gilt (risk-free) — investment thesis validation</p>
-          </div>
-        </div>
-        <RentalYieldVsGiltChart />
       </div>
     </div>
   );

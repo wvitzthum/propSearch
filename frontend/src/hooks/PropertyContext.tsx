@@ -23,6 +23,8 @@ interface PropertyContextType {
   error: string | null;
   filters: PropertyFilters;
   updateFilters: (newFilters: Partial<PropertyFilters>) => void;
+  // updateFiltersWithoutFetch — update sort state without triggering a re-fetch of properties
+  updateFiltersWithoutFetch: (newFilters: Partial<PropertyFilters>) => void;
   refreshProperties: () => Promise<void>;
   // FE-181: Bridge to usePipeline so archived filter works via client-side pipeline state
   registerPipeline: (getStatus: (id: string) => PropertyStatus) => void;
@@ -44,6 +46,8 @@ const AREA_COORDS: Record<string, [number, number]> = {
   'Chelsea (SW3)': [51.4912, -0.1634],
   'Chelsea (SW10)': [51.4856, -0.1823],
   'Primrose Hill (NW1)': [51.5410, -0.1550],
+  'Pimlico (SW1)': [51.4893, -0.1400],
+  'Bermondsey (SE1)': [51.5016, -0.0711],
 };
 
 const IS_DEMO = import.meta.env.VITE_DEMO_MODE === 'true';
@@ -69,11 +73,17 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, []);
 
   const [filters, setFilters] = useState<PropertyFilters>({
-    limit: 100,
+    limit: 300,
     offset: 0,
     sortBy: 'alpha_score',
     sortOrder: 'DESC'
   });
+
+  // DE-241: Update filters without triggering a fetch. Used by PropertiesPage URL init
+  // to sync sort params from URL without racing with the initial fetch.
+  const updateFiltersWithoutFetch = useCallback((newFilters: Partial<PropertyFilters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  }, []);
 
   const fetchProperties = useCallback(async (currentFilters: PropertyFilters) => {
     try {
@@ -136,10 +146,9 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
         // FE-181: Normalize all optional fields to prevent .map() crashes on demo data
         // Demo data often lacks gallery, image_url, link, streetview_url, floorplan_url
         const links = Array.isArray(p.links) ? p.links : (p.link ? [p.link] : []);
-        // FE-231: Normalize financial fields that demo_master.json often leaves undefined.
-        // Without defaults, undefined / 12 → NaN propagates into monthly outlay/payment displays.
-        const serviceCharge = typeof p.service_charge === 'number' && p.service_charge > 0 ? p.service_charge : 4000; // £4K/yr default
-        const groundRent = typeof p.ground_rent === 'number' && p.ground_rent >= 0 ? p.ground_rent : 250;       // £250/yr default
+        // BUG-006: No silent defaults for financial fields. service_charge and ground_rent
+        // must remain undefined if not sourced — fabrication violates DATA_GUARDRAILS.md Rule 1.
+        // Display layer handles undefined gracefully (shows "N/A" or "—").
         return {
           ...p,
           // Normalize missing fields to safe defaults
@@ -150,8 +159,7 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
           link: p.link || links[0] || '',
           streetview_url: p.streetview_url || '',
           floorplan_url: p.floorplan_url || '',
-          service_charge: serviceCharge,
-          ground_rent: groundRent,
+          // service_charge and ground_rent passed through as-is (may be undefined)
           lat: lat + (Math.random() - 0.5) * 0.01,
           lng: lng + (Math.random() - 0.5) * 0.01,
         } as PropertyWithCoords;
@@ -207,6 +215,7 @@ export const PropertyProvider: React.FC<{ children: ReactNode }> = ({ children }
       error,
       filters,
       updateFilters,
+      updateFiltersWithoutFetch,
       refreshProperties,
       registerPipeline,
       registerHydrate,

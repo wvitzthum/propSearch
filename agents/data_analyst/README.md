@@ -11,13 +11,14 @@ High-fidelity property research, metric normalization, and "Alpha" acquisition s
 4. **Check macro data freshness** — `GET /api/macro` returns `_meta.days_since_refresh`. Green ≤3 days, Amber 4–7 days, Red >7 days. Refresh if stale.
 5. **Capture images locally** — run `node scripts/capture_images.js` after any import/enrichment that pulled new property image URLs. See `PROTOCOLS/10_IMAGE_STORAGE.md`. Zoopla zoocdn URLs rotate frequently — always localise immediately.
 6. **Run `make tasks-regen`** — after any task status change.
+7. **Run URL contamination audit** — `node scripts/sync_data.js --audit-urls`. This scans all properties' `links` arrays and reports any URL appearing in multiple records with different addresses. Run at the start of every session to catch new contaminations before they spread.
 
 ---
 
 ## Core Fields Reference
 
 ### Acquisition Criteria
-- **Locations:** Islington (N1/N7), Bayswater (W2), Belsize Park (NW3), West Hampstead (NW6), Chelsea (SW3/SW10).
+- **Locations:** Islington (N1/N7), Bayswater (W2), Belsize Park (NW3), West Hampstead (NW6), Chelsea (SW3/SW10), Pimlico (SW1), Bermondsey (SE1).
 - **List Price:** £500,000 to £775,000. | **Size:** 1.5 to 2 Bedrooms, min 600 sq ft.
 - **Bedrooms & Bathrooms:** Every active property must have a real bedroom and bathroom count sourced from the portal listing. Decimal values allowed: 1.5 (double/ensuite room), 1.5 bathrooms (bath + ens). Null is acceptable if the listing does not disclose — do not fabricate.
 - **Price Prediction Notes:** For every shortlisted property, the analyst must write a short (2-3 sentence) prediction rationale in `analyst_notes` — explain the thesis: why this property, what market condition are you betting on, what is the expected hold period. This feeds the Acquisition Strategy section on /property/:id. Notes must be specific — not generic ("Good location" is not sufficient; "Zone 2 flat with Crossrail access, expected 8% CAGR driven by Canary Wharf employment growth, 5-year hold" is).
@@ -126,6 +127,40 @@ Each protocol is a standalone reference — read the one you need, when you need
 | `PROTOCOLS/08_SCRAPING.md` | FlareSolverr usage, portal extraction patterns |
 | `PROTOCOLS/09_STATE_MODEL.md` | Flagging rules, analyst_flag values, no-archive discipline |
 | `PROTOCOLS/10_IMAGE_STORAGE.md` | Local image capture, `capture_images.js` workflow, CDN resilience |
+
+---
+
+## Reusable Scripts (`scripts/`)
+
+These scripts are maintained and tested. Use them instead of ad-hoc one-offs.
+
+### Scraping
+
+| Script | Purpose | Usage |
+|--------|---------|-------|
+| `scrape_zoopla_search.js` | Search Zoopla listings, extract card data (price/beds/address) | `node scripts/scrape_zoopla_search.js "https://...nw3/?price=500000-900000" "NW3"` → JSON array |
+| `scrape_zoopla_detail.js` | Full detail page for one Zoopla listing | `node scripts/scrape_zoopla_detail.js 72947017` → JSON |
+
+**FlareSolverr dependency:** Both require FlareSolverr at `http://nas.home:8191`. Set `FLARESOLVR_URL` env var to override. Probe with: `curl http://nas.home:8191/v1` — expect `405 Method not allowed` when healthy.
+
+**Card-based search extraction:** Zoopla search pages render client-side. `scrape_zoopla_search.js` extracts from React card HTML (`data-testid="listing-card-content"`). Detail pages require FlareSolverr.
+
+### Import
+
+| Script | Purpose | Usage |
+|--------|---------|-------|
+| `import_comparables.js` | Import candidates with spatial enrichment and alpha score | `node scripts/import_comparables.js /tmp/candidates.json` |
+
+Input JSON: array of `{ id, address, area, list_price, sqft, bedrooms, bathrooms, tenure, floor_level, lat, lng, source, source_id, metadata }`. Writes to `data/propSearch.db`. Computes `price_per_sqm`, `nearest_tube_distance`, `park_proximity`, `alpha_score` automatically.
+
+### Image Capture
+
+| Script | Purpose | Usage |
+|--------|---------|-------|
+| `capture_zoopla_images.js` | Download all Zoopla images for a listing, save to DB | `node scripts/capture_zoopla_images.js <zoopla_id> [internal_property_id]` |
+| `capture_images.js` | General image capture (Rightmove URLs already in DB) | `node scripts/capture_images.js` |
+
+**Image capture bug fixed (2026-04-19):** `capture_zoopla_images.js` was inserting with `propertyId = 'zo-{zooplaId}'` (wrong UUID for imported properties). Always pass the internal property UUID as the 2nd argument. When called as `node scripts/capture_zoopla_images.js 70438237 b0e9c67e-668e68a0b2ba-31c0d3b7`, it correctly writes to `data/images/{internal_id}/`. See `PROTOCOLS/10_IMAGE_STORAGE.md`.
 
 ---
 

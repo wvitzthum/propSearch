@@ -8,7 +8,9 @@ export type Area =
   | "Chelsea (SW3/SW10)"
   | "Chelsea (SW3)"
   | "Chelsea (SW10)"
-  | "Primrose Hill (NW1)";
+  | "Primrose Hill (NW1)"
+  | "Pimlico (SW1)"
+  | "Bermondsey (SE1)";
 
 export type EPCRating = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
 
@@ -26,6 +28,7 @@ export interface Property {
   id: string;
   metadata: PropertyMetadata;
   last_checked?: string; // ISO date string — FE-231: last time user manually re-checked this property
+  archive_reason?: string; // Reason for archiving a property (FE-185)
   address: string;
   area: Area;
   image_url: string;
@@ -46,8 +49,8 @@ export interface Property {
   vetted: boolean;
   epc: EPCRating;
   tenure: string;
-  service_charge: number;
-  ground_rent: number;
+  service_charge?: number;
+  ground_rent?: number;
   lease_years_remaining: number;
   council_tax_band?: string;
   dom: number;
@@ -69,13 +72,20 @@ export interface Property {
   // ADR-017: Analyst-owned market status axis (independent of user pipeline_status)
   market_status?: MarketStatus;
   // FE-186: Server-persisted pipeline status (synced from usePipeline)
-  pipeline_status?: 'discovered' | 'shortlisted' | 'vetted' | 'archived';
+  pipeline_status?: 'discovered' | 'shortlisted' | 'vetted' | 'watchlist' | 'archived';
   // UX-034: User-defined priority rank (1 = highest priority within pipeline group)
   property_rank?: number | null;
   // FE-166: Price history entries for Property Price Evolution chart
   price_history?: PriceHistoryEntry[];
   // FE-234/FE-235: User analyst notes — private observations and strategic notes per property
   analyst_notes?: string;
+  // UX-58: Estimated monthly rent for yield calculation on PropertyDetail
+  estimated_rent?: number | null;
+  // FE-276: Annual appreciation volatility for this area (e.g. 3.2 = ±3.2%/yr)
+  area_volatility?: number | null;
+  // FE-277: WGS84 coordinates for map placement and distance calculations
+  lat?: number;
+  lng?: number;
 }
 
 // FE-166: Price history data for Property Price Evolution component

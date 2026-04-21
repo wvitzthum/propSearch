@@ -13,7 +13,7 @@ import { TrendingUp, TrendingDown, AlertTriangle, MapPin, Zap, Target, ShieldAle
 import type { Property } from '../types/property';
 import { useAppreciationModel } from '../hooks/useAppreciationModel';
 import { useMacroData } from '../hooks/useMacroData';
-import { calculateAlphaBreakdown, alphaColor } from '../utils/alphaScore';
+import { calculateAlphaBreakdown, alphaColor, parseAppreciation } from '../utils/alphaScore';
 import { extractValue } from '../types/macro';
 
 // ─── Local phase helper (mirrors SeasonalMarketCycle.tsx) ───────────────────
@@ -53,15 +53,14 @@ interface BidLadder {
   walkAway: number;
 }
 
-function calcBidLadder(dom: number, realistic: number, list: number): BidLadder {
-  const domVal = dom ?? 0;
-  if (domVal > 90) {
+function calcBidLadder(posture: Posture, realistic: number, list: number): BidLadder {
+  if (posture === 'conservative') {
     return {
       opening: Math.round(realistic * 0.95),
       target: realistic,
       walkAway: realistic,
     };
-  } else if (domVal > 30) {
+  } else if (posture === 'moderate') {
     return {
       opening: Math.round(realistic * 0.97),
       target: realistic,
@@ -131,9 +130,12 @@ const AcquisitionStrategy: React.FC<Props> = ({ property, onRequestEnrichment })
   }, [breakdown]);
 
   // 5-year projection
+  // BUG-006 FIX: Use the model's base case (2.0% CAGR, not 4.0%) as fallback.
+  // profile?.scenarios[].annual_return is the canonical source — fallback to 2.0% from the model.
+  const baseCagr = profile?.scenarios.find(s => s.scenario === 'base')?.annual_return ?? 2.0;
+  // five_year_value fallback: 1.104× = e^(2.0% × 5) — correct model base case (was 1.21× = 4% arbitrary).
   const fiveYearValue = profile?.scenarios.find(s => s.scenario === 'base')?.five_year_value
-    ?? property.list_price * 1.21; // fallback 4% CAGR
-  const baseCagr = profile?.scenarios.find(s => s.scenario === 'base')?.annual_return ?? 4.0;
+    ?? property.list_price * 1.104;
 
   // Confidence from scenario spread
   const confidence = useMemo(() => {
@@ -166,8 +168,8 @@ const AcquisitionStrategy: React.FC<Props> = ({ property, onRequestEnrichment })
   const [posture, setPosture] = useState<Posture>(initialPosture);
 
   const ladder = useMemo<BidLadder>(
-    () => calcBidLadder(property.dom ?? 0, property.realistic_price, property.list_price),
-    [property.dom, property.realistic_price, property.list_price]
+    () => calcBidLadder(posture, property.realistic_price, property.list_price),
+    [posture, property.realistic_price, property.list_price]
   );
 
   const buffer = useMemo(
@@ -225,18 +227,41 @@ const AcquisitionStrategy: React.FC<Props> = ({ property, onRequestEnrichment })
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  const apScore = property.appreciation_potential ?? 0;
-  const apColor = alphaColor(apScore);
+  // BUG-007 FIX: Guard against string DB values (e.g. "5.4") and null/missing fields.
+  // The Property type says number, but SQLite can return strings from raw JSON imports.
+  const rawAp = property.appreciation_potential as unknown;
+  const apNumeric = (rawAp !== null && rawAp !== undefined && rawAp !== '' && isFinite(Number(rawAp)))
+    ? Number(rawAp)
+    : null;
+
+  // BUG-007 FIX: The "Alpha-Derived Appreciation" score is the modifier, not the raw potential.
+  // parseAppreciation applies the band mapping: ≥8→+0.5, 6-7.9→0, 4-5.9→−0.3, <4→−0.5
+  const appreciationBreakdown = parseAppreciation(apNumeric, property.area_volatility ?? undefined);
+  const apScore = appreciationBreakdown.score; // e.g. −0.3 (this is the alpha modifier)
+  const apColor = alphaColor(Math.max(0, apScore + 5)); // shift to colour the modifier (0–10 range)
 
   return (
     <div className="space-y-4">
-      {/* ── Section header ────────────────────────────────────────────────── */}
+      {/* ── Section header — alpha score as headline (UX-119: merged Bid Strategy) ── */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Target size={12} className="text-blue-400" />
-          <h2 className="text-[10px] font-black text-white uppercase tracking-widest">
-            Acquisition Strategy
-          </h2>
+        <div className="flex items-center gap-3">
+          <div className={`text-[32px] font-black tabular-nums leading-none ${
+            apScore >= 0.2 ? 'text-retro-green' : apScore <= -0.2 ? 'text-rose-400' : 'text-amber-400'
+          }`}>
+            {apScore >= 0 ? '+' : ''}{apScore.toFixed(1)}
+            <span className="text-[14px] text-linear-text-muted font-bold ml-1">/10</span>
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-0.5">
+              <Target size={12} className="text-blue-400" />
+              <h2 className="text-[10px] font-black text-white uppercase tracking-widest">
+                Bid Strategy
+              </h2>
+            </div>
+            <div className="h-1 w-32 bg-linear-bg rounded-full overflow-hidden">
+              <div className={`h-full rounded-full ${apColor === 'emerald' ? 'bg-retro-green' : apColor === 'amber' ? 'bg-amber-400' : 'bg-rose-400'}`} style={{ width: `${(apScore / 10) * 100}%` }} />
+            </div>
+          </div>
         </div>
         {notesUpdated && (
           <span className="text-[8px] font-mono text-linear-text-muted/60">
@@ -258,11 +283,16 @@ const AcquisitionStrategy: React.FC<Props> = ({ property, onRequestEnrichment })
                 Alpha-Derived · Appreciation
               </div>
               <div className={`text-[28px] font-black tabular-nums ${
-                apColor === 'emerald' ? 'text-retro-green' : apColor === 'amber' ? 'text-amber-400' : 'text-rose-400'
+                apScore >= 0.2 ? 'text-retro-green' : apScore <= -0.2 ? 'text-rose-400' : 'text-amber-400'
               }`}>
-                {apScore.toFixed(1)}
+                {apScore >= 0 ? '+' : ''}{apScore.toFixed(1)}
                 <span className="text-[12px] text-linear-text-muted font-bold"> /10</span>
               </div>
+              {apNumeric !== null && (
+                <div className="text-[9px] text-linear-text-muted mt-0.5">
+                  {apNumeric.toFixed(1)}% potential → {apScore >= 0 ? '+' : ''}{apScore.toFixed(1)} modifier
+                </div>
+              )}
             </div>
             <div className="flex flex-col items-end gap-1">
               <span className={`text-[8px] font-black uppercase ${
@@ -273,9 +303,9 @@ const AcquisitionStrategy: React.FC<Props> = ({ property, onRequestEnrichment })
               <div className="h-1 w-16 bg-linear-bg rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full ${
-                    apColor === 'emerald' ? 'bg-retro-green' : apColor === 'amber' ? 'bg-amber-400' : 'bg-rose-400'
+                    apScore >= 0.2 ? 'bg-retro-green' : apScore <= -0.2 ? 'bg-rose-400' : 'bg-amber-400'
                   }`}
-                  style={{ width: `${(apScore / 10) * 100}%` }}
+                  style={{ width: `${Math.max(0, Math.min(100, ((apScore + 1) / 2) * 100))}%` }}
                 />
               </div>
             </div>
@@ -283,7 +313,7 @@ const AcquisitionStrategy: React.FC<Props> = ({ property, onRequestEnrichment })
 
           {/* 5yr projection */}
           <div className="border-t border-linear-border pt-4">
-            <div className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest mb-2">
+            <div className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest mb-2">
               5-Year Projection
             </div>
             <div className="flex items-baseline gap-2">
@@ -299,7 +329,7 @@ const AcquisitionStrategy: React.FC<Props> = ({ property, onRequestEnrichment })
           {/* Key drivers */}
           {keyDrivers.length > 0 && (
             <div className="border-t border-linear-border pt-3">
-              <div className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest mb-2">
+              <div className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest mb-2">
                 Key Drivers
               </div>
               <ul className="space-y-1">
@@ -319,7 +349,7 @@ const AcquisitionStrategy: React.FC<Props> = ({ property, onRequestEnrichment })
 
           {/* Posture selector */}
           <div>
-            <div className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest mb-2">
+            <div className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest mb-2">
               Bidding Posture
             </div>
             <div className="flex gap-1">
@@ -347,7 +377,7 @@ const AcquisitionStrategy: React.FC<Props> = ({ property, onRequestEnrichment })
               { label: 'Walk-Away', value: ladder.walkAway, color: 'text-amber-400', warn: true },
             ].map(row => (
               <div key={row.label} className="flex items-center justify-between">
-                <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest w-20">
+                <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest w-20">
                   {row.label}
                 </span>
                 <span className={`text-[11px] font-bold ${row.color}`}>
@@ -364,7 +394,7 @@ const AcquisitionStrategy: React.FC<Props> = ({ property, onRequestEnrichment })
               </div>
             ))}
             <div className="flex items-center justify-between pt-1">
-              <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest w-20">vs List</span>
+              <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest w-20">vs List</span>
               <span className="text-[9px] font-bold text-retro-green">
                 -{Math.max(0, Math.round(((property.list_price - ladder.opening) / property.list_price) * 100))}% below list
               </span>
@@ -374,10 +404,10 @@ const AcquisitionStrategy: React.FC<Props> = ({ property, onRequestEnrichment })
           {/* Dynamic negotiation buffer bar */}
           <div className="border-t border-linear-border pt-4">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">
+              <div className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">
                 Negotiation Buffer
               </div>
-              <span className="text-[8px] text-linear-text-muted/60">{Math.round(buffer.toTarget)}% to target</span>
+              <span className="text-[10px] text-linear-text-muted/60">{Math.round(buffer.toTarget)}% to target</span>
             </div>
             <div className="h-2 w-full bg-linear-bg rounded-full overflow-hidden flex">
               <div
@@ -390,7 +420,7 @@ const AcquisitionStrategy: React.FC<Props> = ({ property, onRequestEnrichment })
               />
               <div className="h-full bg-linear-bg/50 flex-1" />
             </div>
-            <div className="flex justify-between mt-1.5 text-[8px] font-bold text-linear-text-muted uppercase tracking-widest">
+            <div className="flex justify-between mt-1.5 text-[10px] font-bold text-linear-text-muted uppercase tracking-widest">
               <span>Opening</span>
               <span>Target</span>
               <span>Walk-Away</span>
@@ -403,15 +433,15 @@ const AcquisitionStrategy: React.FC<Props> = ({ property, onRequestEnrichment })
 
           {/* Price/sqm delta */}
           <div>
-            <div className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest mb-2">
+            <div className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest mb-2">
               Price Efficiency
             </div>
             <div className="flex items-baseline gap-1 flex-wrap">
               <span className="text-[11px] font-black text-white">
                 £{breakdown.price.pricePerSqm.toLocaleString()}/sqm
               </span>
-              <span className="text-[9px] text-linear-text-muted">vs</span>
-              <span className="text-[9px] text-linear-text-muted">£{breakdown.price.areaBenchmark.toLocaleString()} avg</span>
+              <span className="text-[10px] text-linear-text-muted">vs</span>
+              <span className="text-[10px] text-linear-text-muted">£{breakdown.price.areaBenchmark.toLocaleString()} avg</span>
             </div>
             <div className="flex items-center gap-1.5 mt-1">
               <div className={`h-1.5 w-1.5 rounded-full ${priceDeltaGood ? 'bg-retro-green' : 'bg-rose-400'}`} />
@@ -426,25 +456,25 @@ const AcquisitionStrategy: React.FC<Props> = ({ property, onRequestEnrichment })
 
           {/* DOM vs area avg */}
           <div className="border-t border-linear-border pt-4">
-            <div className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest mb-2">
+            <div className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest mb-2">
               Market Duration
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[16px] font-black text-white tabular-nums">{dom}</span>
-              <span className="text-[9px] text-linear-text-muted">days</span>
+              <span className="text-[10px] text-linear-text-muted">days</span>
             </div>
             <div className="flex items-center gap-1.5 mt-1">
               {isHotStale ? (
                 <>
                   <div className="h-1.5 w-1.5 rounded-full bg-rose-400 animate-pulse" />
-                  <span className="text-[8px] font-black text-rose-400 uppercase">
+                  <span className="text-[10px] font-black text-rose-400 uppercase">
                     Hot Stale &gt;90d — vendor motivated
                   </span>
                 </>
               ) : isStale ? (
                 <>
                   <div className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                  <span className="text-[8px] font-black text-amber-400 uppercase">Stale listing</span>
+                  <span className="text-[10px] font-black text-amber-400 uppercase">Stale listing</span>
                 </>
               ) : (
                 <>
@@ -459,7 +489,7 @@ const AcquisitionStrategy: React.FC<Props> = ({ property, onRequestEnrichment })
 
           {/* Comparable sales — no-data state, request analyst via EnrichmentModal */}
           <div className="border-t border-linear-border pt-4">
-            <div className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest mb-2">
+            <div className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest mb-2">
               Recent Comparables
             </div>
             <div className="flex items-center justify-between p-2 bg-linear-bg border border-white/5 rounded-lg">

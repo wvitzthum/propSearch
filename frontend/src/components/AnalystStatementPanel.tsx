@@ -5,10 +5,9 @@
  * "Bloomberg Terminal meets Linear" aesthetic — terminal dispatch feel.
  */
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, ExternalLink, MessageSquare } from 'lucide-react';
+import { ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
 import { useMacroData } from '../hooks/useMacroData';
 import type { AnalystStatement } from '../types/macro';
-import { extractValue } from '../types/macro';
 
 const fmtDate = (iso: string): string => {
   const d = new Date(iso);
@@ -25,7 +24,6 @@ const MacroBadge: React.FC<{ label: string; value: string | number }> = ({ label
 // ── Single statement card ───────────────────────────────────────────────────────
 const StatementCard: React.FC<{ stmt: AnalystStatement; latest: boolean }> = ({ stmt, latest }) => {
   const [sourcesExpanded, setSourcesExpanded] = useState(false);
-  const [historyExpanded, setHistoryExpanded] = useState(false);
 
   const ctx = stmt.macro_context;
   const badges: Array<{ label: string; value: string }> = [];

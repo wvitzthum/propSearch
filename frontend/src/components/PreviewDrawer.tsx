@@ -69,7 +69,7 @@ const NotesSection: React.FC<NotesSectionProps> = ({ propertyId }) => {
         <button 
           onClick={handleSaveNotes}
           disabled={isSaving}
-          className={`flex items-center gap-1.5 px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest transition-all ${
+          className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest transition-all ${
             isSaving ? 'bg-retro-green/20 text-retro-green' : 'bg-linear-card text-linear-text-muted hover:text-white'
           }`}
         >
@@ -242,25 +242,25 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
             {/* KPI Grid — FE-220: responsive — 2 cols on mobile, 4 on desktop */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 border-y border-linear-border/50 py-6">
               <div className="flex flex-col gap-1">
-                <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
+                <span className="text-[11px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
                   <Maximize2 size={10} className="text-linear-accent" /> Space
                 </span>
                 <span className="text-sm font-bold text-white tracking-tight">{property.sqft || '—'} SQFT</span>
               </div>
               <div className="flex flex-col gap-1 border-l md:border-x border-linear-border md:px-4 pl-4 md:pl-0">
-                <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
+                <span className="text-[11px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
                   <LayoutGrid size={10} className="text-linear-accent" /> Floor
                 </span>
                 <span className="text-sm font-bold text-white tracking-tight uppercase">{property.floor_level || '—'}</span>
               </div>
               <div className="flex flex-col gap-1 border-t md:border-t-0 border-linear-border/50 md:border-r md:border-linear-border pt-4 md:pt-0 md:pr-4 pl-0">
-                <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
+                <span className="text-[11px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
                   <Scale size={10} className="text-linear-accent" /> Price/m²
                 </span>
                 <span className="text-sm font-bold text-white tracking-tight">£{(property.price_per_sqm || 0).toLocaleString()}</span>
               </div>
               <div className="flex flex-col gap-1 border-t md:border-t-0 border-linear-border/50 pt-4 md:pt-0 pl-4 md:pl-4">
-                <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
+                <span className="text-[11px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
                   <Zap size={10} className="text-linear-accent" /> EPC
                 </span>
                 <span className="text-sm font-bold text-white tracking-tight">{property.epc || 'N/A'} Rating</span>
@@ -272,18 +272,26 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
               <h3 className="text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.2em]">Asset Overhead</h3>
               <div className="p-5 bg-linear-card border border-linear-border rounded-2xl flex items-center justify-between group hover:border-linear-accent/30 transition-colors">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest">Est. Service Charge</span>
+                  <span className="text-[12px] text-linear-text-muted uppercase font-bold tracking-widest">Est. Service Charge</span>
                   <div className="text-lg font-bold text-white tracking-tight">
-                    £{(property.service_charge || 0).toLocaleString()}
-                    <span className="text-[10px] text-linear-text-muted ml-1 font-medium">/ PA</span>
+                    {property.service_charge != null
+                      ? `£${property.service_charge.toLocaleString()}`
+                      : '—'}
+                    {property.service_charge != null && (
+                      <span className="text-[10px] text-linear-text-muted ml-1 font-medium">/ PA</span>
+                    )}
                   </div>
                 </div>
                 <div className="h-8 w-px bg-linear-border" />
                 <div className="flex flex-col gap-1 items-end text-right">
-                  <span className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest">Ground Rent</span>
+                  <span className="text-[12px] text-linear-text-muted uppercase font-bold tracking-widest">Ground Rent</span>
                   <div className="text-lg font-bold text-white tracking-tight">
-                    £{(property.ground_rent || 0).toLocaleString()}
-                    <span className="text-[10px] text-linear-text-muted ml-1 font-medium">/ PA</span>
+                    {property.ground_rent != null
+                      ? `£${property.ground_rent.toLocaleString()}`
+                      : '—'}
+                    {property.ground_rent != null && (
+                      <span className="text-[10px] text-linear-text-muted ml-1 font-medium">/ PA</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -295,25 +303,25 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
                     <TrendingDown size={120} />
                   </div>
                   <div className="flex flex-col gap-1 relative z-10">
-                    <span className="text-[9px] text-blue-400 uppercase font-black tracking-widest">Total Monthly Outlay</span>
+                    <span className="text-[12px] text-blue-400 uppercase font-black tracking-widest">Total Monthly Outlay</span>
                     <div className="flex items-baseline gap-1">
                       <span className="text-2xl font-bold text-white tracking-tighter">£{(outlay.total || 0).toLocaleString()}</span>
                       <span className="text-[10px] text-linear-text-muted font-bold">/ MONTH</span>
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-blue-500/10 pt-3">
-                      <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-wider">
+                      <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
                         <span className="text-linear-text-muted">Mortgage</span>
                         <span className="text-white">£{(outlay.mortgage || 0).toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-wider">
+                      <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
                         <span className="text-linear-text-muted">Council Tax</span>
                         <span className="text-white">£{(outlay.councilTax || 0).toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-wider">
+                      <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
                         <span className="text-linear-text-muted">Overheads</span>
                         <span className="text-white">£{( (outlay.serviceCharge || 0) + (outlay.groundRent || 0) ).toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-wider">
+                      <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
                         <span className="text-blue-400/80">90% LTV @ {outlay.rate || 0}%</span>
                       </div>
                     </div>
@@ -392,15 +400,15 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-4 bg-linear-card border border-linear-border rounded-xl">
                   <div className="flex justify-between items-center mb-3">
-                    <span className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest">Alpha Score</span>
+                    <span className="text-[11px] font-bold text-linear-text-muted uppercase tracking-widest">Alpha Score</span>
                     <AlphaBadge score={property.alpha_score} />
                   </div>
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center text-[9px]">
+                    <div className="flex justify-between items-center text-[11px]">
                       <span className="text-linear-text-muted">Days on Market</span>
                       <span className="font-bold text-white">{property.dom} Days</span>
                     </div>
-                    <div className="flex justify-between items-center text-[9px]">
+                    <div className="flex justify-between items-center text-[11px]">
                       <span className="text-linear-text-muted">Price/SQM</span>
                       <span className="font-bold text-white">£{(property.price_per_sqm || 0).toLocaleString()}</span>
                     </div>
@@ -414,17 +422,17 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
                 </div>
                 <div className="p-4 bg-linear-card border border-linear-border rounded-xl flex flex-col justify-between">
                   <div>
-                    <div className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                    <div className="text-[11px] font-bold text-linear-text-muted uppercase tracking-widest mb-3 flex items-center gap-1.5">
                       <Calendar size={10} /> Market Metrics
                     </div>
                     <div className="space-y-2">
-                      <div className="flex justify-between items-center text-[9px]">
+                      <div className="flex justify-between items-center text-[11px]">
                         <span className="text-linear-text-muted">Acquisition</span>
                         <span className="font-bold text-retro-green">
                           £{((property.realistic_price || 0) / 1000).toFixed(0)}K
                         </span>
                       </div>
-                      <div className="flex justify-between items-center text-[9px]">
+                      <div className="flex justify-between items-center text-[11px]">
                         <span className="text-linear-text-muted">List Price</span>
                         <span className="font-bold text-white">
                           £{((property.list_price || 0) / 1000).toFixed(0)}K
@@ -457,7 +465,7 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
                     {property.epc || '—'}
                   </div>
                   <div className="flex-1">
-                    <div className="text-[9px] text-linear-text-muted uppercase font-bold tracking-widest">EPC Rating</div>
+                    <div className="text-[11px] text-linear-text-muted uppercase font-bold tracking-widest">EPC Rating</div>
                     <div className="text-xs font-bold text-white">{property.epc || 'N/A'} → {property.epc_improvement_potential || 'B'}</div>
                   </div>
                   <ArrowRight size={16} className="text-linear-border" />
@@ -468,7 +476,7 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
                 <div className="h-1 w-full bg-linear-bg rounded-full overflow-hidden mb-3">
                   <div className="h-full bg-gradient-to-r from-blue-500 to-retro-green" style={{ width: property.epc === property.epc_improvement_potential ? '95%' : '72%' }} />
                 </div>
-                <div className="flex justify-between items-center text-[9px]">
+                <div className="flex justify-between items-center text-[11px]">
                   <span className="text-linear-text-muted">Est. CAPEX</span>
                   <span className="font-bold text-white">£{(property.est_capex_requirement || 0).toLocaleString()}</span>
                 </div>
@@ -492,8 +500,8 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
               </h3>
               <AffordabilityNode
                 propertyPrice={property.realistic_price || property.list_price || 0}
-                serviceCharge={property.service_charge || 0}
-                groundRent={property.ground_rent || 0}
+                serviceCharge={property.service_charge}
+                groundRent={property.ground_rent}
               />
             </div>
 
@@ -507,7 +515,7 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
                 leaseYears={property.lease_years_remaining || 999}
                 epc={property.epc}
                 floorLevel={property.floor_level}
-                serviceCharge={property.service_charge || 0}
+                serviceCharge={property.service_charge}
                 area={property.area}
               />
             </div>
@@ -534,10 +542,11 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
                 </div>
               ))}
               {/* FE-185 Part 3: market_status badge + last_checked date */}
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {(property as any).market_status && (
                 <div className="flex items-center justify-between pt-2 border-t border-linear-border/50">
-                  <span className="text-[9px] text-linear-text-muted font-bold uppercase tracking-widest">Market Status</span>
-                  <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                  <span className="text-[11px] text-linear-text-muted font-bold uppercase tracking-widest">Market Status</span>
+                  <span className={`px-2 py-0.5 rounded text-[11px] font-black uppercase ${
                     (property as any).market_status === 'active' ? 'bg-retro-amber/10 text-retro-amber border border-retro-amber/20' :
                     (property as any).market_status === 'under_offer' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
                     'bg-linear-bg text-linear-text-muted border border-linear-border'
@@ -546,10 +555,11 @@ const PreviewDrawer: React.FC<PreviewDrawerProps> = ({
                   </span>
                 </div>
               )}
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {(property as any).last_checked && (
                 <div className="flex items-center justify-between">
-                  <span className="text-[9px] text-linear-text-muted font-bold uppercase tracking-widest">Last Verified</span>
-                  <span className="text-[9px] font-bold text-white">
+                  <span className="text-[11px] text-linear-text-muted font-bold uppercase tracking-widest">Last Verified</span>
+                  <span className="text-[11px] font-bold text-white">
                     {new Date((property as any).last_checked).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })}
                   </span>
                 </div>

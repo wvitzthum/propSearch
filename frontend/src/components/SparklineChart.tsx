@@ -32,24 +32,21 @@ const SparklineChart: React.FC<SparklineChartProps> = ({
     // QA-185: Guard against NaN values in data
     const validData = data.filter(d => typeof d === 'number' && isFinite(d));
     if (validData.length < 2) return null;
-    const pad = 2;
-    const innerWidth = width - pad * 2;
-    const innerHeight = height - pad * 2;
 
     const xScale = scaleLinear({
       domain: [0, validData.length - 1],
-      range: [pad, width - pad],
+      range: [0, width],
     });
     const yScale = scaleLinear({
       domain: [Math.min(...validData), Math.max(...validData)],
-      range: [height - pad, pad],
+      range: [height, 0],
     });
 
     const di = dotIndex !== undefined ? dotIndex : validData.length - 1;
     const dotX = xScale(di);
     const dotY = yScale(validData[di] ?? 0);
 
-    return { xScale, yScale, dotX, dotY, innerWidth, innerHeight, validData };
+    return { xScale, yScale, dotX, dotY, validData };
   }, [data, width, height, dotIndex]);
 
   if (data.length < 2) return null;
@@ -57,11 +54,11 @@ const SparklineChart: React.FC<SparklineChartProps> = ({
   // QA-185: Use validData for SVG rendering to prevent NaN in path coordinates
   const renderData = chart?.validData ?? data.filter((d: number) => isFinite(d));
 
+// VISX-031: Removed viewBox — explicit pixel SVG dims, no tooltip, no coord mismatch risk
   return (
     <svg
       width={width}
       height={height}
-      viewBox={`0 0 ${width} ${height}`}
       className={className}
       aria-hidden="true"
     >

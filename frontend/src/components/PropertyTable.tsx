@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowUp,
@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   CheckSquare,
   Square,
-  Star,
   Layers,
 } from 'lucide-react';
 import type { PropertyWithCoords } from '../types/property';
@@ -27,16 +26,19 @@ interface PropertyTableProps {
   properties: PropertyWithCoords[];
   onSortChange?: (key: string) => void;
   currentSort?: string;
+  /** SORT-001: sortOrder from URL — used to initialise localSort.direction correctly on load. */
+  sortOrder?: 'ASC' | 'DESC';
   onPreview?: (property: PropertyWithCoords) => void;
   onStatusChange?: (id: string, status: PropertyStatus) => void;
   getStatus?: (id: string) => PropertyStatus;
-  // UX-034: Rank — get/set user priority rank
-  getRank?: (id: string) => number | undefined;
-  onRankChange?: (id: string, rank: number | null) => void;
   /** UX-041: Show batch selection checkbox column — toggled via toolbar */
   showBatchCheckbox?: boolean;
   /** UX-041: Set of hidden column keys — accessible via column toggle. Defaults empty (all visible). */
   hiddenColumns?: Set<string>;
+  /** UX-82: Set of selected row IDs — lives at page level to survive view-mode switch */
+  batchSelected?: Set<string>;
+  /** UX-82: Callback receives (id, selected) for external state updates */
+  onBatchSelectedChange?: (id: string, selected: boolean) => void;
 }
 
 const SortIcon = ({ 
@@ -94,43 +96,70 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
   properties,
   onSortChange,
   currentSort,
+  sortOrder,
   onPreview,
   onStatusChange,
   getStatus,
-  getRank,
-  onRankChange,
   showBatchCheckbox = false,
   hiddenColumns = new Set(),
-}) => {
+  batchSelected: externalBatchSelected,
+  onBatchSelectedChange,
+}: PropertyTableProps) => {
   const { toggleComparison, isInComparison } = useComparison();
-  const [batchSelected, setBatchSelected] = useState<Set<string>>(new Set());
+  // UX-82: batchSelected lives at page level — survives view-mode switch
+  const [internalBatchSelected, setInternalBatchSelected] = useState<Set<string>>(new Set());
+  const batchSelected = externalBatchSelected ?? internalBatchSelected;
+  // SORT-001 BUG #2 fix: direction is no longer hardcoded — reads from URL sortOrder.
+  // Falls back to 'desc' when sortOrder is not yet set (initial render before URL is parsed).
   const [localSort, setLocalSort] = useState<{ key: string, direction: 'asc' | 'desc' }>({
     key: currentSort || 'alpha_score',
-    direction: 'desc'
+    direction: sortOrder === 'ASC' ? 'asc' : 'desc',
   });
 
-  const toggleBatchSelect = (id: string) => {
-    setBatchSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
+  // SORT-001: Keep localSort.direction in sync with URL sortOrder.
+  // useState only reads initial values on mount; when the URL updates (e.g. after a
+  // column-header click in PropertiesPage), sortOrder prop changes but localSort is stale.
+  useEffect(() => {
+    setLocalSort(prev => {
+      const newDir = sortOrder === 'ASC' ? 'asc' : 'desc';
+      return prev.direction === newDir ? prev : { ...prev, direction: newDir };
     });
+  }, [sortOrder]);
+
+  const toggleBatchSelect = (id: string) => {
+    if (onBatchSelectedChange) {
+      onBatchSelectedChange(id, !batchSelected.has(id));
+    } else {
+      setInternalBatchSelected(prev => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id); else next.add(id);
+        return next;
+      });
+    }
   };
 
   const selectAll = () => {
     if (batchSelected.size === properties.length) {
-      setBatchSelected(new Set());
+      if (onBatchSelectedChange) {
+        properties.forEach(p => onBatchSelectedChange(p.id, false));
+      } else {
+        setInternalBatchSelected(new Set());
+      }
     } else {
-      setBatchSelected(new Set(properties.map(p => p.id)));
+      if (onBatchSelectedChange) {
+        properties.forEach(p => onBatchSelectedChange(p.id, true));
+      } else {
+        setInternalBatchSelected(new Set(properties.map(p => p.id)));
+      }
     }
   };
 
   const clearBatch = () => {
-    setBatchSelected(new Set());
+    if (onBatchSelectedChange) {
+      batchSelected.forEach(id => onBatchSelectedChange(id, false));
+    } else {
+      setInternalBatchSelected(new Set());
+    }
   };
 
   const handleSort = (key: string) => {
@@ -142,25 +171,14 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
     if (onSortChange) onSortChange(key);
   };
 
-  // UX-034 rank sort — reads from usePropertyRank hook, not property object
-  const rankedSort = useCallback((a: PropertyWithCoords, b: PropertyWithCoords, dir: 'asc' | 'desc') => {
-    if (!getRank) return 0;
-    const rankA = getRank(a.id);
-    const rankB = getRank(b.id);
-    if (rankA === undefined && rankB === undefined) return 0;
-    if (rankA === undefined) return dir === 'asc' ? 1 : -1;
-    if (rankB === undefined) return dir === 'asc' ? -1 : 1;
-    return dir === 'asc' ? rankA - rankB : rankB - rankA;
-  }, [getRank]);
-
   const sortedProperties = [...properties].sort((a, b) => {
     const key = localSort.key;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let aValue: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let bValue: any;
 
-    if (key === 'user_priority') {
-      return rankedSort(a, b, localSort.direction);
-    } else if (key === 'value_gap') {
+    if (key === 'value_gap') {
       aValue = (a.list_price || 0) - (a.realistic_price || 0);
       bValue = (b.list_price || 0) - (b.realistic_price || 0);
     } else if (key === 'commute_paternoster') {
@@ -170,17 +188,31 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
       aValue = a.commute_canada_square ?? 999;
       bValue = b.commute_canada_square ?? 999;
     } else if (key.includes('.')) {
-      const [main, sub] = key.split('.') as [keyof PropertyWithCoords, string];
-      aValue = (a[main] as any)?.[sub];
-      bValue = (b[main] as any)?.[sub];
+      const [main, sub] = key.split('.');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      aValue = (a as any)[main]?.[sub];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      bValue = (b as any)[main]?.[sub];
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       aValue = (a as any)[key];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       bValue = (b as any)[key];
     }
 
     if (aValue === undefined || aValue === null) return 1;
     if (bValue === undefined || bValue === null) return -1;
 
+    // SORT-001: user_priority is ordinal — rank 1 always at top regardless of direction.
+    // This mirrors the keyboard shortcut behaviour in PropertiesPage.
+    if (key === 'user_priority') {
+      const rankA = (a as any).user_priority ?? 0;
+      const rankB = (b as any).user_priority ?? 0;
+      if (rankA === 0 && rankB === 0) return 0;
+      if (rankA === 0) return 1;
+      if (rankB === 0) return -1;
+      return rankA - rankB;
+    }
     if (aValue < bValue) return localSort.direction === 'asc' ? -1 : 1;
     if (aValue > bValue) return localSort.direction === 'asc' ? 1 : -1;
     return 0;
@@ -243,16 +275,8 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                   )}
                 </button>
               </th>
-              {/* UX-034: Rank column header — click to sort by user priority */}
-              <th
-                className="px-2 py-3 text-center text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] cursor-pointer group hover:bg-linear-card transition-colors relative border-r border-linear-border/30 min-w-[44px]"
-                onClick={() => onSortChange?.('user_priority')}
-              >
-                <div className="flex flex-col items-center gap-0.5">
-                  <span>Rk</span>
-                  <SortIcon columnKey="user_priority" currentSort={localSort.key} direction={localSort.direction} />
-                </div>
-              </th>
+              {/* UX-060: Watchlist indicator column header */}
+              <th className="px-2 py-3 text-center border-r border-linear-border/30 min-w-[36px]" />
               <TableHeader
                 label="Asset"
                 columnKey="address"
@@ -284,7 +308,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
               <TableHeader
                 label="Gap"
                 columnKey="value_gap"
-                tooltip="Delta between list price and realistic acquisition target."
+                tooltip='Negotiation margin: list price minus your target price. Negative = opportunity (target below list). Positive = overpaying (target above list). Sort by this column to find the best deals.'
                 className="px-2"
                 onSort={handleSort}
                 currentSort={localSort.key}
@@ -318,6 +342,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
               <TableHeader
                 label="DoM"
                 columnKey="dom"
+                tooltip="Days on market — sourced from portal listing (Rightmove / Zoopla). Stale listings (>30d) may indicate price reductions."
                 className="px-2"
                 onSort={handleSort}
                 currentSort={localSort.key}
@@ -344,6 +369,15 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                 currentSort={localSort.key}
                 direction={localSort.direction}
               />
+              <TableHeader
+                label="Added"
+                columnKey="date_added"
+                tooltip="Date this property was added to your pipeline. Sort by this to find recent entries."
+                className="px-2"
+                onSort={handleSort}
+                currentSort={localSort.key}
+                direction={localSort.direction}
+              />
               <th className="px-2 py-3 text-right text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.1em] whitespace-nowrap">
                 Action
               </th>
@@ -361,6 +395,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                   className={`hover:bg-linear-card/40 transition-colors group ${
                     status === 'shortlisted' ? 'bg-linear-accent-blue/5' :
                     status === 'vetted' ? 'bg-linear-accent-emerald/10' :
+                    status === 'watchlist' ? 'bg-amber-500/5' :
                     status === 'archived' ? 'opacity-50 bg-linear-accent-rose/5' : ''
                   } ${isSelected ? 'bg-linear-accent-blue/10' : ''} ${isBatchSelected ? 'bg-blue-500/5' : ''}`}
                 >
@@ -380,43 +415,13 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                       </button>
                     </td>
                   )}
-                  {/* UX-034: Rank cell — click to assign/remove rank */}
+                  {/* UX-060: Watchlist status indicator */}
                   <td
-                    className={`px-2 py-4 text-center border-r border-linear-border/30 ${showBatchCheckbox ? '' : ''}`}
+                    className="px-2 py-4 text-center border-r border-linear-border/30"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {getRank ? (
-                      <button
-                        onClick={() => {
-                          const currentRank = getRank(property.id);
-                          if (currentRank !== undefined) {
-                            onRankChange?.(property.id, null);
-                          } else {
-                            let count = 0;
-                            for (const p of properties) {
-                              if (getRank(p.id) !== undefined) count++;
-                            }
-                            onRankChange?.(property.id, count + 1);
-                          }
-                        }}
-                        className={`w-8 h-8 rounded flex items-center justify-center text-[10px] font-black transition-all ${
-                          getRank(property.id) !== undefined
-                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            : 'text-linear-text-muted/40 hover:text-blue-400 hover:bg-blue-500/10 border border-transparent hover:border-blue-500/20'
-                        }`}
-                        title={getRank(property.id) !== undefined ? `Rank ${getRank(property.id)} — click to remove` : 'Assign rank'}
-                      >
-                        {getRank(property.id) !== undefined ? (
-                          getRank(property.id) === 1 ? (
-                            <div className="flex items-center justify-center gap-0.5">
-                              <Star size={9} className="text-amber-400 fill-amber-400" />
-                              <span>{getRank(property.id)}</span>
-                            </div>
-                          ) : (
-                            getRank(property.id)
-                          )
-                        ) : '—'}
-                      </button>
+                    {status === 'watchlist' ? (
+                      <div className="w-2 h-2 rounded-full bg-amber-400 mx-auto" title="Watchlist" />
                     ) : null}
                   </td>
                   {/* Asset / Area — sticky, with compact pipeline status dot */}
@@ -431,6 +436,7 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                           className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
                             status === 'shortlisted' ? 'bg-blue-400' :
                             status === 'vetted' ? 'bg-emerald-400' :
+                            status === 'watchlist' ? 'bg-amber-400' :
                             status === 'archived' ? 'bg-rose-400' :
                             'bg-zinc-500'
                           }`}
@@ -446,6 +452,11 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                           {status === 'vetted' && (
                             <span className="flex items-center gap-0.5 text-[8px] font-black text-linear-accent-emerald bg-linear-accent-emerald/10 px-1 rounded border border-linear-accent-emerald/20">
                               <ShieldCheck size={8} /> VETTED
+                            </span>
+                          )}
+                          {status === 'watchlist' && (
+                            <span className="flex items-center gap-0.5 text-[8px] font-black text-amber-400 bg-amber-500/10 px-1 rounded border border-amber-500/20">
+                              <Archive size={8} /> WATCHLIST
                             </span>
                           )}
                           {property.metadata?.is_new && (
@@ -552,6 +563,12 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                       </span>
                     ) : '—'}
                   </td>
+                  {/* FE-274: Date Added column */}
+                  <td className="px-2 py-4 text-[10px] text-linear-text-muted font-mono" onClick={(e) => e.stopPropagation()}>
+                    {property.metadata?.first_seen
+                      ? new Date(property.metadata.first_seen).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })
+                      : '—'}
+                  </td>
                   {/* UX-041: Appreciation — accessible via column toggle */}
                   {!hiddenColumns.has('appreciation_potential') && (
                     <td className="px-2 py-4 text-[11px] text-linear-text-muted font-bold">
@@ -589,12 +606,15 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => toggleComparison(property.id)}
-                        className={`p-1.5 rounded transition-all ${
+                        className={`p-1.5 rounded transition-all flex items-center gap-1 ${
                           isSelected ? 'text-linear-accent-blue bg-linear-accent-blue/10' : 'text-linear-accent hover:text-white'
                         }`}
                         title={isSelected ? 'Remove from Comparison' : 'Add to Comparison'}
                       >
                         <Zap size={14} fill={isSelected ? 'currentColor' : 'none'} />
+                        <span className="text-[8px] text-linear-text-muted group-hover:opacity-100 opacity-0 transition-opacity">
+                          {isSelected ? '−' : '+'}
+                        </span>
                       </button>
                       {/* UX-041: Single context-aware pipeline advance button */}
                       <button
@@ -602,22 +622,25 @@ const PropertyTable: React.FC<PropertyTableProps> = ({
                           if (!onStatusChange) return;
                           const next = status === 'discovered' ? 'shortlisted'
                             : status === 'shortlisted' ? 'vetted'
-                            : status === 'archived' ? 'discovered'
-                            : 'archived';
+                            : status === 'vetted' ? 'watchlist'
+                            : status === 'watchlist' ? 'archived'
+                            : 'discovered';
                           onStatusChange(property.id, next);
                         }}
                         className={`p-1.5 rounded transition-all ${
                           status === 'shortlisted' ? 'text-blue-400 hover:text-white' :
                           status === 'vetted' ? 'text-emerald-400 hover:text-white' :
+                          status === 'watchlist' ? 'text-amber-400 hover:text-white' :
                           status === 'archived' ? 'text-rose-400 hover:text-white' :
                           'text-linear-accent hover:text-white'
                         }`}
-                        title={`Pipeline: ${status} → click to advance`}
+                        title={`Advance: ${status} → ${status === 'discovered' ? 'shortlisted' : status === 'shortlisted' ? 'vetted' : status === 'vetted' ? 'watchlist' : status === 'watchlist' ? 'archived' : 'discovered'}`}
                       >
                         {status === 'discovered' ? <Bookmark size={14} /> :
                          status === 'shortlisted' ? <ShieldCheck size={14} /> :
+                         status === 'vetted' ? <ShieldCheck size={14} /> :
                          status === 'archived' ? <RotateCcw size={14} /> :
-                         <ShieldCheck size={14} />}
+                         <Archive size={14} />}
                       </button>
                       <Link
                         to={`/property/${property.id}`}

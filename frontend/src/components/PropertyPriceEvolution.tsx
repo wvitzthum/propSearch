@@ -207,7 +207,7 @@ const PriceEvolutionChart: React.FC<{ width: number; property: Property; history
                   stroke="#18181b"
                   strokeWidth={1.5}
                 />
-                {h.status !== 'listed' && (
+                {h.status != null && h.status !== 'listed' && (
                   <circle cx={cx} cy={cy} r={8} fill="none" stroke={color} strokeWidth={1} strokeOpacity={0.4} strokeDasharray="2,2" />
                 )}
               </g>
@@ -345,7 +345,7 @@ const PriceEvolutionChart: React.FC<{ width: number; property: Property; history
               <span className="text-linear-text-muted">Status</span>
               <span
                 className="font-bold"
-                style={{ color: STATUS_COLORS[tooltipData.entry.status] ?? '#60a5fa' }}
+                style={{ color: STATUS_COLORS[tooltipData.entry.status ?? 'listed'] ?? '#60a5fa' }}
               >
                 {tooltipData.entry.status.replace('_', ' ')}
               </span>
@@ -482,16 +482,22 @@ const PropertyPriceEvolution: React.FC<Props> = ({ property, onRequestEnrichment
                         {fmt(h.price)}
                       </td>
                       <td className="text-center py-1.5 px-2">
-                        <span
-                          className="px-1.5 py-0.5 rounded-full text-[7px] font-black uppercase tracking-wider"
-                          style={{
-                            backgroundColor: STATUS_COLORS[h.status] + '20',
-                            color: STATUS_COLORS[h.status],
-                            border: `0.5px solid ${STATUS_COLORS[h.status]}40`,
-                          }}
-                        >
-                          {h.status.replace('_', ' ')}
-                        </span>
+                        {(() => {
+                          const entryStatus = h.status ?? 'listed';
+                          const color = STATUS_COLORS[entryStatus] ?? '#60a5fa';
+                          return (
+                            <span
+                              className="px-1.5 py-0.5 rounded-full text-[7px] font-black uppercase tracking-wider"
+                              style={{
+                                backgroundColor: color + '20',
+                                color,
+                                border: `0.5px solid ${color}40`,
+                              }}
+                            >
+                              {entryStatus.replace('_', ' ')}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="text-right py-1.5 pl-2">
                         {h.reduction_pct != null ? (

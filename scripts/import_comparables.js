@@ -131,6 +131,8 @@ function importProperty(data) {
     'Belsize Park (NW3)': 12000,
     'Islington (N1)': 11000,
     'Angel (N1)': 11000,
+    'Pimlico (SW1)': 14500,
+    'Bermondsey (SE1)': 12500,
   };
   const benchmark = AREA_BENCHMARKS[data.area] || 10000;
   const discountPct = ((benchmark - price_per_sqm) / benchmark) * 100;
@@ -231,10 +233,24 @@ function main() {
   }
   
   console.error(`Importing ${candidates.length} candidates into ${DB_PATH}`);
+  let skipped = 0;
   for (const c of candidates) {
+    // Guard: skip records without at least one portal link
+    const links = c.links || (c.url ? [c.url] : []);
+    if (!Array.isArray(links) || links.length === 0) {
+      console.error(`  [GUARD] SKIPPED — no links/URL for: ${c.address || c.id}`);
+      skipped++;
+      continue;
+    }
+    // Guard: skip records without a positive list price
+    if (!c.list_price || c.list_price <= 0) {
+      console.error(`  [GUARD] SKIPPED — no/zero price for: ${c.address || c.id}`);
+      skipped++;
+      continue;
+    }
     importProperty(c);
   }
-  console.error('Done.');
+  console.error(`Done. Imported: ${candidates.length - skipped} | Skipped: ${skipped}`);
 }
 
 if (require.main === module) {

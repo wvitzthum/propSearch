@@ -12117,7 +12117,7 @@
       "effort": "High",
       "section": "new_approved",
       "title": "DE: Source all map overlay data -- LSOA boundaries, income, crime, POIs, greenspace, rivers",
-      "status": "Todo",
+      "status": "In Progress",
       "responsible": "Data Engineer",
       "dependencies": [],
       "date": "2026-04-21",
@@ -12161,7 +12161,7 @@
       "effort": "High",
       "section": "new_approved",
       "title": "FE: LSOA choropleth overlay rendering on /map -- income, density, crime",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "DE-242"
@@ -12194,8 +12194,10 @@
         "Add 'Amenities' section to layer toggle panel with per-category checkboxes.",
         "",
         "FILE IMPACT: MapView.tsx (choropleth state, fetch, render, toggle). No new component files needed.",
-        "DEPENDENCY: DE-242. Do not begin rendering until data files are confirmed committed."
-      ]
+        "DEPENDENCY: DE-242. Do not begin rendering until data files are confirmed committed.",
+        "Resolved 2026-04-21: Architecture-only since DE-242 data not yet committed. (1) Choropleth layer: choroplethData state, CHOROPLETH_COLORS (income/density/crime palettes), CHOROPLETH_BREAKS, getChoroplethColor using existing interpolateColor, choroplethStyle function, choropleth GeoJSON render with tooltip; (2) POI layer: poiData state, POI_COLORS per category, CircleMarker per POI with popup; (3) Overlays control panel in map UI with 3 choropleth modes + 7 amenity categories; (4) Choropleth legend (bottom-left) that auto-shows when overlay active; (5) Fetch for /data/lsoa_choropleth_london.geojson + /data/london_pois.json. Build clean. FE-275 resolved."
+      ],
+      "completed_date": "2026-04-21"
     },
     {
       "id": "FE-277",
@@ -12203,7 +12205,7 @@
       "effort": "Medium",
       "section": "new_approved",
       "title": "FE: PropertyDetail NeighbourhoodSection -- walkability score, Haversine distances, crime badge, mini-map",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Frontend Engineer",
       "dependencies": [
         "FE-275"
@@ -12230,7 +12232,8 @@
         "",
         "FILE IMPACT: PropertyDetail.tsx (import + render), new: NeighbourhoodSection.tsx, new: nearbyAmenities.ts.",
         "DEPENDENCY: FE-275 (POI data must be available)."
-      ]
+      ],
+      "completed_date": "2026-04-21"
     },
     {
       "id": "UX-129",

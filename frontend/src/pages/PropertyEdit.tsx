@@ -128,9 +128,9 @@ const PropertyEdit: React.FC = () => {
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false); // PED-006: replace window.confirm
   // Track dirty fields: fieldKey → new value (string or number)
   const [dirty, setDirty] = useState<Record<string, string | number>>({});
-  // Track which accordion sections are open
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(['financial']));
 
   useEffect(() => {
@@ -207,13 +207,20 @@ const PropertyEdit: React.FC = () => {
 
   const handleCancel = useCallback(() => {
     if (hasChanges) {
-      if (window.confirm('Discard unsaved changes?')) {
-        navigate(`/property/${id}`);
-      }
+      setShowDiscardConfirm(true);
     } else {
       navigate(`/property/${id}`);
     }
   }, [hasChanges, navigate, id]);
+
+  const handleDiscardConfirm = useCallback(() => {
+    setShowDiscardConfirm(false);
+    navigate(`/property/${id}`);
+  }, [navigate, id]);
+
+  const handleDiscardCancel = useCallback(() => {
+    setShowDiscardConfirm(false);
+  }, []);
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => {
@@ -370,7 +377,7 @@ const PropertyEdit: React.FC = () => {
                           >
                             <option value="">— not set —</option>
                             {field.options?.map(opt => (
-                              <option key={opt} value={opt}>{opt}</option>
+                              <option key={opt} value={opt}>{MARKET_STATUS_LABELS[opt] ?? opt}</option>
                             ))}
                           </select>
                         ) : field.type === 'textarea' ? (
@@ -390,7 +397,14 @@ const PropertyEdit: React.FC = () => {
                             <input
                               type={field.type === 'url' ? 'url' : field.type === 'date' ? 'date' : field.type}
                               value={displayValue}
-                              step={field.key === 'bedrooms' || field.key === 'bathrooms' ? '0.5' : 'any'}
+                              step={
+                                field.type !== 'number' ? undefined
+                                  : field.key === 'bedrooms' || field.key === 'bathrooms' ? '0.5'
+                                  : field.key === 'price_reduction_percent' ? '0.5'
+                                  : field.group === 'financial' || field.key === 'est_capex_requirement' ? '100'
+                                  : '1'
+                              }
+                              min={field.type === 'number' ? 0 : undefined}
                               onChange={e => handleFieldChange(
                                 field.key,
                                 field.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value
@@ -476,36 +490,56 @@ const PropertyEdit: React.FC = () => {
             )}
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={handleCancel}
-              disabled={submitting}
-              className="flex items-center gap-1.5 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 text-xs font-bold rounded-lg transition-colors disabled:opacity-50"
-            >
-              <X size={12} />
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={!hasChanges || submitting}
-              className={[
-                'flex items-center gap-1.5 px-5 py-2 text-white text-xs font-bold rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed',
-                hasChanges && !submitting
-                  ? 'bg-retro-green hover:bg-retro-green/90 shadow-lg shadow-retro-green/20'
-                  : 'bg-retro-green/40',
-              ].join(' ')}
-            >
-              {submitting ? (
-                <>
-                  <Loader2 size={12} className="animate-spin" />
-                  Saving…
-                </>
-              ) : (
-                <>
-                  <Save size={12} />
-                  Save Changes
-                </>
-              )}
-            </button>
+            {showDiscardConfirm ? (
+              <>
+                <span className="text-[10px] text-linear-text-muted">Discard changes?</span>
+                <button
+                  onClick={handleDiscardCancel}
+                  className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 text-xs font-bold rounded-lg transition-colors"
+                >
+                  Keep Editing
+                </button>
+                <button
+                  onClick={handleDiscardConfirm}
+                  className="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/30 text-rose-400 text-xs font-bold rounded-lg transition-colors"
+                >
+                  Discard
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={handleCancel}
+                  disabled={submitting}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 text-xs font-bold rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <X size={12} />
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={!hasChanges || submitting}
+                  className={[
+                    'flex items-center gap-1.5 px-5 py-2 text-white text-xs font-bold rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed',
+                    hasChanges && !submitting
+                      ? 'bg-retro-green hover:bg-retro-green/90 shadow-lg shadow-retro-green/20'
+                      : 'bg-retro-green/40',
+                  ].join(' ')}
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin" />
+                      Saving…
+                    </>
+                  ) : (
+                    <>
+                      <Save size={12} />
+                      Save Changes
+                    </>
+                  )}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

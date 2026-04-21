@@ -17,6 +17,7 @@ interface YieldRow {
 
 const RentalYieldVsGiltChart: React.FC = () => {
   const { data } = useMacroData();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const raw = data as any;
 
   const {
@@ -51,10 +52,10 @@ const RentalYieldVsGiltChart: React.FC = () => {
     return Object.entries(re)
       .filter(([key]) => key !== '_description')
       .slice(0, 8)
-      .map(([area, val]: [string, any]) => ({
+      .map(([area, val]: [string, unknown]) => ({
         area,
-        gross: typeof val === 'object' ? (val.gross_yield ?? 3.5) : (parseFloat(String(val)) || 3.5),
-        net: typeof val === 'object' ? (val.net_yield ?? (val.gross_yield != null ? (val.gross_yield as number) * 0.76 : 2.7)) : (parseFloat(String(val)) * 0.76 || 2.7),
+        gross: typeof val === 'object' ? (val as { gross_yield?: number }).gross_yield ?? 3.5 : (parseFloat(String(val)) || 3.5),
+        net: typeof val === 'object' ? ((val as { gross_yield?: number }).gross_yield != null ? (val as { gross_yield: number }).gross_yield * 0.76 : 2.7) : (parseFloat(String(val)) * 0.76 || 2.7),
         epcRisk: false,
       }));
   }, [raw]);
@@ -137,7 +138,6 @@ const RentalYieldVsGiltChart: React.FC = () => {
 
             const handleMouseMove = (event: React.MouseEvent<SVGRectElement>, row: YieldRow) => {
               const coords = localPoint(event);
-              console.log('[CHART] handleMouseMove coords:', coords, 'row:', row?.area);
               if (!coords) return;
               showTooltip({ tooltipData: row, tooltipLeft: coords.x, tooltipTop: coords.y });
             };
@@ -157,8 +157,9 @@ const RentalYieldVsGiltChart: React.FC = () => {
                   ))}
                 </div>
 
-                {/* SVG Chart */}
-                <svg width={chartWidth} height={innerHeight} className="overflow-visible" data-testid="yield-vs-gilt-svg">
+                {/* SVG Chart + Tooltip (siblings in flex container — correct coord space) */}
+                <div className="relative shrink-0">
+                  <svg width={chartWidth} height={innerHeight} className="overflow-visible" data-testid="yield-vs-gilt-svg">
                   {/* Background track */}
                   {sorted.map(row => (
                     <rect
@@ -214,6 +215,24 @@ const RentalYieldVsGiltChart: React.FC = () => {
                   })}
                 </svg>
 
+                  {/* Tooltip — rendered inside the relative div so coords are SVG-element-relative (correct for localPoint) */}
+                  {tooltipOpen && tooltipData && (
+                    <TooltipWithBounds
+                      left={tooltipLeft}
+                      top={tooltipTop}
+                      applyPositionStyle
+                      offsetLeft={0}
+                      offsetTop={0}
+                      className="bg-black/90 backdrop-blur border border-linear-border rounded-lg px-3 py-2 pointer-events-none z-50"
+                    >
+                      <div className="text-[10px] font-black text-white">{tooltipData.area.split(' (')[0]}</div>
+                      <div className="text-[9px] text-retro-green font-bold">Gross: {tooltipData.gross.toFixed(1)}%</div>
+                      <div className="text-[9px] text-linear-text-muted">Net: {tooltipData.net.toFixed(1)}%</div>
+                      <div className="text-[9px] text-linear-text-muted">vs gilt: {tooltipData.gross - giltYield >= 0 ? '+' : ''}{(tooltipData.gross - giltYield).toFixed(1)}pp</div>
+                    </TooltipWithBounds>
+                  )}
+                </div>
+
                 {/* Yield values */}
                 <div className="shrink-0 flex flex-col justify-start" style={{ width: valueWidth, paddingLeft: 8 }}>
                   {sorted.map(row => {
@@ -260,22 +279,6 @@ const RentalYieldVsGiltChart: React.FC = () => {
         <span className="text-[8px] text-linear-text-muted/40 font-mono">vs UK Gilt 10yr · {new Date().getFullYear()}</span>
       </div>
 
-      {/* Tooltip */}
-      {tooltipOpen && tooltipData && (
-        <TooltipWithBounds
-          left={tooltipLeft}
-          top={tooltipTop}
-          applyPositionStyle
-          offsetLeft={0}
-          offsetTop={0}
-          className="bg-black/90 backdrop-blur border border-linear-border rounded-lg px-3 py-2 pointer-events-none z-50"
-        >
-          <div className="text-[10px] font-black text-white">{tooltipData.area.split(' (')[0]}</div>
-          <div className="text-[9px] text-retro-green font-bold">Gross: {tooltipData.gross.toFixed(1)}%</div>
-          <div className="text-[9px] text-linear-text-muted">Net: {tooltipData.net.toFixed(1)}%</div>
-          <div className="text-[9px] text-linear-text-muted">vs gilt: {tooltipData.gross - giltYield >= 0 ? '+' : ''}{(tooltipData.gross - giltYield).toFixed(1)}pp</div>
-        </TooltipWithBounds>
-      )}
     </div>
   );
 };

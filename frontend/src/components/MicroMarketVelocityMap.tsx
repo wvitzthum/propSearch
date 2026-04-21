@@ -33,10 +33,11 @@ const MicroMarketVelocityMap: React.FC = () => {
 
   // FE-121 fix: use area_trends — each entry has its own london_benchmark for per-area delta
   const areas = useMemo(() => {
-    // area_trends is an array of { area, heat_index: {value}, annual_growth: {value}, london_benchmark, ... }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const heatData: any[] = data?.area_trends || [];
     const globalLondonBenchmark = data?.london_benchmark ?? 1.2;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return heatData.map((a: any) => {
       const heat = extractValue(a.heat_index?.value ?? a.heat_index ?? a.score) ?? 5;
       const growth = extractValue(a.annual_growth?.value ?? a.annual_growth) ?? 0;
@@ -60,6 +61,7 @@ const MicroMarketVelocityMap: React.FC = () => {
   // Property count per area for optional annotation
   const propertyCountByArea = useMemo(() => {
     const counts: Record<string, number> = {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (properties || []).forEach((p: any) => {
       const areaName = (p.area || '').split(' (')[0];
       counts[areaName] = (counts[areaName] || 0) + 1;
@@ -113,6 +115,7 @@ const MicroMarketVelocityMap: React.FC = () => {
       </div>
 
       {/* Ranked area rows */}
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       {areas.slice(0, 6).map((area: any) => {
         const color = heatColor(area.heat);
         const barWidth = (area.heat / MAX_HEAT) * BAR_WIDTH_PX;

@@ -3,78 +3,74 @@ import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft,
   MapPin,
-  CheckCircle2,
   ShieldAlert,
   Maximize2,
-  LayoutGrid,
-  Home,
-  Zap,
   Gem,
-  TrendingDown,
-  Clock,
   FileText,
   Save,
-  ArrowRight,
   BarChart3,
   TrendingUp,
   Layers,
   X,
   ChevronLeft,
   ChevronRight,
-  Tag,
   RefreshCw,
   Edit3,
   Settings,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  Target,
+  CirclePercent,
 } from 'lucide-react';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import { useFinancialData } from '../hooks/useFinancialData';
 import LoadingNode from '../components/LoadingNode';
 import PropertyImage from '../components/PropertyImage';
 import LocationNodeMap from '../components/LocationNodeMap';
-import PipelineTracker from '../components/PipelineTracker';
+import PropertyLifecycleBar from '../components/PropertyLifecycleBar';
 import SourceHub from '../components/SourceHub';
 import type { PropertyWithCoords } from '../types/property';
 import { usePipeline } from '../hooks/usePipeline';
 
 import FloorplanViewer from '../components/FloorplanViewer';
+
+// UX-97: Shared freshness computation — same logic as DataProvenanceSection
+function computeFreshness(lastRefreshed?: string): { color: string; bg: string; label: string } {
+  if (!lastRefreshed) return { color: '#a1a1aa', bg: 'bg-zinc-600', label: 'UNKNOWN' };
+  const refreshed = new Date(lastRefreshed);
+  const now = new Date();
+  const daysDiff = (now.getTime() - refreshed.getTime()) / (1000 * 60 * 60 * 24);
+  if (daysDiff <= 7) return { color: '#22c55e', bg: 'bg-emerald-500/20', label: 'CURRENT' };
+  if (daysDiff <= 30) return { color: '#f59e0b', bg: 'bg-amber-500/20', label: 'STALE' };
+  return { color: '#ef4444', bg: 'bg-red-500/20', label: 'OUTDATED' };
+}
+
+function daysAgo(dateStr: string): number {
+  const then = new Date(dateStr);
+  return Math.floor((new Date().getTime() - then.getTime()) / (1000 * 60 * 60 * 24));
+}
 import ThesisTagSelector from '../components/ThesisTagSelector';
-import AffordabilityNode from '../components/AffordabilityNode';
+import RentalYieldVsGiltChartWithRent from '../components/RentalYieldVsGiltChartWithRent';
 import CapitalAppreciationChart from '../components/CapitalAppreciationChart';
 import DataProvenanceSection from '../components/DataProvenanceSection';
 import PropertyPriceEvolution from '../components/PropertyPriceEvolution';
+import NeighbourhoodSection from '../components/NeighbourhoodSection';
 import { useThesisTags } from '../hooks/useThesisTags';
 import { useMacroData } from '../hooks/useMacroData';
 import { fmtPrice, fmtNum } from '../utils/format';
 import { showToast } from '../utils/toast';
-import AlphaScoreBreakdown from '../components/AlphaScoreBreakdown';
+import { buildNegotiationTiers } from '../utils/negotiationTiers';
+import { useAffordability } from '../hooks/useAffordability';
 import AcquisitionStrategy from '../components/AcquisitionStrategy';
 import EnrichmentModal from '../components/EnrichmentModal';
-
-// FE-241: Council Tax Band badge — UK band colours
-const CT_COLORS: Record<string, string> = {
-  A: 'text-retro-green bg-retro-green/10 border-retro-green/20',
-  B: 'text-retro-green bg-retro-green/10 border-retro-green/20',
-  C: 'text-lime-400 bg-lime-400/10 border-lime-400/20',
-  D: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
-  E: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
-  F: 'text-rose-400 bg-rose-400/10 border-rose-400/20',
-  G: 'text-red-400 bg-red-400/10 border-red-400/20',
-  H: 'text-red-500 bg-red-500/10 border-red-500/20',
-};
-
-const CouncilTaxBadge: React.FC<{ band: string }> = ({ band }) => {
-  const style = CT_COLORS[band.toUpperCase()] ?? 'text-linear-text-muted bg-linear-bg border-linear-border';
-  return (
-    <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-black border ${style}`}>
-      Band {band.toUpperCase()}
-    </span>
-  );
-};
+import PriceAssessment from '../components/PriceAssessment';
 
 const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { properties, loading, recheckProperty } = usePropertyContext();
   const { calculateMonthlyOutlay } = useFinancialData();
+  const { calculateSDLT, getLTVMatchScore } = useAffordability();
   const { getStatus, setStatus } = usePipeline();
   const { getTags } = useThesisTags();
   const { data: macroData } = useMacroData();
@@ -88,6 +84,11 @@ const PropertyDetail: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isRechecking, setIsRechecking] = useState(false); // FE-231: recheck button loading state
   const [showEnrichmentModal, setShowEnrichmentModal] = useState(false); // FE-237: enrichment modal
+  const [notesPanelOpen, setNotesPanelOpen] = useState(false);
+  const [showAppreciation, setShowAppreciation] = useState(false); // UX-119
+  const [showMarketContext, setShowMarketContext] = useState(false); // UX-120
+  const [showLocationContext, setShowLocationContext] = useState(false); // UX-125
+  const [showTagSelector, setShowTagSelector] = useState(false); // UX-123: tag selector toggle
 
   const property = useMemo(() => {
     return properties.find(p => p.id === id) as PropertyWithCoords | undefined;
@@ -101,6 +102,7 @@ const PropertyDetail: React.FC = () => {
 
   const outlay = property ? calculateMonthlyOutlay(property) : null;
   const status = property ? getStatus(property.id) : 'discovered';
+  const ltvScore = property ? getLTVMatchScore(property.realistic_price) : null;
 
   const handleSaveNotes = () => {
     if (!id) return;
@@ -117,7 +119,7 @@ const PropertyDetail: React.FC = () => {
     try {
       await recheckProperty(id);
       const today = new Date().toISOString().split('T')[0];
-      showToast(`Property re-checked — verified ${today}`, 'success');
+      showToast(`Listing verified — active on ${today}`, 'success');
     } catch {
       showToast('Recheck failed — please try again', 'error');
     } finally {
@@ -201,7 +203,7 @@ const PropertyDetail: React.FC = () => {
       <div className="px-6 py-8 max-w-5xl mx-auto">
         <Link to="/dashboard" className="inline-flex items-center gap-2 text-[10px] font-bold text-linear-text-muted hover:text-white uppercase tracking-wider transition-colors mb-8 group">
           <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
-          Back to Terminal
+          ← Back to Dashboard
         </Link>
 
         <div className="grid lg:grid-cols-3 gap-12">
@@ -221,50 +223,46 @@ const PropertyDetail: React.FC = () => {
               </span>
             </div>
 
-            <h1 className="text-4xl font-bold text-white mb-8 leading-tight tracking-tight">
+            <h1 className="text-4xl font-bold text-white mb-6 leading-tight tracking-tight">
               {property.address}
             </h1>
 
-            {/* Asset Pipeline */}
-            <div className="mb-12 p-8 bg-linear-card border border-linear-border rounded-3xl shadow-xl">
-              <PipelineTracker
+            {/* UX-57: PriceAssessment hero — top of content, above pipeline */}
+            <div className="mb-8">
+              <PriceAssessment property={property as PropertyWithCoords} />
+            </div>
+
+            {/* UX-123: Collapsed lifecycle bar — Pipeline + Thesis Tags in one compact card */}
+            <div className="mb-6">
+              <PropertyLifecycleBar
                 status={status}
                 onStatusChange={(newStatus) => setStatus(property.id, newStatus)}
+                tags={getTags(property.id)}
+                onAddTag={() => setShowTagSelector(v => !v)}
+                lastCheckedDaysAgo={property.last_checked ? daysAgo(property.last_checked) : undefined}
+                verifiedColor={property.last_checked ? computeFreshness(property.last_checked).color : undefined}
               />
-              {/* FE-231: Show last_checked timestamp if available */}
-              {property.last_checked && (
-                <div className="mt-4 pt-4 border-t border-white/5 flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-retro-green" />
-                  <span className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest">
-                    Last re-checked: {property.last_checked}
-                  </span>
+              {/* ThesisTagSelector shown as inline expanded panel below bar */}
+              {showTagSelector && (
+                <div className="mt-2 p-3 bg-linear-card border border-linear-border rounded-2xl">
+                  <ThesisTagSelector
+                    propertyId={property.id}
+                    currentTags={getTags(property.id)}
+                    size="md"
+                    onTagChange={() => {}}
+                  />
                 </div>
               )}
             </div>
 
-            {/* Investment Thesis Tags */}
-            <div className="mb-12 p-6 bg-linear-card border border-linear-border rounded-3xl">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest flex items-center gap-2">
-                  <Tag size={14} className="text-blue-400" />
-                  Investment Thesis
-                </h3>
-              </div>
-              <ThesisTagSelector
-                propertyId={property.id}
-                currentTags={getTags(property.id)}
-                size="lg"
-              />
-            </div>
-
             {/* Gallery & Floorplan Tabs */}
-            <div className="mb-12">
+            <div className="mb-8">
               <div className="flex items-center gap-6 border-b border-linear-border mb-6">
                 <button 
                   onClick={() => setActiveTab('gallery')}
                   className={`pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === 'gallery' ? 'text-white' : 'text-linear-text-muted hover:text-white'}`}
                 >
-                  Gallery Stream
+                  Gallery
                   {activeTab === 'gallery' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-accent" />}
                 </button>
                 <button
@@ -309,7 +307,7 @@ const PropertyDetail: React.FC = () => {
                         <div
                           key={i}
                           onClick={() => setActiveImageIndex(i)}
-                          className={`aspect-[4/3] rounded-xl overflow-hidden border transition-all cursor-pointer relative group ${
+                          className={`aspect-[16/9] rounded-xl overflow-hidden border transition-all cursor-pointer relative group ${
                             i === activeImageIndex ? 'border-linear-accent ring-2 ring-linear-accent/20 scale-95' : 'border-linear-border hover:border-white/40'
                           }`}
                         >
@@ -354,312 +352,214 @@ const PropertyDetail: React.FC = () => {
               )}
             </div>
 
-            {/* FE-241: Council tax band added as 5th column */}
-            <div className="grid grid-cols-5 gap-4 mb-12 py-8 border-y border-linear-border">
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
-                  <Maximize2 size={12} className="text-linear-accent" /> Space
-                </span>
-                <span className="text-lg font-bold text-white tracking-tight">
-                  {property.bedrooms != null ? `${property.bedrooms}` : '—'}
-                  <span className="text-linear-text-muted font-bold"> Bed</span>
-                  {property.bathrooms != null && (
-                    <span className="text-white font-bold"> · {property.bathrooms}</span>
-                  )}
-                  {property.bathrooms != null && (
-                    <span className="text-linear-text-muted font-bold"> Bath</span>
-                  )}
-                  <span className="text-linear-text-muted font-bold"> · {property.sqft} sqft</span>
-                </span>
+            {/* UX-118: Financial Summary — unified card replacing Asset Overhead + Institutional Ownership Model + AffordabilityNode */}
+            <div className="mb-12">
+              <div className="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-6">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 size={14} className="text-blue-400" />
+                    <h2 className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Financial Summary</h2>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {/* Affordability signal — inline badge */}
+                    {ltvScore && (() => {
+                      const colorMap: Record<string, string> = {
+                        'text-retro-green': 'text-retro-green bg-retro-green/10 border-retro-green/20',
+                        'text-amber-400': 'text-amber-400 bg-amber-400/10 border-amber-400/20',
+                        'text-rose-400': 'text-rose-400 bg-rose-400/10 border-rose-400/20',
+                      };
+                      const cls = colorMap[ltvScore.color] ?? 'text-white bg-white/5 border-white/10';
+                      return (
+                        <span className={`px-2 py-1 rounded-lg border text-[9px] font-black uppercase tracking-widest ${cls}`}>
+                          {ltvScore.band}
+                        </span>
+                      );
+                    })()}
+                    <span className="text-[11px] font-black text-linear-text-muted uppercase tracking-widest">
+                      {outlay?.rate ?? 3.75}% Fixed
+                    </span>
+                  </div>
+                </div>
+
+                {/* Key figures row */}
+                <div className="grid grid-cols-3 gap-4 mb-5">
+                  <div className="bg-linear-card border border-white/5 rounded-xl px-4 py-3">
+                    <div className="text-[8px] text-linear-text-muted uppercase font-black tracking-widest mb-1">Monthly Outlay</div>
+                    <div className="text-2xl font-bold text-white tracking-tight">
+                      £{outlay?.total.toLocaleString() ?? '—'}
+                    </div>
+                  </div>
+                  <div className="bg-linear-card border border-white/5 rounded-xl px-4 py-3">
+                    <div className="text-[8px] text-linear-text-muted uppercase font-black tracking-widest mb-1">Mortgage P&I</div>
+                    <div className="text-2xl font-bold text-white tracking-tight">
+                      £{outlay?.mortgage.toLocaleString() ?? '—'}
+                    </div>
+                  </div>
+                  <div className="bg-linear-card border border-white/5 rounded-xl px-4 py-3">
+                    <div className="text-[8px] text-linear-text-muted uppercase font-black tracking-widest mb-1">SDLT + All-In</div>
+                    <div className="text-2xl font-bold text-white tracking-tight">
+                      {(() => {
+                        const sdlt = calculateSDLT(property.list_price, JSON.parse(localStorage.getItem('propSearch_ftb') ?? 'false'), false).sdlt;
+                        const allIn = property.realistic_price + sdlt;
+                        if (allIn >= 1_000_000) return `£${(allIn/1_000_000).toFixed(1)}M+`;
+                        return `£${Math.round(allIn/1000)}K+`;
+                      })()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Breakdown */}
+                <div className="border-t border-blue-500/10 pt-4">
+                  <div className="grid sm:grid-cols-4 gap-x-4 gap-y-2">
+                    {[
+                      { label: 'Council Tax', value: `£${outlay?.councilTax.toLocaleString() ?? '—'}/mo`, note: property.council_tax_band ? `Band ${property.council_tax_band}` : null },
+                      { label: 'Service Charge', value: property.service_charge ? `£${property.service_charge.toLocaleString()}/yr` : '—', note: null },
+                      { label: 'Ground Rent', value: property.ground_rent ? `£${property.ground_rent.toLocaleString()}/yr` : '—', note: null },
+                      { label: 'Stamp Duty', value: (() => { const s = calculateSDLT(property.list_price, JSON.parse(localStorage.getItem('propSearch_ftb') ?? 'false'), false).sdlt; return s >= 1_000_000 ? `£${(s/1_000_000).toFixed(2)}M` : `£${Math.round(s/1000)}K`; })(), note: null },
+                    ].map(row => (
+                      <div key={row.label} className="flex justify-between items-baseline">
+                        <span className="text-[10px] text-linear-text-muted">{row.label}{row.note ? ` (${row.note})` : ''}</span>
+                        <span className="text-[10px] font-bold text-white">{row.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <div className="flex flex-col gap-1 border-x border-linear-border px-4">
-                <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
-                  <LayoutGrid size={12} className="text-linear-accent" /> Floor
-                </span>
-                <span className="text-lg font-bold text-white tracking-tight uppercase">{property.floor_level || '—'}</span>
-              </div>
-              <div className="flex flex-col gap-1 border-r border-linear-border px-4">
-                <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
-                  <Home size={12} className="text-linear-accent" /> Tenure
-                </span>
-                <span className="text-lg font-bold text-white tracking-tight leading-tight">{property.tenure}</span>
-              </div>
-              <div className="flex flex-col gap-1 border-r border-linear-border px-4">
-                <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
-                  <Zap size={12} className="text-linear-accent" /> EPC
-                </span>
-                <span className="text-lg font-bold text-white tracking-tight">{property.epc} Rating</span>
-              </div>
-              {/* FE-241: Council Tax Band badge */}
-              <div className="flex flex-col gap-1 pl-4">
-                <span className="text-[10px] text-linear-text-muted uppercase font-bold tracking-widest flex items-center gap-1.5">
-                  <span className="text-linear-accent font-black">CT</span>
-                </span>
-                {property.council_tax_band ? (
-                  <CouncilTaxBadge band={property.council_tax_band} />
-                ) : (
-                  <span className="text-lg font-bold text-white/30 tracking-tight">—</span>
+            </div>
+
+            {/* 5-Year Capital Appreciation — collapsed by default (UX-119) */}
+            <div className="mb-12">
+              <div className="bg-linear-card border border-linear-border rounded-2xl overflow-hidden">
+                <button
+                  onClick={() => setShowAppreciation(v => !v)}
+                  className="w-full px-5 py-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <TrendingUp size={14} className="text-retro-green" />
+                    <h2 className="text-[10px] font-black text-white uppercase tracking-widest">
+                      5-Year Market Outlook
+                    </h2>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {!showAppreciation && (
+                      <span className="text-[9px] text-linear-text-muted italic">
+                        tap to expand
+                      </span>
+                    )}
+                    <ChevronDown
+                      size={14}
+                      className={`text-linear-text-muted transition-transform ${showAppreciation ? 'rotate-180' : ''}`}
+                    />
+                  </div>
+                </button>
+                {showAppreciation && (
+                  <div className="px-5 pb-5 border-t border-linear-border/50">
+                    <CapitalAppreciationChart
+                      propertyPrice={property.realistic_price}
+                      leaseYears={property.lease_years_remaining}
+                      epc={property.epc}
+                      floorLevel={property.floor_level}
+                      serviceCharge={property.service_charge}
+                      area={property.area}
+                    />
+                  </div>
                 )}
               </div>
             </div>
 
-            {/* Asset Overhead */}
-            <div className="mb-12">
-              <h2 className="text-xs font-bold text-linear-text-muted uppercase tracking-widest mb-6 flex items-center gap-2">
-                <TrendingDown size={14} className="text-retro-green" />
-                Asset Overhead & Costs
-              </h2>
-              <div className="p-8 bg-linear-card border border-linear-border rounded-3xl grid sm:grid-cols-2 gap-12 group hover:border-linear-accent/20 transition-colors">
-                <div className="flex flex-col gap-3">
-                  <span className="text-[10px] text-linear-text-muted uppercase font-black tracking-widest">Est. Service Charge</span>
-                  <div className="text-4xl font-bold text-white tracking-tighter">
-                    £{property.service_charge?.toLocaleString() ?? '—'}
-                    <span className="text-sm text-linear-text-muted ml-1 uppercase font-black">/ Per Year</span>
-                  </div>
-                  <div className="h-1 w-full bg-linear-bg rounded-full overflow-hidden mt-2">
-                    <div className="h-full bg-linear-accent/30 w-[45%]" />
-                  </div>
-                </div>
-                <div className="flex flex-col gap-3 sm:border-l sm:border-linear-border sm:pl-12">
-                  <span className="text-[10px] text-linear-text-muted uppercase font-black tracking-widest">Ground Rent</span>
-                  <div className="text-4xl font-bold text-white tracking-tighter">
-                    £{property.ground_rent?.toLocaleString() ?? '—'}
-                    <span className="text-sm text-linear-text-muted ml-1 uppercase font-black">/ Per Year</span>
-                  </div>
-                  <div className="h-1 w-full bg-linear-bg rounded-full overflow-hidden mt-2">
-                    <div className="h-full bg-linear-accent/10 w-[15%]" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Total Monthly Outlay */}
-            {outlay && (
-              <div className="mb-12">
-                <h2 className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-                  <TrendingUp size={14} />
-                  Institutional Ownership Model
-                </h2>
-                <div className="p-8 bg-blue-500/5 border border-blue-500/20 rounded-3xl relative overflow-hidden group hover:border-blue-500/40 transition-all">
-                  <div className="absolute -right-8 -top-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity">
-                    <BarChart3 size={300} />
-                  </div>
-                  
-                  <div className="relative z-10 grid sm:grid-cols-2 gap-12">
-                    <div>
-                      <span className="text-[10px] text-blue-400 uppercase font-black tracking-widest block mb-2">Total Monthly Outlay</span>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-5xl font-bold text-white tracking-tighter">£{outlay.total.toLocaleString()}</span>
-                        <span className="text-sm text-linear-text-muted font-black uppercase">/ Month</span>
-                      </div>
-                      <p className="mt-4 text-xs text-linear-text-muted leading-relaxed max-w-xs">
-                        Aggregate carry cost including mortgage servicing (90% LTV), council tax, and institutional overheads.
-                      </p>
-                    </div>
-                    
-                    <div className="flex flex-col justify-center space-y-4 sm:border-l sm:border-blue-500/10 sm:pl-12">
-                      <div className="flex justify-between items-center group/item">
-                        <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-wider group-hover/item:text-white transition-colors">Mortgage (Principal & Interest)</span>
-                        <span className="text-sm font-bold text-white tracking-tight">£{outlay.mortgage.toLocaleString()}</span>
-                      </div>
-                      {/* FE-241: Council tax band shown in label */}
-                      <div className="flex justify-between items-center group/item">
-                        <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-wider group-hover/item:text-white transition-colors">
-                          Estimated Council Tax
-                          {property.council_tax_band && (
-                            <span className="ml-1.5 text-[9px] font-black opacity-60">
-                              (Band {property.council_tax_band})
-                            </span>
-                          )}
-                        </span>
-                        <span className="text-sm font-bold text-white tracking-tight">£{outlay.councilTax.toLocaleString()}/mo</span>
-                      </div>
-                      <div className="flex justify-between items-center group/item">
-                        <span className="text-[10px] font-bold text-linear-text-muted uppercase tracking-wider group-hover/item:text-white transition-colors">Service Charge & Ground Rent</span>
-                        <span className="text-sm font-bold text-white tracking-tight">£{(outlay.serviceCharge + outlay.groundRent).toLocaleString()}</span>
-                      </div>
-                      <div className="pt-4 mt-2 border-t border-blue-500/10 flex items-center justify-between">
-                        <span className="text-[9px] font-black text-blue-400/60 uppercase tracking-[0.2em]">Financing: 90% LTV @ {outlay.rate}% Fixed</span>
-                        <span className="text-[9px] font-mono text-linear-text-muted">ID: FIN-OUT-{property.id.slice(0, 4)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Affordability Node */}
-            <div className="mb-12">
-              <AffordabilityNode
-                propertyPrice={property.realistic_price}
-                serviceCharge={property.service_charge}
-                groundRent={property.ground_rent}
-              />
-            </div>
-
-            {/* 5-Year Capital Appreciation Model */}
-            <div className="mb-12">
-              <CapitalAppreciationChart
-                propertyPrice={property.realistic_price}
-                leaseYears={property.lease_years_remaining}
-                epc={property.epc}
-                floorLevel={property.floor_level}
-                serviceCharge={property.service_charge}
-                area={property.area}
-              />
-            </div>
-
             {/* Data Provenance */}
-            <DataProvenanceSection lastRefreshed={macroData?.sdlt_countdown ? '2026-04-01' : undefined} sources={macroData?._source_citations} />
+            <DataProvenanceSection lastRefreshed={macroData?.last_refreshed} sources={macroData?._source_citations} />
 
-            <div className="space-y-12">
-              <div>
-                <h2 className="text-xs font-bold text-linear-text-muted uppercase tracking-widest mb-4">Institutional Connectivity</h2>
-                <div className="grid grid-cols-2 gap-4">
-                   <div className="p-6 bg-linear-card border border-linear-border rounded-2xl relative overflow-hidden group hover:border-blue-400/30 transition-colors">
-                      <div className="flex flex-col gap-1 relative z-10">
-                        <span className="text-[10px] text-linear-text-muted uppercase font-black tracking-widest">Paternoster Sq</span>
-                        <div className="text-3xl font-bold text-white tracking-tighter">{property.commute_paternoster}<span className="text-sm text-linear-text-muted ml-1 uppercase font-bold">Mins</span></div>
-                      </div>
-                      <Clock className="absolute -right-6 -bottom-6 text-blue-400/5 group-hover:text-blue-400/10 transition-colors" size={100} />
-                   </div>
-                   <div className="p-6 bg-linear-card border border-linear-border rounded-2xl relative overflow-hidden group hover:border-emerald-400/30 transition-colors">
-                      <div className="flex flex-col gap-1 relative z-10">
-                        <span className="text-[10px] text-linear-text-muted uppercase font-black tracking-widest">Canada Square</span>
-                        <div className="text-3xl font-bold text-white tracking-tighter">{property.commute_canada_square}<span className="text-sm text-linear-text-muted ml-1 uppercase font-bold">Mins</span></div>
-                      </div>
-                      <Clock className="absolute -right-6 -bottom-6 text-emerald-400/5 group-hover:text-emerald-400/10 transition-colors" size={100} />
-                   </div>
+            {/* ── Bid Strategy (UX-119: merged AcquisitionStrategy + alpha header) ── */}
+            <AcquisitionStrategy
+              property={property as PropertyWithCoords}
+              onRequestEnrichment={() => setShowEnrichmentModal(true)}
+            />
+
+            {/* ── Market Context — collapsible (UX-120) ── */}
+            <div className="bg-linear-card border border-linear-border rounded-2xl overflow-hidden">
+              <button
+                onClick={() => setShowMarketContext(v => !v)}
+                className="w-full px-5 py-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <CirclePercent size={14} className="text-retro-green" />
+                  <h2 className="text-[10px] font-black text-white uppercase tracking-widest">
+                    Market Context
+                  </h2>
                 </div>
-              </div>
+                {!showMarketContext && (
+                  <span className="text-[9px] text-linear-text-muted italic">tap to expand</span>
+                )}
+                <ChevronDown size={14} className={`text-linear-text-muted transition-transform ${showMarketContext ? 'rotate-180' : ''}`} />
+              </button>
+              {showMarketContext && (
+                <div className="px-5 pb-5 border-t border-linear-border/50">
+                  <RentalYieldVsGiltChartWithRent property={property as PropertyWithCoords} />
+                </div>
+              )}
+            </div>
 
-              {/* FE-240 / ADR-019: Redesigned Acquisition Strategy section */}
-              <AcquisitionStrategy
-                property={property as PropertyWithCoords}
-                onRequestEnrichment={() => setShowEnrichmentModal(true)}
-              />
-
-              <div>
-                <AlphaScoreBreakdown property={property} />
-
-                {/* CAPEX & Retrofit Node */}
-                <h2 className="text-xs font-bold text-linear-text-muted uppercase tracking-widest mb-4">CAPEX & Retrofit Modeling</h2>
-                <div className="p-8 bg-linear-card border border-linear-border rounded-3xl relative overflow-hidden group shadow-2xl">
-                  <div className="relative z-10 grid md:grid-cols-2 gap-12 items-center">
-                    <div>
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="h-10 w-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                          <Zap size={20} />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-white tracking-tight">EPC Optimization Path</h3>
-                          <p className="text-xs text-linear-text-muted">Mandatory efficiency upgrades for institutional grade liquidity.</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-8 mb-8">
-                        <div className="flex flex-col items-center">
-                          <span className="text-[9px] font-black text-linear-text-muted uppercase tracking-widest mb-2">Current</span>
-                          <div className={`h-14 w-14 rounded-2xl border-2 flex items-center justify-center text-2xl font-black ${
-                            ['A', 'B'].includes(property.epc) ? 'border-retro-green text-retro-green bg-retro-green/5' :
-                            ['C', 'D'].includes(property.epc) ? 'border-retro-amber text-retro-amber bg-retro-amber/5' :
-                            'border-rose-500 text-rose-400 bg-rose-500/5'
-                          }`}>
-                            {property.epc}
-                          </div>
-                        </div>
-                        <ArrowRight size={24} className="text-linear-border mt-4" />
-                        <div className="flex flex-col items-center">
-                          <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-2">Potential</span>
-                          <div className="h-14 w-14 rounded-2xl border-2 border-blue-500/50 text-blue-400 bg-blue-500/5 flex items-center justify-center text-2xl font-black shadow-[0_0_20px_rgba(59,130,246,0.2)]">
-                            {property.epc_improvement_potential || 'B'}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-linear-text-muted">Efficiency Gain</span>
-                          <span className="text-retro-green font-bold">
-                            +{property.epc === property.epc_improvement_potential ? '0' : 
-                              (property.epc < (property.epc_improvement_potential || 'B') ? '15' : '22')}% Thermal Retention
-                          </span>
-                        </div>
-                        <div className="h-1.5 w-full bg-linear-bg rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-blue-500 to-retro-green transition-all duration-1000" 
-                            style={{ width: property.epc === property.epc_improvement_potential ? '95%' : '75%' }} 
-                          />
-                        </div>
-                      </div>
+            {/* ── Location Context — collapsible (UX-125: commute + map merged) ── */}
+            <div className="bg-linear-card border border-linear-border rounded-2xl overflow-hidden">
+              <button
+                onClick={() => setShowLocationContext(v => !v)}
+                className="w-full px-5 py-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <MapPin size={14} className="text-blue-400" />
+                  <h2 className="text-[10px] font-black text-white uppercase tracking-widest">
+                    Location Context
+                  </h2>
+                  {property.area && (
+                    <span className="text-[9px] text-linear-text-muted normal-case font-normal tracking-normal">
+                      · {property.area}
+                    </span>
+                  )}
+                </div>
+                {!showLocationContext && (
+                  <span className="text-[9px] text-linear-text-muted italic">tap to expand</span>
+                )}
+                <ChevronDown size={14} className={`text-linear-text-muted transition-transform ${showLocationContext ? 'rotate-180' : ''}`} />
+              </button>
+              {showLocationContext && (
+                <div className="border-t border-linear-border/50">
+                  {/* Commute cards */}
+                  <div className="grid grid-cols-2 gap-3 p-5">
+                    <div className="p-4 bg-linear-bg border border-white/5 rounded-xl">
+                      <div className="text-[9px] text-linear-text-muted uppercase font-black tracking-widest mb-1">Paternoster Sq</div>
+                      <div className="text-2xl font-bold text-white tracking-tight">{property.commute_paternoster ?? '—'}<span className="text-sm text-linear-text-muted ml-1 font-bold">min</span></div>
                     </div>
-
-                    <div className="bg-linear-bg/50 border border-linear-border rounded-2xl p-6">
-                      <div className="flex justify-between items-start mb-6">
-                        <div>
-                          <span className="text-[9px] font-black text-linear-text-muted uppercase tracking-widest block mb-1">Est. CAPEX Requirement</span>
-                          <div className="text-3xl font-bold text-white tracking-tighter">
-                            £{(property.est_capex_requirement || 0).toLocaleString()}
-                          </div>
-                        </div>
-                        <div className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-[9px] font-black text-white uppercase">
-                          {property.est_capex_requirement ? 'Class 1 Quote' : 'Estimate Needed'}
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        {property.est_capex_requirement ? (
-                          <>
-                            <div className="flex items-center gap-3 text-[11px] text-linear-text-muted">
-                              <CheckCircle2 size={14} className="text-retro-green" />
-                              <span>Optimization target: {property.epc_improvement_potential} Rating</span>
-                            </div>
-                            <div className="flex items-center gap-3 text-[11px] text-linear-text-muted">
-                              <CheckCircle2 size={14} className="text-retro-green" />
-                              <span>Retrofit scope including thermal retention upgrades</span>
-                            </div>
-                            <div className="flex items-center gap-3 text-[11px] text-linear-text-muted">
-                              <CheckCircle2 size={14} className="text-retro-green" />
-                              <span>Smart HVAC & LED institutional standard sync</span>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="py-4 text-center">
-                            <p className="text-[10px] text-linear-text-muted uppercase font-bold italic">No active CAPEX quotes for this asset.</p>
-                          </div>
-                        )}
-                      </div>
-
-                      <button 
-                        disabled={!property.est_capex_requirement}
-                        className={`w-full mt-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-xl ${
-                          property.est_capex_requirement 
-                            ? 'bg-linear-accent text-white hover:brightness-110 shadow-linear-accent/10' 
-                            : 'bg-linear-card text-linear-text-muted border border-linear-border cursor-not-allowed'
-                        }`}
-                      >
-                        {property.est_capex_requirement ? 'View Detailed CAPEX Breakdown' : 'Request Retrofit Quote'}
-                      </button>
+                    <div className="p-4 bg-linear-bg border border-white/5 rounded-xl">
+                      <div className="text-[9px] text-linear-text-muted uppercase font-black tracking-widest mb-1">Canada Square</div>
+                      <div className="text-2xl font-bold text-white tracking-tight">{property.commute_canada_square ?? '—'}<span className="text-sm text-linear-text-muted ml-1 font-bold">min</span></div>
                     </div>
                   </div>
-                  <div className="absolute -right-20 -bottom-20 opacity-[0.03] pointer-events-none group-hover:opacity-[0.05] transition-opacity">
-                    <TrendingUp size={400} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Location Node Mini-Map */}
-              {property && (
-                <div>
-                  <h2 className="text-xs font-bold text-linear-text-muted uppercase tracking-widest mb-4">Location Node Context</h2>
-                  <LocationNodeMap lat={property.lat} lng={property.lng} address={property.address} />
+                  {/* Map */}
+                  {property && (
+                    <div className="px-5 pb-5">
+                      <LocationNodeMap lat={property.lat} lng={property.lng} address={property.address} />
+                    </div>
+                  )}
+                  {/* FE-277: Neighbourhood — amenity distances, walkability score, mini-map */}
+                  {property?.lat && property?.lng && (
+                    <div className="px-5 pb-5">
+                      <NeighbourhoodSection
+                        lat={property.lat}
+                        lng={property.lng}
+                        address={property.address}
+                        crimeRate={undefined}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           </div>
 
           <div className="lg:col-span-1">
-            <div className="bg-linear-card border border-linear-border rounded-2xl shadow-2xl p-6 sticky top-24 backdrop-blur-md">
+            <div className="bg-linear-card border border-linear-border rounded-2xl shadow-2xl p-6 sticky top-24 hidden lg:block backdrop-blur-md">
               <div className="mb-8">
                 <span className="text-[10px] text-linear-text-muted block uppercase font-bold tracking-[0.2em] mb-3">Institutional Target</span>
                 <div className="text-4xl font-bold text-white tracking-tighter mb-1 flex items-baseline gap-1">
@@ -674,37 +574,58 @@ const PropertyDetail: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-4 mb-8">
-                <div className="flex items-center gap-3 text-xs text-linear-text-muted group">
-                  <div className="h-5 w-5 rounded-full bg-retro-green/10 border border-retro-green/20 flex items-center justify-center text-retro-green">
-                    <CheckCircle2 size={12} />
+              {/* UX-98/UX-93: Negotiation tiers + SDLT from shared utilities */}
+              <div className="pt-4 pb-1 flex items-center gap-2">
+                <Target size={10} className="text-amber-400" />
+                <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">
+                  Negotiation Range
+                </span>
+              </div>
+              <div className="space-y-2 mb-6">
+                {buildNegotiationTiers(property.list_price).map(tier => (
+                  <div key={tier.label} className="flex justify-between items-center py-1.5 border-b border-white/5 last:border-0">
+                    <span className="text-[10px] text-linear-text-muted">{tier.label.split(' (')[0]}</span>
+                    <span className={`text-[10px] font-medium ${tier.colorClass}`}>{tier.range}</span>
                   </div>
-                  Verified Title Deeds
+                ))}
+                <div className="flex justify-between items-center py-1.5 border-b border-white/5">
+                  <span className="text-[10px] text-linear-text-muted">SDLT estimate</span>
+                  <span className="text-[10px] font-medium text-white">
+                    {(() => {
+                      const sdltValue = calculateSDLT(property.list_price, JSON.parse(localStorage.getItem('propSearch_ftb') ?? 'false'), false).sdlt;
+                      if (sdltValue >= 1_000_000) return `£${(sdltValue / 1_000_000).toFixed(2)}M`;
+                      return `£${Math.round(sdltValue / 1000)}K`;
+                    })()}
+                  </span>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-linear-text-muted group">
-                  <div className="h-5 w-5 rounded-full bg-retro-green/10 border border-retro-green/20 flex items-center justify-center text-retro-green">
-                    <CheckCircle2 size={12} />
-                  </div>
-                  Clean Service History
-                </div>
-                <div className="flex items-center gap-3 text-xs text-linear-text-muted group">
-                  <div className="h-5 w-5 rounded-full bg-retro-green/10 border border-retro-green/20 flex items-center justify-center text-retro-green">
-                    <CheckCircle2 size={12} />
-                  </div>
-                  Institutional Grade Asset
+                <div className="flex justify-between items-center py-1.5">
+                  <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">All-in estimate</span>
+                  <span className="text-[11px] font-black text-white">
+                    ~{(() => {
+                      const sdltValue = calculateSDLT(property.list_price, JSON.parse(localStorage.getItem('propSearch_ftb') ?? 'false'), false).sdlt;
+                      const allIn = property.realistic_price + sdltValue;
+                      if (allIn >= 1_000_000) return `£${(allIn / 1_000_000).toFixed(2)}M+`;
+                      return `£${Math.round(allIn / 1000)}K+`;
+                    })()}
+                  </span>
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 mb-8">
                 <SourceHub links={property.links || [property.link]} variant="full" />
-                <button className="w-full py-3.5 bg-linear-card text-white border border-linear-border rounded-xl font-bold hover:bg-linear-accent transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest">
-                  Generate PDF Report
+                <button
+                  disabled
+                  className="w-full py-3.5 bg-linear-card text-white/40 border border-linear-border rounded-xl font-bold flex items-center justify-center gap-2 text-xs uppercase tracking-widest cursor-not-allowed"
+                  title="PDF Export — coming soon"
+                >
+                  <FileText size={12} className="opacity-40" />
+                  PDF Export — TBD
                 </button>
 
                 {/* FE-238: DATA ACTIONS — section header */}
                 <div className="pt-4 pb-1 flex items-center gap-2">
                   <Settings size={10} className="text-linear-text-muted" />
-                  <span className="text-[9px] font-black text-linear-text-muted uppercase tracking-widest">
+                  <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">
                     Data Actions
                   </span>
                 </div>
@@ -721,16 +642,18 @@ const PropertyDetail: React.FC = () => {
                 <button
                   onClick={handleRecheck}
                   disabled={isRechecking}
+                  title="Verify the listing is still active on the market and updates the last_checked timestamp"
                   className="w-full py-3 bg-retro-green/10 text-retro-green border border-retro-green/20 rounded-xl font-bold hover:bg-retro-green/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest disabled:opacity-50"
                 >
                   <RefreshCw size={12} className={isRechecking ? 'animate-spin' : ''} />
-                  {isRechecking ? 'Verifying Live...' : 'Recheck Property'}
+                  {isRechecking ? 'Verifying Live...' : 'Verify Listing'}
                 </button>
 
                 {/* FE-237: Request Enrichment button */}
                 <button
                   onClick={() => setShowEnrichmentModal(true)}
                   className="w-full py-3 bg-amber-400/10 text-amber-400 border border-amber-400/20 rounded-xl font-bold hover:bg-amber-400/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+                  title="Request analyst enrichment: lease years remaining, ground rent, SDLT breakdown, lease extension costs"
                 >
                   <RefreshCw size={12} />
                   Request Enrichment
@@ -744,37 +667,64 @@ const PropertyDetail: React.FC = () => {
                 onClose={() => setShowEnrichmentModal(false)}
               />
 
-              {/* Analyst Annotations */}
+              {/* Analyst Annotations — FE-255: collapsible supplementary panel */}
               <div className="mt-8 pt-8 border-t border-linear-border space-y-4">
-                <div className="flex items-center justify-between">
+                <button
+                  onClick={() => setNotesPanelOpen(v => !v)}
+                  className="w-full flex items-center justify-between text-left group"
+                >
                   <h3 className="text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
                     <FileText size={12} className="text-linear-accent" /> Analyst Notes
+                    {notes && notes.length > 0 && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-retro-green inline-block ml-1" />
+                    )}
                   </h3>
-                  <button 
-                    onClick={handleSaveNotes}
-                    disabled={isSaving}
-                    className={`flex items-center gap-1.5 px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest transition-all ${
-                      isSaving ? 'bg-retro-green/20 text-retro-green' : 'bg-linear-card text-linear-text-muted hover:text-white'
-                    }`}
-                  >
-                    <Save size={10} />
-                    {isSaving ? 'Secured' : 'Sync'}
-                  </button>
-                </div>
-                <div className="relative group">
-                  <textarea 
-                    value={notes}
-                    onChange={(e) => setLocalNotes(e.target.value)}
-                    placeholder="Strategic observations..."
-                    className="w-full h-40 bg-linear-bg border border-linear-border rounded-xl p-4 text-xs text-white placeholder:text-linear-text-muted/40 focus:outline-none focus:border-linear-accent/50 focus:ring-1 focus:ring-linear-accent/10 transition-all resize-none custom-scrollbar"
-                  />
-                  <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[8px] font-mono text-linear-text-muted uppercase">
-                    Local Persistence
+                  <span className="text-linear-text-muted group-hover:text-white transition-colors">
+                    {notesPanelOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </span>
+                </button>
+                {notesPanelOpen && (
+                  <div className="animate-in fade-in duration-200">
+                    <div className="flex justify-end mb-2">
+                      <button
+                        onClick={handleSaveNotes}
+                        disabled={isSaving}
+                        className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest transition-all ${
+                          isSaving ? 'bg-retro-green/20 text-retro-green' : 'bg-linear-card text-linear-text-muted hover:text-white'
+                        }`}
+                      >
+                        <Save size={10} />
+                        {isSaving ? 'Secured' : 'Sync Note'}
+                      </button>
+                    </div>
+                    <div className="relative group">
+                      <textarea
+                        value={notes}
+                        onChange={(e) => setLocalNotes(e.target.value)}
+                        placeholder="Record strategic observations, structural concerns, or bidding notes..."
+                        className="w-full h-40 bg-linear-bg border border-linear-border rounded-xl p-4 text-xs text-white placeholder:text-linear-text-muted/40 focus:outline-none focus:border-linear-accent/50 focus:ring-1 focus:ring-linear-accent/10 transition-all resize-none custom-scrollbar"
+                      />
+                      <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-[8px] font-mono text-linear-text-muted uppercase">
+                        Local Persistence
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
-              <div className="mt-8 pt-8 border-t border-linear-border">
+              {/* Asset Source Hub — always visible, no hover required (UX-122) */}
+              <div className="pt-6 border-t border-linear-border space-y-3">
+                <div className="flex items-center gap-2">
+                  <ExternalLink size={12} className="text-blue-400" />
+                  <h3 className="text-[10px] font-bold text-linear-text-muted uppercase tracking-[0.2em]">
+                    Asset Source Hub
+                  </h3>
+                </div>
+                <SourceHub links={property.links || [property.link]} variant="full" />
+              </div>
+
+              {/* Location Insight — always visible */}
+              <div className="pt-6 border-t border-linear-border">
                 <div className="flex items-start gap-4">
                   <div className="h-8 w-8 rounded-lg bg-linear-bg border border-linear-border flex items-center justify-center text-linear-accent shrink-0">
                     <MapPin size={16} />
@@ -787,6 +737,29 @@ const PropertyDetail: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* UX-121: Mobile sticky action bar — accessible on all mobile viewports */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-linear-card border-t border-linear-border px-4 py-3 flex items-center gap-2 shadow-[0_-4px_30px_rgba(0,0,0,0.4)] backdrop-blur-md">
+        {/* Verify Listing */}
+        <button
+          onClick={handleRecheck}
+          disabled={isRechecking}
+          className="flex-1 py-2.5 bg-retro-green/20 text-retro-green border border-retro-green/20 rounded-xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+        >
+          <RefreshCw size={11} className={isRechecking ? 'animate-spin' : ''} />
+          Verify
+        </button>
+        {/* Request Enrichment */}
+        <button
+          onClick={() => setShowEnrichmentModal(true)}
+          className="flex-1 py-2.5 bg-amber-400/10 text-amber-400 border border-amber-400/20 rounded-xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+        >
+          <RefreshCw size={11} />
+          Enrich
+        </button>
+        {/* Source Hub links */}
+        <SourceHub links={property.links || [property.link]} variant="compact" />
       </div>
     </div>
   );
