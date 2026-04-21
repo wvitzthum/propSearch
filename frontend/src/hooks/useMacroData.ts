@@ -16,7 +16,7 @@ export const useMacroData = () => {
         if (!res.ok) throw new Error(`Failed to fetch macro data: ${res.status} ${res.statusText}`);
         return res.json();
       })
-      .then((raw: any) => {
+      .then(/* eslint-disable @typescript-eslint/no-explicit-any */ (raw: any) => {
         // Normalization Layer — extract all provenance-wrapped values
         const rawEcon = raw.economic_indicators || raw;
         const rawRates = rawEcon.mortgage_rates || raw.mortgage_rates || {};
@@ -231,6 +231,8 @@ export const useMacroData = () => {
           // Pass through hpi_history for HPIHistoryChart + LondonPrimePremiumChart
           // Schema: { date, london_hpi, uk_hpi, london_vs_uk_pct } — HM Land Registry
           hpi_history: raw.hpi_history,
+          // PO-003: Analyst Statement Panel — pass through from macro_trend data
+          analyst_statements: raw.analyst_statements ?? [],
         };
 
         setData(normalized);

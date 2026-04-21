@@ -8,6 +8,7 @@ import AreaMetricHeatmap from '../components/AreaMetricHeatmap';
 import PropertyTypePerformanceChart from '../components/PropertyTypePerformanceChart';
 import Tooltip from '../components/Tooltip';
 import { PHASES } from '../components/SeasonalMarketCycle';
+import AnalystStatementPanel from '../components/AnalystStatementPanel';
 
 const MarketPage: React.FC = () => {
   return (
@@ -32,6 +33,9 @@ const MarketPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* PO-003: Analyst Statement Panel — written macro summaries at top of Market Intel */}
+      <AnalystStatementPanel />
 
       {/* UX-033: Market Verdict Strip */}
 

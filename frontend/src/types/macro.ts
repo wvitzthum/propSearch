@@ -207,6 +207,8 @@ export interface MacroTrend {
   london_benchmark?: number;
   // UX-009: Data freshness timestamp
   last_refreshed?: string;
+  // PO-003: Analyst Statement Panel — array of written macro summaries
+  analyst_statements?: AnalystStatement[];
   // FE-188: Appreciation model scenario definitions — used by HPIHistoryChart for 3-scenario fan chart
   appreciation_model?: {
     scenario_definitions?: {
@@ -224,6 +226,7 @@ export interface MacroTrend {
     url?: string;
     data_used?: string[];
   }>;
+  // PO-003: Analyst Statement Panel (note: already declared at line 211)
 }
 
 // FE-164: BoE Rate Consensus (Q3 2026 - Q2 2027)
@@ -451,4 +454,28 @@ export interface AppreciationProfile {
   expectedValue: number;
   weightedIRR: number;
   portfolioAlpha: number; // vs risk-free
+}
+
+// PO-003: Analyst Statement Panel — written macro summaries surfaced at top of MarketPage
+export interface AnalystStatement {
+  id: string;
+  date: string;          // ISO date "2026-04-13"
+  analyst: string;       // "Senior Real Estate Data Analyst"
+  title: string;         // short headline
+  body: string;          // full paragraph
+  sources: string[];
+  macro_context: {
+    boe_rate?: number;
+    two_year_swap?: number;
+    five_year_swap?: number;
+    london_hpi_annual_change?: number;
+    flat_hpi_annual_change?: number;
+    london_avg_price?: number;
+    gbp_usd?: number;
+    mos?: number;
+    avg_discount_pct?: number;
+    mortgage_2yr_75ltv?: number;
+    mortgage_5yr_60ltv?: number;
+  };
+  tags: string[];
 }
