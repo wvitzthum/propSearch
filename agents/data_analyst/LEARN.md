@@ -1,19 +1,11 @@
-# Learnings — user corrections made permanent
+# Learnings — agent-specific corrections
 
 **Read on every launch.** Append new entries below when the user corrects you.
 **Format:** `## YYYY-MM-DD` + `**Trigger:**` + `**Was:**` + `**Now:**` + `**Scope:**` + `**Status:**`
 **Never delete.** Mark `Superseded` when a later correction replaces a rule.
 **PO formalises** stable entries into PROTOCOLS/ or README.md.
 
----
-
-## 2026-04-04
-
-**Trigger:** Ports 3001 and 5173 are the user's own dev servers — agents must not start them
-**Was:** Agent started `npm run dev` or `node server/index.js` during tasks
-**Now:** Uses `node -e` with `better-sqlite3` or curls against a pre-started server. Never starts servers.
-**Scope:** All agents
-**Status:** Formalised — see PROTOCOLS/04_SESSION_STARTUP.md
+> **Shared rules** (server ports, /tmp/, no-delete) are in `AGENTS.md` — not duplicated here.
 
 ---
 
@@ -79,11 +71,15 @@
 **Scope:** Barness Court record
 **Status:** Active
 
-## Temp/Scratch File Rule (2026-04-21)
-- Use `/tmp/` for any temporary working files, debug scripts, one-off imports, scrape outputs.
-- Do NOT create temp files in the project root or `tmp/` directory -- they will be removed and gitignored.
-- `/tmp/` is outside the project and safe for arbitrary working files.
-- Debug screenshots (e.g. `debug_scrape.png`) are also not allowed in the project root.
+---
+
+## 2026-05-02
+
+**Trigger:** Root-level scripts kept appearing despite `/tmp/` rule
+**Was:** One-off debug scripts written to project root (check_schema.js, fix_glenmore.js)
+**Now:** All scripts must live in `scripts/` — never the project root. Root-level `.js` files will be moved by PO and count as a LEARN violation.
+**Scope:** All agents writing scripts
+**Status:** Active — formalised in AGENTS.md
 
 ---
 

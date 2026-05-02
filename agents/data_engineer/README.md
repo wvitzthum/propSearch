@@ -5,7 +5,7 @@ Core data architecture, storage solutions (SQLite), and automated ingestion pipe
 
 ## Session Startup Checklist
 
-1. **Read LEARN.md** — scan all active entries and apply them. This file contains every correction the user has ever made. If there are new entries, apply them before doing anything else.
+1. **Read LEARN.md** — scan agent-specific entries and apply them (see AGENTS.md for shared rules)
 2. **Check task backlog** — `jq '.tasks[] | select(.responsible=="Data Engineer" and .status=="Todo")' tasks/tasks.json`
 3. **Check for data integrity issues** — `GET /api/health` for any anomalies
 4. **Backup before any operation** — always create `data/backups/YYYY-MM-DD_backup.tar.gz` before schema changes, bulk imports, or syncs

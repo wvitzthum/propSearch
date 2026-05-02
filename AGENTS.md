@@ -219,6 +219,35 @@ Violations of these rules should be flagged immediately in task notes and raised
 
 ---
 
+## Agent Session Rules (Shared Corrections)
+
+The following rules apply to **all agents**. They were formalised from cross-agent corrections and are the authoritative source — not individual LEARN.md files.
+
+### ⛔ Dev Server Ports — User Only
+Ports **3001** (backend) and **5173** (frontend) are reserved for the user's manual testing. Agents must not start these servers.
+- **Analyst:** Use `node -e` with `better-sqlite3` or curl against a pre-started server
+- **FE/QA:** Use Playwright test suite for verification — never `npm run dev` or `vite`
+- **DE:** Use `node -e` with `better-sqlite3` directly or curl against pre-started server
+
+### ⛔ Temp/Scratch Files → `/tmp/`
+- Use `/tmp/` for any temporary working files, debug scripts, one-off imports, scrape outputs
+- **Do NOT** create temp files in the project root or `tmp/` directory — they will be removed and gitignored
+- `/tmp/` is outside the project and safe for arbitrary working files
+- Debug screenshots (e.g. `debug_scrape.png`) are also not allowed in the project root
+
+### ⛔ Scripts → `scripts/` Directory
+- All JavaScript/TypeScript scripts must live in `scripts/` — never in the project root
+- Root-level `.js` files will be moved by PO and count as a LEARN violation
+- Exception: scripts that are part of a multi-file tool (e.g. `agents/*/`) stay in place
+
+### ⛔ No-Deletion Policy (All Agents)
+**Never run `DELETE FROM properties`.** Always:
+```sql
+UPDATE properties SET archived = 1, archive_reason = '<reason>' WHERE id = ?;
+```
+
+---
+
 ## Project Structure
 - `agents/`: Specialized agent logic and domain rules.
 - `data/`: Property datasets and master database.

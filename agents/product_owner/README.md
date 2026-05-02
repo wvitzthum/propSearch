@@ -5,7 +5,7 @@ Long-term vision, requirements, and feature prioritization. The PO does not writ
 
 ## Session Startup Checklist
 
-1. **Read LEARN.md** — scan all active entries and apply them. This file contains every correction the user has ever made. If there are new entries, apply them before doing anything else.
+1. **Read LEARN.md** — scan agent-specific entries and apply them (see AGENTS.md for shared rules)
 2. **Review task backlog** — `jq '.tasks[] | select(.status=="Todo")' tasks/tasks.json`
 3. **Check strategic priorities** — see `STRATEGIC_ROADMAP.md`
 4. **Check recent architectural decisions** — review `DECISIONS.md` (root, ADRs 001–019) or `PROTOCOLS/03_DECISIONS.md` (summary)

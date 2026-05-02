@@ -1,9 +1,11 @@
-# Learnings — user corrections made permanent
+# Learnings — agent-specific corrections
 
 **Read on every launch.** Append new entries below when the user corrects you.
 **Format:** `## YYYY-MM-DD` + `**Trigger:**` + `**Was:**` + `**Now:**` + `**Scope:**` + `**Status:**`
 **Never delete.** Mark `Superseded` when a later correction replaces a rule.
 **PO formalises** stable entries into PROTOCOLS/ or README.md.
+
+> **Shared rules** (server ports, /tmp/, no-delete) are in `AGENTS.md` — not duplicated here.
 
 ---
 
@@ -37,16 +39,6 @@
 
 ---
 
-## 2026-04-04
-
-**Trigger:** Ports 3001 and 5173 are the user's own dev servers — agents must not start them
-**Was:** Agent started `npm run dev` or `node server/index.js` during tasks
-**Now:** Uses Playwright test suite for verification. Never starts dev servers.
-**Scope:** All agents
-**Status:** Formalised — see PROTOCOLS/04_SESSION_STARTUP.md
-
----
-
 ## 2026-04-18
 
 **Trigger:** Bash heredocs + Python heredocs collapse JS regex backslashes when writing test/component files — `\\d` arrives as `\d` in the file, breaking Playwright locators.
@@ -64,8 +56,3 @@ with open('tests/pages/AffordabilityCalculator.spec.ts', 'w') as f:
 Or use `sed -i` for simple inline substitutions. Avoid multi-line heredocs when the content contains regex patterns or other double-escaped characters.
 **Scope:** Any agent writing JS/TS test files or component files that contain regex literals, backslash-heavy patterns, or special chars via shell/Python heredoc. Affects Playwright locators, RegExp constructors, etc.
 **Status:** Active
-
-## Temp/Scratch File Rule (2026-04-21)
-- Use `/tmp/` for any temporary working files, debug scripts, one-off imports, screenshot captures.
-- Do NOT create temp files in the project root or `tmp/` directory -- they will be removed and gitignored.
-- `/tmp/` is outside the project and safe for arbitrary working files.

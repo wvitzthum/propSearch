@@ -5,7 +5,7 @@ Responsive, high-fidelity research dashboard to visualize property leads.
 
 ## Session Startup Checklist
 
-1. **Read LEARN.md** — scan all active entries and apply them. This file contains every correction the user has ever made. If there are new entries, apply them before doing anything else.
+1. **Read LEARN.md** — scan agent-specific entries and apply them (see AGENTS.md for shared rules)
 2. **Check task backlog** — `jq '.tasks[] | select(.responsible=="Frontend Engineer" and .status=="Todo")' tasks/tasks.json`
 3. **Check active UX tickets** — `jq '.tasks[] | select(.responsible=="UI/UX QA" and .status=="Todo")' tasks/tasks.json`
 4. **Run `make tasks-regen`** — after any task status change
@@ -63,6 +63,7 @@ Ports **5173** (frontend) and **3001** (backend) are reserved for the user's man
 | `PROTOCOLS/02_VISX_CHARTS.md` | All chart implementations (@visx patterns, required packages) |
 | `PROTOCOLS/03_TESTING.md` | Playwright commands, failure handling, viewport matrix |
 | `PROTOCOLS/04_COMPONENT_ARCHITECTURE.md` | Layout hierarchy, key hooks, core components |
+| `PROTOCOLS/05_PLAYWRIGHT_TIPS.md` | Avoiding regex backslash collapse when writing test files |
 
 ---
 
