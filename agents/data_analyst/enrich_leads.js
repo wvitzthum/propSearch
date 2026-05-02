@@ -43,7 +43,7 @@ for (const file of files) {
   console.log(`Processing ${file}...`);
 
   try {
-    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    let data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
     // Guard: skip files with no links and no price — nothing to scrape or import
     const links = Array.isArray(data.links) ? data.links : (data.url ? [data.url] : []);

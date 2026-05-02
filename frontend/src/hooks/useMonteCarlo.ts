@@ -25,7 +25,8 @@ function percentile(sorted: number[], p: number): number {
   return sorted[lower] + (sorted[upper] - sorted[lower]) * (idx - lower);
 }
 
-function extractPostcode(area: string): string {
+function extractPostcode(area: string | null | undefined): string {
+  if (!area) return 'N1'; // Guard against null/undefined
   // Extract postcode sector e.g. 'N1' from 'Islington (N1)'
   const match = area.match(/\(([^)]+)\)/);
   if (match) return match[1];

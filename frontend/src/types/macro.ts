@@ -203,6 +203,41 @@ export interface MacroTrend {
     data?: Array<{ date: string; london_hpi: number; uk_hpi: number; london_vs_uk_pct: number }>;
     [key: string]: unknown;
   };
+  // FE-279: SONIA Forward Curve from swap_rates
+  forward_curve?: SoniaForwardCurvePoint[];
+  // FE-282: Mortgage Timing Signal
+  timing_signal?: MortgageTimingSignal;
+  // FE-214: Polymarket BoE decision probabilities
+  prediction_markets?: {
+    _provenance?: {
+      source: string;
+      source_url: string;
+      methodology: string;
+      last_refreshed: string;
+    };
+    boe_decisions?: PolymarketMarket[];
+    boe_rate_2026?: PolymarketMarket[];
+    historical_accuracy?: {
+      boe_mpc?: HistoricalAccuracy;
+    };
+    last_updated?: string;
+  };
+  // FE-279: BoE rate probabilities
+  boe_rate_probabilities?: {
+    base_rate: number;
+    scenarios?: {
+      bull_case?: { description: string; end_of_2026_rate: number; probability: number };
+      base_case?: { description: string; end_of_2026_rate: number; probability: number };
+      bear_case?: { description: string; end_of_2026_rate: number; probability: number };
+    };
+    hike_probability_2026?: { from_polymarket: number };
+    next_rate_change?: {
+      meeting: string;
+      most_likely_action: string;
+      probability: number;
+      expected_new_rate: number;
+    };
+  };
   // UX-004: Single canonical London benchmark — use data.london_benchmark instead of reading london_hpi.annual_change/yoy_pct
   london_benchmark?: number;
   // UX-009: Data freshness timestamp
@@ -478,4 +513,137 @@ export interface AnalystStatement {
     mortgage_5yr_60ltv?: number;
   };
   tags: string[];
+}
+
+// FE-279: MPC Probability Matrix types
+export interface MPCProbability {
+  meeting_date: string;
+  meeting_name: string;
+  implied_rate: number;
+  no_change_prob: number;
+  cut_25bp_prob: number;
+  raise_25bp_prob: number;
+  expected_change_bp: number;
+  source?: string;
+  _note?: string;
+}
+
+// FE-280: SONIA Forward Curve types — matches swap_rates.forward_curve in macro_trend.json
+export interface SoniaForwardCurvePoint {
+  meeting_date: string;
+  meeting_name: string;
+  implied_rate: number;
+  no_change_prob: number;
+  cut_25bp_prob: number;
+  raise_25bp_prob: number;
+  expected_change_bp?: number;
+  source?: string;
+  _note?: string;
+}
+
+// FE-282: Mortgage Timing Signal types
+export type TimingDirection = 'falling' | 'rising' | 'holding';
+export type ConfidenceLevel = 'high' | 'medium' | 'low';
+
+export interface MortgageTimingSignal {
+  direction: TimingDirection;
+  target_rate?: number;
+  target_quarter?: string;
+  confidence: ConfidenceLevel;
+  confidence_volume_threshold?: number;
+}
+
+// FE-283: Rate Alert types
+export type AlertType = 'cut_prob' | 'hold_prob' | 'rate_fall' | 'rate_rise';
+
+export interface RateAlert {
+  id: string;
+  type: AlertType;
+  threshold: number;
+  meeting?: string;
+  horizon?: string;
+  triggered: boolean;
+  triggered_at?: string;
+  triggered_value?: number;
+}
+
+// FE-284: Prediction Market Accuracy types
+export interface HistoricalAccuracy {
+  hit_rate: number;
+  brier_score: number;
+  n_markets: number | null;
+  period: string;
+  calibration_note: string;
+  confidence: ConfidenceLevel;
+  boe_specific_data: boolean;
+  source?: string;
+}
+
+// FE-214: Polymarket Market Outcome
+export interface MarketOutcome {
+  label: string;
+  price: number;
+  implied_probability: number;
+}
+
+// FE-214: Polymarket Market
+export interface PolymarketMarket {
+  market_id: string;
+  market_url: string;
+  question: string;
+  source: string;
+  market_type: 'binary' | 'categorical';
+  volume_24h: number | null;
+  volume_total: number | null;
+  liquidity: number | null;
+  event_date: string;
+  settlement_date?: string;
+  outcomes?: MarketOutcome[];
+  sub_markets?: Array<{
+    label: string;
+    price: number;
+    implied_probability: number;
+    outcome_type?: string;
+  }>;
+  interpretation?: string;
+  last_refreshed: string;
+}
+
+// Extended MacroTrend with new PO-008/PO-009 fields
+export interface MacroTrendExtended extends MacroTrend {
+  // PO-008: SONIA Forward Curve from swap_rates
+  forward_curve?: SoniaForwardCurvePoint[];
+  // PO-008: Mortgage Timing Signal
+  timing_signal?: MortgageTimingSignal;
+  // PO-009: Polymarket BoE decision probabilities
+  prediction_markets?: {
+    _provenance?: {
+      source: string;
+      source_url: string;
+      methodology: string;
+      last_refreshed: string;
+    };
+    boe_decisions?: PolymarketMarket[];
+    boe_rate_2026?: PolymarketMarket[];
+    historical_accuracy?: {
+      boe_mpc?: HistoricalAccuracy;
+    };
+    last_updated?: string;
+  };
+  // PO-008: BoE Rate Probabilities
+  boe_rate_probabilities?: {
+    base_rate: number;
+    scenarios?: {
+      bull_case?: { description: string; end_of_2026_rate: number; probability: number };
+      base_case?: { description: string; end_of_2026_rate: number; probability: number };
+      bear_case?: { description: string; end_of_2026_rate: number; probability: number };
+    };
+    hike_probability_2026?: { from_polymarket: number };
+    next_rate_change?: {
+      meeting: string;
+      most_likely_action: string;
+      probability: number;
+      expected_new_rate: number;
+    };
+  };
 }

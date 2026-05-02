@@ -1,0 +1,398 @@
+[
+  {
+    "url": "https://g-h.co.uk/sales/maida-vale-london-w9/lve090201",
+    "address": "Maida Vale, W9",
+    "price": 1000000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/granville-road-childs-hill-london-nw2/wha210038",
+    "address": "Granville Road, Childs Hill, NW2",
+    "price": 1000000,
+    "beds": 3,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/abbey-road-st-johns-wood-london-nw8/lve190042",
+    "address": "Abbey Road, St. John's Wood, NW8",
+    "price": 995000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/morshead-road-little-venice-london-w9/lve170146",
+    "address": "Morshead Road, Little Venice, W9",
+    "price": 995000,
+    "beds": 3,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/kimberley-road-queens-park-london-nw6/wha260071",
+    "address": "Kimberley Road, Queens Park, NW6",
+    "price": 965000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/rosslyn-hill-hampstead-london-nw3/ham240292",
+    "address": "Rosslyn Hill, Hampstead, NW3",
+    "price": 950000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/frognal-hampstead-london-nw3/ham250136",
+    "address": "Frognal, Hampstead, NW3",
+    "price": 925000,
+    "beds": 3,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/belsize-road-south-hampstead-london-nw6/wha240134",
+    "address": "Belsize Road, South Hampstead, NW6",
+    "price": 925000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/castellain-mansions-castellain-road-london-w9/lve210192",
+    "address": "Castellain Mansions, Castellain Road, W9",
+    "price": 925000,
+    "beds": 3,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/maida-vale-little-venice-london-w9/lve250085",
+    "address": "Maida Vale, Little Venice, W9",
+    "price": 900000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/lindfield-gardens-hampstead-london-nw3/ham250251",
+    "address": "Lindfield Gardens, Hampstead, NW3",
+    "price": 900000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/the-clay-yard-liddell-place-west-hampstead-nw6/wha250257",
+    "address": "The Clay Yard, Liddell Place, NW6",
+    "price": 900000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/warrington-crescent-little-venice-london-w9/lve220145",
+    "address": "Warrington Crescent, Little Venice, W9",
+    "price": 895000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/clifton-gardens-little-venice-london-w9/lve260024",
+    "address": "Clifton Gardens, Little Venice, W9",
+    "price": 875000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/heritage-lane-west-hampstead-london-nw6/wha200104",
+    "address": "Heritage Lane, West Hampstead, NW6",
+    "price": 850000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/clifton-gardens-little-venice-london-w9/lve260018",
+    "address": "Clifton Gardens, Little Venice, W9",
+    "price": 849000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/randolph-avenue-little-venice-london-w9/lve220111",
+    "address": "Randolph Avenue, Little Venice, W9",
+    "price": 830000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/delaware-road-little-venice-london-w9/lve260002",
+    "address": "Delaware Road, Little Venice, W9",
+    "price": 825000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/honeybourne-road-west-hampstead-london-nw6/wha150114",
+    "address": "Honeybourne Road, West Hampstead, NW6",
+    "price": 825000,
+    "beds": 3,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/lanark-road-little-venice-london-w9/lve210162",
+    "address": "Lanark Road, Little Venice, W9",
+    "price": 800000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/maida-vale-london-w9/lve130532",
+    "address": "Maida Vale, London, W9",
+    "price": 800000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/priory-terrace-south-hampstead-london-nw6/wha250094",
+    "address": "Priory Terrace, South Hampstead, NW6",
+    "price": 800000,
+    "beds": 3,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/smyrna-road-west-hampstead-london-nw6/wha240198",
+    "address": "Smyrna Road, West Hampstead, NW6",
+    "price": 800000,
+    "beds": 3,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/maida-vale-little-venice-london-w9/lve230124",
+    "address": "Maida Vale, Little Venice, W9",
+    "price": 800000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/maida-vale-little-venice-london-w9/lve250109",
+    "address": "Maida Vale, Little Venice, W9",
+    "price": 799950,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/king-henrys-road-primrose-hill-london-nw3/cam230130",
+    "address": "King Henrys Road, Primrose Hill, NW3",
+    "price": 799950,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/canfield-place-south-hampstead-london-nw6/wha250014",
+    "address": "Canfield Place, South Hampstead, NW6",
+    "price": 795000,
+    "beds": 3,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/pandora-road-west-hampstead-london-nw6/wha260064",
+    "address": "Pandora Road, West Hampstead, NW6",
+    "price": 775000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/finchley-road-west-hampstead-london-nw3/ham240286",
+    "address": "Finchley Road, West Hampstead, NW3",
+    "price": 750000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/briardale-gardens-london-nw3/ham250092",
+    "address": "Briardale Gardens, London, NW3",
+    "price": 750000,
+    "beds": 3,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/finchley-road-west-hampstead-london-nw3/wha250213",
+    "address": "Finchley Road, West Hampstead, NW3",
+    "price": 750000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/heritage-lane-west-hampstead-london-nw6/wha250220",
+    "address": "Heritage Lane, West Hampstead, NW6",
+    "price": 750000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/fitzjohns-avenue-hampstead-village-london-nw3/ham240395",
+    "address": "Fitzjohns Avenue, Hampstead Village, NW3",
+    "price": 750000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/mill-lane-west-hampstead-london-nw6/wha250278",
+    "address": "Mill Lane, West Hampstead, NW6",
+    "price": 725000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/warrington-gardens-little-venice-london-w9/lve220025",
+    "address": "Warrington Gardens, Little Venice, W9",
+    "price": 725000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/lanark-road-london-w9/lve220067",
+    "address": "Lanark Road, London, W9",
+    "price": 725000,
+    "beds": 2,
+    "postcode": null,
+    "area": "West Hampstead",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/despard-road-archway-london-n19/hig240039",
+    "address": "Despard Road, Archway, N19",
+    "price": 950000,
+    "beds": 3,
+    "postcode": null,
+    "area": "Islington",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/highgate-hill-archway-london-n19/hig260027",
+    "address": "Highgate Hill, Archway, N19",
+    "price": 825000,
+    "beds": 2,
+    "postcode": null,
+    "area": "Islington",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/hazellville-road-whitehall-park-london-n19/hig240167",
+    "address": "Hazellville Road, Whitehall Park, N19",
+    "price": 800000,
+    "beds": 3,
+    "postcode": null,
+    "area": "Islington",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/st-james-lane-muswell-hill-london-n10/hig240012",
+    "address": "St. James Lane, Muswell Hill, N10",
+    "price": 750000,
+    "beds": 2,
+    "postcode": null,
+    "area": "Islington",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/corinne-road-tufnell-park-london-n19/cam230140",
+    "address": "Corinne Road, Tufnell Park, N19",
+    "price": 700000,
+    "beds": 2,
+    "postcode": null,
+    "area": "Islington",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/connaught-gardens-muswell-hill-london-n10/hig230039",
+    "address": "Connaught Gardens, Muswell Hill, N10",
+    "price": 600000,
+    "beds": 2,
+    "postcode": null,
+    "area": "Islington",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/whitehall-park-whitehall-park-london-n19/hig260017",
+    "address": "Whitehall Park, Whitehall Park, N19",
+    "price": 550000,
+    "beds": 2,
+    "postcode": null,
+    "area": "Islington",
+    "source": "Goldschmidt & Howland"
+  },
+  {
+    "url": "https://g-h.co.uk/sales/westbere-road-west-hampstead-london-nw2/wha230155",
+    "address": "Westbere Road, West Hampstead, NW2",
+    "price": 550000,
+    "beds": 2,
+    "postcode": null,
+    "area": "Bayswater",
+    "source": "Goldschmidt & Howland"
+  }
+]

@@ -3,6 +3,59 @@
 
 MANDATORY — execute for every new lead before creating a new record.
 
+## Step 0 — Pre-Import Similar Property Check (NEW - 2026-04-26)
+
+**Before creating ANY new property record, check for similar properties based on characteristics.**
+
+This step prevents cross-property contamination where the same portal URL gets assigned to multiple different properties, or where similar-looking properties (same street, similar price) are confused.
+
+**Check query:**
+```sql
+-- Find properties on the same street with similar characteristics
+SELECT id, address, list_price, sqft, bedrooms, tenure, links
+FROM properties 
+WHERE archived = 0
+  AND (
+    -- Same street name (extract street from address)
+    LOWER(address) LIKE '%' || LOWER(?) || '%'
+    -- OR same postcode area with similar price
+    OR (area LIKE ? AND abs(list_price - ?) < 50000)
+  )
+```
+
+**What makes a property unique (check all of these):**
+| Characteristic | Why Unique |
+|---------------|-----------|
+| **Full Address + Postcode** | Most definitive identifier |
+| **Price** | Same unit rarely changes price significantly |
+| **Sqft** | Different floor plans = different sizes |
+| **Bedrooms/Bathrooms** | Different configurations |
+| **Tenure** | SoFH vs Leasehold = different units |
+
+**Decision rules:**
+| Scenario | Action |
+|----------|--------|
+| Same address + postcode + price ≈ same sqft | Likely duplicate — investigate |
+| Same street but different sqft OR price differs >£50k | Likely different units — OK to create new record |
+| Same URL in multiple records | **Contamination — fix immediately** |
+
+**Glenmore Road example (2026-04-26):**
+- `zo-70438237`: £675k, SoFH, 714 sqft, 2bd/1ba — Zoopla link was contaminated with Rightmove link for different property
+- `13cb1730`: £800k, Leasehold 999yr, 675 sqft, 2bd/2ba — had the contaminated Rightmove link
+
+**Both properties were on Glenmore Road but were completely different units.** The contamination occurred because:
+1. A scraped URL was shared between records
+2. No check existed to verify sqft/bedrooms matched the URL's actual content
+
+**Prevention checklist before import:**
+- [ ] URL is unique to this property (not in any other record)
+- [ ] Address + postcode matches the URL's property
+- [ ] Sqft is consistent with the URL's listing
+- [ ] Bedrooms match the URL's listing
+- [ ] Tenure matches the URL's listing
+
+---
+
 ## Step 1 — Duplicate Check (Two-Phase)
 
 ### Phase 1A — URL Cross-Check (MUST run before address matching)

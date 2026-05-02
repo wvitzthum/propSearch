@@ -1,11 +1,14 @@
 // FE-207: Migrated sparklines to @visx — replaces hand-rolled polyline with visx LinePath
+// FE-282: Extended with Mortgage Timing Signal
 import React, { useMemo } from 'react';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Clock } from 'lucide-react';
 import { useMacroData } from '../hooks/useMacroData';
 import { extractValue } from '../types/macro';
 import { scaleLinear } from '@visx/scale';
 import { LinePath } from '@visx/shape';
 import { curveMonotoneX } from '@visx/curve';
+import MPCProbabilityMatrix from './MPCProbabilityMatrix';
+import Tooltip from './Tooltip';
 
 const SwapRateSignal: React.FC = () => {
   const { data } = useMacroData();
@@ -46,6 +49,52 @@ const SwapRateSignal: React.FC = () => {
 
   const trendColor = (t: string) => t === 'rising' ? '#ef4444' : t === 'falling' ? '#22c55e' : '#a1a1aa';
   const TrendIcon = (t: string) => t === 'rising' ? TrendingUp : t === 'falling' ? TrendingDown : Minus;
+
+  // FE-282: Mortgage Timing Signal — derived from forward curve
+  const timingSignal = useMemo(() => {
+    const signal = data?.timing_signal;
+    if (signal) return signal;
+
+    // Fallback: derive from forward curve
+    const fc = data?.forward_curve ?? [];
+    if (fc.length >= 2) {
+      const current = fc[0];
+      const future = fc.find((p: { meeting_date: string }) => {
+        const d = new Date(p.meeting_date);
+        return d >= new Date('2026-07-01');
+      }) ?? fc[Math.min(2, fc.length - 1)];
+
+      if (current && future) {
+        const change = future.implied_rate - current.implied_rate;
+        const vol = data?.prediction_markets?.boe_decisions?.[0]?.volume_total ?? 0;
+        return {
+          direction: change < -0.1 ? 'falling' : change > 0.1 ? 'rising' : 'holding',
+          target_rate: future.implied_rate,
+          target_quarter: future.meeting_name,
+          confidence: vol > 100000 ? 'high' : vol > 25000 ? 'medium' : 'low' as const,
+        };
+      }
+    }
+
+    // Default fallback
+    return {
+      direction: 'holding' as const,
+      confidence: 'low' as const,
+    };
+  }, [data?.timing_signal, data?.forward_curve, data?.prediction_markets]);
+
+  const timingColor = timingSignal.direction === 'falling' ? '#22c55e'
+    : timingSignal.direction === 'rising' ? '#ef4444'
+    : '#a1a1aa';
+  const timingBg = timingSignal.direction === 'falling' ? 'rgba(34, 197, 94, 0.1)'
+    : timingSignal.direction === 'rising' ? 'rgba(239, 68, 68, 0.1)'
+    : 'rgba(161, 161, 170, 0.1)';
+  const timingBorder = timingSignal.direction === 'falling' ? 'rgba(34, 197, 94, 0.3)'
+    : timingSignal.direction === 'rising' ? 'rgba(239, 68, 68, 0.3)'
+    : 'rgba(161, 161, 170, 0.3)';
+  const confidenceColor = timingSignal.confidence === 'high' ? '#22c55e'
+    : timingSignal.confidence === 'medium' ? '#f59e0b'
+    : '#a1a1aa';
 
   // FE-182: Implied fixed rate — values are now plain numbers, no NaN possible
   const implied5yrFixed = useMemo(() => {
@@ -152,6 +201,49 @@ const SwapRateSignal: React.FC = () => {
               <span className="text-linear-text-muted">actual</span>
             </div>
           </div>
+        </div>
+
+        {/* FE-282: Mortgage Timing Signal */}
+        <div
+          className="p-3 rounded-xl border transition-colors"
+          style={{ backgroundColor: timingBg, borderColor: timingBorder }}
+        >
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-1.5">
+              <Clock size={9} style={{ color: timingColor }} />
+              <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: timingColor }}>
+                Rate Outlook
+              </span>
+            </div>
+            <Tooltip
+              content={`Rates are ${timingSignal.direction} — derived from SONIA forward curve slope`}
+              methodology="Forward curve from swap_rates.forward_curve. Direction based on rate change over next 3 months."
+            >
+              <div className="flex items-center gap-1.5">
+                <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: confidenceColor }} />
+                <span className="text-[8px] font-bold uppercase" style={{ color: confidenceColor }}>
+                  {timingSignal.confidence}
+                </span>
+              </div>
+            </Tooltip>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-white">
+              Rates {timingSignal.direction === 'falling' ? 'falling'
+                : timingSignal.direction === 'rising' ? 'rising'
+                : 'holding'}
+              {timingSignal.target_rate && timingSignal.target_quarter && (
+                <span className="text-linear-text-muted ml-1">
+                  to ~{timingSignal.target_rate.toFixed(2)}% {timingSignal.target_quarter}
+                </span>
+              )}
+            </span>
+          </div>
+        </div>
+
+        {/* FE-282: Compact MPC Probability Strip */}
+        <div className="p-3 bg-linear-bg rounded-xl border border-linear-border">
+          <MPCProbabilityMatrix compact />
         </div>
 
         {/* Historical table */}

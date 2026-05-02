@@ -73,12 +73,17 @@ const createPropertyIcon = (
 
 // FE-251: Linear interpolation between two hex colours
 const interpolateColor = (from: string, to: string, t: number): string => {
+  // Guard against undefined inputs
+  if (!from || !to) return '#3b82f6'; // fallback to blue
   const lerp = (a: number, b: number, t: number) => Math.round(a + (b - a) * t);
-  const parse = (hex: string) => [
-    parseInt(hex.slice(1, 3), 16),
-    parseInt(hex.slice(3, 5), 16),
-    parseInt(hex.slice(5, 7), 16),
-  ];
+  const parse = (hex: string) => {
+    if (!hex || hex.length < 7) return [0, 0, 0];
+    return [
+      parseInt(hex.slice(1, 3), 16),
+      parseInt(hex.slice(3, 5), 16),
+      parseInt(hex.slice(5, 7), 16),
+    ];
+  };
   const [r1, g1, b1] = parse(from);
   const [r2, g2, b2] = parse(to);
   const r = lerp(r1, r2, t);
@@ -111,11 +116,36 @@ const CHOROPLETH_COLORS: Record<'income' | 'density' | 'crime', string[]> = {
 };
 const CHOROPLETH_BREAKS = [0, 0.25, 0.5, 0.75, 1.0];
 
+// FE-275 / DE-243: Compute normalized lsoa_value from actual data fields.
+// Fields available in lsoa_choropleth_london.geojson: imd_score, imd_rank, claimant_rate, crime_count
+const CHOROPLETH_RANGES = {
+  imd_score: { min: 0, max: 65 },   // Index of Multiple Deprivation score (0–~65)
+  crime_count: { min: 0, max: 1206 }, // raw crime count per LSOA
+  claimant_rate: { min: 0, max: 100 }, // % claimants (0–100)
+};
+
+const normalize = (val: number, min: number, max: number): number => {
+  if (max === min) return 0.5;
+  return Math.max(0, Math.min(1, (val - min) / (max - min)));
+};
+
 const choroplethStyle = (feature: GeoJSON.Feature | undefined, mode: 'income' | 'density' | 'crime') => {
-  const val = feature?.properties?.lsoa_value ?? 0.5; // 0–1 normalized value
+  if (!feature?.properties) return { fillOpacity: 0 };
+  const props = feature.properties as Record<string, number>;
+  let val: number;
+  if (mode === 'crime') {
+    // Crime: higher count = worse → normalize crime_count to 0–1
+    val = normalize(props.crime_count ?? 0, CHOROPLETH_RANGES.crime_count.min, CHOROPLETH_RANGES.crime_count.max);
+  } else if (mode === 'density') {
+    // Density/claimancy: claimant_rate is % (0–100), higher = more deprived
+    val = normalize(props.claimant_rate ?? 0, CHOROPLETH_RANGES.claimant_rate.min, CHOROPLETH_RANGES.claimant_rate.max);
+  } else {
+    // Income deprivation: imd_score, higher = more deprived
+    val = normalize(props.imd_score ?? 0, CHOROPLETH_RANGES.imd_score.min, CHOROPLETH_RANGES.imd_score.max);
+  }
   return {
     fillColor: getChoroplethColor(mode, val),
-    fillOpacity: 0.35,
+    fillOpacity: 0.4,
     color: '#1e293b',
     weight: 0.3,
     opacity: 0.2,
@@ -124,12 +154,12 @@ const choroplethStyle = (feature: GeoJSON.Feature | undefined, mode: 'income' | 
 
 // FE-275: Choropleth colour computation — uses existing interpolateColor from FE-251
 const getChoroplethColor = (mode: 'income' | 'density' | 'crime', t: number): string => {
-  const palette = CHOROPLETH_COLORS[mode];
+  const palette = CHOROPLETH_COLORS[mode] ?? CHOROPLETH_COLORS.income;
   const idx = Math.min(Math.floor(t * 4), 3);
   const t0 = CHOROPLETH_BREAKS[idx];
   const t1 = CHOROPLETH_BREAKS[idx + 1];
   const localT = t1 > t0 ? (t - t0) / (t1 - t0) : 0;
-  return interpolateColor(palette[idx], palette[idx + 1], localT);
+  return interpolateColor(palette[idx] ?? palette[0], palette[idx + 1] ?? palette[3], localT);
 };
 
 // FE-275: POI CircleMarker colours
@@ -195,13 +225,13 @@ const MapView: React.FC = () => {
       .then(r => r.ok ? r.json() : null)
       .then(d => d && setRiversData(d))
       .catch(() => {});
-    // FE-275: Fetch LSOA choropleth data
-    fetch('/data/lsoa_choropleth_london.geojson')
+    // FE-275: Fetch LSOA choropleth data (DE-243: served via /api/static/ — not in Vite public/)
+    fetch('/api/static/lsoa_choropleth_london.geojson')
       .then(r => r.ok ? r.json() : null)
       .then(d => d && setChoroplethData(d))
       .catch(() => {});
-    // FE-275: Fetch POI data
-    fetch('/data/london_pois.json')
+    // FE-275: Fetch POI data (DE-243: served via /api/static/)
+    fetch('/api/static/london_pois.json')
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (!d) return;
@@ -345,13 +375,16 @@ const MapView: React.FC = () => {
             style={(feature) => choroplethStyle(feature, choroplethMode)}
             onEachFeature={(feature, layer) => {
               if (feature?.properties) {
-                const props = feature.properties;
-                const label = props.lsoa_name || props.name || 'LSOA';
-                const value = props.lsoa_value != null
-                  ? props.lsoa_value.toFixed(0)
-                  : props.income ? `£${Number(props.income).toLocaleString()}`
-                  : props.crime_rate ? `${props.crime_rate.toFixed(0)}/1k`
-                  : 'N/A';
+                const props = feature.properties as Record<string, unknown>;
+                const label = (props.area_name as string) || (props.name as string) || 'LSOA';
+                let value: string;
+                if (choroplethMode === 'crime') {
+                  value = `${Number(props.crime_count ?? 0).toFixed(0)} crimes`;
+                } else if (choroplethMode === 'density') {
+                  value = `${Number(props.claimant_rate ?? 0).toFixed(1)}% claimants`;
+                } else {
+                  value = `IMD ${Number(props.imd_score ?? 0).toFixed(1)} (rank ${Number(props.imd_rank ?? 0).toLocaleString()})`;
+                }
                 layer.bindTooltip(`${label}: ${value}`, {
                   className: 'bg-linear-card border border-linear-border text-white text-[10px] rounded-lg px-2 py-1',
                   sticky: true,
@@ -419,7 +452,7 @@ const MapView: React.FC = () => {
       </MapContainer>
 
       {/* FE-178: Controls Overlay */}
-      <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+      <div className="absolute top-4 right-4 z-[850] flex flex-col gap-2">
         {/* Layer toggles */}
         <div className="bg-linear-card/95 backdrop-blur-md border border-linear-border rounded-xl p-2 space-y-1.5 shadow-2xl">
           {[
@@ -543,9 +576,9 @@ const MapView: React.FC = () => {
 
       {/* FE-275: Choropleth Legend — bottom-left, shows when overlay is active */}
       {choroplethMode && (
-        <div className="absolute bottom-4 left-4 z-[1000] bg-linear-card/95 backdrop-blur-md border border-linear-border rounded-xl p-3 shadow-2xl">
+        <div className="absolute bottom-4 left-4 z-[800] bg-linear-card/95 backdrop-blur-md border border-linear-border rounded-xl p-3 shadow-2xl">
           <div className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest mb-2">
-            {choroplethMode === 'income' ? 'Income' : choroplethMode === 'density' ? 'Density' : 'Crime Rate'}
+            {choroplethMode === 'income' ? 'Income Deprivation' : choroplethMode === 'density' ? 'Claimant Rate' : 'Crime Count'}
           </div>
           <div className="flex items-center gap-1">
             {[0, 1, 2, 3, 4].map(i => {
@@ -556,20 +589,14 @@ const MapView: React.FC = () => {
             })}
           </div>
           <div className="flex justify-between mt-1 text-[8px] text-linear-text-muted">
-            {choroplethMode === 'income' ? (
-              <><span>Low</span><span>High</span></>
-            ) : choroplethMode === 'density' ? (
-              <><span>Low</span><span>High</span></>
-            ) : (
-              <><span>Safe</span><span>High</span></>
-            )}
+            <span>Low</span><span>High</span>
           </div>
         </div>
       )}
 
-      {/* Filter Panel */}
+      {/* Filter Panel — left-aligned below top bar, above overlay controls to avoid overlap */}
       {isFilterOpen && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-linear-card/95 backdrop-blur-md border border-linear-border rounded-xl p-4 shadow-2xl min-w-[500px]">
+        <div className="absolute top-4 left-16 z-[900] bg-linear-card/95 backdrop-blur-md border border-linear-border rounded-xl p-4 shadow-2xl min-w-72 max-w-[90vw]">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[10px] font-bold text-white uppercase tracking-widest">Map Filters</span>
             <button onClick={() => setIsFilterOpen(false)} className="text-linear-text-muted hover:text-white">

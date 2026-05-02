@@ -28,6 +28,8 @@ All leads are routed to the **Inbox** for human triage before full normalization
 | Belsize Park | NW3 | Primary |
 | West Hampstead | NW6 | Secondary |
 | Chelsea | SW3, SW10 | Secondary |
+| Pimlico | SW1 | Primary |
+| Bermondsey | SE1 | Primary |
 
 ### Price Range
 

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAffordability } from '../hooks/useAffordability';
 import { useFinancialData } from '../hooks/useFinancialData';
+import { useMacroData } from '../hooks/useMacroData'; // FE-281: for forward curve data
 import { extractValue } from '../types/macro';
 import LTVMatchBadge from '../components/LTVMatchBadge';
 import BudgetSlider from '../components/BudgetSlider';
@@ -24,6 +25,7 @@ import BorrowingPowerCalculator from '../components/BorrowingPowerCalculator';
 
 const AffordabilitySettings: React.FC = () => {
   const { macroData, loading } = useFinancialData();
+  const { data } = useMacroData(); // FE-281: for forward curve data
   const {
     monthlyBudget,
     mortgageRate,
@@ -523,6 +525,191 @@ const AffordabilitySettings: React.FC = () => {
                     </div>
                     <div className="mt-3 text-[10px] text-linear-text-muted">
                       Shorter terms = higher payments, less total interest. Longer terms = lower payments, more total interest.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* FE-281: Rate Outlook Section */}
+          <div className="bg-linear-card border border-linear-border rounded-3xl overflow-hidden">
+            <button
+              onClick={() => toggleSection('rate_outlook')}
+              className="w-full p-6 flex items-center justify-between hover:bg-linear-bg/50 transition-colors"
+            >
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                  <TrendingUp size={20} />
+                </div>
+                <div className="text-left">
+                  <h2 className="text-sm font-bold text-white uppercase tracking-widest">Rate Outlook</h2>
+                  <p className="text-[10px] text-linear-text-muted mt-1">
+                    SONIA forward curve + Polymarket probabilities for mortgage timing decisions
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-lg font-bold text-cyan-400">2yr vs 5yr</span>
+                <ChevronDown size={20} className={`text-linear-text-muted transition-transform ${expandedSections.has('rate_outlook') ? 'rotate-180' : ''}`} />
+              </div>
+            </button>
+
+            {expandedSections.has('rate_outlook') && (
+              <div className="px-6 pb-6 border-t border-linear-border">
+                <div className="pt-6 space-y-6">
+                  {/* Rate Horizon Selector */}
+                  <div className="p-4 bg-cyan-500/5 border border-cyan-500/20 rounded-xl">
+                    <div className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest mb-3">Rate Horizon Decision</div>
+                    <div className="flex bg-linear-bg rounded-xl border border-linear-border p-1.5 gap-1 mb-4">
+                      {[
+                        { key: '2yr', label: '2yr Fixed' },
+                        { key: '5yr', label: '5yr Fixed' },
+                        { key: '2yr_remortgage', label: '2yr → Remortgage' },
+                      ].map((opt) => (
+                        <button
+                          key={opt.key}
+                          className="flex-1 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all bg-linear-bg border border-linear-border text-linear-text-muted hover:text-white hover:border-cyan-500/30"
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="text-[10px] text-linear-text-muted leading-relaxed">
+                      Compare 2yr forward rate vs 5yr current rate to determine optimal locking strategy.
+                      5yr premium &gt;50bp suggests 2yr with remortgage plan.
+                    </div>
+                  </div>
+
+                  {/* SONIA vs Polymarket side by side */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* SONIA Forward */}
+                    <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-xl">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="h-2 w-2 rounded-full bg-blue-500" />
+                        <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">SONIA Forward</span>
+                      </div>
+                      <div className="space-y-2">
+                        {data?.forward_curve?.slice(0, 3).map((point) => (
+                          <div key={point.meeting_date} className="flex items-center justify-between">
+                            <span className="text-[9px] text-linear-text-muted">{point.meeting_name}</span>
+                            <span className="text-[10px] font-bold text-white">{point.implied_rate.toFixed(2)}%</span>
+                          </div>
+                        ))}
+                        {(!data?.forward_curve || data.forward_curve.length === 0) && (
+                          <div className="text-[9px] text-linear-text-muted">No forward curve data available</div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Polymarket Probabilities */}
+                    <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="h-2 w-2 rounded-full bg-amber-500" />
+                        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Polymarket</span>
+                      </div>
+                      {data?.prediction_markets?.boe_decisions?.[0] && (() => {
+                        const nextMPC = data.prediction_markets.boe_decisions[0];
+                        const subMarkets = nextMPC.sub_markets ?? nextMPC.outcomes ?? [];
+                        const cut = subMarkets.find((o: { label: string }) => o.label.toLowerCase().includes('cut'));
+                        const hold = subMarkets.find((o: { label: string }) => o.label.toLowerCase().includes('no change') || o.label.toLowerCase().includes('hold'));
+                        const raise = subMarkets.find((o: { label: string }) => o.label.toLowerCase().includes('increase') || o.label.toLowerCase().includes('raise'));
+                        return (
+                          <div className="space-y-2">
+                            {cut && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-[9px] text-retro-green">Cut</span>
+                                <span className="text-[10px] font-bold text-retro-green">
+                                  {((cut as { price?: number }).price ?? 0).toFixed(2)}
+                                </span>
+                              </div>
+                            )}
+                            {hold && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-[9px] text-white">Hold</span>
+                                <span className="text-[10px] font-bold text-white">
+                                  {((hold as { price?: number }).price ?? 0).toFixed(2)}
+                                </span>
+                              </div>
+                            )}
+                            {raise && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-[9px] text-retro-rose">Raise</span>
+                                <span className="text-[10px] font-bold text-retro-rose">
+                                  {((raise as { price?: number }).price ?? 0).toFixed(2)}
+                                </span>
+                              </div>
+                            )}
+                            {subMarkets.length === 0 && (
+                              <div className="text-[9px] text-linear-text-muted">No probability data</div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Rate Decision Bet Calculator */}
+                  <div className="p-4 bg-linear-bg rounded-xl border border-linear-border">
+                    <div className="text-[10px] font-bold text-white uppercase tracking-widest mb-3">Lock Now vs Wait Calculator</div>
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      {[
+                        { label: 'Lock Now', value: '4.40%', color: 'text-amber-400', desc: 'Current 2yr fixed' },
+                        { label: 'Wait 3mo', value: '45%', color: 'text-blue-400', desc: 'Cut probability' },
+                        { label: 'Expected Saving', value: '£2,100', color: 'text-emerald-400', desc: 'If rates fall' },
+                      ].map((item) => (
+                        <div key={item.label}>
+                          <div className="text-[9px] text-linear-text-muted uppercase tracking-widest">{item.label}</div>
+                          <div className={`text-lg font-bold ${item.color}`}>{item.value}</div>
+                          <div className="text-[8px] text-linear-text-muted">{item.desc}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-linear-border">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-[10px] font-bold text-white">Recommendation:</span>
+                        <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-[9px] font-bold rounded">LOCK NOW</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* MPC Probability Strip */}
+                  <div className="p-4 bg-linear-bg rounded-xl border border-linear-border">
+                    <div className="text-[10px] font-bold text-linear-text-muted uppercase tracking-widest mb-3">Next MPC Meeting</div>
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <span className="text-lg font-bold text-white">
+                          {data?.boe_rate_probabilities?.next_rate_change?.meeting?.split(',')[0] ?? 'May 7-8, 2026'}
+                        </span>
+                      </div>
+                      <div className="flex-1">
+                        {(() => {
+                          const nextMPC = data?.prediction_markets?.boe_decisions?.[0];
+                          const subMarkets = nextMPC?.sub_markets ?? [];
+                          const cut = (subMarkets[0] as { price?: number })?.price ?? 0.35;
+                          const hold = (subMarkets[1] as { price?: number })?.price ?? 0.60;
+                          const raise = (subMarkets[2] as { price?: number })?.price ?? 0.05;
+                          const total = cut + hold + raise;
+                          return (
+                            <div className="h-2 bg-linear-bg rounded-full overflow-hidden flex">
+                              {cut > 0 && (
+                                <div className="bg-retro-green transition-all" style={{ width: `${(cut / total) * 100}%` }} />
+                              )}
+                              {hold > 0 && (
+                                <div className="bg-gray-500 transition-all" style={{ width: `${(hold / total) * 100}%` }} />
+                              )}
+                              {raise > 0 && (
+                                <div className="bg-retro-rose transition-all" style={{ width: `${(raise / total) * 100}%` }} />
+                              )}
+                            </div>
+                          );
+                        })()}
+                        <div className="flex justify-between mt-1 text-[8px]">
+                          <span className="text-retro-green">Cut {((data?.boe_rate_probabilities?.next_rate_change?.probability ?? 0.6) * 100).toFixed(0)}%</span>
+                          <span className="text-white">Hold</span>
+                          <span className="text-retro-rose">Raise</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

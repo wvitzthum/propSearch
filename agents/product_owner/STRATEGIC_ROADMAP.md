@@ -60,3 +60,21 @@ To leverage real-time market sentiment and high-density data to identify "Alpha"
 2. [ ] **FE-061:** Implement "Negotiation Buffer" visualization in Property Detail.
 3. [ ] **DAT-043:** Integrate "Urban Village" POI data for SW3/NW3/NW6.
 4. [ ] **QA-032:** Audit EPC improvement data accuracy for period properties.
+
+---
+
+## Phase 4 Implementation (2026-04-23)
+**Status:** In Progress
+
+### 4.1 Bank Rate Short-Term Forecasting (PO-008) ✅ Scoped
+- **FE-279:** MPC Probability Matrix component
+- **FE-280:** BoERatePathChart SONIA Forward Curve + Polymarket overlay
+- **FE-281:** Rate Decision Bet Calculator + Rate Horizon Selector on AffordabilitySettings
+- **FE-282:** SwapRateSignal Mortgage Timing Signal + Rate Outlook badge
+- **Blocked by:** DAT-212 (SONIA data), DAT-214 (Polymarket)
+
+### 4.2 Prediction Market Intelligence (PO-009) ✅ Scoped
+- **FE-279:** MPC Probability Strip (shared with PO-008)
+- **FE-283:** Rate Alert / Threshold System
+- **FE-284:** Prediction Accuracy Panel
+- **Blocked by:** DAT-213 (research), DAT-214 (pipeline), DAT-215 (backtest)

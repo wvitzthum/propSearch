@@ -127,6 +127,7 @@ Each protocol is a standalone reference — read the one you need, when you need
 | `PROTOCOLS/08_SCRAPING.md` | FlareSolverr usage, portal extraction patterns |
 | `PROTOCOLS/09_STATE_MODEL.md` | Flagging rules, analyst_flag values, no-archive discipline |
 | `PROTOCOLS/10_IMAGE_STORAGE.md` | Local image capture, `capture_images.js` workflow, CDN resilience |
+| `PROTOCOLS/11_PORTAL_STATUS_CHECK.md` | Verifying portal listings (Rightmove/Zoopla/OTM), detecting removed vs active |
 
 ---
 

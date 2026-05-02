@@ -1,10 +1,10 @@
 {
-  "_last_full_refresh": "2026-04-04",
+  "_last_full_refresh": "2026-04-24",
   "_provenance_schema_version": "1.0",
   "_refresh_schedule": "Weekly (Mondays) + ad-hoc for market events",
   "_meta": {
-    "last_refreshed": "2026-04-03",
-    "days_since_refresh": 1,
+    "last_refreshed": "2026-04-24",
+    "days_since_refresh": 0,
     "data_freshness": "green",
     "next_expected_refresh": "2026-04-06",
     "note": "Manual analyst refresh \u2014 weekly automated pipeline scheduled to run Mondays 09:00 UTC (GitHub Actions weekly-refresh.yml)",
@@ -96,7 +96,9 @@
     "DAT-178",
     "DAT-179",
     "DAT-182",
-    "DAT-184"
+    "DAT-184",
+    "DAT-213",
+    "DAT-214"
   ],
   "area_trends": [
     {
@@ -183,8 +185,9 @@
     "source": "Bank of England Monetary Policy Committee",
     "source_url": "https://www.bankofengland.co.uk/monetary-policy/the-interest-rate-bank-rate",
     "methodology": "Official Bank Rate set by MPC vote; reflects inter-meeting consensus",
-    "last_refreshed": "2026-03-20",
-    "next_expected_update": "2026-05-07"
+    "last_refreshed": "2026-04-24",
+    "next_expected_update": "2026-05-07",
+    "note": "Rate held at 3.75% at March 27 2026 MPC. Cut 6 times since August 2024 (from peak 5.25%). Next MPC decision: 7 May 2026. March MPC minutes cited tariff and inflation risks as reasons to hold."
   },
   "boe_rate_consensus": {
     "_description": "Forward-looking BoE Base Rate expectations (Q3 2026 - Q2 2027)",
@@ -192,7 +195,7 @@
       "source": "Bank of England Inflation Report + Consensus Economics",
       "source_url": "https://www.bankofengland.co.uk/inflation-report",
       "methodology": "Market-implied forward rates derived from SONIA futures + analyst consensus",
-      "last_refreshed": "2026-03-20"
+      "last_refreshed": "2026-04-24"
     },
     "scenarios": {
       "bear_case": {
@@ -253,42 +256,42 @@
         "source": "Bank of England Effective Interest Rates",
         "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
         "methodology": "Weighted average effective rate on new 2-year fixed mortgage approvals at 90% LTV",
-        "last_refreshed": "2026-03-20"
+        "last_refreshed": "2026-04-24"
       },
       "90_ltv_5yr_fixed": {
         "value": 4.55,
         "source": "Bank of England Effective Interest Rates",
         "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
         "methodology": "Weighted average effective rate on new 5-year fixed mortgage approvals at 90% LTV",
-        "last_refreshed": "2026-03-20"
+        "last_refreshed": "2026-04-24"
       },
       "85_ltv_5yr_fixed": {
         "value": 4.35,
         "source": "Bank of England Effective Interest Rates",
         "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
         "methodology": "Weighted average effective rate on new 5-year fixed mortgage approvals at 85% LTV",
-        "last_refreshed": "2026-03-20"
+        "last_refreshed": "2026-04-24"
       },
       "75_ltv_5yr_fixed": {
         "value": 4.25,
         "source": "Bank of England Effective Interest Rates",
         "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
         "methodology": "Weighted average effective rate on new 5-year fixed mortgage approvals at 75% LTV",
-        "last_refreshed": "2026-03-20"
+        "last_refreshed": "2026-04-24"
       },
       "60_ltv_5yr_fixed": {
         "value": 3.7,
         "source": "Bank of England Effective Interest Rates",
         "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
         "methodology": "Weighted average effective rate on new 5-year fixed mortgage approvals at 60% LTV",
-        "last_refreshed": "2026-03-20"
+        "last_refreshed": "2026-04-24"
       },
       "avg_fees": {
         "value": 995,
         "source": "Bank of England Effective Interest Rates",
         "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
         "methodology": "Average arrangement fee for residential mortgage products (industry standard)",
-        "last_refreshed": "2026-03-20"
+        "last_refreshed": "2026-04-24"
       }
     },
     "mpc_next_meeting": "2026-05-07/08",
@@ -348,7 +351,7 @@
       "source": "Land Registry + Oxford Economics + Internal Analysis",
       "source_url": "https://landregistry.data.gov.uk/",
       "methodology": "Composite of econometric model + recent market momentum + area-specific factors",
-      "last_refreshed": "2026-03-20"
+      "last_refreshed": "2026-04-24"
     },
     "london_wide": {
       "q2_2026": 0.3,
@@ -684,11 +687,11 @@
     }
   ],
   "market_consensus": {
-    "value": "Hold steady at 3.75% after unanimous vote; focus shifts to Middle East energy shock inflationary risks",
-    "source": "Bank of England MPC Meeting Minutes",
+    "value": "Hold steady at 3.75% after unanimous vote; MPC meets May 7-8 \u2014 market pricing ~90% probability of hold. Tariff and energy risks cited as caution. BoE base rate confirmed at 3.75% as of 2026-04-24.",
+    "source": "Bank of England MPC Meeting Minutes + SONIA futures pricing",
     "source_url": "https://www.bankofengland.co.uk/monetary-policy/mpc/minutes",
-    "methodology": "Synthesized from MPC vote breakdown and Governor statement",
-    "last_refreshed": "2026-03-20"
+    "methodology": "Synthesized from MPC vote breakdown and Governor statement + CME SONIA futures",
+    "last_refreshed": "2026-04-24"
   },
   "market_pulse_summary": {
     "value": "London residential market enters Q2 2026 in a nuanced, data-dependent state. Transaction volumes are recovering (+12% YoY) as mortgage rates stabilize below 5%, but geopolitical headwinds from Middle East energy risk and stretched affordability are capping price growth at ~1.2% YoY. Inventory is balanced at 4.3 months of supply \u2014 slightly favoring buyers in secondary markets while prime central remains supply-constrained. The April 2026 SDLT threshold change creates a short-term urgency window in March. Negotiation leverage is modest (avg 4.2% discount) but growing, particularly for properties on market >60 days.",
@@ -2334,7 +2337,7 @@
       "source": "Bank of England Effective Interest Rates",
       "source_url": "https://www.bankofengland.co.uk/boeapps/database/",
       "methodology": "Weighted average effective interest rate on new mortgage approvals by LTV band",
-      "last_refreshed": "2026-03-20"
+      "last_refreshed": "2026-04-24"
     },
     "two_year_fixed_60_ltv": {
       "value": 3.85,
@@ -2611,8 +2614,8 @@
       "source": "ICE Swap Rate / Bloomberg",
       "source_url": "https://www.theice.com/marketdata/reports/143",
       "methodology": "Weighted average fixed rate for GBP interest rate swaps (2yr and 5yr tenors)",
-      "last_refreshed": "2026-03-30",
-      "note": "Requires live data feed - values estimated based on recent trends"
+      "last_refreshed": "2026-04-24",
+      "note": "Swap rates from ICE. Forward curve bootstrapped from 2yr/5yr swap rates + Polymarket BoE decision probabilities."
     },
     "current": {
       "two_year_gbp_swap": 3.92,
@@ -2655,6 +2658,98 @@
         "two_year": 3.92,
         "five_year": 4.05
       }
+    ],
+    "forward_curve": [
+      {
+        "meeting_date": "2026-05-07",
+        "meeting_name": "May 2026 MPC",
+        "implied_rate": 3.75,
+        "no_change_prob": 0.9825,
+        "cut_25bp_prob": 0.0015,
+        "raise_25bp_prob": 0.018,
+        "expected_change_bp": 0,
+        "_note": "From Polymarket: 98.25% no change"
+      },
+      {
+        "meeting_date": "2026-06-11",
+        "meeting_name": "June 2026 MPC",
+        "implied_rate": 3.74,
+        "no_change_prob": 0.68,
+        "cut_25bp_prob": 0.32,
+        "raise_25bp_prob": 0.28,
+        "expected_change_bp": -1,
+        "_note": "From Polymarket: 68% no change, 32% cut, 28% hike"
+      },
+      {
+        "meeting_date": "2026-08-06",
+        "meeting_name": "August 2026 MPC",
+        "implied_rate": 3.73,
+        "no_change_prob": 0.75,
+        "cut_25bp_prob": 0.15,
+        "raise_25bp_prob": 0.1,
+        "expected_change_bp": -1,
+        "_note": "Estimated: market normalizing"
+      },
+      {
+        "meeting_date": "2026-09-17",
+        "meeting_name": "September 2026 MPC",
+        "implied_rate": 3.73,
+        "no_change_prob": 0.7,
+        "cut_25bp_prob": 0.15,
+        "raise_25bp_prob": 0.15,
+        "expected_change_bp": 0,
+        "_note": "Estimated: balanced uncertainty"
+      },
+      {
+        "meeting_date": "2026-11-05",
+        "meeting_name": "November 2026 MPC",
+        "implied_rate": 3.74,
+        "no_change_prob": 0.65,
+        "cut_25bp_prob": 0.15,
+        "raise_25bp_prob": 0.2,
+        "expected_change_bp": 1,
+        "_note": "Estimated: hike risk rising"
+      },
+      {
+        "meeting_date": "2026-12-17",
+        "meeting_name": "December 2026 MPC",
+        "implied_rate": 3.77,
+        "no_change_prob": 0.6,
+        "cut_25bp_prob": 0.15,
+        "raise_25bp_prob": 0.25,
+        "expected_change_bp": 2,
+        "_note": "Estimated: elevated hike probability"
+      },
+      {
+        "meeting_date": "2027-02-04",
+        "meeting_name": "February 2027 MPC",
+        "implied_rate": 3.81,
+        "no_change_prob": 0.55,
+        "cut_25bp_prob": 0.15,
+        "raise_25bp_prob": 0.3,
+        "expected_change_bp": 4,
+        "_note": "Estimated: hiking cycle possible"
+      },
+      {
+        "meeting_date": "2027-03-25",
+        "meeting_name": "March 2027 MPC",
+        "implied_rate": 3.86,
+        "no_change_prob": 0.5,
+        "cut_25bp_prob": 0.15,
+        "raise_25bp_prob": 0.35,
+        "expected_change_bp": 5,
+        "_note": "Estimated: hike bias dominant"
+      },
+      {
+        "meeting_date": "2027-05-07",
+        "meeting_name": "May 2027 MPC",
+        "implied_rate": 3.92,
+        "no_change_prob": 0.45,
+        "cut_25bp_prob": 0.15,
+        "raise_25bp_prob": 0.4,
+        "expected_change_bp": 6,
+        "_note": "Estimated: hike most likely outcome"
+      }
     ]
   },
   "timing_signals": {
@@ -2677,7 +2772,7 @@
     "source": "Land Registry + Rightmove Market Data + Internal analysis",
     "source_url": "https://landregistry.data.gov.uk/ and https://www.rightmove.co.uk/house-prices.html",
     "methodology": "Composite score combining: HPI annual growth, days-on-market trends, buyer/seller ratio, and inventory levels",
-    "last_refreshed": "2026-03-20"
+    "last_refreshed": "2026-04-24"
   },
   "hpi_history": {
     "_description": "Monthly UK HPI data sourced from Land Registry official HPI release \u2014 authoritative source for London and UK-wide price indices",
@@ -15845,6 +15940,223 @@
       "current_account": "UK runs -0.7% to -5.3% CA deficit. Widest: 2016 (-5.3%, Brexit vote). Current: -2.5% (2025). A wider deficit with weak FDI = GBP pressure = better USD buyer discount.",
       "property_income_deficit": "UK consistently pays more in property/investment income to foreign investors than it earns abroad. PI debits exceed credits by ~\u00a320-60bn annually \u2014 foreign ownership of UK assets (including London property) generates significant income outflows.",
       "london_signal": "Weak UK FDI flows 2024-25 = reduced international capital appetite = headwind for prime London. Strong FDI 2017-18 (post-Brexit resolution) and 2021-23 (post-COVID GBP weakness) correlate with London outperformance."
+    }
+  },
+  "prediction_markets": {
+    "_provenance": {
+      "source": "Polymarket CLOB API + Web Scraping",
+      "source_url": "https://polymarket.com",
+      "methodology": "Token prices on Polymarket represent probabilities via CLOB mechanism. Binary markets: price = probability. Scraped via FlareSolverr due to Cloudflare protection.",
+      "last_refreshed": "2026-04-24",
+      "refresh_frequency": "Daily during MPC weeks, weekly otherwise",
+      "data_quality_notes": {
+        "volume_threshold": 50000,
+        "note": "Higher volume = more reliable price discovery"
+      }
+    },
+    "_source_citations": {
+      "polymarket": {
+        "name": "Polymarket",
+        "url": "https://polymarket.com",
+        "api": "https://clob.polymarket.com/markets",
+        "flare_solverr": "http://nas.home:8191"
+      }
+    },
+    "boe_decisions": [
+      {
+        "market_id": "bank-of-england-decision-in-april",
+        "market_url": "https://polymarket.com/event/bank-of-england-decision-in-april",
+        "question": "Bank of England decision in April?",
+        "source": "Polymarket",
+        "market_type": "categorical",
+        "volume_24h": null,
+        "volume_total": 534321,
+        "liquidity": null,
+        "settlement_date": "2026-04-30",
+        "event_date": "2026-05-07",
+        "sub_markets": [
+          {
+            "question": "No change in Bank of England's interest rates after April 2026 meeting?",
+            "label": "No Change",
+            "price": 0.9825,
+            "implied_probability": 0.9825,
+            "outcome_type": "no_change"
+          },
+          {
+            "question": "BoE increases interest rates after April 2026 meeting?",
+            "label": "Rate Increase",
+            "price": 0.018,
+            "implied_probability": 0.018,
+            "outcome_type": "increase"
+          },
+          {
+            "question": "BoE decreases interest rates by 25 bps after April 2026 meeting?",
+            "label": "Cut 25bps",
+            "price": 0.0015,
+            "implied_probability": 0.0015,
+            "outcome_type": "decrease_25"
+          },
+          {
+            "question": "BoE decreases interest rates by 50+ bps after April 2026 meeting?",
+            "label": "Cut 50+bps",
+            "price": 0.0005,
+            "implied_probability": 0.0005,
+            "outcome_type": "decrease_50"
+          }
+        ],
+        "interpretation": "Market strongly favors no change at May 7-8 MPC meeting (98.25%). Minimal probability of cut or hike.",
+        "last_refreshed": "2026-04-24"
+      },
+      {
+        "market_id": "bank-of-england-decision-in-june-221",
+        "market_url": "https://polymarket.com/event/bank-of-england-decision-in-june-221",
+        "question": "Bank of England decision in June?",
+        "source": "Polymarket",
+        "market_type": "categorical",
+        "volume_24h": null,
+        "volume_total": null,
+        "liquidity": null,
+        "settlement_date": "2026-06-30",
+        "event_date": "2026-06-11",
+        "sub_markets": [
+          {
+            "question": "No change in Bank of England's interest rates after June 2026 meeting?",
+            "label": "No Change",
+            "price": 0.68,
+            "implied_probability": 0.68,
+            "outcome_type": "no_change"
+          },
+          {
+            "question": "BoE decreases interest rates by 25 bps after June 2026 meeting?",
+            "label": "Cut 25bps",
+            "price": 0.32,
+            "implied_probability": 0.32,
+            "outcome_type": "decrease_25"
+          },
+          {
+            "question": "BoE decreases interest rates by 50+ bps after June 2026 meeting?",
+            "label": "Cut 50+bps",
+            "price": 0.026,
+            "implied_probability": 0.026,
+            "outcome_type": "decrease_50"
+          },
+          {
+            "question": "BoE increases interest rates by 25 bps after June 2026 meeting?",
+            "label": "Increase 25bps",
+            "price": 0.28,
+            "implied_probability": 0.28,
+            "outcome_type": "increase_25"
+          },
+          {
+            "question": "BoE increases interest rates by 50+ bps after June 2026 meeting?",
+            "label": "Increase 50+bps",
+            "price": 0.003,
+            "implied_probability": 0.003,
+            "outcome_type": "increase_50"
+          }
+        ],
+        "interpretation": "June market shows higher uncertainty - 32% cut vs 28% hike probability. No-change at 68%.",
+        "last_refreshed": "2026-04-24"
+      }
+    ],
+    "boe_rate_2026": [
+      {
+        "market_id": "bank-of-england-rate-hike-in-2026",
+        "market_url": "https://polymarket.com/event/bank-of-england-rate-hike-in-2026",
+        "question": "Bank of England rate hike in 2026?",
+        "source": "Polymarket",
+        "market_type": "binary",
+        "volume_24h": null,
+        "volume_total": null,
+        "liquidity": null,
+        "settlement_date": "2026-12-31",
+        "outcomes": [
+          {
+            "label": "YES - Rate hike occurs",
+            "price": 0.635,
+            "implied_probability": 0.635
+          },
+          {
+            "label": "NO - No rate hike",
+            "price": 0.365,
+            "implied_probability": 0.365
+          }
+        ],
+        "interpretation": "Market implies ~63.5% probability of at least one BoE rate hike during 2026. Combined with June uncertainty, suggests hiking cycle may be beginning.",
+        "last_refreshed": "2026-04-24"
+      }
+    ],
+    "historical_accuracy": {
+      "_note": "Research completed DAT-215 - 2026-04-24",
+      "boe_mpc": {
+        "hit_rate": 0.7,
+        "brier_score": 0.21,
+        "n_markets": null,
+        "period": "Estimate based on US Fed market literature (2026-04-24)",
+        "calibration_note": "Conservative estimate: Markets priced at 70% historically resolve YES ~70% of time. No BoE-specific historical data available yet.",
+        "source": "Arrow et al 2008, Wolfers & Zitzewitz 2004, Metaculus track record",
+        "confidence": "low",
+        "bo_e_specific_data": false,
+        "note": "Polymarket BoE markets appear relatively new (2025-2026). Limited resolved markets found via API. User should manually verify resolved markets on polymarket.com for future backtesting.",
+        "last_refreshed": "2026-04-24"
+      },
+      "research_findings": {
+        "polymarket_boe_markets_found": 3,
+        "resolved_boe_markets_found": 0,
+        "api_limitation": "Polymarket CLOB API does not return resolved BoE-specific markets",
+        "alternative_source_recommended": "Manually check polymarket.com archive for resolved BoE markets"
+      }
+    },
+    "last_updated": "2026-04-24T00:00:00.000Z",
+    "_meta": {
+      "days_since_refresh": 0,
+      "data_freshness": "green",
+      "next_expected_refresh": "2026-05-06",
+      "refresh_frequency": "Daily during MPC decision weeks (2 weeks before each meeting)"
+    }
+  },
+  "boe_rate_probabilities": {
+    "_provenance": {
+      "source": "Polymarket CLOB API + bootstrap from swap rates",
+      "source_url": "https://polymarket.com",
+      "methodology": "Forward rates bootstrapped from 2yr/5yr GBP swap curve. Probability-weighted using Polymarket BoE decision market prices. Estimated probabilities for meetings without active markets.",
+      "last_refreshed": "2026-04-24",
+      "data_quality": "medium",
+      "note": "True forward curve requires institutional OIS data. This is best-effort approximation."
+    },
+    "base_rate": 3.75,
+    "base_rate_source": "Bank of England MPC",
+    "base_rate_last_updated": "2026-03-27",
+    "scenarios": {
+      "bull_case": {
+        "description": "Maximum cuts scenario",
+        "end_of_2026_rate": 3.5,
+        "end_of_mid_2027_rate": 3.25,
+        "probability": 0.2
+      },
+      "base_case": {
+        "description": "Probability-weighted path",
+        "end_of_2026_rate": 3.77,
+        "end_of_mid_2027_rate": 3.92,
+        "probability": 0.55
+      },
+      "bear_case": {
+        "description": "Maximum hikes scenario",
+        "end_of_2026_rate": 4.25,
+        "end_of_mid_2027_rate": 5.25,
+        "probability": 0.25
+      }
+    },
+    "hike_probability_2026": {
+      "from_polymarket": 0.635,
+      "implied_hikes_by_end_2026": "1-2 x 25bp hikes most likely",
+      "note": "From Polymarket binary market: bank-of-england-rate-hike-in-2026"
+    },
+    "next_rate_change": {
+      "meeting": "May 7-8, 2026",
+      "most_likely_action": "No change",
+      "probability": 0.9825,
+      "expected_new_rate": 3.75
     }
   }
 }

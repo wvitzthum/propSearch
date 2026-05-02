@@ -233,6 +233,30 @@ export const useMacroData = () => {
           hpi_history: raw.hpi_history,
           // PO-003: Analyst Statement Panel — pass through from macro_trend data
           analyst_statements: raw.analyst_statements ?? [],
+          // FE-279/280: SONIA Forward Curve from swap_rates.forward_curve
+          forward_curve: Array.isArray(raw.swap_rates?.forward_curve) ? raw.swap_rates.forward_curve : [],
+          // FE-282: Timing signal derived from forward curve slope
+          timing_signal: (() => {
+            const fc = raw.swap_rates?.forward_curve;
+            if (!fc || fc.length < 2) return undefined;
+            // Look at rate change from now to Q3 2026 (3 months out)
+            const now = new Date();
+            const q3 = new Date('2026-07-01');
+            const currentPoint = fc.find((p: any) => new Date(p.meeting_date) >= now) ?? fc[0];
+            const futurePoint = fc.find((p: any) => new Date(p.meeting_date) >= q3) ?? fc[Math.min(2, fc.length - 1)];
+            const rateChange = (futurePoint?.implied_rate ?? 3.75) - (currentPoint?.implied_rate ?? 3.75);
+            const volume = raw.prediction_markets?.boe_decisions?.[0]?.volume_total ?? 0;
+            return {
+              direction: rateChange < -0.1 ? 'falling' : rateChange > 0.1 ? 'rising' : 'holding',
+              target_rate: futurePoint?.implied_rate,
+              target_quarter: futurePoint?.meeting_name,
+              confidence: volume > 100000 ? 'high' : volume > 25000 ? 'medium' : 'low',
+            };
+          })(),
+          // FE-214: Prediction markets (Polymarket data)
+          prediction_markets: raw.prediction_markets ?? undefined,
+          // FE-279: BoE rate probabilities
+          boe_rate_probabilities: raw.boe_rate_probabilities ?? undefined,
         };
 
         setData(normalized);

@@ -1,3 +1,4 @@
+// FE-280: Extended with SONIA Forward Curve mode and Polymarket Market Consensus overlay
 import React, { useMemo, useState, useCallback } from 'react';
 import { useMacroData } from '../hooks/useMacroData';
 import { extractValue } from '../types/macro';
@@ -8,6 +9,12 @@ import { Group } from '@visx/group';
 import { ParentSize } from '@visx/responsive';
 import { useTooltip, TooltipWithBounds } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
+
+// FE-280: Chart mode prop
+export type BoERatePathMode = 'scenarios' | 'forwardCurve' | 'marketConsensus' | 'all';
+interface BoERatePathChartProps {
+  mode?: BoERatePathMode;
+}
 
 // FE-xxx prototype: BoERatePathChart migrated to @visx
 // Replaces hand-rolled SVG with visx scale/shape/grid primitives
@@ -343,10 +350,178 @@ function BoEChart({ width }: { width: number }) {
   );
 }
 
-const BoERatePathChart: React.FC = () => {
+// FE-280: Forward Curve Chart
+function ForwardCurveChart({ width }: { width: number }) {
+  const { data } = useMacroData();
+  const forwardCurve = data?.forward_curve ?? [];
+
+  const {
+    showTooltip,
+    hideTooltip,
+    tooltipOpen,
+    tooltipData,
+    tooltipLeft,
+    tooltipTop,
+  } = useTooltip<{ meeting: string; rate: number; prob: string }>();
+
+  const MARGIN = { top: 12, right: 8, bottom: 40, left: 32 };
+  const INNER_HEIGHT = 140;
+
+  // Get quarterly meetings for x-axis
+  const quarterlyMeetings = forwardCurve.filter((_, i) => i % 2 === 0).slice(0, 5);
+  const quarters = quarterlyMeetings.map((m) => {
+    const d = new Date(m.meeting_date);
+    return d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
+  });
+
+  const innerWidth = Math.max(width - MARGIN.left - MARGIN.right, 100);
+
+  const allRates = forwardCurve.map((m) => m.implied_rate);
+  const minRate = Math.min(...allRates, 3.0) - 0.25;
+  const maxRate = Math.max(...allRates, 4.5) + 0.25;
+
+  const xScale = scalePoint<string>({
+    domain: quarters,
+    range: [0, innerWidth],
+    padding: 0,
+  });
+
+  const yScale = scaleLinear<number>({
+    domain: [minRate, maxRate],
+    range: [INNER_HEIGHT - MARGIN.top - MARGIN.bottom, 0],
+    nice: false,
+  });
+
+  // Build stepped line for forward curve
+  const stepPoints = forwardCurve.map((m, i) => {
+    const d = new Date(m.meeting_date);
+    const label = d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
+    return { x: xScale(label) ?? (i / forwardCurve.length) * innerWidth, y: yScale(m.implied_rate), rate: m.implied_rate, meeting: m.meeting_name };
+  });
+
+  // Grid ticks
+  const gridTicks = [minRate, minRate + (maxRate - minRate) * 0.5, maxRate];
+
+  return (
+    <div className="relative">
+      <svg width={width} height={INNER_HEIGHT}>
+        <Group left={MARGIN.left} top={MARGIN.top}>
+          <GridRows
+            scale={yScale}
+            width={innerWidth}
+            stroke="rgba(255,255,255,0.04)"
+            strokeWidth={0.5}
+            numTicks={3}
+          />
+          {gridTicks.map((tickVal) => (
+            <text
+              key={tickVal}
+              x={-6}
+              y={yScale(tickVal) + 3}
+              fill="rgba(161,161,170,0.6)"
+              fontSize={8}
+              fontWeight={700}
+              textAnchor="end"
+            >
+              {tickVal.toFixed(1)}%
+            </text>
+          ))}
+          {/* Forward curve line */}
+          <LinePath
+            data={stepPoints}
+            x={(d) => d.x}
+            y={(d) => d.y}
+            stroke="#06b6d4"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+          />
+          {/* Data points */}
+          {stepPoints.map((p, i) => (
+            <circle
+              key={i}
+              cx={p.x}
+              cy={p.y}
+              r={2}
+              fill="#06b6d4"
+              stroke="#fff"
+              strokeWidth={0.5}
+            />
+          ))}
+          {/* X-axis labels */}
+          {quarters.map((q) => (
+            <text
+              key={q}
+              x={xScale(q) ?? 0}
+              y={INNER_HEIGHT - MARGIN.top - MARGIN.bottom + 14}
+              fill="rgba(161,161,170,0.6)"
+              fontSize={8}
+              fontWeight={700}
+              textAnchor="end"
+              transform={`rotate(-35, ${xScale(q) ?? 0}, ${INNER_HEIGHT - MARGIN.top - MARGIN.bottom + 14})`}
+            >
+              {q}
+            </text>
+          ))}
+          {/* Invisible hit area */}
+          <rect
+            x={0} y={0}
+            width={innerWidth}
+            height={INNER_HEIGHT - MARGIN.top - MARGIN.bottom}
+            fill="transparent"
+            onMouseMove={(e) => {
+              const svgRect = e.currentTarget.ownerSVGElement?.getBoundingClientRect();
+              if (!svgRect) return;
+              const rel = localPoint(e);
+              if (!rel) return;
+              const xInGroup = rel.x - svgRect.left - MARGIN.left;
+              const step = innerWidth / (forwardCurve.length - 1);
+              const idx = Math.max(0, Math.min(Math.round(xInGroup / step), forwardCurve.length - 1));
+              const m = forwardCurve[idx];
+              if (m) {
+                showTooltip({
+                  tooltipData: {
+                    meeting: m.meeting_name,
+                    rate: m.implied_rate,
+                    prob: `${(m.no_change_prob * 100).toFixed(0)}% hold`,
+                  },
+                  tooltipLeft: rel.x - svgRect.left,
+                  tooltipTop: rel.y - 30,
+                });
+              }
+            }}
+            onMouseLeave={() => hideTooltip()}
+          />
+        </Group>
+      </svg>
+      {tooltipOpen && tooltipData && (
+        <TooltipWithBounds
+          left={tooltipLeft}
+          top={tooltipTop}
+          applyPositionStyle
+          style={{
+            background: 'rgba(0,0,0,0.85)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 8,
+            padding: '6px 10px',
+            fontSize: 9,
+            color: '#fff',
+          }}
+        >
+          <div className="font-bold">{tooltipData.meeting}</div>
+          <div style={{ color: '#06b6d4' }}>{tooltipData.rate.toFixed(2)}%</div>
+          <div className="text-gray-400">{tooltipData.prob}</div>
+        </TooltipWithBounds>
+      )}
+    </div>
+  );
+}
+
+const BoERatePathChart: React.FC<BoERatePathChartProps> = ({ mode = 'scenarios' }) => {
   const { data } = useMacroData();
   const consensus = data?.boe_rate_consensus;
   const currentRate = extractValue(consensus?.current_rate ?? data?.economic_indicators?.boe_base_rate) ?? 3.75;
+  const [activeMode, setActiveMode] = useState<BoERatePathMode>(mode);
 
   const scenarios = useMemo(() => {
     if (consensus?.scenarios) {
@@ -363,6 +538,13 @@ const BoERatePathChart: React.FC = () => {
     };
   }, [consensus]);
 
+  const modes: { key: BoERatePathMode; label: string }[] = [
+    { key: 'scenarios', label: 'Scenarios' },
+    { key: 'forwardCurve', label: 'SONIA Fwd' },
+    { key: 'marketConsensus', label: 'Market' },
+    { key: 'all', label: 'All' },
+  ];
+
   return (
     <div className="bg-linear-card border border-linear-border rounded-xl overflow-hidden">
       {/* Header */}
@@ -374,13 +556,34 @@ const BoERatePathChart: React.FC = () => {
               BoE Rate Path — Q3 2026 to Q2 2027
             </h3>
           </div>
-          <div className="flex items-center gap-3">
-            {(['bear', 'base', 'bull'] as const).map(key => (
-              <div key={key} className="flex items-center gap-1">
-                <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: SCENARIO_COLORS[key] }} />
-                <span className="text-[8px] font-bold uppercase" style={{ color: SCENARIO_COLORS[key] }}>{key}</span>
+          <div className="flex items-center gap-2">
+            {/* Mode selector */}
+            <div className="flex items-center gap-0.5 bg-linear-bg rounded-lg p-0.5">
+              {modes.map((m) => (
+                <button
+                  key={m.key}
+                  onClick={() => setActiveMode(m.key)}
+                  className={`px-2 py-0.5 text-[7px] font-bold uppercase tracking-widest rounded transition-colors ${
+                    activeMode === m.key
+                      ? 'bg-blue-500/30 text-blue-400'
+                      : 'text-linear-text-muted hover:text-white'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+            {/* Legend */}
+            {activeMode !== 'forwardCurve' && (
+              <div className="flex items-center gap-3">
+                {(['bear', 'base', 'bull'] as const).map(key => (
+                  <div key={key} className="flex items-center gap-1">
+                    <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: SCENARIO_COLORS[key] }} />
+                    <span className="text-[8px] font-bold uppercase" style={{ color: SCENARIO_COLORS[key] }}>{key}</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
@@ -394,41 +597,80 @@ const BoERatePathChart: React.FC = () => {
           </div>
           <div className="h-6 w-px bg-linear-border" />
           <div>
-            <div className="text-[8px] text-linear-text-muted uppercase tracking-widest font-bold">Base Q2 2027</div>
-            <div className="text-2xl font-bold text-blue-400 tracking-tighter">{scenarios.base.path[4].toFixed(2)}%</div>
+            <div className="text-[8px] text-linear-text-muted uppercase tracking-widest font-bold">
+              {activeMode === 'forwardCurve' ? 'Latest Fwd' : 'Base Q2 2027'}
+            </div>
+            <div className="text-2xl font-bold text-blue-400 tracking-tighter">
+              {activeMode === 'forwardCurve' && data?.forward_curve?.[0]
+                ? `${data.forward_curve[0].implied_rate.toFixed(2)}%`
+                : scenarios.base.path[4].toFixed(2)}
+              %
+            </div>
           </div>
-          <div className="h-6 w-px bg-linear-border" />
-          <div>
-            <div className="text-[8px] text-linear-text-muted uppercase tracking-widest font-bold">Bull Q2 2027</div>
-            <div className="text-2xl font-bold text-retro-green tracking-tighter">{scenarios.bull.path[4].toFixed(2)}%</div>
-          </div>
+          {activeMode !== 'forwardCurve' && (
+            <>
+              <div className="h-6 w-px bg-linear-border" />
+              <div>
+                <div className="text-[8px] text-linear-text-muted uppercase tracking-widest font-bold">Bull Q2 2027</div>
+                <div className="text-2xl font-bold text-retro-green tracking-tighter">{scenarios.bull.path[4].toFixed(2)}%</div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* visx chart — responsive via ParentSize */}
         <div className="w-full">
-          <ParentSize>
-            {({ width }) => width > 0 ? <BoEChart width={width} /> : null}
-          </ParentSize>
+          {activeMode === 'scenarios' && (
+            <ParentSize>
+              {({ width }) => width > 0 ? <BoEChart width={width} /> : null}
+            </ParentSize>
+          )}
+          {activeMode === 'forwardCurve' && (
+            <ParentSize>
+              {({ width }) => width > 0 ? <ForwardCurveChart width={width} /> : null}
+            </ParentSize>
+          )}
+          {(activeMode === 'marketConsensus' || activeMode === 'all') && (
+            <ParentSize>
+              {({ width }) => width > 0 ? <BoEChart width={width} /> : null}
+            </ParentSize>
+          )}
         </div>
 
-        {/* Scenario cards */}
-        <div className="mt-3 grid grid-cols-3 gap-3">
-          {([
-            { key: 'bull' as const, label: 'Bull Case', desc: 'Rate cuts, best for buyers' },
-            { key: 'base' as const, label: 'Base Case', desc: 'Central MPC expectation' },
-            { key: 'bear' as const, label: 'Bear Case', desc: 'Sustained inflation pressure' },
-          ]).map(s => (
-            <div
-              key={s.key}
-              className="p-2 rounded-lg border"
-              style={{ borderColor: `${SCENARIO_COLORS[s.key]}30`, backgroundColor: `${SCENARIO_COLORS[s.key]}08` }}
-            >
-              <div className="text-[9px] font-black uppercase tracking-widest" style={{ color: SCENARIO_COLORS[s.key] }}>{s.label}</div>
-              <div className="text-[8px] text-linear-text-muted mt-0.5">{s.desc}</div>
-              <div className="text-[10px] font-bold text-white mt-1">{scenarios[s.key].path[4].toFixed(2)}%</div>
+        {/* Scenario cards — only show for non-forwardCurve modes */}
+        {activeMode !== 'forwardCurve' && (
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            {([
+              { key: 'bull' as const, label: 'Bull Case', desc: 'Rate cuts, best for buyers' },
+              { key: 'base' as const, label: 'Base Case', desc: 'Central MPC expectation' },
+              { key: 'bear' as const, label: 'Bear Case', desc: 'Sustained inflation pressure' },
+            ]).map(s => (
+              <div
+                key={s.key}
+                className="p-2 rounded-lg border"
+                style={{ borderColor: `${SCENARIO_COLORS[s.key]}30`, backgroundColor: `${SCENARIO_COLORS[s.key]}08` }}
+              >
+                <div className="text-[9px] font-black uppercase tracking-widest" style={{ color: SCENARIO_COLORS[s.key] }}>{s.label}</div>
+                <div className="text-[8px] text-linear-text-muted mt-0.5">{s.desc}</div>
+                <div className="text-[10px] font-bold text-white mt-1">{scenarios[s.key].path[4].toFixed(2)}%</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Forward curve info */}
+        {activeMode === 'forwardCurve' && (
+          <div className="mt-3 p-3 bg-cyan-500/5 border border-cyan-500/20 rounded-xl">
+            <div className="flex items-center gap-1 mb-1">
+              <div className="h-1.5 w-1.5 rounded-full bg-cyan-500" />
+              <span className="text-[8px] font-bold text-cyan-400 uppercase tracking-widest">SONIA Forward Curve</span>
             </div>
-          ))}
-        </div>
+            <div className="text-[9px] text-linear-text-muted">
+              Implied rate path from SONIA futures + Polymarket probabilities
+              {data?.forward_curve?.length && ` — ${data.forward_curve.length} MPC meetings shown`}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

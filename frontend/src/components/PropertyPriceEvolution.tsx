@@ -347,7 +347,7 @@ const PriceEvolutionChart: React.FC<{ width: number; property: Property; history
                 className="font-bold"
                 style={{ color: STATUS_COLORS[tooltipData.entry.status ?? 'listed'] ?? '#60a5fa' }}
               >
-                {tooltipData.entry.status.replace('_', ' ')}
+                {(tooltipData.entry.status ?? 'listed').replace('_', ' ')}
               </span>
             </div>
             {tooltipData.entry.reduction_pct != null && (

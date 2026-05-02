@@ -1479,6 +1479,42 @@ const server = http.createServer((req, res) => {
         res.end(data);
       });
     }
+    // DE-243: Static data files (choropleth GeoJSON, POIs, crime/income data)
+    // /api/static/lsoa_choropleth_london.geojson → data/lsoa_choropleth_london.geojson
+    else if (url.pathname.startsWith('/api/static/') && req.method === 'GET') {
+      const filePath = url.pathname.slice('/api/static/'.length);
+      const safePath = filePath.replace(/^(\.\.(\/|\\|$))/, '');
+      const absolutePath = path.join(DATA_DIR, safePath);
+
+      if (!absolutePath.startsWith(DATA_DIR)) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Forbidden' }));
+        return;
+      }
+      if (!fs.existsSync(absolutePath)) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: `Static file not found: ${filePath}` }));
+        return;
+      }
+      const ext = path.extname(absolutePath).toLowerCase();
+      const contentTypes = {
+        '.geojson': 'application/geo+json',
+        '.json': 'application/json',
+        '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+        '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp',
+      };
+      const contentType = contentTypes[ext] || 'application/octet-stream';
+
+      fs.readFile(absolutePath, (err, data) => {
+        if (err) {
+          res.writeHead(500, { 'Content-Type': 'text/plain' });
+          res.end('Internal Server Error');
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=3600' });
+        res.end(data);
+      });
+    }
     else {
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Not Found' }));

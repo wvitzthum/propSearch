@@ -1,5 +1,59 @@
 # LEARN.md — Analyst Session Corrections Log
-## Last updated: 2026-04-19
+## Last updated: 2026-04-26
+
+---
+
+## Portal Status Detection (2026-04-26)
+
+### Rightmove Status Check — WRONG method vs CORRECT method
+**Discovered:** 2026-04-26  
+**Symptom:** 27 properties incorrectly flagged as "SOLD" when checking Rightmove.
+
+**Wrong method:** Grepping for "sold" text in page content:
+```bash
+curl -s "https://www.rightmove.co.uk/properties/$ID" | grep -i "sold"
+# WRONG - "sold" appears in ALL pages (nav links like "Sold house prices")
+```
+
+**Correct method:** Look for "This property has been" message:
+```bash
+curl -s "https://www.rightmove.co.uk/properties/$ID" | grep -qi "This property has been"
+if [ $? -eq 0 ]; then
+  echo "REMOVED/SOLD"
+else
+  echo "ACTIVE"
+fi
+```
+
+**Root cause:** Rightmove pages always contain "sold house prices" in navigation, causing false positives.
+
+**See:** `PROTOCOLS/11_PORTAL_STATUS_CHECK.md` for full detection methods per portal.
+
+---
+
+## Cross-Property URL Contamination (2026-04-26)
+
+### Glenmore Road Contamination — Two Different Properties, One URL
+**Discovered:** 2026-04-26  
+**Symptom:** Two properties shared the same Rightmove URL but were completely different units.
+
+**Records involved:**
+- `zo-70438237`: £675k, SoFH, 714 sqft, 2bd/1ba — correct Zoopla link
+- `13cb1730`: £800k, Leasehold 999yr, 675 sqft, 2bd/2ba — had contaminated Rightmove link
+
+**Both claimed Rightmove URL `169488674`** but:
+- That URL points to a 2-bed/2-bath at £800k
+- One record was a 2-bed/1-bath at £675k
+
+**Fix applied (2026-04-26):**
+1. Removed contaminated link from `zo-70438237`
+2. Created new record `57a9ecac...` for the correct Rightmove property
+3. Updated `PROTOCOLS/07_DUPLICATE_DETECTION.md` with Step 0 for similar property checks
+
+**Prevention (NEW):** Before any import, verify:
+- URL is unique to this property (not in any other record)
+- Address + postcode + sqft + bedrooms match the URL's actual content
+- Tenure is consistent with the URL's listing
 
 ---
 

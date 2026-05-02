@@ -86,8 +86,7 @@ const PropertyDetail: React.FC = () => {
   const [showEnrichmentModal, setShowEnrichmentModal] = useState(false); // FE-237: enrichment modal
   const [notesPanelOpen, setNotesPanelOpen] = useState(false);
   const [showAppreciation, setShowAppreciation] = useState(false); // UX-119
-  const [showMarketContext, setShowMarketContext] = useState(false); // UX-120
-  const [showLocationContext, setShowLocationContext] = useState(false); // UX-125
+  const [showMarketContext, setShowMarketContext] = useState(false); // UX-240: merged Market + Location Context
   const [showTagSelector, setShowTagSelector] = useState(false); // UX-123: tag selector toggle
 
   const property = useMemo(() => {
@@ -477,82 +476,88 @@ const PropertyDetail: React.FC = () => {
               onRequestEnrichment={() => setShowEnrichmentModal(true)}
             />
 
-            {/* ── Market Context — collapsible (UX-120) ── */}
+            {/* ── Market + Location Context — merged single collapsible (UX-240) ── */}
             <div className="bg-linear-card border border-linear-border rounded-2xl overflow-hidden">
               <button
                 onClick={() => setShowMarketContext(v => !v)}
-                className="w-full px-5 py-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+                className="w-full px-5 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
               >
-                <div className="flex items-center gap-2">
-                  <CirclePercent size={14} className="text-retro-green" />
-                  <h2 className="text-[10px] font-black text-white uppercase tracking-widest">
+                <div className="flex items-center gap-3">
+                  <CirclePercent size={13} className="text-retro-green shrink-0" />
+                  <span className="text-[10px] font-black text-white uppercase tracking-widest">
                     Market Context
-                  </h2>
-                </div>
-                {!showMarketContext && (
-                  <span className="text-[9px] text-linear-text-muted italic">tap to expand</span>
-                )}
-                <ChevronDown size={14} className={`text-linear-text-muted transition-transform ${showMarketContext ? 'rotate-180' : ''}`} />
-              </button>
-              {showMarketContext && (
-                <div className="px-5 pb-5 border-t border-linear-border/50">
-                  <RentalYieldVsGiltChartWithRent property={property as PropertyWithCoords} />
-                </div>
-              )}
-            </div>
-
-            {/* ── Location Context — collapsible (UX-125: commute + map merged) ── */}
-            <div className="bg-linear-card border border-linear-border rounded-2xl overflow-hidden">
-              <button
-                onClick={() => setShowLocationContext(v => !v)}
-                className="w-full px-5 py-4 flex items-center justify-between hover:bg-white/5 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <MapPin size={14} className="text-blue-400" />
-                  <h2 className="text-[10px] font-black text-white uppercase tracking-widest">
-                    Location Context
-                  </h2>
+                  </span>
+                  <div className="h-3 w-px bg-linear-border" />
+                  <MapPin size={13} className="text-blue-400 shrink-0" />
+                  <span className="text-[10px] font-black text-white uppercase tracking-widest">
+                    Location
+                  </span>
                   {property.area && (
                     <span className="text-[9px] text-linear-text-muted normal-case font-normal tracking-normal">
                       · {property.area}
                     </span>
                   )}
                 </div>
-                {!showLocationContext && (
-                  <span className="text-[9px] text-linear-text-muted italic">tap to expand</span>
+                {!showMarketContext && (
+                  <span className="text-[9px] text-linear-text-muted italic mr-2">tap to expand</span>
                 )}
-                <ChevronDown size={14} className={`text-linear-text-muted transition-transform ${showLocationContext ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  size={14}
+                  className={`text-linear-text-muted transition-transform shrink-0 ${showMarketContext ? 'rotate-180' : ''}`}
+                />
               </button>
-              {showLocationContext && (
-                <div className="border-t border-linear-border/50">
-                  {/* Commute cards */}
-                  <div className="grid grid-cols-2 gap-3 p-5">
-                    <div className="p-4 bg-linear-bg border border-white/5 rounded-xl">
-                      <div className="text-[9px] text-linear-text-muted uppercase font-black tracking-widest mb-1">Paternoster Sq</div>
-                      <div className="text-2xl font-bold text-white tracking-tight">{property.commute_paternoster ?? '—'}<span className="text-sm text-linear-text-muted ml-1 font-bold">min</span></div>
+
+              {showMarketContext && (
+                <div className="border-t border-linear-border/50 animate-in fade-in duration-200">
+
+                  {/* Market sub-section */}
+                  <div className="px-5 py-4 border-b border-linear-border/50">
+                    <div className="text-[9px] font-black text-retro-green uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <CirclePercent size={10} />
+                      Market Signals
                     </div>
-                    <div className="p-4 bg-linear-bg border border-white/5 rounded-xl">
-                      <div className="text-[9px] text-linear-text-muted uppercase font-black tracking-widest mb-1">Canada Square</div>
-                      <div className="text-2xl font-bold text-white tracking-tight">{property.commute_canada_square ?? '—'}<span className="text-sm text-linear-text-muted ml-1 font-bold">min</span></div>
-                    </div>
+                    <RentalYieldVsGiltChartWithRent property={property as PropertyWithCoords} />
                   </div>
-                  {/* Map */}
-                  {property && (
-                    <div className="px-5 pb-5">
-                      <LocationNodeMap lat={property.lat} lng={property.lng} address={property.address} />
+
+                  {/* Location sub-section */}
+                  <div className="px-5 py-4">
+                    <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <MapPin size={10} />
+                      Commute &amp; Amenity Access
                     </div>
-                  )}
-                  {/* FE-277: Neighbourhood — amenity distances, walkability score, mini-map */}
-                  {property?.lat && property?.lng && (
-                    <div className="px-5 pb-5">
+
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="p-4 bg-white/5 border border-white/5 rounded-xl">
+                        <div className="text-[9px] text-linear-text-muted uppercase font-black tracking-widest mb-1">Paternoster Sq</div>
+                        <div className="text-2xl font-bold text-white tracking-tight tabular-nums">
+                          {property.commute_paternoster ?? '—'}
+                          <span className="text-sm text-linear-text-muted ml-1 font-bold">min</span>
+                        </div>
+                      </div>
+                      <div className="p-4 bg-white/5 border border-white/5 rounded-xl">
+                        <div className="text-[9px] text-linear-text-muted uppercase font-black tracking-widest mb-1">Canada Square</div>
+                        <div className="text-2xl font-bold text-white tracking-tight tabular-nums">
+                          {property.commute_canada_square ?? '—'}
+                          <span className="text-sm text-linear-text-muted ml-1 font-bold">min</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {property && (
+                      <div className="mb-4">
+                        <LocationNodeMap lat={property.lat} lng={property.lng} address={property.address} />
+                      </div>
+                    )}
+
+                    {property?.lat && property?.lng && (
                       <NeighbourhoodSection
                         lat={property.lat}
                         lng={property.lng}
                         address={property.address}
                         crimeRate={undefined}
                       />
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               )}
             </div>

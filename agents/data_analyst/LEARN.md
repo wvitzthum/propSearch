@@ -84,3 +84,27 @@
 - Do NOT create temp files in the project root or `tmp/` directory -- they will be removed and gitignored.
 - `/tmp/` is outside the project and safe for arbitrary working files.
 - Debug screenshots (e.g. `debug_scrape.png`) are also not allowed in the project root.
+
+---
+
+## 2026-04-24: Session Insights
+
+### Polymarket BoE Market Discovery
+- Polymarket BoE-specific markets are accessible via FlareSolverr scraping
+- CLOB API doesn't return BoE-specific resolved markets
+- Active markets found: BoE April decision, June decision, rate hike 2026
+- Market prices represent probabilities directly
+
+### Geocoding Notes
+- Nominatim blocks requests without proper User-Agent (403 Forbidden)
+- Use format: `{'User-Agent': 'Mozilla/5.0...'}`
+- Strathearn Place W2 geocodes to W2 2NJ, lat=51.5136636, lon=-0.1706137
+
+### Property Enrichment
+- Zoopla listing 71605878 had council tax band F and EPC D
+- Council Tax Band F is relatively high for prime W2
+- Spatial data can be estimated from known nearby stations when precise coordinates unavailable
+
+### Metro GeoJSON Structure
+- `london_metro.geojson` contains LineString features (tube lines), not Point features (stations)
+- For station proximity, use known nearby station distances or find nearest point on lines
