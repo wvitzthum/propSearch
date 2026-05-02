@@ -56,7 +56,7 @@
  *    Both conditions met:             +1.0 (shown as separate bonus row)
  *
  *    User Commute Destination (DAT-197):
- *    Paternoster + Canada Square scored directly. <20min: +1.5 | <30min: +1.0 | <45min: +0.5 | >45min: 0.
+ *    Paternoster + Canada Square scored directly. <20min: +1.5 | <30min: +1.0 | <40min: +0.5 | ≥40min: 0.
  *    Cap commute bonus at +3.0. Shown as commute sub-row in breakdown.
  *
  * 3. PRICE EFFICIENCY (weight: 30%)
@@ -294,7 +294,7 @@ export function parseSpatial(
     if (mins === null) return 0;
     if (mins < 20) return 1.5;
     if (mins < 30) return 1.0;
-    if (mins < 45) return 0.5;
+    if (mins < 40) return 0.5;
     return 0;
   };
 

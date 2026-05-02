@@ -198,7 +198,7 @@ const MapView: React.FC = () => {
   const [choroplethMode, setChoroplethMode] = useState<'income' | 'density' | 'crime' | null>(null);
   // FE-275: POI overlay state (point-of-interest markers)
   const [poiData, setPoiData] = useState<Array<{ id: string; lat: number; lng: number; category: string; name: string }>>([]);
-  const [poiCategoryFilter, setPoiCategoryFilter] = useState<Set<string>>(new Set(['transport', 'supermarket', 'school', 'gym', 'cafe', 'park']));
+  const [poiCategoryFilter, setPoiCategoryFilter] = useState<Set<string>>(new Set());
   const [areaFilter, setAreaFilter] = useState('All Areas');
   const [alphaThreshold, setAlphaThreshold] = useState(0);
   // FE-252: Multi-select status filter — Set<PropertyStatus>

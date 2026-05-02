@@ -13333,6 +13333,30 @@
         "Strategy notes moved inside expanded panel (not competing with collapsed header)",
         "Reference: AcquisitionStrategy.tsx + PropertyDetail.tsx lines 480-558"
       ]
+    },
+    {
+      "id": "FE-286",
+      "priority": "Medium",
+      "effort": "Low",
+      "section": "bug_fixes",
+      "title": "FE: Disable POI/amenity markers on MapView by default \u2014 user opt-in only",
+      "status": "Todo",
+      "responsible": "Frontend Engineer",
+      "dependencies": [],
+      "date": "2026-05-02",
+      "notes": [
+        "ISSUE: POI markers (transport, supermarket, school, gym, cafe, park) are ON by default on MapView.",
+        "User preference: amenity markers are for toggling ON as needed \u2014 not shown by default.",
+        "CURRENT (line 201): new Set([...all 6 categories]) \u2014 all categories pre-enabled.",
+        "FIXED (in-place): changed to new Set() \u2014 empty set means nothing shown until user toggles.",
+        "TASK: Verify the fix is correct, confirm no regressions, run tests."
+      ],
+      "acceptance_criteria": [
+        "MapView opens with NO amenity POI markers visible",
+        "User must manually toggle amenity categories to see markers",
+        "All 7 amenity categories (transport, supermarket, convenience, school, gym, cafe, park) work correctly when toggled",
+        "Playwright tests pass (test:smoke)"
+      ]
     }
   ]
 }

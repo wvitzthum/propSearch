@@ -48,6 +48,26 @@
 </tbody>
 </table>
 
+## 🐛 Bug Fixes
+
+<table>
+<thead>
+<tr>
+  <th align="left">ID</th>
+  <th align="left">Priority</th>
+  <th align="left">Effort</th>
+  <th align="left" style="width:480px">Task</th>
+  <th align="left">Status</th>
+  <th align="left">Responsible</th>
+  <th align="left">Dependencies</th>
+  <th align="left">Block Reason / Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr><td><strong>FE-286</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Disable POI/amenity markers on MapView by default — user opt-in only'>FE: Disable POI/amenity markers on MapView by default — user opt-in only</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+</tbody>
+</table>
+
 ## 📊 Data & Research (Unblocked First)
 
 <table>
