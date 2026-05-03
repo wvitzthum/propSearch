@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -87,6 +87,9 @@ const PropertyDetail: React.FC = () => {
   const [notesPanelOpen, setNotesPanelOpen] = useState(false);
   const [showAppreciation, setShowAppreciation] = useState(false); // UX-119
   const [showMarketContext, setShowMarketContext] = useState(false); // UX-240: merged Market + Location Context
+
+  // UXD-008: Scroll to top on navigation
+  useEffect(() => { window.scrollTo(0, 0); }, []);
   const [showTagSelector, setShowTagSelector] = useState(false); // UX-123: tag selector toggle
 
   const property = useMemo(() => {
@@ -211,6 +214,18 @@ const PropertyDetail: React.FC = () => {
               <span className="px-2 py-0.5 bg-linear-card text-linear-text-muted text-[10px] font-bold uppercase rounded border border-linear-border">
                 {property.area}
               </span>
+              {/* UXD-002: Alpha Score badge in top badge row — primary acquisition signal */}
+              {property.alpha_score != null && (
+                <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded border ${
+                  property.alpha_score >= 8
+                    ? 'bg-retro-green/10 text-retro-green border-retro-green/30'
+                    : property.alpha_score >= 5
+                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                    : 'bg-rose-400/10 text-rose-400 border-rose-400/30'
+                }`}>
+                  Alpha {Number(property.alpha_score).toFixed(1)}
+                </span>
+              )}
               {property.is_value_buy && (
                 <span className="px-2 py-0.5 bg-retro-green/10 text-retro-green text-[10px] font-bold uppercase rounded border border-retro-green/30 flex items-center gap-1">
                   <Gem size={10} />
@@ -229,6 +244,44 @@ const PropertyDetail: React.FC = () => {
             {/* UX-57: PriceAssessment hero — top of content, above pipeline */}
             <div className="mb-8">
               <PriceAssessment property={property as PropertyWithCoords} />
+            </div>
+
+            {/* FE-295: Property Specs — canonical property metadata row */}
+            <div className="mb-6 flex flex-wrap gap-3">
+              {[
+                { icon: '◻', label: `${property.sqft?.toLocaleString() ?? '—'} sqft`, color: 'text-white' },
+                { icon: '🛏', label: `${property.bedrooms ?? '—'} bed`, color: 'text-white' },
+                { icon: '🛁', label: `${property.bathrooms ?? '—'} bath`, color: 'text-white' },
+                { icon: '🏛', label: property.tenure ?? '—', color: 'text-linear-text-muted' },
+                { icon: '⚡', label: `EPC ${property.epc}`, color: property.epc <= 'C' ? 'text-emerald-400' : property.epc === 'D' ? 'text-amber-400' : 'text-rose-400' },
+                property.council_tax_band ? { icon: '📋', label: `CT ${property.council_tax_band}`, color: 'text-linear-text-muted' } : null,
+                property.floor_level ? { icon: '⬆', label: property.floor_level, color: 'text-blue-400' } : null,
+                // FE-295: Garden/Balcony indicator
+                ...(property.has_garden === 1 ? [{ icon: '🌿', label: 'Garden', color: 'text-emerald-400' as const }] : []),
+                ...(property.has_balcony === 1 ? [{ icon: '🌆', label: 'Balcony', color: 'text-blue-400' as const }] : []),
+              ].filter(Boolean).map((spec, i) => spec && (
+                <span key={i} className={`flex items-center gap-1.5 px-3 py-1.5 bg-linear-card border border-linear-border rounded-xl text-[11px] font-bold ${spec.color ?? 'text-white'}`}>
+                  {spec.label}
+                </span>
+              ))}
+            </div>
+
+            {/* UXD-004: Commute KPIs — one-click accessible, outside accordion */}
+            <div className="mb-6 grid grid-cols-2 gap-3">
+              <div className="p-4 bg-white/5 border border-white/5 rounded-xl">
+                <div className="text-[9px] text-linear-text-muted uppercase font-black tracking-widest mb-1">Paternoster Sq</div>
+                <div className="text-2xl font-bold text-white tracking-tight tabular-nums">
+                  {property.commute_paternoster ?? '—'}
+                  <span className="text-sm text-linear-text-muted ml-1 font-bold">min</span>
+                </div>
+              </div>
+              <div className="p-4 bg-white/5 border border-white/5 rounded-xl">
+                <div className="text-[9px] text-linear-text-muted uppercase font-black tracking-widest mb-1">Canada Square</div>
+                <div className="text-2xl font-bold text-white tracking-tight tabular-nums">
+                  {property.commute_canada_square ?? '—'}
+                  <span className="text-sm text-linear-text-muted ml-1 font-bold">min</span>
+                </div>
+              </div>
             </div>
 
             {/* UX-123: Collapsed lifecycle bar — Pipeline + Thesis Tags in one compact card */}
@@ -523,24 +576,7 @@ const PropertyDetail: React.FC = () => {
                   <div className="px-5 py-4">
                     <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                       <MapPin size={10} />
-                      Commute &amp; Amenity Access
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="p-4 bg-white/5 border border-white/5 rounded-xl">
-                        <div className="text-[9px] text-linear-text-muted uppercase font-black tracking-widest mb-1">Paternoster Sq</div>
-                        <div className="text-2xl font-bold text-white tracking-tight tabular-nums">
-                          {property.commute_paternoster ?? '—'}
-                          <span className="text-sm text-linear-text-muted ml-1 font-bold">min</span>
-                        </div>
-                      </div>
-                      <div className="p-4 bg-white/5 border border-white/5 rounded-xl">
-                        <div className="text-[9px] text-linear-text-muted uppercase font-black tracking-widest mb-1">Canada Square</div>
-                        <div className="text-2xl font-bold text-white tracking-tight tabular-nums">
-                          {property.commute_canada_square ?? '—'}
-                          <span className="text-sm text-linear-text-muted ml-1 font-bold">min</span>
-                        </div>
-                      </div>
+                      Location &amp; Neighbourhood
                     </div>
 
                     {property && (
@@ -565,21 +601,34 @@ const PropertyDetail: React.FC = () => {
 
           <div className="lg:col-span-1">
             <div className="bg-linear-card border border-linear-border rounded-2xl shadow-2xl p-6 sticky top-24 hidden lg:block backdrop-blur-md">
-              <div className="mb-8">
+              {/* UXD-001: Slim sidebar — price + alpha + negotiation tiers + actions + notes + one SourceHub */}
+              <div className="mb-4">
                 <span className="text-[10px] text-linear-text-muted block uppercase font-bold tracking-[0.2em] mb-3">Institutional Target</span>
                 <div className="text-4xl font-bold text-white tracking-tighter mb-1 flex items-baseline gap-1">
                   <span className="text-2xl text-linear-accent font-medium">£</span>
                   {fmtNum(property.realistic_price)}
                 </div>
                 <div className="text-xs text-linear-text-muted">
-                  List Price: <span className="line-through opacity-50">£{fmtPrice(property.list_price)}</span>
+                  List: <span className="line-through opacity-50">£{fmtPrice(property.list_price)}</span>
                   {property.list_price && property.realistic_price ? (
-                    <span className="ml-2 text-rose-400 font-bold">-{Math.round((1 - property.realistic_price / property.list_price) * 100)}% Delta</span>
+                    <span className="ml-2 text-rose-400 font-bold">-{Math.round((1 - property.realistic_price / property.list_price) * 100)}%</span>
                   ) : null}
                 </div>
+                {/* UXD-002: Alpha score in sidebar */}
+                {property.alpha_score != null && (
+                  <div className="mt-2">
+                    <span className="text-[9px] text-linear-text-muted uppercase tracking-widest">Alpha Score</span>
+                    <div className={`text-lg font-black tabular-nums ${
+                      Number(property.alpha_score) >= 8 ? 'text-retro-green' :
+                      Number(property.alpha_score) >= 5 ? 'text-amber-400' : 'text-rose-400'
+                    }`}>
+                      {Number(property.alpha_score).toFixed(1)}/10
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* UX-98/UX-93: Negotiation tiers + SDLT from shared utilities */}
+              {/* Negotiation Range — UXD-001: keep tiers, remove SDLT + All-in */}
               <div className="pt-4 pb-1 flex items-center gap-2">
                 <Target size={10} className="text-amber-400" />
                 <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">
@@ -593,41 +642,10 @@ const PropertyDetail: React.FC = () => {
                     <span className={`text-[10px] font-medium ${tier.colorClass}`}>{tier.range}</span>
                   </div>
                 ))}
-                <div className="flex justify-between items-center py-1.5 border-b border-white/5">
-                  <span className="text-[10px] text-linear-text-muted">SDLT estimate</span>
-                  <span className="text-[10px] font-medium text-white">
-                    {(() => {
-                      const sdltValue = calculateSDLT(property.list_price, JSON.parse(localStorage.getItem('propSearch_ftb') ?? 'false'), false).sdlt;
-                      if (sdltValue >= 1_000_000) return `£${(sdltValue / 1_000_000).toFixed(2)}M`;
-                      return `£${Math.round(sdltValue / 1000)}K`;
-                    })()}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-1.5">
-                  <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">All-in estimate</span>
-                  <span className="text-[11px] font-black text-white">
-                    ~{(() => {
-                      const sdltValue = calculateSDLT(property.list_price, JSON.parse(localStorage.getItem('propSearch_ftb') ?? 'false'), false).sdlt;
-                      const allIn = property.realistic_price + sdltValue;
-                      if (allIn >= 1_000_000) return `£${(allIn / 1_000_000).toFixed(2)}M+`;
-                      return `£${Math.round(allIn / 1000)}K+`;
-                    })()}
-                  </span>
-                </div>
               </div>
 
+              {/* Data Actions — edit, verify, enrich */}
               <div className="space-y-3 mb-8">
-                <SourceHub links={property.links || [property.link]} variant="full" />
-                <button
-                  disabled
-                  className="w-full py-3.5 bg-linear-card text-white/40 border border-linear-border rounded-xl font-bold flex items-center justify-center gap-2 text-xs uppercase tracking-widest cursor-not-allowed"
-                  title="PDF Export — coming soon"
-                >
-                  <FileText size={12} className="opacity-40" />
-                  PDF Export — TBD
-                </button>
-
-                {/* FE-238: DATA ACTIONS — section header */}
                 <div className="pt-4 pb-1 flex items-center gap-2">
                   <Settings size={10} className="text-linear-text-muted" />
                   <span className="text-[10px] font-black text-linear-text-muted uppercase tracking-widest">
@@ -635,7 +653,7 @@ const PropertyDetail: React.FC = () => {
                   </span>
                 </div>
 
-                {/* FE-234 entry point: Edit Data */}
+                {/* FE-234: Edit Data */}
                 <Link to={`/property/${property.id}/edit`}>
                   <button className="w-full py-3 bg-linear-card text-white border border-linear-border rounded-xl font-bold hover:bg-linear-accent/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest">
                     <Edit3 size={12} />
@@ -643,22 +661,22 @@ const PropertyDetail: React.FC = () => {
                   </button>
                 </Link>
 
-                {/* FE-231: Recheck button — updates last_checked via POST /api/properties/:id/check */}
+                {/* FE-231: Verify Listing */}
                 <button
                   onClick={handleRecheck}
                   disabled={isRechecking}
-                  title="Verify the listing is still active on the market and updates the last_checked timestamp"
+                  title="Verify the listing is still active on the market"
                   className="w-full py-3 bg-retro-green/10 text-retro-green border border-retro-green/20 rounded-xl font-bold hover:bg-retro-green/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest disabled:opacity-50"
                 >
                   <RefreshCw size={12} className={isRechecking ? 'animate-spin' : ''} />
                   {isRechecking ? 'Verifying Live...' : 'Verify Listing'}
                 </button>
 
-                {/* FE-237: Request Enrichment button */}
+                {/* FE-237: Request Enrichment */}
                 <button
                   onClick={() => setShowEnrichmentModal(true)}
                   className="w-full py-3 bg-amber-400/10 text-amber-400 border border-amber-400/20 rounded-xl font-bold hover:bg-amber-400/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
-                  title="Request analyst enrichment: lease years remaining, ground rent, SDLT breakdown, lease extension costs"
+                  title="Request analyst enrichment"
                 >
                   <RefreshCw size={12} />
                   Request Enrichment
@@ -717,7 +735,7 @@ const PropertyDetail: React.FC = () => {
                 )}
               </div>
 
-              {/* Asset Source Hub — always visible, no hover required (UX-122) */}
+              {/* Asset Source Hub — single instance, no duplicate (UXD-006) */}
               <div className="pt-6 border-t border-linear-border space-y-3">
                 <div className="flex items-center gap-2">
                   <ExternalLink size={12} className="text-blue-400" />
@@ -726,18 +744,6 @@ const PropertyDetail: React.FC = () => {
                   </h3>
                 </div>
                 <SourceHub links={property.links || [property.link]} variant="full" />
-              </div>
-
-              {/* Location Insight — always visible */}
-              <div className="pt-6 border-t border-linear-border">
-                <div className="flex items-start gap-4">
-                  <div className="h-8 w-8 rounded-lg bg-linear-bg border border-linear-border flex items-center justify-center text-linear-accent shrink-0">
-                    <MapPin size={16} />
-                  </div>
-                  <div className="text-[10px] leading-relaxed text-linear-text-muted">
-                    Positioned in <span className="text-white font-bold">Prime {(property.area || 'Unknown').split(' (')[0]}</span>. High rental demand zone with strong historical capital appreciation.
-                  </div>
-                </div>
               </div>
             </div>
           </div>
