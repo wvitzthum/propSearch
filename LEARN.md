@@ -1,5 +1,76 @@
 # LEARN.md — Analyst Session Corrections Log
-## Last updated: 2026-04-26
+## Last updated: 2026-05-02
+
+---
+
+## Choropleth Data — Population Density (2026-05-02)
+
+### DAT-259: Population Density Sourced from ONS
+**Problem:** Choropleth "Density" mode was showing UC claimant rate (%) instead of actual population density (people/km²).
+
+**Source:** ONS "Population density for Lower layer Super Output Areas in England and Wales, mid-2022 to mid-2024"
+**URL:** `https://www.ons.gov.uk/.../lowersuperoutputareapopulationdensity/mid2022revisednov2025tomid2024/sapelsoapopulationdensity20222024.xlsx`
+**Download date:** 2026-05-02
+**File:** `data/sources/lsoa_density_2022_2024.xlsx` (3.7 MB, Excel)
+
+**New fields added to `data/lsoa_choropleth_london.geojson`:**
+- `population` — Census 2021 mid-2024 population estimate (integer)
+- `area_sq_km` — LSOA area in km² (float, 6 decimal places)
+- `pop_density` — people/km², computed as population / area_sq_km (float, 1 decimal)
+
+**Coverage:** 4,659/4,835 London LSOAs matched (176 missing: LSOA boundary changes between Census 2011 and 2021 census rebasing — 2011 LSOAs that were split/merged in 2021 boundaries).
+
+**Frontend update:** `frontend/src/pages/MapView.tsx`
+- `CHOROPLETH_RANGES.pop_density: { min: 0, max: 25000 }` (London avg ~10,000 people/km²)
+- `choroplethStyle()`: claimants mode now uses `pop_density` (orange density palette)
+- Tooltip: shows `X people/km²`, population, area, and density level (low/moderate/dense/very dense)
+- Legend button: label changed from "UC Claimants" → "Population Density"
+
+**London density stats (people/km²):**
+- Min: 134 (very suburban, e.g., Bromley rural fringe)
+- Max: 56,154 (very dense inner city, e.g., parts of Islington/Tower Hamlets)
+- Average: 10,172
+- Median: 8,953
+
+**Source documentation:** `data/SOURCES_CHOROPLETH.md`
+
+---
+
+## Choropleth Data — Household Income (2026-05-02)
+
+### DAT-258: Research Complete — LSOA-level Household Income NOT Available from ONS
+
+**Finding:** ONS "Income estimates for small areas" are published at **MSOA level only** (5,000–15,000 people per MSOA, ~7,264 MSOAs in England and Wales). LSOA-level (1,000–3,000 people) income estimates are NOT produced by ONS.
+
+**Known source:** HMRC "PAYE median income by LSOA" exists but URL not located (searched 2026-05-02).
+**Commercial option:** CACI PayCheck (£)
+**Interim workaround:** `imd_score` (Income Deprivation component of IMD) as proxy.
+
+**See:** task DAT-258 notes in `tasks/tasks.json` for full research log and next steps.
+
+---
+
+## ONS Dataset Discovery Notes (2026-05-02)
+
+### Finding ONS Download URLs
+ONS dataset download pages require JavaScript rendering. To find direct download URLs:
+1. Navigate to ONS dataset page (e.g., `https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/lowersuperoutputareapopulationdensity`)
+2. View page source or fetch HTML
+3. Search for `"/file?uri=..."` patterns — these are the actual download URLs
+4. Pattern: `https://www.ons.gov.uk/file?uri={path}/{dataset}/{version}/...`
+
+**LSOA Population Density downloads:**
+- `mid2022revisednov2025tomid2024/sapelsoapopulationdensity20222024.xlsx` — 3.7 MB, mid-2022 to mid-2024 (recommended)
+- `mid2021andmid2022/sapelsoapopdensitytablefinal.xlsx` — Census 2021-based
+
+**ONS API:** `api.beta.ons.gov.uk` has 337 datasets — does NOT include all ONS datasets.
+Best approach: Navigate ONS website to find dataset page → view source → find download URL.
+
+**London LSOAs** have LAD codes starting with `E09` (e.g., E09000012 = Camden).
+**England LSOAs** have codes starting with `E01`.
+**Wales LSOAs** have codes starting with `W01`.
+
+
 
 ---
 

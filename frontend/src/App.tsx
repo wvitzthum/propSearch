@@ -13,13 +13,15 @@ import ComparisonPage from './pages/ComparisonPage';
 import AffordabilityCalculator from './pages/AffordabilityCalculator';
 import Inbox from './pages/Inbox';
 import { PropertyProvider } from './hooks/PropertyContext';
+import { SidebarProvider } from './contexts/SidebarContext';
 
 function App() {
   return (
     <PropertyProvider>
-      <Router>
-        <Layout>
-          <Routes>
+      <SidebarProvider>
+        <Router>
+          <Layout>
+            <Routes>
             {/* Redirects: consolidate old routes */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/mortgage" element={<Navigate to="/affordability" replace />} />
@@ -55,8 +57,9 @@ function App() {
               </div>
             } />
           </Routes>
-        </Layout>
-      </Router>
+          </Layout>
+        </Router>
+      </SidebarProvider>
     </PropertyProvider>
   );
 }

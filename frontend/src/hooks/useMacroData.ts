@@ -159,7 +159,7 @@ export const useMacroData = () => {
           // UX-004: Single canonical London benchmark — use across all components
           london_benchmark: extractValue(raw.london_hpi?.annual_change ?? raw.london_hpi?.yoy_pct) ?? 1.2,
           // UX-009: Data freshness tracking
-          last_refreshed: raw.london_hpi?.last_updated ?? raw._meta?.generated_at ?? raw._provenance?.fetched ?? new Date().toISOString(),
+          last_refreshed: raw._meta?.last_full_refresh ?? raw.london_hpi?.last_refreshed ?? raw.london_hpi?.last_updated ?? raw._meta?.generated_at ?? raw._provenance?.fetched ?? new Date().toISOString(),
           inventory_velocity: raw.inventory_velocity ? {
             months_of_supply: extractValue(raw.inventory_velocity.months_of_supply) ?? 4.2,
             new_instructions_q_change: extractValue(raw.inventory_velocity.new_instructions_q_change) ?? 12.5

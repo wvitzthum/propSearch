@@ -244,6 +244,26 @@ function initializeDB() {
     )
   `).run();
 
+  // 6.5. enrichment_requests table (DE-218)
+  // Stores user-initiated property enrichment requests picked up by the Data Analyst.
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS enrichment_requests (
+      id TEXT PRIMARY KEY,
+      property_id TEXT,
+      request_type TEXT,
+      field TEXT,
+      value TEXT,
+      notes TEXT,
+      result_data TEXT,
+      requested_by TEXT,
+      priority TEXT DEFAULT 'normal',
+      status TEXT DEFAULT 'pending',
+      created_at TEXT,
+      updated_at TEXT,
+      processed_at TEXT
+    )
+  `).run();
+
   // 7. archived_properties table (Historical — pre-2026-04-01)
   // NOTE: No longer written to. Retained for historical record. The server init's
   // idempotent restore ensures records are NOT re-inserted on restart (NOT EXISTS guard).

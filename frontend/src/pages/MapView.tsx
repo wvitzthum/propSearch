@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import { usePipeline } from '../hooks/usePipeline';
+import { useSidebar } from '../contexts/SidebarContext';
 import type { PropertyStatus } from '../hooks/usePipeline';
 import type { PropertyWithCoords } from '../types/property';
 import type { MarketStatus } from '../types/property';
@@ -116,12 +117,21 @@ const CHOROPLETH_COLORS: Record<'income' | 'density' | 'crime', string[]> = {
 };
 const CHOROPLETH_BREAKS = [0, 0.25, 0.5, 0.75, 1.0];
 
-// FE-275 / DE-243: Compute normalized lsoa_value from actual data fields.
-// Fields available in lsoa_choropleth_london.geojson: imd_score, imd_rank, claimant_rate, crime_count
+// FE-275 / DE-243 / DAT-259: Compute normalized lsoa_value from actual data fields.
+// Fields in lsoa_choropleth_london.geojson (updated 2026-05-02):
+//   imd_score, imd_rank  — Income Deprivation (Index of Multiple Deprivation)
+//   claimant_rate         — UC claimant rate % (retained)
+//   crime_count           — raw crime count per LSOA
+//   population            — Census 2021 mid-2024 population estimate (DAT-259)
+//   area_sq_km            — LSOA area in km² (DAT-259)
+//   pop_density           — people/km², computed as population/area (DAT-259)
+// Source: ONS "Population density for Lower layer Super Output Areas, mid-2022 to mid-2024"
+//         https://www.ons.gov.uk/.../lowersuperoutputareapopulationdensity
 const CHOROPLETH_RANGES = {
-  imd_score: { min: 0, max: 65 },   // Index of Multiple Deprivation score (0–~65)
+  imd_score: { min: 0, max: 65 },     // Index of Multiple Deprivation score (0–~65)
   crime_count: { min: 0, max: 1206 }, // raw crime count per LSOA
-  claimant_rate: { min: 0, max: 100 }, // % claimants (0–100)
+  claimant_rate: { min: 0, max: 100 }, // % density (0–100)
+  pop_density: { min: 0, max: 25000 }, // people/km² (0–25k; London avg ~10k/km²)
 };
 
 const normalize = (val: number, min: number, max: number): number => {
@@ -137,10 +147,15 @@ const choroplethStyle = (feature: GeoJSON.Feature | undefined, mode: 'income' | 
     // Crime: higher count = worse → normalize crime_count to 0–1
     val = normalize(props.crime_count ?? 0, CHOROPLETH_RANGES.crime_count.min, CHOROPLETH_RANGES.crime_count.max);
   } else if (mode === 'density') {
-    // Density/claimancy: claimant_rate is % (0–100), higher = more deprived
-    val = normalize(props.claimant_rate ?? 0, CHOROPLETH_RANGES.claimant_rate.min, CHOROPLETH_RANGES.claimant_rate.max);
+    // Density (DAT-259): population density in people/km² from Census 2021 mid-2024
+    // Higher density = more urban/built-up area → use orange density palette
+    // pop_density = population / area_sq_km (people/km²)
+    const pd = props.pop_density ?? 0;
+    const pdRange = CHOROPLETH_RANGES.pop_density;
+    val = normalize(pd, pdRange.min, pdRange.max);
   } else {
-    // Income deprivation: imd_score, higher = more deprived
+    // Income deprivation (DAT-258 pending): imd_score, higher = more deprived
+    // TODO: Replace with actual household income (£/year) when DAT-258 is resolved
     val = normalize(props.imd_score ?? 0, CHOROPLETH_RANGES.imd_score.min, CHOROPLETH_RANGES.imd_score.max);
   }
   return {
@@ -202,54 +217,92 @@ const MapView: React.FC = () => {
   const [areaFilter, setAreaFilter] = useState('All Areas');
   const [alphaThreshold, setAlphaThreshold] = useState(0);
   // FE-252: Multi-select status filter — Set<PropertyStatus>
-  const [statusFilter, setStatusFilter] = useState<Set<PropertyStatus>>(new Set());
+  // Default: hide archived, show all others (discovered, shortlisted, vetted, watchlist)
+  const [statusFilter, setStatusFilter] = useState<Set<PropertyStatus>>(new Set(['discovered', 'shortlisted', 'vetted', 'watchlist']));
   // FE-251: Alpha colour mode toggle
   const [alphaColorMode, setAlphaColorMode] = useState(false);
   // FE-252: Market status filter (analyst-owned axis — withdrawn/sold by default in Map)
   const [marketStatusFilter, setMarketStatusFilter] = useState<MarketStatus | 'all'>('all');
   const [layers, setLayers] = useState({ properties: true, metro: true, greenspace: false, rivers: false });
+  // FE-287: Lazy-load state for overlay data
+  const [poiDataLoaded, setPoiDataLoaded] = useState(false);
+  const [choroplethDataLoaded, setChoroplethDataLoaded] = useState(false);
+  const [greenspaceDataLoaded, setGreenspaceDataLoaded] = useState(false);
+  const [riversDataLoaded, setRiversDataLoaded] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  // Sidebar and header controls for full-width map view
+  const { hidePipelineBar } = useSidebar();
 
-  // Fetch GeoJSON layers
+  // Hide pipeline bar on mount, restore on unmount
+  useEffect(() => {
+    hidePipelineBar();
+  }, [hidePipelineBar]);
+
+  // Fetch essential data on mount (metro is always visible by default)
   useEffect(() => {
     fetch('/api/london-metro')
       .then(r => r.ok ? r.json() : null)
       .then(d => d && setGeoData(d))
       .catch(() => {});
-    fetch('/data/london_greenspace.geojson')
-      .then(r => r.ok ? r.json() : null)
-      .then(d => d && setGreenspaceData(d))
-      .catch(() => {});
-    fetch('/data/london_rivers.geojson')
-      .then(r => r.ok ? r.json() : null)
-      .then(d => d && setRiversData(d))
-      .catch(() => {});
-    // FE-275: Fetch LSOA choropleth data (DE-243: served via /api/static/ — not in Vite public/)
-    fetch('/api/static/lsoa_choropleth_london.geojson')
-      .then(r => r.ok ? r.json() : null)
-      .then(d => d && setChoroplethData(d))
-      .catch(() => {});
-    // FE-275: Fetch POI data (DE-243: served via /api/static/)
-    fetch('/api/static/london_pois.json')
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (!d) return;
-        // Support GeoJSON FeatureCollection or flat array
-        if (d.features && Array.isArray(d.features)) {
-          setPoiData(d.features.map((f: { geometry: { coordinates: [number, number] }; properties: { id: string; category: string; name: string } }) => ({
-            id: f.properties.id,
-            lat: f.geometry.coordinates[1],
-            lng: f.geometry.coordinates[0],
-            category: f.properties.category,
-            name: f.properties.name,
-          })));
-        } else if (Array.isArray(d)) {
-          setPoiData(d as Array<{ id: string; lat: number; lng: number; category: string; name: string }>);
-        }
-      })
-      .catch(() => {});
   }, []);
+
+  // FE-287: Lazy-load choropleth data on first mode toggle
+  useEffect(() => {
+    if (choroplethMode && !choroplethDataLoaded) {
+      fetch('/api/static/lsoa_choropleth_london.geojson')
+        .then(r => r.ok ? r.json() : null)
+        .then(d => d && setChoroplethData(d))
+        .then(() => setChoroplethDataLoaded(true))
+        .catch(() => {});
+    }
+  }, [choroplethMode, choroplethDataLoaded]);
+
+  // FE-287: Lazy-load POI data on first amenity toggle
+  useEffect(() => {
+    if (poiCategoryFilter.size > 0 && !poiDataLoaded) {
+      fetch('/api/static/london_pois.json')
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (!d) return;
+          if (d.features && Array.isArray(d.features)) {
+            setPoiData(d.features.map((f: { geometry: { coordinates: [number, number] }; properties: { id: string; category: string; name: string } }) => ({
+              id: f.properties.id,
+              lat: f.geometry.coordinates[1],
+              lng: f.geometry.coordinates[0],
+              category: f.properties.category,
+              name: f.properties.name,
+            })));
+          } else if (Array.isArray(d)) {
+            setPoiData(d as Array<{ id: string; lat: number; lng: number; category: string; name: string }>);
+          }
+        })
+        .then(() => setPoiDataLoaded(true))
+        .catch(() => {});
+    }
+  }, [poiCategoryFilter, poiDataLoaded]);
+
+  // FE-287: Lazy-load greenspace on first toggle
+  useEffect(() => {
+    if (layers.greenspace && !greenspaceDataLoaded) {
+      fetch('/data/london_greenspace.geojson')
+        .then(r => r.ok ? r.json() : null)
+        .then(d => d && setGreenspaceData(d))
+        .then(() => setGreenspaceDataLoaded(true))
+        .catch(() => {});
+    }
+  }, [layers.greenspace, greenspaceDataLoaded]);
+
+  // FE-287: Lazy-load rivers on first toggle
+  useEffect(() => {
+    if (layers.rivers && !riversDataLoaded) {
+      fetch('/data/london_rivers.geojson')
+        .then(r => r.ok ? r.json() : null)
+        .then(d => d && setRiversData(d))
+        .then(() => setRiversDataLoaded(true))
+        .catch(() => {});
+    }
+  }, [layers.rivers, riversDataLoaded]);
 
   // Fullscreen API
   const toggleFullscreen = () => {
@@ -276,7 +329,7 @@ const MapView: React.FC = () => {
       const areaName = (p.area || '').split(' (')[0];
       if (areaFilter !== 'All Areas' && areaName !== areaFilter) return false;
       if (alphaThreshold > 0 && p.alpha_score < alphaThreshold) return false;
-      // FE-252: Multi-select status filter — empty set means 'all' (show everything)
+      // FE-252: Multi-select status filter — show only statuses in the set (archived excluded by default)
       if (statusFilter.size > 0) {
         const s = getStatus(p.id);
         if (!statusFilter.has(s)) return false;
@@ -311,11 +364,13 @@ const MapView: React.FC = () => {
   return (
     <div ref={mapRef} className="fixed inset-0 top-12 bg-linear-bg z-0">
       {/* Map */}
+      {/* FE-287: preferCanvas renderer for better performance with dense GeoJSON layers */}
       <MapContainer
         center={[51.547, -0.140]}
         zoom={13}
         className="w-full h-full"
         zoomControl={false}
+        preferCanvas={true}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -369,6 +424,7 @@ const MapView: React.FC = () => {
         )}
 
         {/* FE-275: Choropleth overlay (LSOA polygons) */}
+        {/* FE-289: Enhanced tooltips with plain-English explanations */}
         {choroplethMode && choroplethData && (
           <GeoJSON
             data={choroplethData}
@@ -377,17 +433,50 @@ const MapView: React.FC = () => {
               if (feature?.properties) {
                 const props = feature.properties as Record<string, unknown>;
                 const label = (props.area_name as string) || (props.name as string) || 'LSOA';
-                let value: string;
-                if (choroplethMode === 'crime') {
-                  value = `${Number(props.crime_count ?? 0).toFixed(0)} crimes`;
-                } else if (choroplethMode === 'density') {
-                  value = `${Number(props.claimant_rate ?? 0).toFixed(1)}% claimants`;
-                } else {
-                  value = `IMD ${Number(props.imd_score ?? 0).toFixed(1)} (rank ${Number(props.imd_rank ?? 0).toLocaleString()})`;
-                }
-                layer.bindTooltip(`${label}: ${value}`, {
-                  className: 'bg-linear-card border border-linear-border text-white text-[10px] rounded-lg px-2 py-1',
+                // Mode label for tooltip header
+                // DAT-258: 'income' mode still uses imd_score (Income Deprivation) until actual household income is sourced
+                // DAT-259: 'density' mode now shows Population Density (people/km²) from Census 2021 mid-2024
+                const modeLabel = choroplethMode === 'income' ? 'Income Deprivation' : choroplethMode === 'density' ? 'Population Density' : 'Crime Count';
+
+                // Use a function for dynamic content that evaluates at hover time
+                layer.bindTooltip(() => {
+                  let content: string;
+                  if (choroplethMode === 'income') {
+                    const imdScore = Number(props.imd_score ?? 0);
+                    const imdRank = Number(props.imd_rank ?? 0);
+                    // IMD rank: 1 = most deprived, 32,844 = least deprived
+                    // Invert to get decile: 1 = most deprived, 10 = least deprived
+                    const imdDecile = Math.ceil(((32844 - imdRank + 1) / 32844) * 10);
+                    const deprivationLevel = imdDecile <= 3 ? 'high deprivation' : imdDecile >= 8 ? 'low deprivation' : 'moderate deprivation';
+                    content = `<div class="font-bold text-white">${label}</div><div class="text-linear-text-muted text-[9px] mb-1">${modeLabel}</div><div class="text-[10px]">IMD: ${imdScore.toFixed(1)}/65<br/>Rank: ${imdRank.toLocaleString()} of 32,844<br/>Decile: ${imdDecile}/10 (${deprivationLevel})</div>`;
+                  } else if (choroplethMode === 'density') {
+                    // DAT-259: Show population density (people/km²) from Census 2021 mid-2024
+                    const popDensity = Number(props.pop_density ?? 0);
+                    const population = Number(props.population ?? 0);
+                    const areaSqKm = Number(props.area_sq_km ?? 0);
+                    const londonAvgDensity = 10000; // approximate London average (people/km²)
+                    const ratio = popDensity / londonAvgDensity;
+                    const densityLevel = popDensity > 20000 ? 'very dense' : popDensity > 12000 ? 'dense' : popDensity > 6000 ? 'moderate' : 'low density';
+                    const densityFormatted = popDensity > 0
+                      ? `${popDensity.toLocaleString()} people/km²`
+                      : 'No data';
+                    const popFormatted = population > 0
+                      ? `Pop: ${population.toLocaleString()}`
+                      : 'Pop: N/A';
+                    content = `<div class="font-bold text-white">${label}</div><div class="text-linear-text-muted text-[9px] mb-1">Population Density</div><div class="text-[10px]">${densityFormatted}<br/>${popFormatted} in ${areaSqKm.toFixed(2)} km²<br/>Context: ${densityLevel} (${ratio > 1 ? `${ratio.toFixed(1)}× above` : ratio < 1 ? `${(1/ratio).toFixed(1)}× below` : 'at'} London avg)</div>`;
+                  } else {
+                    const crimes = Number(props.crime_count ?? 0);
+                    const londonAvg = 350;
+                    const ratio = crimes / londonAvg;
+                    const crimeLevel = crimes > 500 ? 'high' : crimes < 200 ? 'low' : 'moderate';
+                    content = `<div class="font-bold text-white">${label}</div><div class="text-linear-text-muted text-[9px] mb-1">${modeLabel}</div><div class="text-[10px]">Crimes: ${crimes.toLocaleString()}<br/>London avg: ${londonAvg}<br/>Context: ${crimeLevel} (${ratio > 1 ? `${ratio.toFixed(1)}× above` : ratio < 1 ? `${(1/ratio).toFixed(1)}× below` : 'at'} London avg)</div>`;
+                  }
+                  return content;
+                }, {
+                  className: 'leaflet-tooltip-custom',
                   sticky: true,
+                  direction: 'top',
+                  offset: [0, -5],
                 });
               }
             }}
@@ -451,7 +540,7 @@ const MapView: React.FC = () => {
         })}
       </MapContainer>
 
-      {/* FE-178: Controls Overlay */}
+      {/* FE-178: Controls Overlay — pushed down to avoid header/pipeline bar overlap */}
       <div className="absolute top-4 right-4 z-[850] flex flex-col gap-2">
         {/* Layer toggles */}
         <div className="bg-linear-card/95 backdrop-blur-md border border-linear-border rounded-xl p-2 space-y-1.5 shadow-2xl">
@@ -493,7 +582,7 @@ const MapView: React.FC = () => {
                 <span className={`w-2 h-2 rounded-sm`} style={{
                   background: mode === 'income' ? '#3b82f6' : mode === 'density' ? '#f97316' : '#ef4444',
                 }} />
-                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                {mode === 'density' ? 'Population Density' : mode.charAt(0).toUpperCase() + mode.slice(1)}
               </button>
             ))}
           </div>
@@ -575,11 +664,20 @@ const MapView: React.FC = () => {
       </div>
 
       {/* FE-275: Choropleth Legend — bottom-left, shows when overlay is active */}
+      {/* FE-289: Enhanced choropleth legend with value ranges and metric descriptions */}
       {choroplethMode && (
-        <div className="absolute bottom-4 left-4 z-[800] bg-linear-card/95 backdrop-blur-md border border-linear-border rounded-xl p-3 shadow-2xl">
-          <div className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest mb-2">
-            {choroplethMode === 'income' ? 'Income Deprivation' : choroplethMode === 'density' ? 'Claimant Rate' : 'Crime Count'}
+        <div className="absolute bottom-4 left-4 z-[800] bg-linear-card/95 backdrop-blur-md border border-linear-border rounded-xl p-3 shadow-2xl min-w-64">
+          {/* Mode title */}
+          <div className="text-[8px] font-black text-linear-text-muted uppercase tracking-widest mb-1">
+            {choroplethMode === 'income' ? 'Income Deprivation' : choroplethMode === 'density' ? 'UC Claimants' : 'Crime Count'}
           </div>
+          {/* Mode description */}
+          <div className="text-[9px] text-linear-text-muted/60 mb-2 leading-tight">
+            {choroplethMode === 'income' ? 'Index of Multiple Deprivation score' :
+             choroplethMode === 'density' ? '% adults on Universal Credit / JSA' :
+             'Police-recorded crimes (12 months)'}
+          </div>
+          {/* Color gradient with value ranges */}
           <div className="flex items-center gap-1">
             {[0, 1, 2, 3, 4].map(i => {
               const t = i / 4;
@@ -588,8 +686,24 @@ const MapView: React.FC = () => {
               );
             })}
           </div>
+          {/* Value range labels */}
           <div className="flex justify-between mt-1 text-[8px] text-linear-text-muted">
-            <span>Low</span><span>High</span>
+            {choroplethMode === 'income' ? (
+              <><span>1 (low)</span><span>16</span><span>32</span><span>49</span><span>65 (high)</span></>
+            ) : choroplethMode === 'density' ? (
+              <><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></>
+            ) : (
+              <><span>0</span><span>300</span><span>600</span><span>900</span><span>1200+</span></>
+            )}
+          </div>
+          {/* London average reference */}
+          <div className="mt-2 pt-2 border-t border-linear-border/30 text-[8px] text-linear-text-muted/50 flex items-center justify-between">
+            <span>London avg:</span>
+            <span className="font-medium text-white/70">
+              {choroplethMode === 'income' ? '~21 (IMD)' :
+               choroplethMode === 'density' ? '13.2%' :
+               '~350 crimes'}
+            </span>
           </div>
         </div>
       )}
@@ -621,20 +735,20 @@ const MapView: React.FC = () => {
             <div>
               <div className="text-[9px] font-bold text-linear-text-muted uppercase tracking-widest mb-1.5">Status</div>
               <div className="flex flex-wrap gap-1">
-                {/* 'All' chip — clears the set (resets to 'all' behaviour) */}
+                {/* 'All' chip — shows all statuses including archived */}
                 <button
                   key="all"
-                  onClick={() => setStatusFilter(new Set())}
+                  onClick={() => setStatusFilter(new Set(['discovered', 'shortlisted', 'watchlist', 'vetted', 'archived']))}
                   className={`px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all ${
-                    statusFilter.size === 0
-                      ? 'bg-linear-bg text-white border border-blue-500/30 ring-1 ring-blue-500/20'
+                    statusFilter.size === 5
+                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30 ring-1 ring-blue-500/20'
                       : 'bg-linear-bg text-linear-text-muted border border-linear-border hover:text-white'
                   }`}
                 >
                   All
                 </button>
                 {/* Per-status chips — toggle membership in the set */}
-                {(['discovered', 'shortlisted', 'vetted', 'archived'] as const).map(s => {
+                {(['discovered', 'shortlisted', 'watchlist', 'vetted', 'archived'] as const).map(s => {
                   const isActive = statusFilter.has(s);
                   return (
                     <button
@@ -654,6 +768,7 @@ const MapView: React.FC = () => {
                         isActive
                           ? s === 'archived' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30 ring-1 ring-rose-500/20'
                             : s === 'vetted' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 ring-1 ring-emerald-500/20'
+                            : s === 'watchlist' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30 ring-1 ring-purple-500/20'
                             : s === 'shortlisted' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30 ring-1 ring-blue-500/20'
                             : 'bg-zinc-500/20 text-zinc-300 border border-zinc-500/30 ring-1 ring-zinc-500/20'
                           : 'bg-linear-bg text-linear-text-muted border border-linear-border hover:text-white'

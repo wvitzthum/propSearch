@@ -92,6 +92,27 @@ body {
   color: #ffffff !important;
 }
 
+/* Choropleth Tooltip - Linear Dark Theme */
+.leaflet-tooltip-custom {
+  background: #18181b !important;
+  color: #ffffff !important;
+  border: 1px solid #27272a !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 0 10px rgba(59, 130, 246, 0.05) !important;
+  padding: 8px 12px !important;
+  font-family: Inter, system-ui, sans-serif !important;
+  line-height: 1.4 !important;
+  max-width: 220px !important;
+}
+
+.leaflet-tooltip-custom::before {
+  display: none !important;
+}
+
+.leaflet-tooltip-custom .leaflet-tooltip-content {
+  margin: 0 !important;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;

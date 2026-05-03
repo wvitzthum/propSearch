@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 /**
- * fetch_map_overlays.js — DE-242
+ * fetch_map_overlays.js — DE-242, DAT-259
  * Sources all map overlay data for the propSearch dashboard.
  *
  * Outputs:
- *   data/lsoa_london.geojson          — Part A: LSOA December 2021 boundaries
+ *   data/lsoa_london.geojson           — Part A: LSOA December 2021 boundaries
  *   data/lsoa_income_demographics.json — Part B: Income + demographics
- *   data/lsoa_crime.json               — Part C: Crime counts per LSOA
- *   data/lsoa_choropleth_london.geojson — Part D: Choropleth (A+B+C joined)
- *   data/london_pois.json              — Part E: London POIs
- *   data/london_greenspace.geojson     — Part F: Parks
- *   data/london_rivers.geojson          — Part F: Thames + canals
+ *   data/lsoa_crime.json              — Part C: Crime counts per LSOA
+ *   data/lsoa_choropleth_london.geojson — Part D: Choropleth (A+B+C+population joined)
+ *                                        DAT-259 adds: population, area_sq_km, pop_density
+ *                                        Source: ONS Population density for LSOAs, mid-2022 to mid-2024
+ *   data/london_pois.json             — Part E: London POIs
+ *   data/london_greenspace.geojson    — Part F: Parks
+ *   data/london_rivers.geojson         — Part F: Thames + canals
  */
 const https = require('https');
 const fs = require('fs');

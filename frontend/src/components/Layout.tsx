@@ -8,6 +8,7 @@ import {
   Plus,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   Inbox,
   History,
   Calculator,
@@ -20,9 +21,11 @@ import {
   Menu,
   X,
   Activity,
+  PanelLeft,
 } from 'lucide-react';
 import { usePropertyContext } from '../hooks/PropertyContext';
 import { usePipeline } from '../hooks/usePipeline';
+import { useSidebar } from '../contexts/SidebarContext';
 import CommandPalette from './CommandPalette';
 import SubmissionHistory from './SubmissionHistory';
 import ComparisonBar from './ComparisonBar';
@@ -175,6 +178,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const { properties } = usePropertyContext();
   const { getStatus } = usePipeline();
+  const { sidebarVisible, pipelineBarVisible, toggleSidebar } = useSidebar();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
@@ -382,22 +386,85 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <SubmissionHistory isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} />
       <ShortcutsOverlay isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
 
-      {/* Desktop Sidebar */}
-      <aside className="w-64 border-r border-linear-border flex flex-col fixed inset-y-0 left-0 z-50 bg-linear-bg/80 backdrop-blur-xl hidden lg:flex">
-        {/* Logo */}
-        <div className="p-4 flex items-center justify-between">
-          <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer p-1 rounded-lg hover:bg-linear-card transition-colors">
-            <div className="h-6 w-6 rounded bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-black italic shadow-lg shadow-blue-500/20">
-              IS
-            </div>
-            <span className="text-sm font-semibold tracking-tight">propSearch</span>
-            <ChevronDown size={14} className="text-linear-text-muted" />
-          </Link>
-          <button className="h-6 w-6 rounded border border-linear-border flex items-center justify-center text-linear-text-muted hover:text-white hover:bg-linear-card transition-all">
-            <Plus size={14} />
-          </button>
+      {/* Desktop Sidebar — collapsible with icon-only collapsed state */}
+      <aside className={`hidden lg:flex flex-col fixed inset-y-0 left-0 z-50 bg-linear-bg/80 backdrop-blur-xl transition-all duration-200 ${sidebarVisible ? 'w-64 border-r border-linear-border' : 'w-14 border-r border-linear-border'}`}>
+        {/* Logo + Collapse Button */}
+        <div className="p-3 flex items-center justify-between border-b border-linear-border/50">
+          {sidebarVisible ? (
+            <>
+              <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer p-1 rounded-lg hover:bg-linear-card transition-colors">
+                <div className="h-6 w-6 rounded bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-black italic shadow-lg shadow-blue-500/20 shrink-0">
+                  IS
+                </div>
+                <span className="text-sm font-semibold tracking-tight">propSearch</span>
+              </Link>
+              <button
+                onClick={toggleSidebar}
+                title="Collapse sidebar"
+                className="h-6 w-6 rounded border border-linear-border flex items-center justify-center text-linear-text-muted hover:text-white hover:bg-linear-card transition-all"
+              >
+                <PanelLeft size={14} />
+              </button>
+            </>
+          ) : (
+            <Link to="/dashboard" className="mx-auto" title="propSearch">
+              <div className="h-8 w-8 rounded bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-black italic shadow-lg shadow-blue-500/20">
+                IS
+              </div>
+            </Link>
+          )}
         </div>
-        {sidebarNav()}
+
+        {/* Nav items — full or icon-only based on state */}
+        {sidebarVisible ? (
+          <div className="flex-1 overflow-y-auto py-2 px-2">
+            {sidebarNav()}
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto py-2">
+            {/* Icon-only nav items */}
+            <div className="flex flex-col items-center gap-1 px-1">
+              <Link to="/dashboard" title="Dashboard" className="w-10 h-10 rounded-lg flex items-center justify-center text-linear-text-muted hover:text-white hover:bg-linear-card transition-colors">
+                <LayoutDashboard size={18} />
+              </Link>
+              <Link to="/properties" title="Properties" className="w-10 h-10 rounded-lg flex items-center justify-center text-linear-text-muted hover:text-white hover:bg-linear-card transition-colors">
+                <Building2 size={18} />
+              </Link>
+              <Link to="/map" title="Map" className="w-10 h-10 rounded-lg flex items-center justify-center text-linear-text-muted hover:text-white hover:bg-linear-card transition-colors">
+                <Map size={18} />
+              </Link>
+              <Link to="/inbox" title="Inbox" className="w-10 h-10 rounded-lg flex items-center justify-center text-linear-text-muted hover:text-white hover:bg-linear-card transition-colors">
+                <Inbox size={18} />
+              </Link>
+              <Link to="/comparison" title="Comparison" className="w-10 h-10 rounded-lg flex items-center justify-center text-linear-text-muted hover:text-white hover:bg-linear-card transition-colors">
+                <Scale size={18} />
+              </Link>
+              <Link to="/affordability" title="Affordability" className="w-10 h-10 rounded-lg flex items-center justify-center text-linear-text-muted hover:text-white hover:bg-linear-card transition-colors">
+                <Calculator size={18} />
+              </Link>
+              <Link to="/market" title="Market" className="w-10 h-10 rounded-lg flex items-center justify-center text-linear-text-muted hover:text-white hover:bg-linear-card transition-colors">
+                <BarChart3 size={18} />
+              </Link>
+              <Link to="/rates" title="Rates & Scenarios" className="w-10 h-10 rounded-lg flex items-center justify-center text-linear-text-muted hover:text-white hover:bg-linear-card transition-colors">
+                <TrendingUp size={18} />
+              </Link>
+              <Link to="/archive" title="Archive" className="w-10 h-10 rounded-lg flex items-center justify-center text-linear-text-muted hover:text-white hover:bg-linear-card transition-colors">
+                <Archive size={18} />
+              </Link>
+            </div>
+
+            {/* Expand button at bottom */}
+            <div className="mt-auto p-2 border-t border-linear-border/50">
+              <button
+                onClick={toggleSidebar}
+                title="Expand sidebar"
+                className="w-full h-10 rounded-lg flex items-center justify-center text-linear-text-muted hover:text-white hover:bg-linear-card transition-colors"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+        )}
       </aside>
 
       {/* Mobile Sidebar Drawer */}
@@ -433,8 +500,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </>
       )}
 
-      {/* Main Content */}
-      <main className="flex-grow min-h-screen pl-0 lg:pl-64">
+      {/* Main Content — adjusts padding based on sidebar visibility */}
+      <main className={`flex-grow min-h-screen transition-all duration-200 ${sidebarVisible ? 'pl-0 lg:pl-64' : 'pl-0 lg:pl-14'}`}>
         <header className="border-b border-linear-border bg-linear-bg/50 backdrop-blur-md sticky top-0 z-40">
           {/* Top row: hamburger + breadcrumbs + controls */}
           <div className="h-12 px-4 lg:px-6 flex items-center gap-3">
@@ -485,7 +552,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </div>
 
           {/* UX-015: Pipeline progress bar — FE-217: Mobile-responsive with flex-wrap */}
-          <div className="px-4 lg:px-6 py-1.5 flex flex-wrap items-center gap-2 border-t border-white/5 lg:overflow-x-auto">
+          {/* Hidden when pipelineBarVisible is false (e.g., on MapView) */}
+          {pipelineBarVisible && (
+            <div className="px-4 lg:px-6 py-1.5 flex flex-wrap items-center gap-2 border-t border-white/5 lg:overflow-x-auto">
             <div className="flex items-center gap-1 text-[9px] font-black text-linear-text-muted/60 uppercase tracking-widest shrink-0">
               Pipeline
             </div>
@@ -525,6 +594,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               View Funnel →
             </Link>
           </div>
+          )}
         </header>
 
         {/* FE-218: Responsive padding — p-4 on mobile, p-6 on sm, p-8 on lg */}

@@ -44,7 +44,9 @@
 <tr><td><strong>PO-006</strong></td><td>High</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='PO: Specify exact income multiplier tiers and bonus treatment rules for BorrowingPowerCalculator'>PO: Specify exact income multiplier tiers and bonus treatment rules for BorrowingPowerCalculator</td><td>done</td><td>Product Owner</td><td>DE-230</td><td></td></tr>
 <tr><td><strong>UX-129</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UX: E2E test cases for SDLT calculation -- gov.uk worked examples and edge cases'>UX: E2E test cases for SDLT calculation -- gov.uk worked examples and edge cases</td><td>Todo</td><td>UI UX QA</td><td>FE-270</td><td></td></tr>
 <tr><td><strong>UX-130</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UX: Design brief for map overlay toggle panel and POI legend'>UX: Design brief for map overlay toggle panel and POI legend</td><td>Todo</td><td>UI UX QA</td><td>DE-242</td><td></td></tr>
-<tr><td><strong>FE-285</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='UX Overhaul: Bid Strategy section on /property/{id} — too much detail in too little space. Collapse 3-column grid + timing strip + strategy notes into a single card: collapsed by default showing posture badge + opening bid headline only. Expand reveals full 3-col layout with cleaner hierarchy and readable font sizes (13px body). Also merge Market Context and Location Context into one shared collapsible section. See PropertyDetail.tsx + AcquisitionStrategy.tsx.'>UX Overhaul: Bid Strategy section on /property/{id} — too much detail in too little space. Collapse 3-column grid + timing strip + strategy notes into a single card: collapsed by default showing posture badge + opening bid headline only. Expand reveals full 3-col layout with cleaner hierarchy and readable font sizes (13px body). Also merge Market Context and Location Context into one shared collapsible section. See PropertyDetail.tsx + AcquisitionStrategy.tsx.</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-288</strong></td><td>Medium</td><td>High</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Viewport culling — serve only visible LSOA/POI features to MapView'>FE: Viewport culling — serve only visible LSOA/POI features to MapView</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-291</strong></td><td>Medium</td><td>High</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Replace IMD choropleth with actual household income data'>Replace IMD choropleth with actual household income data</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>FE-293</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Add bedroom and bathroom filter controls to MapView'>FE: Add bedroom and bathroom filter controls to MapView</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
 </tbody>
 </table>
 
@@ -64,7 +66,7 @@
 </tr>
 </thead>
 <tbody>
-<tr><td><strong>FE-286</strong></td><td>Medium</td><td>Low</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='FE: Disable POI/amenity markers on MapView by default — user opt-in only'>FE: Disable POI/amenity markers on MapView by default — user opt-in only</td><td>Todo</td><td>Frontend Engineer</td><td>None</td><td></td></tr>
+<tr><td><strong>DE-244</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DE: Pre-compress overlay data files with gzip for /api/static endpoints'>DE: Pre-compress overlay data files with gzip for /api/static endpoints</td><td>Todo</td><td>Data Engineer</td><td>None</td><td></td></tr>
 </tbody>
 </table>
 
@@ -84,8 +86,11 @@
 </tr>
 </thead>
 <tbody>
+<tr><td><strong>DAT-257</strong></td><td>high</td><td>-</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Investigate dynamic analyst statement updates for AnalystStatementPanel (STMT-001)'>Investigate dynamic analyst statement updates for AnalystStatementPanel (STMT-001)</td><td>Todo</td><td>Product Owner</td><td>None</td><td></td></tr>
 <tr><td><strong>DAT-206</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Macro: Refresh market_indicators and global_context macro_trend — data is 12 days stale (Red)'>Macro: Refresh market_indicators and global_context macro_trend — data is 12 days stale (Red)</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
 <tr><td><strong>DAT-207</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Alpha 7+ Data Quality Audit — CT band sourcing, sqft correction, alpha recalculation'>Alpha 7+ Data Quality Audit — CT band sourcing, sqft correction, alpha recalculation</td><td>done</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>DAT-258</strong></td><td>Medium</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='Source household income data by London LSOA for choropleth'>Source household income data by London LSOA for choropleth</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
+<tr><td><strong>DAT-260</strong></td><td>High</td><td>Medium</td><td style='max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap' title='DAT: Enrich 58 properties missing bedroom data via manual research'>DAT: Enrich 58 properties missing bedroom data via manual research</td><td>Todo</td><td>Data Analyst</td><td>None</td><td></td></tr>
 </tbody>
 </table>
 
@@ -539,6 +544,14 @@
 <tr><td><strong>DAT-223</strong></td><td>Import + enrich: OnTheMarket 19321844</td><td>Done</td><td>2026-04-24</td></tr>
 <tr><td><strong>DAT-224</strong></td><td>Import + enrich: OnTheMarket 18515173</td><td>Done</td><td>2026-04-24</td></tr>
 <tr><td><strong>DAT-225</strong></td><td>Import + enrich: OnTheMarket 16487323</td><td>Done</td><td>2026-04-24</td></tr>
+<tr><td><strong>FE-285</strong></td><td>UX Overhaul: Bid Strategy section on /property/{id} — too much detail in too little space. Collapse 3-column grid + timing strip + strategy notes into a single card: collapsed by default showing posture badge + opening bid headline only. Expand reveals full 3-col layout with cleaner hierarchy and readable font sizes (13px body). Also merge Market Context and Location Context into one shared collapsible section. See PropertyDetail.tsx + AcquisitionStrategy.tsx.</td><td>Done</td><td>2026-04-26</td></tr>
+<tr><td><strong>FE-286</strong></td><td>FE: Disable POI/amenity markers on MapView by default — user opt-in only</td><td>Done</td><td>2026-05-02</td></tr>
+<tr><td><strong>FE-287</strong></td><td>FE: Leaflet preferCanvas renderer + lazy-load overlay data on MapView</td><td>Done</td><td>2026-05-02</td></tr>
+<tr><td><strong>FE-289</strong></td><td>FE: Improve choropleth tooltip and legend with plain-English explanations and real value ranges</td><td>Done</td><td>2026-05-02</td></tr>
+<tr><td><strong>FE-290</strong></td><td>MapView: Add sidebar toggle to allow full-width map view</td><td>Done</td><td>2026-05-02</td></tr>
+<tr><td><strong>FE-292</strong></td><td>Fix choropleth &quot;density&quot; mode - rename to &quot;Claimants&quot; or replace with actual density data</td><td>Done</td><td>2026-05-02</td></tr>
+<tr><td><strong>DAT-259</strong></td><td>Source population density data by London LSOA for choropleth</td><td>Done</td><td>2026-05-02</td></tr>
+<tr><td><strong>FE-294</strong></td><td>FE: Fix EnrichmentModal payload to match server schema (property_id, request_type)</td><td>Done</td><td>2026-05-02</td></tr>
 <tr><td><strong>FE-162</strong></td><td>Runtime crash in Inbox.tsx — Cannot read properties of undefined (reading toLoca...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-187</strong></td><td>Responsive Layout Audit: Sidebar layout (pl-64 fixed) not mobile-optimised — res...</td><td>Done</td><td></td></tr>
 <tr><td><strong>QA-172</strong></td><td>Runtime React error in MarketConditionsBar.tsx:141 — &#x27;Objects are not valid as a...</td><td>Done</td><td></td></tr>

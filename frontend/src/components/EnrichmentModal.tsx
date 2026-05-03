@@ -29,6 +29,22 @@ const ENRICHMENT_FIELDS: { key: string; label: string; desc: string }[] = [
   { key: 'tenure',            label: 'Tenure Details',       desc: 'Confirm lease/freehold and years remaining' },
 ];
 
+// Maps enriched field keys to server request_type values
+function fieldToRequestType(field: string): string {
+  const map: Record<string, string> = {
+    alpha_score: 'general',
+    appreciation_potential: 'general',
+    realistic_price: 'price_confirm',
+    area_benchmarks: 'general',
+    epc: 'epc_lookup',
+    nearest_tube_distance: 'general',
+    market_status: 'general',
+    price_history: 'general',
+    tenure: 'tenure_confirm',
+  };
+  return map[field] ?? 'general';
+}
+
 const EnrichmentModal: React.FC<EnrichmentModalProps> = ({
   propertyId,
   propertyAddress,
@@ -84,12 +100,16 @@ const EnrichmentModal: React.FC<EnrichmentModalProps> = ({
       return;
     }
     setSubmitting(true);
-    const body = {
-      propertyId,
-      fields: Array.from(selected),
-      notes: notes.trim(),
-      requestedAt: new Date().toISOString(),
-    };
+    // Map each selected field to a separate enrichment request
+    // Server expects: property_id, request_type, field, notes, requested_by
+    const requests = Array.from(selected).map(field => ({
+      property_id: propertyId,
+      request_type: fieldToRequestType(field),
+      field,
+      notes: notes.trim() || null,
+      requested_by: 'user',
+      priority: 'normal',
+    }));
     try {
       const isDemo = import.meta.env.VITE_DEMO_MODE === 'true';
       if (isDemo) {
@@ -99,12 +119,18 @@ const EnrichmentModal: React.FC<EnrichmentModalProps> = ({
         onClose();
         return;
       }
-      const res = await fetch('/api/enrichment-requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error('Request failed');
+      // POST each field request separately (server enforces one field per request)
+      const results = await Promise.all(
+        requests.map(r =>
+          fetch('/api/enrichment-requests', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(r),
+          }).then(res => res.json())
+        )
+      );
+      const failed = results.filter(r => r.error);
+      if (failed.length > 0) throw new Error(failed[0].error);
       showToast('Enrichment requested — the analyst will review this property', 'success');
       onRequested?.();
       onClose();
