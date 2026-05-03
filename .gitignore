@@ -50,6 +50,13 @@ data/images/
 # Large sourced datasets (use data/sources/ README for provenance)
 # data/sources/*.json  # uncomment to ignore all sourced JSON
 
+# DE-245: Raw overlay GeoJSON files (large) — use pre-compressed .gz versions
+# Compress with: gzip -k data/<file>; only the .gz files are committed
+data/*.geojson
+!data/*.geojson.gz
+data/london_pois.json
+!data/london_pois.json.gz
+
 # Temp/working files -- use /tmp for scratch work, never commit tmp/
 tmp/
 *.tmp

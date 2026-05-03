@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const zlib = require('zlib');
 const Database = require('better-sqlite3');
 
 const PORT = (process.env.PORT ? parseInt(process.env.PORT) : 3001);
@@ -10,6 +11,29 @@ const DB_PATH = process.env.SQLITE_PATH
 const INBOX_DIR = path.join(DATA_DIR, 'inbox');
 const TRIAGED_DIR = path.join(DATA_DIR, 'triaged');
 const ARCHIVE_INBOX_DIR = path.join(DATA_DIR, 'archive/inbox');
+
+// DE-244/DE-245: Lazy decompress overlay files on first boot
+// If raw overlay files are missing but .gz versions exist, decompress silently.
+// Handles fresh git pulls on new machines where only .gz files are committed.
+const OVERLAY_FILES = [
+  'lsoa_choropleth_london.geojson',
+  'lsoa_london.geojson',
+  'london_pois.json',
+  'london_greenspace.geojson',
+  'london_rivers.geojson',
+  'london_metro.geojson',
+];
+for (const file of OVERLAY_FILES) {
+  const rawPath = path.join(DATA_DIR, file);
+  const gzPath = rawPath + '.gz';
+  if (!fs.existsSync(rawPath) && fs.existsSync(gzPath)) {
+    console.log(`Lazy decompressing ${file} from .gz...`);
+    const gzData = fs.readFileSync(gzPath);
+    const rawData = zlib.gunzipSync(gzData);
+    fs.writeFileSync(rawPath, rawData);
+    console.log(`  → ${file} restored (${Math.round(rawData.length / 1024 / 1024)}MB)`);
+  }
+}
 
 // Ensure directories exist
 [INBOX_DIR, TRIAGED_DIR, ARCHIVE_INBOX_DIR].forEach(dir => {
@@ -1499,23 +1523,21 @@ const server = http.createServer((req, res) => {
         res.end(data);
       });
     }
-    // DE-243: Static data files (choropleth GeoJSON, POIs, crime/income data)
+    // DE-244/DE-245: Static data files (choropleth GeoJSON, POIs, crime/income data)
     // /api/static/lsoa_choropleth_london.geojson → data/lsoa_choropleth_london.geojson
+    // Priority: serve pre-compressed .gz directly if client accepts gzip (no CPU streaming)
     else if (url.pathname.startsWith('/api/static/') && req.method === 'GET') {
       const filePath = url.pathname.slice('/api/static/'.length);
       const safePath = filePath.replace(/^(\.\.(\/|\\|$))/, '');
       const absolutePath = path.join(DATA_DIR, safePath);
+      const gzPath = absolutePath + '.gz';
 
       if (!absolutePath.startsWith(DATA_DIR)) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Forbidden' }));
         return;
       }
-      if (!fs.existsSync(absolutePath)) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: `Static file not found: ${filePath}` }));
-        return;
-      }
+
       const ext = path.extname(absolutePath).toLowerCase();
       const contentTypes = {
         '.geojson': 'application/geo+json',
@@ -1524,16 +1546,44 @@ const server = http.createServer((req, res) => {
         '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp',
       };
       const contentType = contentTypes[ext] || 'application/octet-stream';
+      const acceptEncoding = (req.headers['accept-encoding'] || '').toLowerCase();
+      const wantsGzip = acceptEncoding.includes('gzip');
 
-      fs.readFile(absolutePath, (err, data) => {
-        if (err) {
-          res.writeHead(500, { 'Content-Type': 'text/plain' });
-          res.end('Internal Server Error');
-          return;
-        }
-        res.writeHead(200, { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=3600' });
-        res.end(data);
-      });
+      // DE-244: Serve pre-compressed .gz directly (no streaming, no CPU hit)
+      if (wantsGzip && ['.geojson', '.json'].includes(ext) && fs.existsSync(gzPath)) {
+        const stat = fs.statSync(gzPath);
+        res.writeHead(200, {
+          'Content-Type': contentType,
+          'Content-Encoding': 'gzip',
+          'Cache-Control': 'public, max-age=86400',
+          'Vary': 'Accept-Encoding',
+          'Content-Length': stat.size,
+        });
+        fs.createReadStream(gzPath).pipe(res);
+        return;
+      }
+
+      // Fallback: raw file (with streaming gzip if client wants gzip but no .gz exists)
+      if (!fs.existsSync(absolutePath)) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: `Static file not found: ${filePath}` }));
+        return;
+      }
+
+      const stat = fs.statSync(absolutePath);
+      const headers = {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=86400',
+      };
+
+      // DE-244: Stream with gzip only if client wants it and no .gz pre-compressed file exists
+      if (wantsGzip && ['.geojson', '.json'].includes(ext) && !fs.existsSync(gzPath)) {
+        res.writeHead(200, { ...headers, 'Content-Encoding': 'gzip', 'Vary': 'Accept-Encoding', 'Content-Length': undefined });
+        fs.createReadStream(absolutePath).pipe(zlib.createGzip()).pipe(res);
+      } else {
+        res.writeHead(200, { ...headers, 'Content-Length': stat.size });
+        fs.createReadStream(absolutePath).pipe(res);
+      }
     }
     else {
       res.writeHead(404, { 'Content-Type': 'application/json' });

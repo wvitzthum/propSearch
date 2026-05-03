@@ -13463,7 +13463,7 @@
       "effort": "Medium",
       "section": "bug_fixes",
       "title": "DE: Pre-compress overlay data files with gzip for /api/static endpoints",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Data Engineer",
       "dependencies": [],
       "date": "2026-05-02",
@@ -13736,7 +13736,7 @@
       "effort": "Medium",
       "section": "infra",
       "title": "DE: Compress overlay data files, strip from git history, serve gzip via /api/static/",
-      "status": "Todo",
+      "status": "Done",
       "responsible": "Data Engineer",
       "dependencies": [],
       "date": "2026-05-02",
@@ -14001,6 +14001,303 @@
         "All pending requests worked within 48 hours of submission",
         "Completed requests have result_data populated with enriched values",
         "Failed requests have descriptive analyst_notes"
+      ]
+    },
+    {
+      "id": "DAT-266",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "data_research",
+      "title": "DAT: Batch geocode all 137 properties missing lat/lng via Nominatim",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-05-02",
+      "notes": [
+        "PROBLEM: 137/241 properties (57%) have no lat/lng. 10 properties have commute times set but no geocoded coordinates -- impossible to calculate accurately.",
+        "Nearest tube distance is the only spatial data these properties have.",
+        "SCOPE: Geocode all properties where lat IS NULL OR lng IS NULL. Rate limit: Nominatim requires 1 request/second. 137 properties = ~2.5 minutes.",
+        "COMMAND: python3 agents/data_analyst/enrich_spatial.py (existing)",
+        "Nominatim tips (from LEARN.md 2026-04-24): Must use proper User-Agent header (Mozilla/5.0...). Rate limit: 1 req/sec. Use sleep(1100) between calls. Best results: geocode with postcode when available. For NW3/NW6/NW8 properties: try appending \", London, NW3\" etc.",
+        "AFTER: Run make tasks-regen after any changes. Verify: SELECT COUNT(*) FROM properties WHERE lat IS NOT NULL AND lng IS NOT NULL"
+      ],
+      "acceptance_criteria": [
+        "All 137 properties without lat/lng are geocoded",
+        "lat/lng accuracy verified for 10 random sample properties (check address on map)",
+        "No properties left with lat=NULL and lng=NULL (unless genuinely unresolvable)",
+        "Update lat/lng in both properties table AND demo_master.json"
+      ]
+    },
+    {
+      "id": "DAT-267",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "data_research",
+      "title": "DAT: Build tube journey time lookup table for London areas to Canada Square and Paternoster Square",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [
+        "DAT-263"
+      ],
+      "date": "2026-05-02",
+      "notes": [
+        "PROBLEM: Commute times are estimated manually which ignores tube line, changes, waiting time, and walk from destination.",
+        "DESTINATIONS: commute_canada_square = Canada Square, Canary Wharf (51.5048, -0.0235, Jubilee line terminus). commute_paternoster = Paternoster Square, near St Pauls (51.5139, -0.0983, Central/Circle/District line).",
+        "APPROACH: Build a lookup table of known door-to-door commute times for each target area. Use TfL Journey Planner API (free, no key for basic): GET https://api.tfl.gov.uk/journey/journeyresults/{from_lat},{from_lon}/to/{to_lat},{to_lon}. This returns walking + tube + interchange times.",
+        "OUTPUT FORMAT: data/commute_lookup.json -- { \"NW3\": { tube_line: \"Northern\", interchange: 0, tube_time_to_canada: 20, tube_time_to_paternoster: 16 }, \"NW6\": { tube_line: \"Jubilee\", interchange: 0, tube_time_to_canada: 18, tube_time_to_paternoster: 22 }, ... }",
+        "FORMULA after implementing: commute = (nearest_tube_distance / 80) + tube_journey_time + (interchanges * 4) + 3",
+        "REFERENCE TUBE TIMES (verify at tfl.gov.uk): Belsize Park (NW3) -> Canary Wharf: Northern + Jubilee at Baker Street = 28 min. West Hampstead (NW6) -> Canary Wharf: Jubilee direct = 18 min. Bayswater (W2) -> Canary Wharf: Circle/Jubilee = 22 min. Islington (N1) -> Canary Wharf: Northern + Jubilee = 25 min."
+      ],
+      "acceptance_criteria": [
+        "Lookup table covers all target areas: NW3, NW6, NW8, W2, SW3, SW10, SW1, SE1, N1, N7",
+        "Each area has tube_line, interchange_count, and times to both destinations",
+        "Table is in data/commute_lookup.json or a SQLite table",
+        "Times are validated against TfL Journey Planner (or equivalent)"
+      ]
+    },
+    {
+      "id": "DAT-268",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "data_research",
+      "title": "DAT: Recalculate commute_canada_square and commute_paternoster for all properties using geocoded lat/lng + lookup table",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [
+        "DAT-263",
+        "DAT-264"
+      ],
+      "date": "2026-05-02",
+      "notes": [
+        "PREREQUISITES: DAT-263 (geocode) + DAT-264 (lookup table) must be complete.",
+        "FORMULA: For each property with lat/lng AND nearest_tube_distance: commute = walk_to_tube + tube_time + (interchanges * 4) + 3. walk_to_tube = nearest_tube_distance / 80 (80m/min walking pace). Tube journey time from lookup table based on area + nearest tube line. Interchange penalty = 4 min per interchange. Walk from destination = 3 min fixed.",
+        "SCRIPT: node scripts/calculate_commutes.js (DAT-266 creates this)",
+        "VALIDATION: Spot-check 5 properties manually at tfl.gov.uk journey planner: Belsize Avenue (NW3), Goldhurst Terrace (NW6), Peters Court (W2), Danbury Street (N1), Highbury New Park (N1).",
+        "AFTER: Update both data/propSearch.db AND data/demo_master.json."
+      ],
+      "acceptance_criteria": [
+        "All 125 properties with commute times are recalculated with proper formula",
+        "At least 5 properties verified against tfl.gov.uk journey planner",
+        "demo_master.json updated with recalculated values",
+        "No regression: all existing commute times are replaced with better estimates"
+      ]
+    },
+    {
+      "id": "DAT-269",
+      "priority": "Low",
+      "effort": "Low",
+      "section": "data_research",
+      "title": "DAT: Create scripts/calculate_commutes.js for future imports",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [
+        "DAT-264"
+      ],
+      "date": "2026-05-02",
+      "notes": [
+        "MAINTENANCE TASK: Build a reusable script so commute times are calculated automatically for every new property import.",
+        "SCRIPT: scripts/calculate_commutes.js -- Input: property lat, lng, nearest_tube_distance, nearest_tube_name, area. Output: commute_canada_square (minutes), commute_paternoster (minutes). Uses data/commute_lookup.json (or inline lookup table) + Haversine formula.",
+        "INTEGRATION: Call from import_comparables.js after spatial enrichment. Call from enrich_spatial.py after geocoding. Call manually: node scripts/calculate_commutes.js [property_id]."
+      ],
+      "acceptance_criteria": [
+        "scripts/calculate_commutes.js runs on a single property or batch",
+        "Uses commute_lookup.json for tube journey times",
+        "Can be called as part of import pipeline without manual intervention"
+      ]
+    },
+    {
+      "id": "DAT-262",
+      "priority": "High",
+      "effort": "Medium",
+      "section": "bug_fixes",
+      "title": "DAT: Enforce address-based duplicate detection in enrich_leads.js for ALL imports including USER_SUBMISSION",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-05-02",
+      "notes": [
+        "PROBLEM: User submits an agent URL. Server saves it to inbox (no duplicate detected at submission time).",
+        "Analyst runs enrich_leads.js. The URL gets scraped, address extracted.",
+        "PROTOCOLS/07_DUPLICATE_DETECTION.md Step 1B says to check for address matches, but it only applied to scraped leads -- not USER_SUBMISSION leads.",
+        "CURRENT RULE (analyst README): When source = USER_SUBMISSION: Import immediately -- no filtering, no pre-archiving, no rejection",
+        "This rule bypasses acquisition criteria only -- NOT duplicate detection. The intent was never to allow duplicate records.",
+        "FIX: enrich_leads.js must run Step 1A + Step 1B for ALL imports regardless of source.",
+        "USER_SUBMISSION bypasses: acquisition criteria, pre-archiving, rejection. ADDED: duplicate detection now runs for all imports.",
+        "Implementation: After scraping/fetching, BEFORE insert: (1) Phase 1A URL cross-check against properties.links[]. (2) Phase 1B normalized address+area match. If match found: merge and skip insert. Exception: archived=1 records.",
+        "Address normalization (from PROTOCOLS/07_DUPLICATE_DETECTION.md): strip commas/spaces, normalize unit prefixes, standardise St->Street, Ave->Avenue. Case-insensitive after normalization."
+      ],
+      "acceptance_criteria": [
+        "enrich_leads.js runs URL cross-check before creating any new record",
+        "enrich_leads.js runs normalized address match before creating any new record",
+        "User-submitted leads that match existing addresses are merged, not duplicated",
+        "PROTOCOLS/07_DUPLICATE_DETECTION.md updated to clarify scope applies to ALL imports",
+        "No new duplicate records created for same-property-different-portal cases"
+      ]
+    },
+    {
+      "id": "DAT-270",
+      "priority": "High",
+      "effort": "High",
+      "section": "data_research",
+      "title": "DAT: Build agent website scraping pipeline -- Phase 1 (Tier 1: easy direct-scrape agents)",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [],
+      "date": "2026-05-02",
+      "notes": [
+        "EXPANSION: The analyst currently scrapes Rightmove, Zoopla, and a few agent sites.",
+        "This task builds a systematic scraping pipeline for the following agent websites.",
+        "These are estate agent own websites -- they list properties directly and are often",
+        "higher quality than portal scrapes (no intermediary listing fees distorting data).",
+        "",
+        "PHASE 1 TARGETS (Tier 1 -- no/weak anti-bot, direct scrape likely works):",
+        "- Goldschmidt & Howland (g-h.co.uk) -- NW8 specialist. Already have leads from this (leads_goldschmidt_howland.json)",
+        "- Rose & Co Estates (roseandcoestates.co.uk) -- NW3 specialist",
+        "- Hadleigh Residential (hadleigh.co.uk) -- NW3 specialist",
+        "- Neilson & Bauer (neilsonbauer.com) -- N1 specialist",
+        "- Alwyne Estates (alwyne.co.uk) -- N1 specialist",
+        "",
+        "EXTRACTION PATTERN (each agent may differ):",
+        "Pattern: html.match(/\"numBedrooms\":\\s*(\\d+)/) or html.match(/(\\d+)\\s*bedroom/i)",
+        "Also extract: address, list_price, sqft, tenure, epc, floorplan_url, image_url",
+        "See DAT-191 protocol notes for extraction patterns per portal.",
+        "",
+        "APPROACH:",
+        "1. Test each agent URL with direct fetch (node fetch or python urllib) first",
+        "2. If 403/429: enable FlareSolverr (FLARESOLVR_URL env var, http://nas.home:8191)",
+        "3. Extract listing cards from search pages or detail pages",
+        "4. Normalize to import_comparables.js format",
+        "5. Run through enrich_leads.js workflow",
+        "",
+        "SCRIPTS TO CREATE:",
+        "- scripts/scrape_rose_and_co.js (NW3, direct)",
+        "- scripts/scrape_hadleigh.js (NW3, direct)",
+        "- scripts/scrape_neilson_bauer.js (N1, direct)",
+        "- scripts/scrape_alwyne.js (N1, direct)",
+        "- scripts/scrape_goldschmidt_howland.js (NW8, direct -- upgrade existing if needed)",
+        "",
+        "NOTES FROM DAT-191: Goldschmidt & Howland extraction: html.match(/(\\d+)\\s*bedroom/i) and html.match(/(\\d+)\\s*bathroom/i)",
+        "",
+        "VALIDATION: Compare extracted data against known listings on each agent website.",
+        "Use tfl.gov.uk postcode search to verify addresses."
+      ],
+      "acceptance_criteria": [
+        "Scripts created for all 5 Tier 1 agents",
+        "Each script extracts: address, price, sqft, bedrooms, bathrooms, tenure, image_url, source_url",
+        "Output format compatible with import_comparables.js",
+        "First scrape results reviewed by analyst before full pipeline integration"
+      ]
+    },
+    {
+      "id": "DAT-271",
+      "priority": "High",
+      "effort": "High",
+      "section": "data_research",
+      "title": "DAT: Build agent website scraping pipeline -- Phase 2 (Tier 2: major chains requiring FlareSolverr)",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [
+        "DAT-270"
+      ],
+      "date": "2026-05-02",
+      "notes": [
+        "PHASE 2 TARGETS (Tier 2 -- anti-bot protection, FlareSolverr required):",
+        "- Knight Frank (knightfrank.co.uk) -- Major chain, all areas. High-value target. Gold standard listings.",
+        "- Savills (savills.co.uk) -- Major chain, all areas. Premium listings. High-value.",
+        "- Chestertons (chestertons.co.uk) -- Major chain, SW3/NW3 specialist. Good coverage.",
+        "- Dexters (dexters.co.uk) -- Major chain, N1 and surrounds. Strong local presence.",
+        "- Hamptons (hamptons.co.uk) -- Major chain. User already has some leads from this.",
+        "- Foxtons (foxtons.co.uk) -- Major chain, London focus. User already has some leads.",
+        "",
+        "APPROACH:",
+        "All Tier 2 agents require FlareSolverr (http://nas.home:8191).",
+        "Set FLARESOLVR_URL env var: export FLARESOLVR_URL=http://nas.home:8191",
+        "Use scripts/scrape_flare.js pattern (see agents/data_analyst/PROTOCOLS/08_SCRAPING.md):",
+        "  const res = await fetch(FLARESOLVR_URL + \"/v1\", {",
+        "    method: \"POST\", headers: {\"Content-Type\": \"application/json\"},",
+        "    body: JSON.stringify({ cmd: \"request.get\", url, maxTimeout: 60000 })",
+        "  });",
+        "",
+        "PORTAL STRUCTURE NOTES:",
+        "- Knight Frank: server-side rendered listings, structured HTML. Beds/baths often in JSON-LD schema.",
+        "- Savills: AngularJS (client-side rendered). Needs FlareSolverr. Search page JSON accessible.",
+        "- Dexters: Next.js (client-side). FlareSolverr needed. Card data in React state.",
+        "- Hamptons: Client-side rendered. FlareSolverr needed. Same structure as Rightmove.",
+        "- Foxtons: Client-side. FlareSolverr needed.",
+        "",
+        "SCRIPTS TO CREATE:",
+        "- scripts/scrape_knight_frank.js",
+        "- scripts/scrape_savills.js",
+        "- scripts/scrape_chestertons.js",
+        "- scripts/scrape_dexters.js",
+        "- scripts/scrape_hamptons.js",
+        "- scripts/scrape_foxtons.js",
+        "",
+        "NOTE: Chancellors (chancellors.co.uk) is agent-blocked per DAT-191. No beds/baths/CT in HTML.",
+        "KFH and Ellis & Co are also agent-blocked. Skip these unless anti-bot measures are updated."
+      ],
+      "acceptance_criteria": [
+        "Scripts created for all 6 Tier 2 agents",
+        "All Tier 2 scripts use FlareSolverr correctly (probe FLARESOLVR_URL, handle 403/429)",
+        "Each script extracts: address, price, sqft, bedrooms, bathrooms, tenure, image_url, source_url",
+        "Results reviewed by analyst before full pipeline integration"
+      ]
+    },
+    {
+      "id": "DAT-272",
+      "priority": "Medium",
+      "effort": "Medium",
+      "section": "data_research",
+      "title": "DAT: Integrate agent website leads into standard import pipeline (inbox \u2192 enrich \u2192 import)",
+      "status": "Todo",
+      "responsible": "Data Analyst",
+      "dependencies": [
+        "DAT-270",
+        "DAT-271"
+      ],
+      "date": "2026-05-02",
+      "notes": [
+        "TASK: After Phase 1 + Phase 2 scripts are built, integrate agent website leads",
+        "into the standard pipeline so they flow through enrich_leads.js automatically.",
+        "",
+        "CURRENT PIPELINE:",
+        "1. Scraped lead lands in data/inbox/*.json",
+        "2. Analyst approves from inbox (or enrich_leads.js processes directly)",
+        "3. enrich_leads.js: duplicate check, address normalization, enrichment",
+        "4. import_comparables.js: spatial enrichment, alpha score, DB insert",
+        "5. capture_images.js: localize remote images",
+        "",
+        "NEEDED CHANGES:",
+        "1. Update enrich_leads.js or create enrich_agent_leads.js:",
+        "   - Accept agent-specific fields (agent_name as source)",
+        "   - Agent website listings have more complete data than portals -- trust what is given",
+        "   - But still run duplicate detection (URL cross-check + address match)",
+        "",
+        "2. Update source tracking:",
+        "   - source = \"agent_name\" (e.g. \"knight_frank\", \"savills\", \"neilson_bauer\")",
+        "   - source_name = full agent name (e.g. \"Knight Frank\", \"Savills\")",
+        "   - This enables filtering in the UI by source",
+        "",
+        "3. Add agent listings to PropertyDetail SourceHub.tsx:",
+        "   - Link back to the agent website listing (different from Rightmove/Zoopla)",
+        "   - This extends listing longevity -- agent sites often keep listings after portals remove them",
+        "",
+        "4. Data quality expectations:",
+        "   - Agent websites often have more complete data than portal scrapes",
+        "   - sqft, bedrooms, bathrooms, tenure more likely to be present",
+        "   - But address may not include unit/flat number in search results",
+        "",
+        "FULL AGENT LIST TO INTEGRATE:",
+        "NW3: Rose & Co, Hadleigh, Knight Frank, Chestertons, KFH",
+        "NW6/NW8: Goldschmidt & Howland, Knight Frank, Savills",
+        "N1: Neilson & Bauer, Dexters, Cluttons, Ellis & Co, Alwyne, Knight Frank, Savills",
+        "Both areas: Savills, Hamptons, Foxtons (all areas)"
+      ],
+      "acceptance_criteria": [
+        "Agent website leads flow through enrich_leads.js without manual intervention",
+        "Duplicate detection prevents same-property-different-agent duplication",
+        "SourceHub.tsx shows agent website link for all agent-sourced properties",
+        "All Phase 1 and Phase 2 agents are integrated into the standard import pipeline"
       ]
     }
   ]

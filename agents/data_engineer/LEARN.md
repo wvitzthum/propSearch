@@ -46,3 +46,13 @@
 **Now:** `await sleep(200)` between grid-point crime requests. Falls back to retry on 429.
 **Scope:** `scripts/fetch_map_overlays.js` — fetchCrimeRates()
 **Status:** Active
+
+---
+
+## 2026-05-03
+
+**Trigger:** DE-245 — Two large LSOA GeoJSON files (~220MB each) exceeded GitHub's 100MB limit, blocking git push
+**Was:** Raw .geojson files committed to git history; BFG Repo-Cleaner unavailable in this environment
+**Now:** Solution via DE-244/DE-245: (1) Strip large files from git history via `git filter-branch --index-filter 'git rm --cached lsoa_choropleth_london.geojson lsoa_london.geojson' -- --all`. (2) Add raw files to .gitignore (`data/*.geojson`). (3) Commit only `.gz` versions (38MB compressed vs 220MB raw). (4) Server auto-decompresses on first boot via lazy decompress block. (5) `/api/static/` serves `.gz` directly with `Content-Encoding: gzip` when client accepts gzip.
+**Scope:** `server/index.js` (lazy decompress + gz static serving), `.gitignore`, `data/` (gzipped overlay files)
+**Status:** Active — on fresh clone, run `node server/index.js` first to decompress; then map layers load normally
