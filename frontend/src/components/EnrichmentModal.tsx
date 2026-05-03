@@ -14,18 +14,23 @@ interface EnrichmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onRequested?: () => void; // called after successful request
+  /** Fields pre-selected when modal opens (e.g. re-enrich defaults) */
+  preSelected?: string[];
 }
 
 // Fields the analyst can re-evaluate
 const ENRICHMENT_FIELDS: { key: string; label: string; desc: string }[] = [
+  // ── Listing verification ────────────────────────────────────────────────
+  { key: 'price_history',     label: 'Price History',      desc: 'Re-scrape listing for current price and status' },
+  { key: 'market_status',     label: 'Market Status',      desc: 'Confirm listing is still active, under offer, or sold' },
+  { key: 'image_gallery_recheck', label: 'Gallery Images', desc: 'Re-scrape listing for updated photos and floorplan' },
+  // ── Structural / physical ───────────────────────────────────────────────
   { key: 'alpha_score',        label: 'Alpha Score',          desc: 'Re-score based on current market data' },
   { key: 'appreciation_potential', label: 'Appreciation Potential', desc: 'Update growth projections with latest HPI' },
   { key: 'realistic_price',    label: 'Realistic Price',     desc: 'Revise estimate using recent comparables' },
   { key: 'area_benchmarks',    label: 'Area Benchmarks',      desc: 'Refresh area performance metrics' },
   { key: 'epc',               label: 'EPC Rating',           desc: 'Re-assess energy performance certificate' },
   { key: 'nearest_tube_distance', label: 'Tube Distance',   desc: 'Verify nearest station proximity' },
-  { key: 'market_status',     label: 'Market Status',       desc: 'Confirm current offer/listing status' },
-  { key: 'price_history',     label: 'Price History',       desc: 'Re-scrape listing for price changes' },
   { key: 'tenure',            label: 'Tenure Details',       desc: 'Confirm lease/freehold and years remaining' },
 ];
 
@@ -40,6 +45,7 @@ function fieldToRequestType(field: string): string {
     nearest_tube_distance: 'general',
     market_status: 'general',
     price_history: 'general',
+    image_gallery_recheck: 'general',
     tenure: 'tenure_confirm',
   };
   return map[field] ?? 'general';
@@ -51,8 +57,9 @@ const EnrichmentModal: React.FC<EnrichmentModalProps> = ({
   isOpen,
   onClose,
   onRequested,
+  preSelected = [],
 }) => {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set(preSelected));
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [hasPending, setHasPending] = useState(false);

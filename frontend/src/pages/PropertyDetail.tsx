@@ -59,7 +59,6 @@ import NeighbourhoodSection from '../components/NeighbourhoodSection';
 import { useThesisTags } from '../hooks/useThesisTags';
 import { useMacroData } from '../hooks/useMacroData';
 import { fmtPrice, fmtNum } from '../utils/format';
-import { showToast } from '../utils/toast';
 import { buildNegotiationTiers } from '../utils/negotiationTiers';
 import { useAffordability } from '../hooks/useAffordability';
 import AcquisitionStrategy from '../components/AcquisitionStrategy';
@@ -68,7 +67,7 @@ import PriceAssessment from '../components/PriceAssessment';
 
 const PropertyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { properties, loading, recheckProperty } = usePropertyContext();
+  const { properties, loading } = usePropertyContext();
   const { calculateMonthlyOutlay } = useFinancialData();
   const { calculateSDLT, getLTVMatchScore } = useAffordability();
   const { getStatus, setStatus } = usePipeline();
@@ -82,7 +81,6 @@ const PropertyDetail: React.FC = () => {
     return localStorage.getItem(`notes_${id}`) || '';
   });
   const [isSaving, setIsSaving] = useState(false);
-  const [isRechecking, setIsRechecking] = useState(false); // FE-231: recheck button loading state
   const [showEnrichmentModal, setShowEnrichmentModal] = useState(false); // FE-237: enrichment modal
   const [notesPanelOpen, setNotesPanelOpen] = useState(false);
   const [showAppreciation, setShowAppreciation] = useState(false); // UX-119
@@ -111,22 +109,6 @@ const PropertyDetail: React.FC = () => {
     setIsSaving(true);
     localStorage.setItem(`notes_${id}`, notes);
     setTimeout(() => setIsSaving(false), 600);
-  };
-
-  // FE-231+FE-232: Recheck property via context — async with toasts
-  // recheckProperty handles optimistic update internally and rolls back on error
-  const handleRecheck = async () => {
-    if (!id) return;
-    setIsRechecking(true);
-    try {
-      await recheckProperty(id);
-      const today = new Date().toISOString().split('T')[0];
-      showToast(`Listing verified — active on ${today}`, 'success');
-    } catch {
-      showToast('Recheck failed — please try again', 'error');
-    } finally {
-      setIsRechecking(false);
-    }
   };
 
   if (loading) return (
@@ -653,34 +635,23 @@ const PropertyDetail: React.FC = () => {
                   </span>
                 </div>
 
-                {/* FE-234: Edit Data */}
+                {/* FE-296: Re-enrich — one-click re-verification, sends enrichment request to analyst */}
+                <button
+                  onClick={() => setShowEnrichmentModal(true)}
+                  title="Request analyst re-verification of price, status, and images"
+                  className="w-full py-3 bg-amber-400/10 text-amber-400 border border-amber-400/20 rounded-xl font-bold hover:bg-amber-400/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+                >
+                  <RefreshCw size={12} />
+                  Re-enrich Listing
+                </button>
+
+                {/* FE-231: Edit Data */}
                 <Link to={`/property/${property.id}/edit`}>
                   <button className="w-full py-3 bg-linear-card text-white border border-linear-border rounded-xl font-bold hover:bg-linear-accent/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest">
                     <Edit3 size={12} />
                     Edit Data
                   </button>
                 </Link>
-
-                {/* FE-231: Verify Listing */}
-                <button
-                  onClick={handleRecheck}
-                  disabled={isRechecking}
-                  title="Verify the listing is still active on the market"
-                  className="w-full py-3 bg-retro-green/10 text-retro-green border border-retro-green/20 rounded-xl font-bold hover:bg-retro-green/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest disabled:opacity-50"
-                >
-                  <RefreshCw size={12} className={isRechecking ? 'animate-spin' : ''} />
-                  {isRechecking ? 'Verifying Live...' : 'Verify Listing'}
-                </button>
-
-                {/* FE-237: Request Enrichment */}
-                <button
-                  onClick={() => setShowEnrichmentModal(true)}
-                  className="w-full py-3 bg-amber-400/10 text-amber-400 border border-amber-400/20 rounded-xl font-bold hover:bg-amber-400/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
-                  title="Request analyst enrichment"
-                >
-                  <RefreshCw size={12} />
-                  Request Enrichment
-                </button>
               </div>
 
               <EnrichmentModal
@@ -688,6 +659,12 @@ const PropertyDetail: React.FC = () => {
                 propertyAddress={property.address}
                 isOpen={showEnrichmentModal}
                 onClose={() => setShowEnrichmentModal(false)}
+                onRequested={() => setShowEnrichmentModal(false)}
+                preSelected={
+                  (property.gallery?.length ?? 0) === 0
+                    ? ['price_history', 'market_status', 'image_gallery_recheck']
+                    : ['price_history', 'market_status']
+                }
               />
 
               {/* Analyst Annotations — FE-255: collapsible supplementary panel */}
@@ -752,22 +729,13 @@ const PropertyDetail: React.FC = () => {
 
       {/* UX-121: Mobile sticky action bar — accessible on all mobile viewports */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-linear-card border-t border-linear-border px-4 py-3 flex items-center gap-2 shadow-[0_-4px_30px_rgba(0,0,0,0.4)] backdrop-blur-md">
-        {/* Verify Listing */}
-        <button
-          onClick={handleRecheck}
-          disabled={isRechecking}
-          className="flex-1 py-2.5 bg-retro-green/20 text-retro-green border border-retro-green/20 rounded-xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-95 transition-all"
-        >
-          <RefreshCw size={11} className={isRechecking ? 'animate-spin' : ''} />
-          Verify
-        </button>
-        {/* Request Enrichment */}
+        {/* FE-296: Re-enrich — pre-selected for fast re-verification (mirrors desktop sidebar) */}
         <button
           onClick={() => setShowEnrichmentModal(true)}
           className="flex-1 py-2.5 bg-amber-400/10 text-amber-400 border border-amber-400/20 rounded-xl text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 active:scale-95 transition-all"
         >
           <RefreshCw size={11} />
-          Enrich
+          Re-enrich
         </button>
         {/* Source Hub links */}
         <SourceHub links={property.links || [property.link]} variant="compact" />
